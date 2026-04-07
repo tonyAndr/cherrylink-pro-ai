@@ -134,6 +134,13 @@ class LinkatePosts
             }
             $query_text  = $current_post->post_title . "\n" . wp_strip_all_tags($current_post->post_content);
             $source_html = $current_post->post_content;
+
+            // If the content has no HTML tags (e.g. WP-CLI-seeded posts, classic editor
+            // plain text), wrap paragraphs in <p> so the API anchor extractor can find blocks.
+            if (!empty($source_html) && strip_tags($source_html) === $source_html) {
+                $paras = array_filter(array_map('trim', preg_split('/\n{2,}/', $source_html)));
+                $source_html = '<p>' . implode('</p><p>', $paras) . '</p>';
+            }
         }
 
         // ── Vector API search ─────────────────────────────────────────────────
@@ -218,8 +225,10 @@ class LinkatePosts
         if ($results) {
             foreach ($results as $result) {
                 $api_row = $api_map[(int)$result->ID] ?? [];
+                // Escape quotes so the JSON string is safe inside the Gutenberg
+                // template, which embeds it as: "data-suggestions":"{suggestions}"
                 $result->suggestions = !empty($api_row['suggestions'])
-                    ? wp_json_encode($api_row['suggestions'], JSON_UNESCAPED_UNICODE)
+                    ? str_replace('"', '\\"', wp_json_encode($api_row['suggestions'], JSON_UNESCAPED_UNICODE))
                     : '';
                 $result->score = isset($api_row['score'])
                     ? (int)round($api_row['score'] * 100)

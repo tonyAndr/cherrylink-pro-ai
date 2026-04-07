@@ -77,8 +77,44 @@ class CherryVectorAPI
     }
 
     /**
-     * Batch-upsert all indexable posts. Runs in batches to avoid timeouts.
-     * Returns ['indexed' => int, 'errors' => int].
+     * Batch-upsert multiple posts in a single API call.
+     * Much faster than individual upserts — one TEI embed call for all posts.
+     *
+     * @param WP_Post[] $wp_posts
+     * @return array ['indexed' => int, 'errors' => int]
+     */
+    public function upsert_batch(array $wp_posts): array
+    {
+        if (empty($wp_posts)) {
+            return ['indexed' => 0, 'errors' => 0];
+        }
+
+        $documents = [];
+        foreach ($wp_posts as $post) {
+            $documents[] = [
+                'post_id' => $post->ID,
+                'title'   => $post->post_title,
+                'text'    => wp_strip_all_tags($post->post_content),
+                'url'     => get_permalink($post->ID),
+                'lang'    => 'ru',
+            ];
+        }
+
+        $response = $this->request('POST', '/v1/documents/batch', ['documents' => $documents]);
+
+        if ($response === null) {
+            return ['indexed' => 0, 'errors' => count($documents)];
+        }
+
+        return [
+            'indexed' => (int)($response['indexed'] ?? 0),
+            'errors'  => (int)($response['errors']  ?? 0),
+        ];
+    }
+
+    /**
+     * Fetch a batch of posts from DB and upsert them all in one API call.
+     * Returns ['indexed' => int, 'errors' => int, 'total' => int].
      */
     public function reindex_all(int $batch_size = 50, int $offset = 0): array
     {
@@ -98,23 +134,14 @@ class CherryVectorAPI
             )
         );
 
-        $indexed = 0;
-        $errors  = 0;
-
-        foreach ($posts as $post) {
-            $wp_post = new WP_Post($post);
-            if ($this->upsert_post($wp_post)) {
-                $indexed++;
-            } else {
-                $errors++;
-            }
+        if (empty($posts)) {
+            return ['indexed' => 0, 'errors' => 0, 'total' => 0];
         }
 
-        return [
-            'indexed' => $indexed,
-            'errors'  => $errors,
-            'total'   => count($posts),
-        ];
+        $wp_posts = array_map(fn($p) => new WP_Post($p), $posts);
+        $result   = $this->upsert_batch($wp_posts);
+
+        return array_merge($result, ['total' => count($posts)]);
     }
 
     // ── HTTP ────────────────────────────────────────────────────────────────
@@ -126,9 +153,10 @@ class CherryVectorAPI
             return null;
         }
 
+        $is_batch = str_ends_with($path, '/batch');
         $args = [
             'method'  => $method,
-            'timeout' => 15,
+            'timeout' => $is_batch ? 120 : 15,
             'headers' => [
                 'Content-Type'   => 'application/json',
                 'X-License-Key'  => $this->license_key,

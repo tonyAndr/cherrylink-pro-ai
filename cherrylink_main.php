@@ -42,6 +42,7 @@ if (!defined('LINKATE_ACF_LIBRARY')) require(CHERRYLINK_DIR . '/cherrylink_acf.p
 if (!defined('LP_OT_LIBRARY')) require(CHERRYLINK_DIR . '/cherrylink_output_tags.php');
 if (!defined('LP_ADMIN_SUBPAGES_LIBRARY')) require(CHERRYLINK_DIR . '/cherrylink_admin_subpages.php');
 if (!defined('LINKATE_TERMS_LIBRARY')) require(CHERRYLINK_DIR . '/cherrylink_terms.php');
+if (!defined('CHERRY_VECTOR_API_CLIENT')) { define('CHERRY_VECTOR_API_CLIENT', true); require(CHERRYLINK_DIR . '/cherrylink_vector_api.php'); }
 if (!defined('LINKATE_INDEX_LIBRARY')) require(CHERRYLINK_DIR . '/cherrylink_index.php');
 if (!defined('LINKATE_STATISTICS_LIBRARY')) require(CHERRYLINK_DIR . '/cherrylink_statistics.php');
 if (!defined('LINKATE_STOPWORDS_LIBRARY')) require(CHERRYLINK_DIR . '/cherrylink_stopwords.php');
@@ -105,227 +106,144 @@ class LinkatePosts
 
     static function execute($args = '', $option_key = 'linkate-posts')
     {
-        global $table_prefix, $wpdb;
-        $table_name = $table_prefix . 'linkate_posts';
-        ini_set('display_errors', 1);
-        error_reporting(E_ALL);
-        // First we process any arguments to see if any defaults have been overridden
-        $arg_options = link_cf_parse_args($args);
-        $is_term = isset($arg_options['is_term']) ? $arg_options['is_term'] : 0;
-        $offset = isset($arg_options['offset']) ? $arg_options['offset'] : 0;
-        $linkate_posts_current_ID = isset($arg_options['manual_ID']) ? intval($arg_options['manual_ID']) : -1;
+        global $wpdb;
 
-        // switch output between editors (classic/gutenberg) and related block if empty
-        $presentation_mode = (isset($arg_options['mode']) && !empty($arg_options['mode'])) ? $arg_options['mode'] : 'related_block';
-        $postid = link_cf_current_post_id($linkate_posts_current_ID);
+        $arg_options       = link_cf_parse_args($args);
+        $is_term           = isset($arg_options['is_term'])    ? (int)$arg_options['is_term']    : 0;
+        $offset            = isset($arg_options['offset'])     ? (int)$arg_options['offset']     : 0;
+        $post_id           = isset($arg_options['manual_ID'])  ? (int)$arg_options['manual_ID']  : -1;
+        $mode              = !empty($arg_options['mode'])      ? $arg_options['mode']             : 'related_block';
+        $custom_text       = isset($arg_options['custom_text']) ? trim($arg_options['custom_text']) : '';
 
-        // Next we retrieve the stored options and use them unless a value has been overridden via the arguments
         $options = link_cf_set_options($option_key, $arg_options);
+        $post_id = link_cf_current_post_id($post_id);
+        $limit   = (int)$options['limit_ajax'];
 
-        try {
-            $use_stemming = $options['use_stemming'] === "true";
-            $stemmer = new Stem\LinguaStemRu();
-            $stemmer->enable_stemmer($use_stemming);
-        } catch (Exception $e) {
+        if (!$post_id || $limit < 1) {
+            return LinkatePosts::_empty_result($mode, $options, $option_key);
         }
 
-        $index_helpers = new CL_Index_Helpers($stemmer, $options, $wpdb);
-        if ($postid && 0 < $options['limit_ajax']) {
-            $match_tags = ($options['match_tags'] !== 'false');
-            $exclude_cats = ($options['excluded_cats'] !== '');
-            $include_cats = ($options['included_cats'] !== '');
-            $exclude_authors = ($options['excluded_authors'] !== '');
-            $include_authors = ($options['included_authors'] !== '');
-            $exclude_posts = (trim($options['excluded_posts']) !== '');
-            $exclude_posts = implode(",", array_filter(explode(",", $exclude_posts)));
-            $include_posts = (trim($options['included_posts']) !== '');
-            $include_posts = implode(",", array_filter(explode(",", $include_posts)));
-            $match_category = ($options['match_cat'] === 'true');
-            $match_author = ($options['match_author'] === 'true');
-            $use_tag_str = ('' != trim($options['tag_str']));
-            $omit_current_post = ($options['omit_current_post'] !== 'false');
-            $ignore_relevance = ($options['ignore_relevance'] !== 'false');
-            $match_against_title = ($options['match_all_against_title'] !== 'false');
-            $hide_pass = ($options['show_private'] === 'false');
-            $check_age = ('none' !== $options['age']['direction']);
-            $check_custom = (trim($options['custom']['key']) !== '');
-            $limit = $offset . ', ' . $options['limit_ajax'];
-            $consider_max_incoming_links = (isset($options['consider_max_incoming_links']) && $options['consider_max_incoming_links'] !== 'false');
-            //get the terms to do the matching
-
-            // check if user typed in custom filter text
-            if (isset($arg_options['custom_text']) && !empty(trim($arg_options['custom_text']))) {
-                $cleaned_custom_text = $index_helpers->linkate_sp_mb_clean_words($arg_options['custom_text']);
-                // replace everything with custom text
-                $contentterms = $cleaned_custom_text;
-                $titleterms = $cleaned_custom_text;
-                $customterms = $cleaned_custom_text;
-                $suggestions = $cleaned_custom_text;
-            } else { // proceed the normal way
-                list($contentterms, $titleterms, $customterms, $suggestions) = $index_helpers->linkate_sp_terms_by_freq($postid, $options['num_terms'], $is_term);
-            }
-
-            // these should add up to 1.0
-            $weight_content = $options['weight_content'];
-            $weight_title = $options['weight_title'];
-            $weight_custom = $options['weight_custom'];
-            // below a threshold we ignore the weight completely and save some effort
-            if ($weight_content < 0.001) $weight_content = (int) 0;
-            if ($weight_title < 0.001) $weight_title = (int) 0;
-            if ($weight_custom < 0.001) $weight_custom = (int) 0;
-
-            $count_content = mb_substr_count($contentterms, ' ') + 1;
-            $count_title = mb_substr_count($titleterms, ' ') + 1;
-            $count_custom  = mb_substr_count($customterms, ' ') + 1;
-            if ($weight_content) $weight_content = 57.0 * $weight_content / $count_content;
-            if ($weight_title) $weight_title = 18.0 * $weight_title / $count_title;
-            if ($weight_custom) $weight_custom = 24.0 * $weight_custom / $count_custom;
-
-            $rel_ids = false;
-            $in_relevant_clause = '';
-
-            // for relevant results we get ids of matching posts from linkate_posts using fulltext search
-            if (!$ignore_relevance) {
-                if (isset($cleaned_custom_text)) {
-                    $words = explode(' ', $cleaned_custom_text);
-                    $regex = implode('|', $words);
-
-                    $query = "SELECT ID FROM $wpdb->posts WHERE post_content REGEXP '{$regex}' OR post_title REGEXP '{$regex}' LIMIT 0, 1000";
-                    $rel_ids = $wpdb->get_col($query);
-                } else {
-
-                    $sql = "SELECT pID FROM (SELECT pID, ";
-                    $sql .= link_cf_score_fulltext_match($table_name, $weight_title, $titleterms, $weight_content, $contentterms, $weight_custom, $customterms, $match_against_title);
-                    $sql .= " WHERE " . link_cf_where_fulltext_match($weight_title, $titleterms, $weight_content, $contentterms, $weight_custom, $customterms, $match_against_title);
-                    $sql .= " AND pID <> $postid AND is_term = 0 ORDER BY score DESC LIMIT 0, 1000) as linkate_table";
-                    CHERRYLINK_DEBUGGER::deprecated_cherry_debug(__FUNCTION__, $sql, 'wp_linkate_posts SQL query');
-                    $EXEC_TIME = microtime(true);
-                    $rel_ids = $wpdb->get_col($sql);
-                    $time_elapsed_secs = microtime(true) - $EXEC_TIME;
-                    CHERRYLINK_DEBUGGER::deprecated_cherry_debug(__FUNCTION__, count($rel_ids), 'Результат SELECT wp_linkate_posts, время выполнения: ' . $time_elapsed_secs);
-                }
-                if ($rel_ids) {
-                    $in_relevant_clause = " ID IN (" . implode(",", $rel_ids) . ") ";
-                }
-            }
-
-            // build and execute main query
-            if ($ignore_relevance || $rel_ids) {
-                $sql = "SELECT ID,post_content,post_title,post_author,post_excerpt,post_date,post_type FROM $wpdb->posts ";
-
-                if ($check_custom) $sql .= "LEFT JOIN $wpdb->postmeta wpp ON post_id = ID ";
-
-                // build the 'WHERE' clause
-                $where = array();
-                if ($in_relevant_clause) $where[] = $in_relevant_clause; // add relevant ids
-                $where[] = link_cf_where_show_status($options['status']);
-
-                if ($is_term == 0) { // we don't need these if we are editing taxonomies
-                    if ($match_category) $where[] = link_cf_where_match_category($postid);
-                    if ($match_tags) $where[] = link_cf_where_match_tags($options['match_tags']);
-                    if ($match_author) $where[] = link_cf_where_match_author();
-                    if ($omit_current_post) $where[] = link_cf_where_omit_post($linkate_posts_current_ID);
-                    if ($check_custom) $where[] = link_cf_where_check_custom($options['custom']['key'], $options['custom']['op'], $options['custom']['value']);
-                }
-                $where[] = link_cf_where_show_pages($options['show_pages'], $options['show_customs']);
-                if ($include_cats) $where[] = link_cf_where_included_cats($options['included_cats']);
-                if ($exclude_cats) $where[] = link_cf_where_excluded_cats($options['excluded_cats']);
-                if ($exclude_authors) $where[] = link_cf_where_excluded_authors($options['excluded_authors']);
-                if ($include_authors) $where[] = link_cf_where_included_authors($options['included_authors']);
-                if ($exclude_posts) $where[] = link_cf_where_excluded_posts(trim($options['excluded_posts']));
-                if ($include_posts) $where[] = link_cf_where_included_posts(trim($options['included_posts']));
-                if ($use_tag_str) $where[] = link_cf_where_tag_str($options['tag_str']);
-                if ($hide_pass) $where[] = link_cf_where_hide_pass();
-                if ($check_age) $where[] = link_cf_where_check_age($options['age']['direction'], $options['age']['length'], $options['age']['duration']);
-
-                $sql .= "WHERE " . implode(' AND ', $where);
-                if ($check_custom) $sql .= " GROUP BY $wpdb->posts.ID";
-
-                // Save original order
-                if ($options['ignore_sorting'] && $ignore_relevance) {
-                    $sql .= " ORDER BY FIND_IN_SET(ID,'" . trim($options['included_posts']) . "')";
-                }
-
-                if ($ignore_relevance) {
-                    $sql .= " LIMIT $limit";
-                } else {
-                    // sorting by fulltext match score
-                    $sql .= " ORDER BY FIELD(ID, " . implode(",", $rel_ids) . ") LIMIT $limit";
-                }
-
-
-
-                CHERRYLINK_DEBUGGER::deprecated_cherry_debug(__FUNCTION__, $sql, 'wp_posts SQL query');
-                $EXEC_TIME = microtime(true);
-                $results = $wpdb->get_results($sql);
-                // throw new Exception('FATALLLLLL');
-
-                try {
-                    // save last db call for debug reasons
-                    $db_response['query'] = $wpdb->last_query;
-                    $db_response['error'] = $wpdb->last_error;
-                    if ($wpdb->last_result && is_array($wpdb->last_result)) {
-                        $db_response['result_count'] = count($wpdb->last_result);
-                    }
-                    update_option('cherry_debug_info', $db_response);
-                } catch (Exception $excc) {
-                    // do nothing
-                }
-
-                $time_elapsed_secs = microtime(true) - $EXEC_TIME;
-                CHERRYLINK_DEBUGGER::deprecated_cherry_debug(__FUNCTION__, count($results), 'Результат SELECT wp_posts, время выполнения: ' . $time_elapsed_secs);
-
-                // remove duplicates
-                $ids_list = array();
-                $duplicates = array();
-                foreach ($results as $k => $v) {
-                    if (in_array($v->ID, $ids_list)) {
-                        $duplicates[] = $k;
-                    } else {
-                        $ids_list[] = $v->ID;
-                    }
-                }
-                $results = array_filter($results, function ($k) use ($duplicates) {
-                    return !in_array($k, $duplicates);
-                }, ARRAY_FILTER_USE_KEY);
-
-                CHERRYLINK_DEBUGGER::deprecated_cherry_debug(__FUNCTION__, count($results), 'После фильтра дублей');
-
-
-                // filter buy max incoming links
-                if ($consider_max_incoming_links && $presentation_mode !== 'related_block') {
-                    $exclude_result = [];
-                    foreach ($results as $k => $v) {
-                        $id_to_check = $v->ID;
-                        $in_cnt = intval(get_post_meta($id_to_check, "cherry_income", true));
-                        if ($in_cnt >= intval($options['max_incoming_links'])) {
-                            $exclude_result[] = $k;
-                        }
-                    }
-                    $results = array_filter($results, function ($k) use ($exclude_result) {
-                        return !in_array($k, $exclude_result);
-                    }, ARRAY_FILTER_USE_KEY);
-                }
-            } else {
-                $results = false;
-            }
+        // ── Build query text for the vector API ───────────────────────────────
+        if (!empty($custom_text)) {
+            $query_text  = $custom_text;
+            $source_html = '';
         } else {
-            $results = false;
+            $current_post = get_post($post_id);
+            if (!$current_post) {
+                return LinkatePosts::_empty_result($mode, $options, $option_key);
+            }
+            $query_text  = $current_post->post_title . "\n" . wp_strip_all_tags($current_post->post_content);
+            $source_html = $current_post->post_content;
         }
 
-        CHERRYLINK_DEBUGGER::deprecated_cherry_debug(__FUNCTION__, $presentation_mode, 'Как обработать результаты?');
-        switch ($presentation_mode) {
-                // case 'related_block':
-                //     return CL_Related_Block::prepare_related_block($postid, $results, $option_key, $options);
-                //     break;
+        // ── Vector API search ─────────────────────────────────────────────────
+        // Request extra results to have headroom after WP-level filtering.
+        $api         = new CherryVectorAPI();
+        $api_results = $api->search($query_text, $source_html, $limit * 3);
+
+        if (empty($api_results)) {
+            return LinkatePosts::_empty_result($mode, $options, $option_key);
+        }
+
+        // Build a map: post_id → API row (for suggestions & score), preserving score order
+        $api_map     = [];
+        $ordered_ids = [];
+        foreach ($api_results as $r) {
+            $pid = (int)$r['post_id'];
+            if ($pid === $post_id) continue;
+            $api_map[$pid]  = $r;
+            $ordered_ids[]  = $pid;
+        }
+
+        if (empty($ordered_ids)) {
+            return LinkatePosts::_empty_result($mode, $options, $option_key);
+        }
+
+        // ── Filter through WordPress (status, type, cats, age …) ─────────────
+        $ids_in          = implode(',', array_map('intval', $ordered_ids));
+        $check_custom    = (trim($options['custom']['key']) !== '');
+        $match_category  = ($options['match_cat'] === 'true');
+        $match_tags      = ($options['match_tags'] !== 'false');
+        $match_author    = ($options['match_author'] === 'true');
+        $exclude_cats    = ($options['excluded_cats'] !== '');
+        $include_cats    = ($options['included_cats'] !== '');
+        $exclude_authors = ($options['excluded_authors'] !== '');
+        $include_authors = ($options['included_authors'] !== '');
+        $exclude_posts   = (trim($options['excluded_posts']) !== '');
+        $include_posts   = (trim($options['included_posts']) !== '');
+        $use_tag_str     = ('' != trim($options['tag_str']));
+        $hide_pass       = ($options['show_private'] === 'false');
+        $check_age       = ('none' !== $options['age']['direction']);
+        $consider_max    = (isset($options['consider_max_incoming_links']) && $options['consider_max_incoming_links'] !== 'false');
+
+        $sql = "SELECT ID, post_content, post_title, post_author, post_excerpt, post_date, post_type FROM {$wpdb->posts} ";
+        if ($check_custom) $sql .= "LEFT JOIN {$wpdb->postmeta} wpp ON post_id = ID ";
+
+        $where   = ["ID IN ($ids_in)"];
+        $where[] = link_cf_where_show_status($options['status']);
+        if ($is_term == 0) {
+            if ($match_category) $where[] = link_cf_where_match_category($post_id);
+            if ($match_tags)     $where[] = link_cf_where_match_tags($options['match_tags']);
+            if ($match_author)   $where[] = link_cf_where_match_author();
+            if ($check_custom)   $where[] = link_cf_where_check_custom($options['custom']['key'], $options['custom']['op'], $options['custom']['value']);
+        }
+        $where[] = link_cf_where_show_pages($options['show_pages'], $options['show_customs']);
+        if ($include_cats)    $where[] = link_cf_where_included_cats($options['included_cats']);
+        if ($exclude_cats)    $where[] = link_cf_where_excluded_cats($options['excluded_cats']);
+        if ($exclude_authors) $where[] = link_cf_where_excluded_authors($options['excluded_authors']);
+        if ($include_authors) $where[] = link_cf_where_included_authors($options['included_authors']);
+        if ($exclude_posts)   $where[] = link_cf_where_excluded_posts(trim($options['excluded_posts']));
+        if ($include_posts)   $where[] = link_cf_where_included_posts(trim($options['included_posts']));
+        if ($use_tag_str)     $where[] = link_cf_where_tag_str($options['tag_str']);
+        if ($hide_pass)       $where[] = link_cf_where_hide_pass();
+        if ($check_age)       $where[] = link_cf_where_check_age($options['age']['direction'], $options['age']['length'], $options['age']['duration']);
+
+        $sql .= "WHERE " . implode(' AND ', $where);
+        if ($check_custom) $sql .= " GROUP BY {$wpdb->posts}.ID";
+        // Preserve vector similarity ranking
+        $sql .= " ORDER BY FIELD(ID, $ids_in)";
+        $sql .= " LIMIT $offset, $limit";
+
+        $results = $wpdb->get_results($sql);
+
+        // Filter by max incoming links
+        if ($consider_max && $mode !== 'related_block' && $results) {
+            $max = (int)$options['max_incoming_links'];
+            $results = array_values(array_filter($results, function ($row) use ($max) {
+                return (int)get_post_meta($row->ID, 'cherry_income', true) < $max;
+            }));
+        }
+
+        // ── Attach API suggestions + score to each result ─────────────────────
+        if ($results) {
+            foreach ($results as $result) {
+                $api_row = $api_map[(int)$result->ID] ?? [];
+                $result->suggestions = !empty($api_row['suggestions'])
+                    ? wp_json_encode($api_row['suggestions'], JSON_UNESCAPED_UNICODE)
+                    : '';
+                $result->score = isset($api_row['score'])
+                    ? (int)round($api_row['score'] * 100)
+                    : 0;
+            }
+        }
+
+        switch ($mode) {
             case 'gutenberg':
                 return LinkatePosts::prepare_for_cherry_gutenberg($results, $option_key, $options);
-                break;
             case 'classic':
             default:
                 return LinkatePosts::prepare_for_cherrylink_panel($results, $option_key, $options);
-                break;
         }
+    }
+
+    private static function _empty_result(string $mode, array $options, string $option_key): array
+    {
+        if ($mode === 'gutenberg') {
+            return ['links' => [], 'count' => -1];
+        }
+        $translations = link_cf_prepare_template($options['none_text']);
+        $output = '<p>' . link_cf_expand_template([], $options['none_text'], $translations, $option_key) . '</p>';
+        return ['links' => trim($output), 'count' => 0];
     }
 
     static function prepare_for_cherry_gutenberg($results, $option_key, $options)
@@ -334,8 +252,7 @@ class LinkatePosts
 
         $results_count = 0;
         if ($results) {
-            $results = link_cf_get_suggestions_for_ids($results);
-            $out_final = $output_template;
+            $out_final    = $output_template;
             $translations = link_cf_prepare_template($out_final);
 
             foreach ($results as $result) {
@@ -345,7 +262,7 @@ class LinkatePosts
             if ($options['sort']['by1'] !== '') $items = link_cf_sort_items($options['sort'], $results, $option_key, $options['group_template'], $items);
             $output = "[" . implode(",", str_replace("\n", "", $items)) . "]";
 
-            $results_count = sizeof($results);
+            $results_count = count($results);
             $send_data['links'] = $output;
             $send_data['count'] = $results_count;
         } else {
@@ -372,7 +289,6 @@ class LinkatePosts
 
         $results_count = 0;
         if ($results) {
-            $results = link_cf_get_suggestions_for_ids($results);
             $output_template = (!isset($options['output_template']) || $options['output_template'] === 'h1' || $options['output_template'] === '{title}') ? '{title}' : '{title_seo}';
             $out_final = $output_template_item_prefix . $output_template . $output_template_item_suffix;
             $translations = link_cf_prepare_template($out_final);
@@ -515,15 +431,7 @@ function linkate_posts_init()
 
     add_action('admin_notices', 'cherrylink_activation_notice');
 
-    $cl_index_helper = new CL_Index_Helpers(null, null, $wpdb);
-    //install the actions to keep the index up to date
-    // add_action('rest_after_insert_post', 'linkate_sp_save_index_entry', 1000000000, 3);
-    add_action('wp_insert_post', 'linkate_sp_save_index_entry', 100000, 3);
-    add_action('delete_post', array($cl_index_helper, 'linkate_sp_delete_index_entry'), 1);
-
-    // add_action('create_term', 'linkate_sp_save_index_entry_term', 1, 3);
-    // add_action('edited_term', 'linkate_sp_save_index_entry_term', 1, 3);
-    // add_action('delete_term', array('CL_Index_Helpers','linkate_sp_delete_index_entry'), 1, 4);
+    // Hooks for vector API indexing are registered in cherrylink_index.php
 
     add_action('admin_enqueue_scripts', 'linkate_posts_wp_admin_style', 1);
 

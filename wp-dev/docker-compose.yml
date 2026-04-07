@@ -1,0 +1,68 @@
+services:
+
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: wordpress
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  wordpress:
+    image: wordpress:6.5-php8.2-apache
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8088:80"
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_NAME: wordpress
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+      WORDPRESS_DEBUG: "1"
+      WORDPRESS_CONFIG_EXTRA: |
+        define('WP_HOME',    'http://localhost:8088');
+        define('WP_SITEURL', 'http://localhost:8088');
+    volumes:
+      # Share the entire WP root so wpcli can see wp-config.php and core files
+      - wp_root:/var/www/html
+      # Overlay the plugin as a live bind mount (takes priority over the named volume)
+      - /Users/anton/projects/cherrylink-pro-ai:/var/www/html/wp-content/plugins/cherrylink-pro-ai
+    networks:
+      - default
+      - cherry_net
+
+  wpcli:
+    image: wordpress:cli-2-php8.2
+    depends_on:
+      - wordpress
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_NAME: wordpress
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+    volumes:
+      - wp_root:/var/www/html
+      - /Users/anton/projects/cherrylink-pro-ai:/var/www/html/wp-content/plugins/cherrylink-pro-ai
+      - ./setup.sh:/setup.sh:ro
+    entrypoint: ["/bin/bash", "/setup.sh"]
+    networks:
+      - default
+      - cherry_net
+
+volumes:
+  db_data:
+  wp_root:
+
+networks:
+  cherry_net:
+    external: true
+    name: cherry-vector-api_default

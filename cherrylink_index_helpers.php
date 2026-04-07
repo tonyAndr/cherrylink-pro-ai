@@ -301,6 +301,20 @@ class CL_Index_Helpers
         }, $this->allowed_post_types));
     }
 
+    /**
+     * Returns the allowed post type list without requiring an instance.
+     * Used by the vector API indexer which doesn't need stemmer/options.
+     */
+    public static function get_allowed_types_list(): array
+    {
+        $types = get_post_types(['public' => true, '_builtin' => false], 'objects');
+        $list  = ['post', 'page'];
+        foreach ($types as $type) {
+            $list[] = $type->name;
+        }
+        return $list;
+    }
+
     public function collect_custom_fields($post, $stopwords)
     {
         $custom_fields = (isset($this->options['index_custom_fields']) && !empty($this->options['index_custom_fields'])) ? $this->options['index_custom_fields'] : false;

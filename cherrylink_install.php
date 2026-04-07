@@ -111,10 +111,7 @@ function linkate_posts_install()
 
     fill_stopwords();
 
-    if ($create_index) { // only (re)create if needed
-        $index_created = linkate_posts_save_index_entries(true);
-        $index_created ? cherry_write_log("Index was created") : cherry_write_log("Index creation failed");
-    }
+    // Vector API indexing is triggered via the admin panel; no local index needed on activation.
 
     // tables creation result
     return $created_posts && $created_scheme && $created_stop;

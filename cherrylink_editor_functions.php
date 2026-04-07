@@ -8,78 +8,7 @@ defined('ABSPATH') || exit;
 // Define lib name
 define('LINKATE_EF_LIBRARY', true);
 
-// Update post index
-
-function linkate_sp_save_index_entry($postID, $postObj, $updated)
-{
-    if ($postObj->post_type === 'revision') return $postID;
-    global $wpdb, $table_prefix;
-    $table_name = $table_prefix . 'linkate_posts';
-
-    $options = get_option('linkate-posts', []);
-
-    $use_stemming = $options['use_stemming'] === "true";
-    $stemmer = new Stem\LinguaStemRu();
-    $stemmer->enable_stemmer($use_stemming);
-
-    $index_helpers = new CL_Index_Helpers($stemmer, $options, $wpdb);
-    $stats_scheme = new CL_Stats_Scheme($options, $wpdb);
-
-    // wp_linkate_scheme, create new scheme for this post
-    if ($options['linkate_scheme_exists']) {
-        $stats_scheme->linkate_scheme_delete_record($postID, 0);
-        $stats_scheme->linkate_scheme_add_row($postObj->post_content, $postID, 0);
-        $options['linkate_scheme_time'] = time();
-        update_option('linkate-posts', $options);
-    }
-
-    $seo_meta_source = $options['seo_meta_source'];
-
-    $suggestions_donors_src = $options['suggestions_donors_src'];
-    $suggestions_donors_join = $options['suggestions_donors_join'];
-    $clean_suggestions_stoplist = $options['clean_suggestions_stoplist'];
-    $min_len = intval($options['term_length_limit']);
-
-    $linkate_overusedwords = $index_helpers->prepare_stopwords();
-
-    $content_words_list = mb_split("\W+", $index_helpers->linkate_sp_mb_clean_words($postObj->post_content));
-    list($content, $content_sugg) = $index_helpers->linkate_sp_get_post_terms($content_words_list, $min_len, $linkate_overusedwords, $clean_suggestions_stoplist);
-    $content = iconv("UTF-8", "UTF-8//IGNORE", $content); // convert broken symbols
-    if (!$content)
-        $content = '';
-    // Seo title is more relevant, usually
-    // Extracting terms from the custom titles, if present
-    // Check SEO Fields
-    $seotitle = linkate_get_post_seo_title($postObj, $seo_meta_source);
-
-    // anti-memory leak
-    wp_cache_delete($postID, 'post_meta');
-
-    if (!empty($seotitle) && $seotitle !== $postObj->post_title) {
-        $title = $postObj->post_title . " " . $seotitle;
-    } else {
-        $title = $postObj->post_title;
-    }
-    list($title, $title_sugg) = $index_helpers->linkate_sp_get_title_terms($title, $min_len, $linkate_overusedwords, $clean_suggestions_stoplist);
-
-
-    // $tags = $index_helpers->linkate_sp_get_tag_terms($postID);
-
-    list($custom_fields, $custom_fields_sugg) = $index_helpers->collect_custom_fields($postObj, $linkate_overusedwords);
-
-    // Extract ancor terms
-    $suggestions = $index_helpers->linkate_sp_prepare_suggestions($title_sugg, $content_sugg, $custom_fields_sugg, $suggestions_donors_src, $suggestions_donors_join);
-
-    //check to see if the field is set
-    $pid = $wpdb->get_var("SELECT pID FROM $table_name WHERE pID=$postID limit 1");
-    //then insert if empty
-    if (is_null($pid)) {
-        $wpdb->query("INSERT INTO $table_name (pID, content, title, custom_fields, suggestions) VALUES ($postID, \"$content\", \"$title\", \"$custom_fields\", \"$suggestions\")");
-    } else {
-        $wpdb->query("UPDATE $table_name SET content=\"$content\", title=\"$title\", custom_fields=\"$custom_fields\", suggestions=\"$suggestions\" WHERE pID=$postID");
-    }
-    return $postID;
-}
+// Post indexing is handled by cherrylink_index.php (vector API)
 
 // Update term index
 // !!! DISABLING TERM INDEXING COMPLETELY

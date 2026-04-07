@@ -60,11 +60,17 @@ function linkate_ajax_call_reindex(): void
         update_option('linkate_posts_meta', $options_meta);
     }
 
-    wp_send_json([
-        'status'  => $result['errors'] > 0 ? 'ERROR' : ($done ? 'DONE' : 'OK'),
-        'indexed' => $result['indexed'],
-        'errors'  => $result['errors'],
+    // Use echo + wp_die (not wp_send_json) so jQuery receives a raw string
+    // that cherry-admin-index.js can JSON.parse() itself.
+    echo json_encode([
+        'status'     => $result['errors'] > 0 ? 'ERROR' : ($done ? 'DONE' : 'OK'),
+        'indexed'    => $result['indexed'],
+        'errors'     => $result['errors'],
+        'time'       => number_format(microtime(true) - $_SERVER['REQUEST_TIME_FLOAT'], 3),
+        'wpdb_error' => $result['errors'] > 0 ? 'Vector API returned errors' : '',
+        'wpdb_query' => '',
     ]);
+    wp_die();
 }
 
 // ── AJAX: get post count for progress bar ────────────────────────────────────

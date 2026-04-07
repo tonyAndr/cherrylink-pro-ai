@@ -153,10 +153,11 @@ class CherryVectorAPI
             return null;
         }
 
-        $is_batch = str_ends_with($path, '/batch');
+        $is_batch  = str_ends_with($path, '/batch');
+        $is_search = str_ends_with($path, '/search');
         $args = [
             'method'  => $method,
-            'timeout' => $is_batch ? 120 : 15,
+            'timeout' => $is_batch ? 120 : ($is_search ? 60 : 15),
             'headers' => [
                 'Content-Type'   => 'application/json',
                 'X-License-Key'  => $this->license_key,

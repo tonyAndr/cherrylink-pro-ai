@@ -410,31 +410,39 @@ function link_cf_display_suggestions_donors($suggestions_donors_src, $suggestion
 
 function link_cf_display_show_pages($show_pages)
 {
-    $options = [
-        'false' => 'Записи',
-        'but'   => 'Страницы',
-        'true'  => 'Вместе',
-    ];
+    // show_pages values: 'false' = posts only, 'but' = pages only, 'true' = both
+    $posts_on = in_array($show_pages, ['false', 'true']);
+    $pages_on = in_array($show_pages, ['but',   'true']);
 ?>
     <tr valign="top">
         <th scope="row"><?php _e('Тип контента:', CHERRYLINK_TEXT_DOMAIN) ?></th>
         <td>
-            <div class="inline-flex rounded-lg border border-gray-300 overflow-hidden text-sm font-medium">
-                <?php foreach ($options as $value => $label) :
-                    $active = $show_pages === $value;
+            <input type="hidden" name="show_pages" id="show_pages_val"
+                   value="<?= esc_attr($show_pages) ?>">
+            <div class="flex flex-wrap gap-2 mt-1" id="show_pages_chips">
+                <?php foreach (['posts' => 'Записи', 'pages' => 'Страницы'] as $key => $label) :
+                    $checked = $key === 'posts' ? $posts_on : $pages_on;
                 ?>
-                <label class="cursor-pointer px-4 py-1.5 transition-colors
-                              <?= $active ? 'bg-slate-700 text-white' : 'bg-white text-gray-600 hover:bg-gray-50' ?>
-                              <?= $value !== 'false' ? 'border-l border-gray-300' : '' ?>">
-                    <input type="radio" name="show_pages" value="<?= $value ?>"
-                           class="hidden" <?= $active ? 'checked' : '' ?>
-                           onchange="this.closest('div').querySelectorAll('label').forEach(function(l){
-                               var active = l.querySelector('input').checked;
-                               l.classList.toggle('bg-slate-700', active);
-                               l.classList.toggle('text-white', active);
-                               l.classList.toggle('bg-white', !active);
-                               l.classList.toggle('text-gray-600', !active);
-                           })">
+                <label class="inline-flex items-center gap-2 cursor-pointer select-none
+                              px-3 py-1 rounded-full border text-sm font-medium transition-colors
+                              <?= $checked ? 'bg-slate-700 text-white border-slate-700' : 'bg-white text-gray-600 border-gray-300 hover:border-slate-400' ?>"
+                       data-key="<?= $key ?>">
+                    <input type="checkbox" class="hidden" <?= $checked ? 'checked' : '' ?>
+                           onchange="(function(){
+                               var chips = document.getElementById('show_pages_chips');
+                               var p = chips.querySelector('[data-key=posts] input').checked;
+                               var pg = chips.querySelector('[data-key=pages] input').checked;
+                               document.getElementById('show_pages_val').value = (p && pg) ? 'true' : (pg ? 'but' : 'false');
+                               chips.querySelectorAll('label').forEach(function(l){
+                                   var on = l.querySelector('input').checked;
+                                   l.classList.toggle('bg-slate-700', on);
+                                   l.classList.toggle('text-white', on);
+                                   l.classList.toggle('border-slate-700', on);
+                                   l.classList.toggle('bg-white', !on);
+                                   l.classList.toggle('text-gray-600', !on);
+                                   l.classList.toggle('border-gray-300', !on);
+                               });
+                           })()">
                     <?= esc_html($label) ?>
                 </label>
                 <?php endforeach; ?>

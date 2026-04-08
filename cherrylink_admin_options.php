@@ -335,7 +335,6 @@ function linkate_posts_expert_options_subpage()
             // 'match_tags',
             // 'sort', 
             // 'quickfilter_dblclick', 
-            'singleword_suggestions',
             'output_template',
             'consider_max_incoming_links',
             'max_incoming_links',
@@ -351,22 +350,8 @@ function linkate_posts_expert_options_subpage()
             'relative_links',
             'suggestions_switch_action',
             'multilink',
-            'num_terms',
-            // 'match_all_against_title', 
-            'weight_title',
-            'weight_content',
-            'weight_custom',
-            'ignore_relevance',
             'show_cat_filter'
         ));
-
-        $wcontent = $options['weight_content'] + 0.0001;
-        $wtitle = $options['weight_title'] + 0.0001;
-        $wtags = $options['weight_custom'] + 0.0001;
-        $wcombined = $wcontent + $wtitle + $wtags;
-        $options['weight_content'] = $wcontent / $wcombined;
-        $options['weight_title'] = $wtitle / $wcombined;
-        $options['weight_custom'] = $wtags / $wcombined;
         update_option('linkate-posts', $options);
         // Show a message to say we've done something
         echo '<div class="notice-success notice"><p>' . __('<b>Настройки обновлены.</b>', CHERRYLINK_TEXT_DOMAIN) . '</p></div>';
@@ -428,10 +413,9 @@ function linkate_posts_expert_options_subpage()
             <div class="grid grid-cols-1 gap-4">
                 <div class="pl-6">
                     <div class="grid grid-rows-1 grid-cols-2">
-                        <div class="justify-self-start grid gap-2 grid-rows-1 grid-cols-3">
+                        <div class="justify-self-start grid gap-2 grid-rows-1 grid-cols-2">
                             <a href="#anchor-editor " class="underline text-base text-blue-400"># Опции редактора</a>
                             <a href="#anchor-template" class="underline text-base text-blue-400"># Разметка ссылок</a>
-                            <a href="#anchor-relevance" class="underline text-base text-blue-400"># Тюнинг релевантности</a>
                         </div>
                         <div class="justify-self-end">
 
@@ -466,7 +450,6 @@ function linkate_posts_expert_options_subpage()
                             <?php
                             link_cf_display_show_catergory_filter($options['show_cat_filter']);
                             link_cf_display_show_custom_posts($options['show_customs']);
-                            link_cf_display_singleword_suggestions($options['singleword_suggestions']);
                             link_cf_display_max_incoming_links($options['consider_max_incoming_links'], $options['max_incoming_links']);
                             // link_cf_display_sort($options['sort']);
                             // link_cf_display_match_tags($options['match_tags']);
@@ -527,20 +510,7 @@ function linkate_posts_expert_options_subpage()
                     <!-- <input type="submit" id="restore_templates" class="button button-download" style="float: right;" value="<?php _e('Восстановить шаблоны по умолчанию', CHERRYLINK_TEXT_DOMAIN) ?>" /> -->
                     <?php if (function_exists('wp_nonce_field')) wp_nonce_field('linkate-posts-update-options'); ?>
                 </div>
-                <div class="<?= CL_TWC::$CARD ?>">
-                    <h2 id="anchor-relevance" class="<?= CL_TWC::$H2 ?>">Тюнинг алгоритма релевантности</h2>
-                    <table class="optiontable form-table">
-                        <?php
-                        link_cf_display_ignore_relevance($options['ignore_relevance']);
-                        link_cf_display_weights($options);
-                        link_cf_display_num_terms($options['num_terms']);
-                        // link_cf_display_match_against_title($options['match_all_against_title']);
-                        ?>
-                    </table><input type="submit" class="<?= CL_TWC::$BTN_SAVE ?> mt-6" name="update_options_relevance" value="<?php _e('Сохранить настройки', CHERRYLINK_TEXT_DOMAIN) ?>" />
-                    <?php if (function_exists('wp_nonce_field')) wp_nonce_field('linkate-posts-update-options'); ?>
-                </div>
-
-                <div class="<?= CL_TWC::$CARD ?>">
+<div class="<?= CL_TWC::$CARD ?>">
                     <input type="checkbox" id="spoiler_debug" />
                     <label for="spoiler_debug" id="label_spoiler_debug" class="hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100 hover:cursor-pointer">⚙ Отладка</label>
 
@@ -605,12 +575,7 @@ function linkate_posts_index_options_subpage()
                     <hr>
                     <table class="optiontable form-table">
                         <?php
-                        // link_cf_display_num_term_length_limit($options['term_length_limit']);
-                        link_cf_display_use_stemming($options['use_stemming']);
                         link_cf_display_seo_meta_source($options['seo_meta_source']);
-                        link_cf_display_index_custom_fields($options['index_custom_fields']);
-                        // link_cf_display_suggestions_donors($options['suggestions_donors_src'], $options['suggestions_donors_join']);
-                        // link_cf_display_clean_suggestions_stoplist($options['clean_suggestions_stoplist']);
                         ?>
                     </table>
 
@@ -618,37 +583,6 @@ function linkate_posts_index_options_subpage()
             </div>
 
         </div>
-        <div class="<?= CL_TWC::$CARD ?> mt-6">
-
-            <input type="checkbox" id="spoiler_stop" />
-            <label for="spoiler_stop" id="label_spoiler_stop" class="hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100 hover:cursor-pointer">Редактор стоп-слов</label>
-
-            <div class="spoiler_stop">
-                <p>Список стоп-слов индивидуальный для вашего сайта. В плагин уже встроены самые распространенные слова из русского языка, которые не учитываются в поиске схожести. Если их требуется расширить - используйте поле справа от таблицы.</p>
-                <p>Слова нужно вводить без знаков препинания, каждое слово с новой строки. </p>
-                <p>Нет необходимости писать все возможные словоформы (пример: узнать, узнал, узнала, узнают, узнавать и тд.) - из слов выделяется основа без окончаний при добавлении в таблицу. </p>
-                <hr>
-                <div style="display:flex;flex-flow: row;width: 100%;flex-wrap:wrap;justify-content: space-evenly">
-                    <div>
-                        <div class="table-controls" style="text-align: right; margin-bottom:10px;">
-                            <button id="stopwords-remove-all" tabIndex="-1" class="<?= CL_TWC::$BTN_NORMAL ?>">Удалить все из таблицы</button>
-                            <button id="stopwords-defaults" tabIndex="-1" class="<?= CL_TWC::$BTN_NORMAL ?>">Вернуть стандартные</button>
-                        </div>
-                        <div id="example-table"></div>
-                    </div>
-                    <div>
-                        <?php
-                        link_cf_display_stopwords();
-                        ?>
-                        <div class="table-controls">
-                            <button id="stopwords-add" class="<?= CL_TWC::$BTN_NORMAL ?>">Добавить слова</button>
-                        </div>
-                    </div>
-                    <div id="index_stopwords_suggestions"></div>
-                </div>
-            </div>
-        </div>
-
 
         <!--  We save and update index using ajax call, see function linkate_ajax_call_reindex below -->
     </div>

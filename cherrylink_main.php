@@ -45,14 +45,12 @@ if (!defined('LINKATE_TERMS_LIBRARY')) require(CHERRYLINK_DIR . '/cherrylink_ter
 if (!defined('CHERRY_VECTOR_API_CLIENT')) { define('CHERRY_VECTOR_API_CLIENT', true); require(CHERRYLINK_DIR . '/cherrylink_vector_api.php'); }
 if (!defined('LINKATE_INDEX_LIBRARY')) require(CHERRYLINK_DIR . '/cherrylink_index.php');
 if (!defined('LINKATE_STATISTICS_LIBRARY')) require(CHERRYLINK_DIR . '/cherrylink_statistics.php');
-if (!defined('LINKATE_STOPWORDS_LIBRARY')) require(CHERRYLINK_DIR . '/cherrylink_stopwords.php');
 
 if (!defined('LINKATE_STATS_COLUMN_LIBRARY')) require(CHERRYLINK_DIR . '/cherrylink_stats_column.php');
 // if (!defined('LINKATE_CRB_LIBRARY')) require(CHERRYLINK_DIR . '/crb_main.php');
 
 if (!defined('LINKATE_GUTENBERG_ASSETS')) require(CHERRYLINK_DIR . '/cherrylink_gutenberg.php');
 if (!defined('LINKATE_TAILWIND_CONSTANTS')) require(CHERRYLINK_DIR . '/cherrylink_tailwind_constants.php');
-if (!defined('LINKATE_STEMMER_RU')) require(CHERRYLINK_DIR . "/cherrylink_stemmer_ru.php");
 if (!defined('LINKATE_INDEX_HELPERS')) require(CHERRYLINK_DIR . "/cherrylink_index_helpers.php");
 if (!defined('LINKATE_STATS_SCHEME')) require(CHERRYLINK_DIR . "/cherrylink_stats_scheme.php");
 
@@ -330,7 +328,7 @@ class LinkatePosts
             $options['first_install'] = current_time('timestamp');
             update_option('linkate_posts_meta', $options);
 
-            $index_helper = new CL_Index_Helpers(null, $options, $wpdb);
+            $index_helper = new CL_Index_Helpers();
             $amount_of_db_rows = $index_helper->get_indexable_posts_count();
             if ($amount_of_db_rows > CHERRYLINK_INITIAL_LIMIT)
                 set_transient('cherry-manual-indexation-needed', true, 20);
@@ -415,8 +413,7 @@ function linkate_posts_wp_admin_style()
         wp_register_script('cherrylink-js-admin-table', plugins_url('/js/tabulator.min.js', __FILE__), array('jquery'), LinkatePosts::get_linkate_version());
         // wp_register_script( 'cherrylink-js-admin-table-wrapper', plugins_url( '/js/jquery_wrapper.js', __FILE__ ), array( 'jquery', 'cherrylink-js-admin-table' ), LinkatePosts::get_linkate_version() );
 
-        wp_register_script('cherrylink-js-admin-stopwords', plugins_url('/js/cherry-admin-stopwords.js', __FILE__), array('jquery'), LinkatePosts::get_linkate_version());
-        wp_register_script('cherrylink-js-admin-index', plugins_url('/js/cherry-admin-index.js', __FILE__), array('jquery', 'cherrylink-js-admin-stopwords'), LinkatePosts::get_linkate_version());
+        wp_register_script('cherrylink-js-admin-index', plugins_url('/js/cherry-admin-index.js', __FILE__), array('jquery'), LinkatePosts::get_linkate_version());
 
         $options = (array) get_option('linkate-posts', []);
         $scheme_exists = array("state" => isset($options['linkate_scheme_exists']) ? true : false);
@@ -425,7 +422,6 @@ function linkate_posts_wp_admin_style()
         wp_enqueue_script('cherrylink-js-tailwind');
         wp_enqueue_script('cherrylink-js-admin');
         wp_enqueue_script('cherrylink-js-admin-table');
-        wp_enqueue_script('cherrylink-js-admin-stopwords');
         wp_enqueue_script('cherrylink-js-admin-index');
         wp_enqueue_script('cherrylink-js-admin-csv');
     }
@@ -451,24 +447,8 @@ function linkate_posts_init()
     );
 } // init
 
-function linkate_check_update()
-{
-
-    require 'updater/plugin-update-checker.php';
-
-    $update_checker = Puc_v4_Factory::buildUpdateChecker(
-        'https://github.com/tonyAndr/cherrylink-pro',
-        __FILE__,
-        'cherrylink-pro'
-    );
-
-    $update_checker->setBranch('main');
-}
-
-// linkate_check_update();
 add_action('init', 'linkate_posts_init', 1);
 register_activation_hook(__FILE__, array('LinkatePosts', 'lp_activate'));
-add_action('plugins_loaded', 'linkate_check_update');
 
 
 function cherry_write_log($data)

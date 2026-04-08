@@ -10,12 +10,6 @@ if (defined('ABSPATH') && defined('WP_UNINSTALL_PLUGIN')) {
 	delete_option('linkate_posts');
 	delete_option('linkate_posts_meta');
 
-	$table_name = $table_prefix . 'linkate_posts';
-		$wpdb->query("DROP TABLE `$table_name`");
-	
 	$table_name = $table_prefix . 'linkate_scheme';
-		$wpdb->query("DROP TABLE `$table_name`");
-
-	$table_name = $table_prefix . 'linkate_stopwords';
-		$wpdb->query("DROP TABLE `$table_name`");
+	$wpdb->query("DROP TABLE IF EXISTS `$table_name`");
 }

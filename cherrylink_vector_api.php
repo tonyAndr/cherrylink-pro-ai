@@ -6,9 +6,11 @@
 
 defined('ABSPATH') || exit;
 
-// URL is defined in wp-config.php or falls back to the local dev stack default
+// URL priority: wp-config.php constant → admin settings → local dev default
 if (!defined('CHERRY_VECTOR_API_URL')) {
-    define('CHERRY_VECTOR_API_URL', 'http://api:8000');
+    $options = get_option('linkate-posts', []);
+    $saved_url = !empty($options['vector_api_url']) ? $options['vector_api_url'] : 'https://seocherry.apov.dev';
+    define('CHERRY_VECTOR_API_URL', $saved_url);
 }
 
 class CherryVectorAPI

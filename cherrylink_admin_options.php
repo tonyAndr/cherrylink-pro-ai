@@ -40,6 +40,41 @@ function cherrylink_pro_options_page()
 <?php
 }
 
+function linkate_posts_vector_api_field()
+{
+    $options = get_option('linkate-posts', []);
+
+    if (isset($_POST['update_vector_api'])) {
+        check_admin_referer('linkate-posts-update-options');
+        $url = esc_url_raw(trim($_POST['vector_api_url'] ?? ''));
+        $options['vector_api_url'] = $url;
+        update_option('linkate-posts', $options);
+        echo '<div class="notice-success notice"><p><b>URL Vector API сохранён</b></p></div>';
+    }
+
+    $current_url = $options['vector_api_url'] ?? '';
+    $defined_in_config = defined('CHERRY_VECTOR_API_URL');
+?>
+    <div class="<?= CL_TWC::$CARD ?>">
+        <h2 class="<?= CL_TWC::$H2 ?>">Cherry Vector API</h2>
+        <?php if ($defined_in_config) : ?>
+            <p>URL задан через <code>wp-config.php</code>: <strong><?= esc_html(CHERRY_VECTOR_API_URL) ?></strong></p>
+            <p class="text-sm text-gray-500">Чтобы управлять URL здесь, удалите <code>define('CHERRY_VECTOR_API_URL', ...)</code> из wp-config.php.</p>
+        <?php else : ?>
+            <p class="text-sm text-gray-500 mb-2">Укажите адрес вашего Cherry Vector API (например: <code>https://seocherry.apov.dev</code>).</p>
+            <form method="post" action="">
+                <label class="font-bold" for="vector_api_url">URL:</label><br>
+                <input type="url" name="vector_api_url" id="vector_api_url" class="mt-2 <?= CL_TWC::$INP_BASE ?>"
+                    value="<?= esc_attr($current_url) ?>" placeholder="https://your-api.example.com">
+                <br>
+                <input type="submit" class="<?= CL_TWC::$BTN_SAVE ?> mt-3" name="update_vector_api" value="Сохранить">
+                <?php if (function_exists('wp_nonce_field')) wp_nonce_field('linkate-posts-update-options'); ?>
+            </form>
+        <?php endif; ?>
+    </div>
+<?php
+}
+
 function linkate_posts_license_field()
 {
     $options = get_option('linkate-posts', []);
@@ -265,6 +300,7 @@ function linkate_posts_main_options_subpage()
             </div>
             <div class="grid grid-col-1 gap-4">
                 <?php linkate_posts_license_field(); ?>
+                <?php linkate_posts_vector_api_field(); ?>
 
                 <div class="<?= CL_TWC::$CARD ?> cherry-settings-export-container">
 

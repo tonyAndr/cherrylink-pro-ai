@@ -175,6 +175,7 @@ if (!isset($options['debug_enabled'])) $options['debug_enabled'] = "false"; // s
     if (!isset($options['max_incoming_links'])) $options['max_incoming_links'] = 20;
     if (!isset($options['template_image_size'])) $options['template_image_size'] = '';
     if (!isset($options['show_cat_filter'])) $options['show_cat_filter'] = 'false';
+    if (!isset($options['vector_api_url'])) $options['vector_api_url'] = '';
     update_option('linkate-posts', $options);
     return $options;
 }

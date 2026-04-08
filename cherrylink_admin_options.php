@@ -54,31 +54,28 @@ function linkate_posts_vector_api_field()
 
     $current_url = $options['vector_api_url'] ?? '';
     $current_key = $options['vector_api_key'] ?? '';
-    $defined_in_config = defined('CHERRY_VECTOR_API_URL');
+    // Note: CHERRY_VECTOR_API_URL and CHERRY_VECTOR_API_KEY can be defined in wp-config.php
+    // to override the admin settings. If defined, the form below is not shown.
+    if (defined('CHERRY_VECTOR_API_URL')) return;
 ?>
     <div class="<?= CL_TWC::$CARD ?>">
         <h2 class="<?= CL_TWC::$H2 ?>">Cherry Vector API</h2>
-        <?php if ($defined_in_config) : ?>
-            <p>URL задан через <code>wp-config.php</code>: <strong><?= esc_html(CHERRY_VECTOR_API_URL) ?></strong></p>
-            <p class="text-sm text-gray-500">Чтобы управлять URL здесь, удалите <code>define('CHERRY_VECTOR_API_URL', ...)</code> из wp-config.php.</p>
-        <?php else : ?>
-            <p class="text-sm text-gray-500 mb-2">
-                URL и ключ доступа к вашему Cherry Vector API.<br>
-                Ключ должен совпадать с <code>ADMIN_KEY</code> в <code>.env</code> на сервере.
-            </p>
-            <form method="post" action="">
-                <label class="font-bold" for="vector_api_url">URL:</label><br>
-                <input type="url" name="vector_api_url" id="vector_api_url" class="mt-2 <?= CL_TWC::$INP_BASE ?>"
-                    value="<?= esc_attr($current_url) ?>" placeholder="https://your-api.example.com">
-                <br><br>
-                <label class="font-bold" for="vector_api_key">API Key:</label><br>
-                <input type="text" name="vector_api_key" id="vector_api_key" class="mt-2 <?= CL_TWC::$INP_BASE ?>"
-                    value="<?= esc_attr($current_key) ?>" placeholder="your-admin-key">
-                <br>
-                <input type="submit" class="<?= CL_TWC::$BTN_SAVE ?> mt-3" name="update_vector_api" value="Сохранить">
-                <?php if (function_exists('wp_nonce_field')) wp_nonce_field('linkate-posts-update-options'); ?>
-            </form>
-        <?php endif; ?>
+        <p class="text-sm text-gray-500 mb-2">
+            URL и ключ доступа к вашему Cherry Vector API.<br>
+            Ключ должен совпадать с <code>ADMIN_KEY</code> в <code>.env</code> на сервере.
+        </p>
+        <form method="post" action="">
+            <label class="font-bold" for="vector_api_url">URL:</label><br>
+            <input type="url" name="vector_api_url" id="vector_api_url" class="mt-2 <?= CL_TWC::$INP_BASE ?>"
+                value="<?= esc_attr($current_url) ?>" placeholder="https://your-api.example.com">
+            <br><br>
+            <label class="font-bold" for="vector_api_key">API Key:</label><br>
+            <input type="text" name="vector_api_key" id="vector_api_key" class="mt-2 <?= CL_TWC::$INP_BASE ?>"
+                value="<?= esc_attr($current_key) ?>" placeholder="your-admin-key">
+            <br>
+            <input type="submit" class="<?= CL_TWC::$BTN_SAVE ?> mt-3" name="update_vector_api" value="Сохранить">
+            <?php if (function_exists('wp_nonce_field')) wp_nonce_field('linkate-posts-update-options'); ?>
+        </form>
     </div>
 <?php
 }
@@ -175,16 +172,16 @@ function linkate_posts_index_status_display($page = 'main')
 {
     global $wpdb, $table_prefix;
     $options_meta = get_option('linkate_posts_meta', []);
-    $table_index = $table_prefix . "linkate_posts";
     $table_scheme = $table_prefix . "linkate_scheme";
 
-
-    $index_rows = $wpdb->get_var("SELECT COUNT(*) FROM $table_index");
-    if ($index_rows) {
-        $index_status_text = " найдено $index_rows записей и страниц.";
+    // Count indexed articles from Vector API
+    $api         = new CherryVectorAPI();
+    $index_rows  = $api->get_count();
+    if ($index_rows > 0) {
+        $index_status_text  = " проиндексировано $index_rows статей в Vector API.";
         $index_status_class = "";
     } else {
-        $index_status_text = " записи не найдены, просканируйте сайт.";
+        $index_status_text  = " статьи не проиндексированы, запустите сканирование.";
         $index_status_class = "";
     }
 
@@ -593,6 +590,13 @@ function linkate_posts_index_options_subpage()
 {
     $options = get_option('linkate-posts', []);
 
+    if (isset($_POST['update_custom_fields'])) {
+        check_admin_referer('linkate-posts-update-options');
+        $options['vector_custom_fields'] = sanitize_textarea_field($_POST['vector_custom_fields'] ?? '');
+        update_option('linkate-posts', $options);
+        echo '<div class="notice-success notice"><p><b>Дополнительные поля сохранены.</b></p></div>';
+    }
+
     //php moved below for ajax
 ?>
     <div class=" linkateposts-tab-content pt-6 ">
@@ -615,14 +619,22 @@ function linkate_posts_index_options_subpage()
             <div class="spoiler_scan">
 
                 <form id="options_form" method="post" action="">
-                    <p>При редактировании этих настроек обязательно нажмите кнопку "Начать сканирование", чтобы изменения вступили в силу.</p>
-                    <hr>
                     <table class="optiontable form-table">
-                        <?php
-                        link_cf_display_seo_meta_source($options['seo_meta_source']);
-                        ?>
+                        <?php link_cf_display_seo_meta_source($options['seo_meta_source']); ?>
                     </table>
+                </form>
 
+                <hr class="my-4">
+
+                <form method="post" action="">
+                    <label class="font-bold" for="vector_custom_fields">Дополнительные поля для индексирования (по одному на строку):</label>
+                    <p class="text-sm text-gray-500 mb-2">Ключи пользовательских полей (ACF, meta и др.), содержимое которых будет добавлено к тексту статьи при индексировании.</p>
+                    <textarea name="vector_custom_fields" id="vector_custom_fields" rows="4"
+                        class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm font-mono"
+                        placeholder="my_acf_field&#10;another_field"><?= esc_textarea($options['vector_custom_fields'] ?? '') ?></textarea>
+                    <br>
+                    <input type="submit" class="<?= CL_TWC::$BTN_SAVE ?> mt-2" name="update_custom_fields" value="Сохранить поля">
+                    <?php if (function_exists('wp_nonce_field')) wp_nonce_field('linkate-posts-update-options'); ?>
                 </form>
             </div>
 

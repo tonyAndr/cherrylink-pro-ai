@@ -32,6 +32,34 @@ class CherryVectorAPI
     // ── Public API ──────────────────────────────────────────────────────────
 
     /**
+     * Return the number of documents indexed for this client.
+     */
+    public function get_count(): int
+    {
+        $response = $this->request('GET', '/v1/documents/count');
+        return (int)($response['count'] ?? 0);
+    }
+
+    /**
+     * Build the text to vectorize for a post: content + any configured custom fields.
+     */
+    private function build_text(WP_Post $post): string
+    {
+        $options = get_option('linkate-posts', []);
+        $text    = wp_strip_all_tags($post->post_content);
+
+        $custom_fields = array_filter(array_map('trim', explode("\n", $options['vector_custom_fields'] ?? '')));
+        foreach ($custom_fields as $field) {
+            $value = get_post_meta($post->ID, $field, true);
+            if (!empty($value) && is_string($value)) {
+                $text .= "\n" . wp_strip_all_tags($value);
+            }
+        }
+
+        return trim($text);
+    }
+
+    /**
      * Index (upsert) a single post. Safe to call on every post save.
      */
     public function upsert_post(WP_Post $post): bool
@@ -39,7 +67,7 @@ class CherryVectorAPI
         $body = [
             'post_id' => $post->ID,
             'title'   => $post->post_title,
-            'text'    => wp_strip_all_tags($post->post_content),
+            'text'    => $this->build_text($post),
             'url'     => get_permalink($post->ID),
             'lang'    => 'ru',
         ];
@@ -98,7 +126,7 @@ class CherryVectorAPI
             $documents[] = [
                 'post_id' => $post->ID,
                 'title'   => $post->post_title,
-                'text'    => wp_strip_all_tags($post->post_content),
+                'text'    => $this->build_text($post),
                 'url'     => get_permalink($post->ID),
                 'lang'    => 'ru',
             ];

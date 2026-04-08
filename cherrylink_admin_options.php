@@ -376,21 +376,9 @@ function linkate_posts_expert_options_subpage()
             // 'match_tags',
             // 'sort', 
             // 'quickfilter_dblclick', 
-            'output_template',
             'consider_max_incoming_links',
             'max_incoming_links',
-            'link_before',
-            'link_after',
-            // 'link_temp_alt',
-            'template_image_size',
-            'no_selection_action',
-            'term_before',
-            'term_after',
-            // 'term_temp_alt',
-            'anons_len',
             'relative_links',
-            'suggestions_switch_action',
-            'multilink',
             'show_cat_filter'
         ));
         update_option('linkate-posts', $options);
@@ -469,7 +457,6 @@ function linkate_posts_expert_options_subpage()
                     <h2 id="anchor-editor" class="<?= CL_TWC::$H2 ?>">Настройки работы в редакторе WP</h2>
                     <table class="optiontable form-table">
                         <?php
-                        link_cf_display_output_template($options['output_template']);
                         link_cf_display_limit_ajax($options['limit_ajax']);
                         link_cf_display_show_pages($options['show_pages']);
                         link_cf_display_match_cat($options['match_cat']);
@@ -508,47 +495,11 @@ function linkate_posts_expert_options_subpage()
                     <?php if (function_exists('wp_nonce_field')) wp_nonce_field('linkate-posts-update-options'); ?>
                 </div>
                 <div class="<?= CL_TWC::$CARD ?>">
-
-
-                    <h2 id="anchor-template" class="<?= CL_TWC::$H2 ?>">Разметка ссылки для записи/страницы</h2>
-                    <p>Шаблон обрамления выделенного текста ссылкой на <i>запись, страницу</i> и пр.</p>
-
+                    <h2 id="anchor-template" class="<?= CL_TWC::$H2 ?>">Настройки ссылок</h2>
                     <table class="optiontable form-table">
-
-                        <?php
-                        link_cf_display_relative_links($options['relative_links']);
-                        link_cf_display_replace_template($options['link_before'], $options['link_after'], $options['link_temp_alt']);
-                        ?>
+                        <?php link_cf_display_relative_links($options['relative_links']); ?>
                     </table>
-
-
-                    <input type="checkbox" id="spoiler_output" />
-                    <label for="spoiler_output" class="">Показать еще...</label>
-
-                    <div class="spoiler_output">
-                        <h2 class="<?= CL_TWC::$H2 ?>">Разметка ссылки для рубрики/таксономии</h2>
-                        <p>Шаблон обрамления выделенного текста ссылкой на <i>рубрику, метку</i> и пр.</p>
-
-                        <table class="optiontable form-table">
-                            <?php link_cf_display_replace_term_template($options['term_before'], $options['term_after'], $options['term_temp_alt']); ?>
-                        </table>
-                        <h2 class="<?= CL_TWC::$H2 ?>">Общие настройки шаблонов и вставки</h2>
-                        <table class="optiontable form-table">
-
-                            <?php
-                            link_cf_display_anons_len($options['anons_len']);
-                            link_cf_display_multilink($options['multilink']);
-                            link_cf_display_no_selection_action($options['no_selection_action']);
-
-                            link_cf_display_suggestions_switch_action($options['suggestions_switch_action']);
-                            link_cf_template_image_size($options['template_image_size'])
-                            ?>
-                        </table>
-                        <p style="color:red"><strong>Изменения шаблона не повлияют на уже вставленные ссылки в статьях!</strong></p>
-                    </div>
-
                     <input type="submit" class="<?= CL_TWC::$BTN_SAVE ?> mt-6" name="update_options_output" value="<?php _e('Сохранить настройки', CHERRYLINK_TEXT_DOMAIN) ?>" />
-                    <!-- <input type="submit" id="restore_templates" class="button button-download" style="float: right;" value="<?php _e('Восстановить шаблоны по умолчанию', CHERRYLINK_TEXT_DOMAIN) ?>" /> -->
                     <?php if (function_exists('wp_nonce_field')) wp_nonce_field('linkate-posts-update-options'); ?>
                 </div>
 <div class="<?= CL_TWC::$CARD ?>">
@@ -617,12 +568,6 @@ function linkate_posts_index_options_subpage()
             <label for="spoiler_scan" id="label_spoiler_scan" class="hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100 hover:cursor-pointer">Настройка сканирования</label>
 
             <div class="spoiler_scan">
-
-                <form id="options_form" method="post" action="">
-                    <table class="optiontable form-table">
-                        <?php link_cf_display_seo_meta_source($options['seo_meta_source']); ?>
-                    </table>
-                </form>
 
                 <hr class="my-4">
 

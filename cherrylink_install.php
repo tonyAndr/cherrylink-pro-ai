@@ -156,9 +156,9 @@ function fill_options($options)
     if (!isset($options['term_temp_alt'])) $options['term_temp_alt'] = base64_encode(urlencode("<div style=\"padding:10px;margin:10px;border-top:1px solid lightgrey;border-bottom:1px solid lightgrey;\">Больше интересной информации по данной теме вы найдете в разделе нашего сайта \"<a href=\"{url}\"><strong>{title}</strong></a>\".</div>"));
     if (!isset($options['term_before'])) $options['term_before'] = base64_encode(urlencode('<a href="{url}" title="{title}">'));
     if (!isset($options['term_after'])) $options['term_after'] = base64_encode(urlencode('</a>'));
-    if (!isset($options['no_selection_action'])) $options['no_selection_action'] = 'placeholder';
+    $options['no_selection_action'] = 'placeholder'; // always use placeholder, not configurable
     if (!isset($options['hash_field'])) $options['hash_field'] = '';
-    if (!isset($options['multilink'])) $options['multilink'] = 'checked';
+    $options['multilink'] = 'checked'; // always allow multiple links, not configurable
     if (!isset($options['compare_seotitle'])) $options['compare_seotitle'] = '';
     if (!isset($options['hash_last_check'])) $options['hash_last_check'] = 1523569887;
     if (!isset($options['hash_last_status'])) $options['hash_last_status'] = false;

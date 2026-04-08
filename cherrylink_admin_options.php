@@ -46,13 +46,14 @@ function linkate_posts_vector_api_field()
 
     if (isset($_POST['update_vector_api'])) {
         check_admin_referer('linkate-posts-update-options');
-        $url = esc_url_raw(trim($_POST['vector_api_url'] ?? ''));
-        $options['vector_api_url'] = $url;
+        $options['vector_api_url'] = esc_url_raw(trim($_POST['vector_api_url'] ?? ''));
+        $options['vector_api_key'] = sanitize_text_field(trim($_POST['vector_api_key'] ?? ''));
         update_option('linkate-posts', $options);
-        echo '<div class="notice-success notice"><p><b>URL Vector API сохранён</b></p></div>';
+        echo '<div class="notice-success notice"><p><b>Настройки Vector API сохранены</b></p></div>';
     }
 
     $current_url = $options['vector_api_url'] ?? '';
+    $current_key = $options['vector_api_key'] ?? '';
     $defined_in_config = defined('CHERRY_VECTOR_API_URL');
 ?>
     <div class="<?= CL_TWC::$CARD ?>">
@@ -61,11 +62,18 @@ function linkate_posts_vector_api_field()
             <p>URL задан через <code>wp-config.php</code>: <strong><?= esc_html(CHERRY_VECTOR_API_URL) ?></strong></p>
             <p class="text-sm text-gray-500">Чтобы управлять URL здесь, удалите <code>define('CHERRY_VECTOR_API_URL', ...)</code> из wp-config.php.</p>
         <?php else : ?>
-            <p class="text-sm text-gray-500 mb-2">Укажите адрес вашего Cherry Vector API (например: <code>https://seocherry.apov.dev</code>).</p>
+            <p class="text-sm text-gray-500 mb-2">
+                URL и ключ доступа к вашему Cherry Vector API.<br>
+                Ключ должен совпадать с <code>ADMIN_KEY</code> в <code>.env</code> на сервере.
+            </p>
             <form method="post" action="">
                 <label class="font-bold" for="vector_api_url">URL:</label><br>
                 <input type="url" name="vector_api_url" id="vector_api_url" class="mt-2 <?= CL_TWC::$INP_BASE ?>"
                     value="<?= esc_attr($current_url) ?>" placeholder="https://your-api.example.com">
+                <br><br>
+                <label class="font-bold" for="vector_api_key">API Key:</label><br>
+                <input type="text" name="vector_api_key" id="vector_api_key" class="mt-2 <?= CL_TWC::$INP_BASE ?>"
+                    value="<?= esc_attr($current_key) ?>" placeholder="your-admin-key">
                 <br>
                 <input type="submit" class="<?= CL_TWC::$BTN_SAVE ?> mt-3" name="update_vector_api" value="Сохранить">
                 <?php if (function_exists('wp_nonce_field')) wp_nonce_field('linkate-posts-update-options'); ?>

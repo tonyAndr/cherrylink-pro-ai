@@ -23,7 +23,9 @@ class CherryVectorAPI
     {
         $this->base_url    = rtrim(CHERRY_VECTOR_API_URL, '/');
         $options           = get_option('linkate-posts', []);
-        $this->license_key = $options['hash_field'] ?? '';
+        $this->license_key = !empty($options['vector_api_key'])
+            ? $options['vector_api_key']
+            : ($options['hash_field'] ?: '123123');
         $this->domain      = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
     }
 

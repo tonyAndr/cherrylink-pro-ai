@@ -1021,51 +1021,37 @@ function link_cf_display_age($age)
 
 function link_cf_display_status($status)
 {
+    $statuses = [
+        'publish' => 'Опубликованы',
+        'private' => 'Личные',
+        'draft'   => 'Черновик',
+        'future'  => 'Запланированные',
+    ];
 ?>
     <tr valign="top">
         <th scope="row"><?php _e('Статус записей:', CHERRYLINK_TEXT_DOMAIN) ?></th>
         <td>
-
-            <label for="status-publish">Опубликованы</label>
-            <select name="status-publish" id="status-publish" <?php if (!function_exists('get_post_type')) echo 'disabled="true"'; ?>>
-                <option <?php if ($status['publish'] == 'false') {
-                            echo 'selected="selected"';
-                        } ?> value="false">Нет</option>
-                <option <?php if ($status['publish'] == 'true') {
-                            echo 'selected="selected"';
-                        } ?> value="true">Да</option>
-            </select>
-
-            <label for="status-private">Личные</label>
-            <select name="status-private" id="status-private" <?php if (!function_exists('get_post_type')) echo 'disabled="true"'; ?>>
-                <option <?php if ($status['private'] == 'false') {
-                            echo 'selected="selected"';
-                        } ?> value="false">Нет</option>
-                <option <?php if ($status['private'] == 'true') {
-                            echo 'selected="selected"';
-                        } ?> value="true">Да</option>
-            </select>
-
-            <label for="status-draft">Черновик</label>
-            <select name="status-draft" id="status-draft" <?php if (!function_exists('get_post_type')) echo 'disabled="true"'; ?>>
-                <option <?php if ($status['draft'] == 'false') {
-                            echo 'selected="selected"';
-                        } ?> value="false">Нет</option>
-                <option <?php if ($status['draft'] == 'true') {
-                            echo 'selected="selected"';
-                        } ?> value="true">Да</option>
-            </select>
-
-            <label for="status-future">Запланированные</label>
-            <select name="status-future" id="status-future" <?php if (!function_exists('get_post_type')) echo 'disabled="true"'; ?>>
-                <option <?php if ($status['future'] == 'false') {
-                            echo 'selected="selected"';
-                        } ?> value="false">Нет</option>
-                <option <?php if ($status['future'] == 'true') {
-                            echo 'selected="selected"';
-                        } ?> value="true">Да</option>
-            </select>
-
+            <div class="flex flex-wrap gap-2 mt-1">
+                <?php foreach ($statuses as $key => $label) :
+                    $checked = ($status[$key] ?? 'false') === 'true';
+                ?>
+                <label class="inline-flex items-center gap-2 cursor-pointer select-none
+                              px-3 py-1 rounded-full border text-sm font-medium transition-colors
+                              <?= $checked ? 'bg-slate-700 text-white border-slate-700' : 'bg-white text-gray-600 border-gray-300 hover:border-slate-400' ?>">
+                    <input type="hidden"  name="status-<?= $key ?>" value="false">
+                    <input type="checkbox" name="status-<?= $key ?>" value="true"
+                           class="hidden" <?= $checked ? 'checked' : '' ?>
+                           onchange="this.previousElementSibling.value = this.checked ? 'true' : 'false';
+                                     this.closest('label').classList.toggle('bg-slate-700', this.checked);
+                                     this.closest('label').classList.toggle('text-white', this.checked);
+                                     this.closest('label').classList.toggle('border-slate-700', this.checked);
+                                     this.closest('label').classList.toggle('bg-white', !this.checked);
+                                     this.closest('label').classList.toggle('text-gray-600', !this.checked);
+                                     this.closest('label').classList.toggle('border-gray-300', !this.checked);">
+                    <?= esc_html($label) ?>
+                </label>
+                <?php endforeach; ?>
+            </div>
         </td>
     </tr>
 <?php

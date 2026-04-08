@@ -30,27 +30,14 @@ function linkate_posts_install()
     $errorlevel = error_reporting(0);
     $suppress = $wpdb->hide_errors();
 
-    // scheme table, export, statistics
-    $table_name = $table_prefix . 'linkate_scheme';
-    $sql = "CREATE TABLE IF NOT EXISTS `$table_name` (
-			`ID` bigint( 20 ) unsigned NOT NULL primary key AUTO_INCREMENT,
-			`source_id` int unsigned NOT NULL ,
-			`source_type` tinyint unsigned NOT NULL ,
-			`target_id` int unsigned NOT NULL ,
-			`target_type` tinyint unsigned NOT NULL ,
-			`ankor_text` varchar(1000) NOT NULL ,
-			`external_url` varchar(1000) NOT NULL
-			) ENGINE = InnoDB CHARSET=$default_charset COLLATE $default_collation;";
-    $created_scheme = $wpdb->query($sql);
     $wpdb->show_errors($suppress);
-
     error_reporting($errorlevel);
 
     // (Re)fill options if empty
     $options = (array) get_option('linkate-posts', []);
     fill_options($options);
 
-    return (bool) $created_scheme;
+    return true;
 }
 
 

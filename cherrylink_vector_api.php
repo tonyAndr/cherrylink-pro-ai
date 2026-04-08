@@ -176,20 +176,94 @@ class CherryVectorAPI
         return array_merge($result, ['total' => count($posts)]);
     }
 
+    // ── Link graph API ──────────────────────────────────────────────────────
+
+    /**
+     * Send raw post HTML to the API for link extraction and storage.
+     * Returns the number of outgoing links found (for cherry_outgoing post meta).
+     */
+    public function parse_links(int $source_id, int $source_type, string $source_url, string $html): int
+    {
+        $response = $this->request('POST', '/v1/links/parse', [
+            'source_id'   => $source_id,
+            'source_type' => $source_type,
+            'source_url'  => $source_url,
+            'html'        => $html,
+        ], 60);
+        return (int)($response['count'] ?? 0);
+    }
+
+    /**
+     * Remove all links originating from a post/term (call on post delete or before re-parse).
+     */
+    public function delete_links(int $source_id, int $source_type = 0): bool
+    {
+        $response = $this->request('DELETE', "/v1/links/source/{$source_id}?source_type={$source_type}");
+        return $response !== null;
+    }
+
+    /**
+     * Clear the entire link graph for this client (call before a full-site rescan).
+     */
+    public function delete_all_links(): bool
+    {
+        $response = $this->request('DELETE', '/v1/links/all');
+        return $response !== null;
+    }
+
+    /**
+     * Get all posts that link to a given URL — for the editor incoming-links panel.
+     */
+    public function get_incoming_links(string $target_url): ?array
+    {
+        $response = $this->request('GET', '/v1/links/incoming?target_url=' . rawurlencode($target_url));
+        return $response;
+    }
+
+    /**
+     * Paginated link stats for CSV/JSON export.
+     * $direction: 'forward' or 'backward'
+     */
+    public function get_links_stats(string $direction, int $offset, int $limit): ?array
+    {
+        $path = '/v1/links/stats?direction=' . $direction . '&offset=' . $offset . '&limit=' . $limit;
+        return $this->request('GET', $path, [], 120);
+    }
+
+    /**
+     * Total link count for this client (replaces SELECT COUNT(*) from linkate_scheme).
+     */
+    public function get_links_count(): int
+    {
+        $response = $this->request('GET', '/v1/links/count');
+        return (int)($response['count'] ?? 0);
+    }
+
+    /**
+     * Full link-graph health analysis — powers "Поиск проблем с перелинковкой".
+     */
+    public function get_link_problems(): ?array
+    {
+        return $this->request('GET', '/v1/links/problems', [], 120);
+    }
+
     // ── HTTP ────────────────────────────────────────────────────────────────
 
-    private function request(string $method, string $path, array $body = []): ?array
+    private function request(string $method, string $path, array $body = [], int $timeout = 0): ?array
     {
         if (empty($this->license_key)) {
             cherry_write_log('CherryVectorAPI: no license key configured');
             return null;
         }
 
-        $is_batch  = str_ends_with($path, '/batch');
-        $is_search = str_ends_with($path, '/search');
+        if ($timeout === 0) {
+            $is_batch  = str_ends_with($path, '/batch') || str_ends_with($path, '/all') || str_contains($path, '/parse');
+            $is_search = str_ends_with($path, '/search') || str_ends_with($path, '/problems') || str_ends_with($path, '/stats');
+            $timeout   = $is_batch ? 120 : ($is_search ? 60 : 15);
+        }
         $args = [
             'method'  => $method,
-            'timeout' => $is_batch ? 120 : ($is_search ? 60 : 15),
+            'timeout' => $timeout,
             'headers' => [
                 'Content-Type'   => 'application/json',
                 'X-License-Key'  => $this->license_key,

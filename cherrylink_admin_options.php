@@ -593,13 +593,11 @@ function linkate_posts_index_options_subpage()
 
 function linkate_posts_statistics_options_subpage()
 {
-    global $wpdb, $table_prefix;
-    $options = get_option('linkate-posts', []);
+    $options      = get_option('linkate-posts', []);
     $options_meta = get_option('linkate_posts_meta', []);
-    $table_index = $table_prefix . "linkate_posts";
-    $table_scheme = $table_prefix . "linkate_scheme";
 
-    $scheme_rows = $wpdb->get_var("SELECT COUNT(*) FROM $table_scheme");
+    $api         = new CherryVectorAPI();
+    $scheme_rows = $api->get_links_count();
 
     //php moved below for ajax
 ?>

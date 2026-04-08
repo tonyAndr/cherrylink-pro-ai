@@ -25,9 +25,17 @@ function linkate_sp_save_index_entry(int $post_id, WP_Post $post, bool $update):
 
     if ($post->post_status === 'publish') {
         $api->upsert_post($post);
+
+        // Update link graph for this post
+        $source_url = get_permalink($post_id);
+        if (!empty($source_url) && !empty($post->post_content)) {
+            $count = $api->parse_links($post_id, 0, $source_url, $post->post_content);
+            update_post_meta($post_id, 'cherry_outgoing', $count);
+        }
     } else {
-        // Unpublished / trashed — remove from index
+        // Unpublished / trashed — remove from both vector index and link graph
         $api->delete_post($post_id);
+        $api->delete_links($post_id, 0);
     }
 }
 
@@ -36,6 +44,7 @@ function linkate_sp_delete_index_entry(int $post_id): void
 {
     $api = new CherryVectorAPI();
     $api->delete_post($post_id);
+    $api->delete_links($post_id, 0);
 }
 
 // ── AJAX: batch reindex all posts ────────────────────────────────────────────

@@ -410,24 +410,38 @@ function link_cf_display_suggestions_donors($suggestions_donors_src, $suggestion
 
 function link_cf_display_show_pages($show_pages)
 {
+    $options = [
+        'false' => 'Записи',
+        'but'   => 'Страницы',
+        'true'  => 'Вместе',
+    ];
 ?>
     <tr valign="top">
-        <th scope="row"><label for="show_pages"><?php _e('Показывать ссылки на записи/страницы/вместе?', CHERRYLINK_TEXT_DOMAIN) ?></label></th>
+        <th scope="row"><?php _e('Тип контента:', CHERRYLINK_TEXT_DOMAIN) ?></th>
         <td>
-            <select name="show_pages" id="show_pages">
-                <option <?php if ($show_pages == 'false') {
-                            echo 'selected="selected"';
-                        } ?> value="false">Только записи (post)</option>
-                <option <?php if ($show_pages == 'but') {
-                            echo 'selected="selected"';
-                        } ?> value="but">Только страницы (page)</option>
-                <option <?php if ($show_pages == 'true') {
-                            echo 'selected="selected"';
-                        } ?> value="true">Записи и страницы вместе</option>
-            </select>
+            <div class="inline-flex rounded-lg border border-gray-300 overflow-hidden text-sm font-medium">
+                <?php foreach ($options as $value => $label) :
+                    $active = $show_pages === $value;
+                ?>
+                <label class="cursor-pointer px-4 py-1.5 transition-colors
+                              <?= $active ? 'bg-slate-700 text-white' : 'bg-white text-gray-600 hover:bg-gray-50' ?>
+                              <?= $value !== 'false' ? 'border-l border-gray-300' : '' ?>">
+                    <input type="radio" name="show_pages" value="<?= $value ?>"
+                           class="hidden" <?= $active ? 'checked' : '' ?>
+                           onchange="this.closest('div').querySelectorAll('label').forEach(function(l){
+                               var active = l.querySelector('input').checked;
+                               l.classList.toggle('bg-slate-700', active);
+                               l.classList.toggle('text-white', active);
+                               l.classList.toggle('bg-white', !active);
+                               l.classList.toggle('text-gray-600', !active);
+                           })">
+                    <?= esc_html($label) ?>
+                </label>
+                <?php endforeach; ?>
+            </div>
         </td>
     </tr>
-    <?php
+<?php
 }
 
 function link_cf_display_show_custom_posts($show_customs)

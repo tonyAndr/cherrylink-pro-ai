@@ -39,17 +39,11 @@ function linkate_post_stats_column($cols) {
 
 function linkate_post_stats_column_values($column_name, $post_id) {
     if ('cherry_income' == $column_name) {
-        $permalink = get_permalink($post_id);
-        $api       = new CherryVectorAPI();
-        $response  = $permalink ? $api->get_incoming_links($permalink) : null;
-        $incoming  = (int)($response['count'] ?? 0);
-        update_post_meta($post_id, 'cherry_income', $incoming);
-        echo $incoming;
+        echo (int)get_post_meta($post_id, 'cherry_income', true);
     }
 
     if ('cherry_outgoing' == $column_name) {
-        $out_cnt = get_post_meta($post_id, 'cherry_outgoing', true);
-        echo (int)$out_cnt;
+        echo (int)get_post_meta($post_id, 'cherry_outgoing', true);
     }
 }
 

@@ -31,6 +31,10 @@ function linkate_sp_save_index_entry(int $post_id, WP_Post $post, bool $update):
         if (!empty($source_url) && !empty($post->post_content)) {
             $count = $api->parse_links($post_id, 0, $source_url, $post->post_content);
             update_post_meta($post_id, 'cherry_outgoing', $count);
+
+            // Refresh this post's own incoming count (1 API call, not N on page load)
+            $incoming = $api->get_incoming_links($source_url);
+            update_post_meta($post_id, 'cherry_income', (int)($incoming['count'] ?? 0));
         }
     } else {
         // Unpublished / trashed — remove from both vector index and link graph

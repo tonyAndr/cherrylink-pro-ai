@@ -81,6 +81,22 @@ function linkate_generate_csv_or_json_prettyfied()
         $from_editor = true;
     }
 
+    // Editor badge request: read counts directly from post meta — fast and
+    // independent of whether the link-graph scan has been run.
+    if ($from_editor) {
+        $post_ids_raw  = $_POST['post_ids'] ?? $gutenberg_data['post_ids'] ?? '';
+        $requested_ids = array_filter(array_map('intval', explode(',', $post_ids_raw)));
+        $output = [];
+        foreach ($requested_ids as $pid) {
+            $output['"id_' . $pid . '"'] = [
+                (int)get_post_meta($pid, 'cherry_outgoing', true),
+                (int)get_post_meta($pid, 'cherry_income',  true),
+            ];
+        }
+        wp_send_json($output);
+        wp_die();
+    }
+
     $api      = new CherryVectorAPI();
     $response = $api->get_links_stats('forward', $offset, $limit);
 
@@ -89,20 +105,10 @@ function linkate_generate_csv_or_json_prettyfied()
         wp_die();
     }
 
-    $results = $response['results'] ?? [];
+    $results      = $response['results'] ?? [];
+    $output_array = linkate_results_to_array_forward($results, false, $include_types);
 
-    // Filter to requested post IDs when called from editor
-    if ($from_editor) {
-        $post_ids_raw  = $_POST['post_ids'] ?? $gutenberg_data['post_ids'] ?? '';
-        $requested_ids = array_map('intval', explode(',', $post_ids_raw));
-        $results = array_filter($results, fn($r) => in_array($r['source_id'], $requested_ids));
-    }
-
-    $output_array = linkate_results_to_array_forward($results, $from_editor, $include_types);
-
-    if ($from_editor) {
-        wp_send_json($output_array);
-    } elseif ($admin_preview) {
+    if ($admin_preview) {
         echo json_encode(linkate_admin_preview_stats($output_array));
     } else {
         linkate_query_to_csv($output_array, 'cherrylink_stats_' . $offset . '.csv');

@@ -386,21 +386,11 @@ function linkate_posts_expert_options_subpage()
     if (isset($_POST['recreate_db'])) {
         check_admin_referer('linkate-posts-update-options');
         delete_option('linkate_posts_meta');
-
-        $table_name = $table_prefix . 'linkate_posts';
-        $wpdb->query("DROP TABLE `$table_name`");
-
-        $table_name = $table_prefix . 'linkate_scheme';
-        $wpdb->query("DROP TABLE `$table_name`");
-
-        $table_name = $table_prefix . 'linkate_stopwords';
-        $wpdb->query("DROP TABLE `$table_name`");
-
         $result = linkate_posts_install();
         if ($result) {
-            echo '<div class="notice-success notice"><p>' . __('<b>Таблицы в БД были успешно пересозданы.</b>', CHERRYLINK_TEXT_DOMAIN) . '</p></div>';
+            echo '<div class="notice-success notice"><p>' . __('<b>Настройки плагина сброшены.</b>', CHERRYLINK_TEXT_DOMAIN) . '</p></div>';
         } else {
-            echo '<div class="notice-error notice"><p>' . __('<b>Операция пересоздания таблиц завершилась с ошибкой.</b>', CHERRYLINK_TEXT_DOMAIN) . '</p></div>';
+            echo '<div class="notice-error notice"><p>' . __('<b>Операция завершилась с ошибкой.</b>', CHERRYLINK_TEXT_DOMAIN) . '</p></div>';
         }
     }
 
@@ -414,23 +404,20 @@ function linkate_posts_expert_options_subpage()
 
 
     if (isset($_POST['truncate_all'])) {
-        $options_meta = get_option('linkate_posts_meta', []);
-        $table_index = $table_prefix . "linkate_posts";
-        $table_scheme = $table_prefix . "linkate_scheme";
         check_admin_referer('linkate-posts-update-options');
-        // Remove scheme
-        unset($options['linkate_scheme_exists']);
-        unset($options['linkate_scheme_time']);
-        update_option('linkate-posts', $options);
-
+        $api = new CherryVectorAPI();
+        $ok_docs  = $api->delete_all_documents();
+        $ok_links = $api->delete_all_links();
+        // Clear local index table and indexing state
+        $wpdb->query("TRUNCATE `{$table_prefix}linkate_posts`");
+        $options_meta = get_option('linkate_posts_meta', []);
         unset($options_meta['indexing_process']);
         update_option('linkate_posts_meta', $options_meta);
-        $wpdb->query("TRUNCATE `$table_scheme`");
-        // Remove index
-        $wpdb->query("TRUNCATE `$table_index`");
-
-        // Show a message to say we've done something
-        echo '<div class="notice-success notice"><p>' . __('<b>Базы данных плагина очищены.</b>', CHERRYLINK_TEXT_DOMAIN) . '</p></div>';
+        if ($ok_docs && $ok_links) {
+            echo '<div class="notice-success notice"><p><b>Данные сайта удалены из API. Выполните полную переиндексацию.</b></p></div>';
+        } else {
+            echo '<div class="notice-warning notice"><p><b>Локальный индекс очищен, но API вернул ошибку. Проверьте подключение к Cherry Vector API.</b></p></div>';
+        }
     }
 
     ?>
@@ -523,9 +510,7 @@ function linkate_posts_expert_options_subpage()
         <div class="mt-4 <?= CL_TWC::$CARD_SPECIAL ?>">
             <h2 id="recovery" class="<?= CL_TWC::$H2 ?>">Прочие настройки</h2>
             <form method="post" action="">
-                <input class="<?= CL_TWC::$BTN_DANGER ?> mt-2" name="truncate_all" type="submit" value="Очистить таблицы ссылок в БД" />
-                <input type="submit" class="<?= CL_TWC::$BTN_DANGER ?> mt-2" name="recreate_db" value="<?php _e('Пересоздать таблицы БД', CHERRYLINK_TEXT_DOMAIN) ?>" />
-
+                <input class="<?= CL_TWC::$BTN_DANGER ?> mt-2" name="truncate_all" type="submit" value="Очистить данные сайта в API (потребуется переиндексация)" onclick="return confirm('Удалить все векторы и граф ссылок для этого сайта из API?')" />
                 <input type="submit" class="<?= CL_TWC::$BTN_DANGER ?> mt-2" name="reset_options" value="<?php _e('Вернуть настройки по умолчанию', CHERRYLINK_TEXT_DOMAIN) ?>" />
                 <?php if (function_exists('wp_nonce_field')) wp_nonce_field('linkate-posts-update-options'); ?>
             </form>

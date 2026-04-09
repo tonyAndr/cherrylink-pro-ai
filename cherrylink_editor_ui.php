@@ -52,7 +52,6 @@ function hook_term_edit($hook_suffix)
         add_action('media_buttons', 'add_linkate_button', 15);
         linkate_panel_css();
         linkate_panel_tinymce_js();
-        linkate_snowball_js();
     }
     // Post editor
     if ('post.php' === $hook_suffix || 'post-new.php' === $hook_suffix) {
@@ -63,7 +62,6 @@ function hook_term_edit($hook_suffix)
             linkate_panel_css();
             add_action('media_buttons', 'add_linkate_button', 15);
             linkate_panel_tinymce_js();
-            linkate_snowball_js();
         }
     }
     return;
@@ -81,11 +79,6 @@ function linkate_panel_tinymce_js()
     wp_register_script('cherrylink-js-main', plugins_url('/js/' . $classic_js, __FILE__), array('jquery'), LinkatePosts::get_linkate_version());
     wp_localize_script('cherrylink-js-main', 'ajax_obj', ['ajaxurl' => admin_url('admin-ajax.php')]);
     wp_enqueue_script('cherrylink-js-main');
-}
-function linkate_snowball_js()
-{
-    wp_register_script('snowball-script', plugins_url('/js/Snowball.min.js', __FILE__));
-    wp_enqueue_script('snowball-script');
 }
 
 // The media button to dislay links box
@@ -161,8 +154,9 @@ function cherrylink_classiceditor_panel()
             </div>
         </div>
         <div class="linkate-tabs">
-            <div class="tab tab-articles linkate-tab-selected">Записи</div>
-            <div class="tab tab-taxonomy">Таксономии</div>
+            <div class="tab tab-articles linkate-tab-selected" title="Записи"><img src="<?php echo plugins_url('/assets/gutenberg/tab-links.png', __FILE__); ?>" width="20" height="20" alt="Записи"></div>
+            <div class="tab tab-taxonomy" title="Таксономии"><img src="<?php echo plugins_url('/assets/gutenberg/tab-taxonomies.png', __FILE__); ?>" width="20" height="20" alt="Таксономии"></div>
+            <div class="tab tab-stats" title="Статистика ссылок"><img src="<?php echo plugins_url('/assets/gutenberg/tab-stats.png', __FILE__); ?>" width="20" height="20" alt="Статистика"></div>
         </div>
         <div class="suggestions-panel-back">&#10094; Назад</div>
         <div class="inside" id="cherrylink_meta_inside">
@@ -196,14 +190,16 @@ function cherrylink_classiceditor_panel()
                 error_reporting($error_level);
                 ?>
             </div>
+            <div class="linkate-box-container container-stats" style="display:none">
+                <div id="cl-incoming-list"><div class="cl-incoming-loading">Загрузка...</div></div>
+            </div>
         </div>
         <div class="linkate-total-links">
-            <div class="total-links-header">Статистика перелинковки</div>
             <div class="total-links-counter">
                 <div> Исходящих</div>
                 <div id="links-count-total">?</div>
-                <div> Входящих</div>
-                <div id="links-count-targets">?</div>
+                <div class="cl-footer-incoming"> Входящих</div>
+                <div id="links-count-targets" class="cl-footer-incoming">?</div>
             </div>
         </div>
     </div>

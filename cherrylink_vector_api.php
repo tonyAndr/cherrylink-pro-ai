@@ -203,6 +203,15 @@ class CherryVectorAPI
     }
 
     /**
+     * Wipe all vectors for this client from Qdrant. Full re-index required after.
+     */
+    public function delete_all_documents(): bool
+    {
+        $response = $this->request('DELETE', '/v1/documents/all');
+        return $response !== null;
+    }
+
+    /**
      * Clear the entire link graph for this client (call before a full-site rescan).
      */
     public function delete_all_links(): bool

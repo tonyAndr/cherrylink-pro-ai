@@ -15,46 +15,11 @@ define('LINKATE_INSTALL_LIBRARY', true);
 // this function gets called when the plugin is installed to set up the index and default options
 function linkate_posts_install()
 {
-    global $wpdb, $table_prefix;
-
-    $default_collation = "utf8mb4_unicode_520_ci";
-    $default_charset = "utf8mb4";
-    if (!$wpdb->has_cap('utf8mb4_520')) {
-        $default_collation = "utf8mb4_unicode_ci";
-        if (!$wpdb->has_cap('utf8mb4')) {
-            $default_collation = "utf8_general_ci";
-            $default_charset = "utf8";
-        }
-    }
-
-    $errorlevel = error_reporting(0);
-    $suppress = $wpdb->hide_errors();
-
-    $wpdb->show_errors($suppress);
-    error_reporting($errorlevel);
-
-    // (Re)fill options if empty
     $options = (array) get_option('linkate-posts', []);
     fill_options($options);
-
     return true;
 }
 
-
-function linkate_table_column_exists($table_name, $column_name)
-{
-    global $wpdb;
-    $column = $wpdb->get_results($wpdb->prepare(
-        "SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s AND COLUMN_NAME = %s ",
-        DB_NAME,
-        $table_name,
-        $column_name
-    ));
-    if (!empty($column)) {
-        return true;
-    }
-    return false;
-}
 
 // used on install, import settings, revert to defaults
 function fill_options($options)
@@ -230,31 +195,6 @@ function linkate_checkNeededOption()
     } 
     return false;
 }
-
-// function getNeededOption()
-// {
-//     $options = get_option('linkate-posts', []);
-//     $s = isset($options['hash_field']) ? $options['hash_field'] : '';
-//     if (empty($s)) {
-//         return NULL;
-//     } else {
-//         return explode(",", base64_decode($s));
-//     }
-// }
-
-// function linkate_callDelay()
-// {
-//     $options = get_option('linkate-posts', []);
-//     if (!isset($options['hash_last_check']) || time() > $options['hash_last_check']) {
-//         return false;
-//     }
-//     return true;
-// }
-// function linkate_lastStatus()
-// {
-//     $options = get_option('linkate-posts', []);
-//     return isset($options['hash_last_status']) ? $options['hash_last_status'] : false;
-// }
 
 function linkate_call_home_nocurl($val, $d)
 {

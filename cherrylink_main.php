@@ -223,10 +223,10 @@ class LinkatePosts
         if ($results) {
             foreach ($results as $result) {
                 $api_row = $api_map[(int)$result->ID] ?? [];
-                // Escape quotes so the JSON string is safe inside the Gutenberg
-                // template, which embeds it as: "data-suggestions":"{suggestions}"
+                // Store raw JSON; each renderer applies its own escaping:
+                // Gutenberg needs \" (JSON-inside-JSON), Classic needs &quot; (HTML attr)
                 $result->suggestions = !empty($api_row['suggestions'])
-                    ? str_replace('"', '\\"', wp_json_encode($api_row['suggestions'], JSON_UNESCAPED_UNICODE))
+                    ? wp_json_encode($api_row['suggestions'], JSON_UNESCAPED_UNICODE)
                     : '';
                 $result->score = isset($api_row['score'])
                     ? (int)round($api_row['score'] * 100)
@@ -263,6 +263,8 @@ class LinkatePosts
             $translations = link_cf_prepare_template($out_final);
 
             foreach ($results as $result) {
+                // JSON-inside-JSON: escape quotes so the value is valid inside "data-suggestions":"{suggestions}"
+                $result->suggestions = str_replace('"', '\\"', $result->suggestions);
                 $items[] = "{" . link_cf_expand_template($result, $out_final, $translations, $option_key) . "}";
             }
 
@@ -300,6 +302,8 @@ class LinkatePosts
             $out_final = $output_template_item_prefix . $output_template . $output_template_item_suffix;
             $translations = link_cf_prepare_template($out_final);
             foreach ($results as $result) {
+                // HTML attribute context: encode quotes so they don't break data-suggestions="..."
+                $result->suggestions = htmlspecialchars($result->suggestions, ENT_COMPAT, 'UTF-8');
                 $items[] = link_cf_expand_template($result, $out_final, $translations, $option_key);
             }
             if ($options['sort']['by1'] !== '') $items = link_cf_sort_items($options['sort'], $results, $option_key, $options['group_template'], $items);

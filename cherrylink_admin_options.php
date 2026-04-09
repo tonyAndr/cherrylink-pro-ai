@@ -170,13 +170,10 @@ function linkate_posts_license_field()
 }
 function linkate_posts_index_status_display($page = 'main')
 {
-    global $wpdb, $table_prefix;
     $options_meta = get_option('linkate_posts_meta', []);
-    $table_scheme = $table_prefix . "linkate_scheme";
 
-    // Count indexed articles from Vector API
-    $api         = new CherryVectorAPI();
-    $index_rows  = $api->get_count();
+    $api        = new CherryVectorAPI();
+    $index_rows = $api->get_count();
     if ($index_rows > 0) {
         $index_status_text  = " проиндексировано $index_rows статей в Vector API.";
         $index_status_class = "";
@@ -185,12 +182,12 @@ function linkate_posts_index_status_display($page = 'main')
         $index_status_class = "";
     }
 
-    $scheme_rows = $wpdb->get_var("SELECT COUNT(*) FROM $table_scheme");
+    $scheme_rows = $api->get_links_count();
     if ($scheme_rows) {
-        $scheme_status_text = " найдено $scheme_rows ссылок в записях и страницах.";
+        $scheme_status_text  = " найдено $scheme_rows ссылок в записях и страницах.";
         $scheme_status_class = "";
     } else {
-        $scheme_status_text = " ссылки не найдены.";
+        $scheme_status_text  = " ссылки не найдены.";
         $scheme_status_class = "";
     }
 

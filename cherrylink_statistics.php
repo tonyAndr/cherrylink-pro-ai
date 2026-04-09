@@ -67,15 +67,15 @@ function linkate_get_all_posts_count()
 // ========================================================================================= //
 
 add_action('wp_ajax_linkate_generate_csv_or_json_prettyfied', 'linkate_generate_csv_or_json_prettyfied');
-function linkate_generate_csv_or_json_prettyfied(bool $is_custom_column = false, int $custom_id = 0)
+function linkate_generate_csv_or_json_prettyfied()
 {
     $gutenberg_data = json_decode(file_get_contents('php://input'), true);
 
-    $from_editor       = false;
-    $admin_preview     = isset($_POST['admin_preview_stats']);
-    $offset            = (int)($_POST['stats_offset'] ?? 0);
-    $limit             = (int)($_POST['stats_limit']  ?? 200);
-    $include_types     = $_POST['export_types'] ?? [];
+    $from_editor   = false;
+    $admin_preview = isset($_POST['admin_preview_stats']);
+    $offset        = (int)($_POST['stats_offset'] ?? 0);
+    $limit         = (int)($_POST['stats_limit']  ?? 200);
+    $include_types = $_POST['export_types'] ?? [];
 
     if (isset($_POST['post_ids']) || isset($gutenberg_data['post_ids'])) {
         $from_editor = true;
@@ -85,28 +85,17 @@ function linkate_generate_csv_or_json_prettyfied(bool $is_custom_column = false,
     $response = $api->get_links_stats('forward', $offset, $limit);
 
     if ($response === null) {
-        if (!$is_custom_column) {
-            echo json_encode(['status' => 'ERROR']);
-            wp_die();
-        }
-        return false;
+        echo json_encode(['status' => 'ERROR']);
+        wp_die();
     }
 
     $results = $response['results'] ?? [];
 
     // Filter to requested post IDs when called from editor
     if ($from_editor) {
-        $post_ids_raw = $_POST['post_ids'] ?? $gutenberg_data['post_ids'] ?? '';
+        $post_ids_raw  = $_POST['post_ids'] ?? $gutenberg_data['post_ids'] ?? '';
         $requested_ids = array_map('intval', explode(',', $post_ids_raw));
         $results = array_filter($results, fn($r) => in_array($r['source_id'], $requested_ids));
-    } elseif ($is_custom_column) {
-        $results = array_filter($results, fn($r) => $r['source_id'] === $custom_id);
-    }
-
-    // FOR POSTS LIST STATS COLUMNS
-    if ($is_custom_column) {
-        $row = reset($results);
-        return $row ? (int)($row['count_sources'] ?? 0) : false;
     }
 
     $output_array = linkate_results_to_array_forward($results, $from_editor, $include_types);

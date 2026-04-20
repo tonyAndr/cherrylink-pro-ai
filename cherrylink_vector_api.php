@@ -256,6 +256,24 @@ class CherryVectorAPI
         return $this->request('GET', '/v1/links/problems', [], 120);
     }
 
+    // ── Error reporting ─────────────────────────────────────────────────────
+
+    /**
+     * Push an error/warning event to the API log.
+     * Non-blocking best-effort — failures are silently ignored.
+     */
+    public function log_error(string $message, string $context = 'php_index', int $post_id = 0, string $severity = 'error', string $detail = ''): void
+    {
+        $body = array_filter([
+            'context'  => $context,
+            'message'  => $message,
+            'severity' => $severity,
+            'post_id'  => $post_id ?: null,
+            'detail'   => $detail ?: null,
+        ]);
+        $this->request('POST', '/v1/logs', $body, 5);
+    }
+
     // ── HTTP ────────────────────────────────────────────────────────────────
 
     private function request(string $method, string $path, array $body = [], int $timeout = 0): ?array

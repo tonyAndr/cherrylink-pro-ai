@@ -73,6 +73,16 @@ function linkate_ajax_call_reindex(): void
         update_option('linkate_posts_meta', $options_meta);
     }
 
+    if ($result['errors'] > 0) {
+        $api->log_error(
+            "Batch reindex: {$result['errors']} errors at offset {$offset} (batch {$batch_size})",
+            'php_index',
+            0,
+            'error',
+            "indexed={$result['indexed']} total={$result['total']}"
+        );
+    }
+
     // Use echo + wp_die (not wp_send_json) so jQuery receives a raw string
     // that cherry-admin-index.js can JSON.parse() itself.
     echo json_encode([

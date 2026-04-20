@@ -1,0 +1,145 @@
+# CherryLink Pro AI — Plugin Context
+
+**Full ecosystem context** (API, VPS, CI/CD): `/Users/anton/projects/cherry-vector-api/CLAUDE.md`
+
+---
+
+## What This Is
+
+WordPress plugin for AI-powered internal linking. Connects to Cherry Vector API (`https://seocherry.apov.dev`) for semantic search and link graph tracking. Works in both Gutenberg and the classic editor.
+
+---
+
+## Key Files
+
+| File | Purpose |
+|---|---|
+| `cherrylink_main.php` | Plugin header, requires all modules |
+| `cherrylink_vector_api.php` | `CherryVectorAPI` class — all HTTP calls to API |
+| `cherrylink_index.php` | Post save/delete hooks + AJAX batch reindex |
+| `cherrylink_stats_scheme.php` | Full-site link graph scanning (`CL_Stats_Scheme`) |
+| `cherrylink_editor_ui.php` | Classic editor panel HTML (tabs: articles / taxonomy / stats) |
+| `cherrylink_gutenberg.php` | Gutenberg sidebar enqueue + script registration |
+| `cherrylink_admin_options.php` | WP admin settings page + "Прочие настройки" actions |
+| `cherrylink_install.php` | Activation, `fill_options()` defaults |
+| `js/cherry-front.js` | Classic editor panel JS (suggestions, stats, link insertion) |
+| `js/cherry-gutenberg.js` | **Built artifact** from cherrylink-gutenberg-pro — do not hand-edit |
+| `css/cherry-main.css` | All plugin styles |
+
+---
+
+## JS Architecture
+
+### Classic editor (`cherry-front.js`)
+All code lives inside `jQuery(document).ready(function($) { ... })`.
+
+**Scope trap:** helper functions defined inside `reLoad_when_data_received()` are NOT accessible from the outer ready scope. `fcl_findPhraseInEditor` and similar must be declared at the outer ready scope level (before `reLoad_when_data_received`).
+
+Key functions:
+- `fcl_findPhraseInEditor(phrase)` — walks TinyMCE text nodes or textarea, selects and scrolls to phrase
+- `fcl_render_api_suggestions(triggerEl, item)` — builds suggestions panel HTML from API data
+- `fcl_enableSuggestionSwitches()` — wires up suggestion item click handlers
+- `fcl_load_incoming_tab()` — loads stats tab (outgoing from editor + incoming from API), one-shot cache via `cl_incoming_loaded`
+- `fcl_isTinyMCE()` — returns true if active editor is TinyMCE (vs textarea)
+- `fcl_getEditorContent()` — gets raw HTML from TinyMCE or textarea
+
+Suggestion item UX:
+- Click on `.cl-api-suggestion-item` → `fcl_findPhraseInEditor(phrase)` (scroll to phrase)
+- Click on `.suggestion-insert` button → find phrase + insert link
+- `.cl-api-suggestion-find` button has been removed
+
+Stats tab:
+- Outgoing: parsed from editor HTML via regex on `<a href>` tags, items have class `cl-stats-outgoing`
+- Incoming: fetched from API via `fcl_fetch_incoming()`
+- Both sections wrapped in `.cl-stats-section` with `.cl-stats-section-title`
+- Clicking an outgoing anchor (`.cl-stats-outgoing .cl-incoming-anchor`) calls `fcl_findPhraseInEditor`
+
+Footer:
+- `.linkate-total-links` hidden entirely when stats tab is active, shown on articles/taxonomy tabs
+- `.cl-footer-incoming` spans are shown/hidden independently
+
+### Gutenberg sidebar (`cherry-gutenberg.js`)
+Built from `/Users/anton/projects/cherrylink-gutenberg-pro`.
+
+Build + deploy:
+```bash
+cd /Users/anton/projects/cherrylink-gutenberg-pro
+npm run build
+cp build/cherry-gutenberg.js /Users/anton/projects/cherrylink-pro-ai/js/cherry-gutenberg.js
+```
+
+Scroll-to-block uses block data store, not DOM:
+```js
+import { findBlocksWithUrl, scrollToBlockInEditor } from '../HOC/scrollToEditor';
+```
+
+---
+
+## PHP: CherryVectorAPI
+
+All API calls go through `CherryVectorAPI` in `cherrylink_vector_api.php`.
+- API URL: `CHERRY_VECTOR_API_URL` constant in wp-config → admin settings → `https://seocherry.apov.dev`
+- License key: admin settings → `123123`
+- Headers sent: `X-License-Key`, `X-Site-Domain`
+- Errors: logged via `cherry_write_log()`
+
+---
+
+## Classic Editor UI (HTML)
+
+`cherrylink_editor_ui.php` renders the panel. Tab structure:
+```html
+<div class="linkate-tabs">
+  <div class="tab tab-articles linkate-tab-selected">  <!-- PNG icon from assets/gutenberg/tab-links.png -->
+  <div class="tab tab-taxonomy">                       <!-- tab-taxonomies.png -->
+  <div class="tab tab-stats">                          <!-- tab-stats.png -->
+</div>
+<div class="container-articles">...</div>
+<div class="container-taxonomy">...</div>
+<div class="container-stats" style="display:none">
+  <div id="cl-incoming-list">...</div>
+</div>
+<div class="linkate-total-links">  <!-- hidden on stats tab -->
+  <div class="total-links-counter">
+    <div>Исходящих</div><div id="links-count-total">?</div>
+    <div class="cl-footer-incoming">Входящих</div>
+    <div id="links-count-targets" class="cl-footer-incoming">?</div>
+  </div>
+</div>
+```
+
+Tab icons use PNG files from `assets/gutenberg/` via `plugins_url()`.
+
+---
+
+## Data Attributes on Link Items
+
+Each `.linkate-link` element carries:
+- `data-url` — post permalink
+- `data-title` — H1 title
+- `data-titleseo` → maps to `title_seo` in `fcl_getDataAttrs()`
+- `data-suggestions` — JSON string (HTML-escaped with `htmlspecialchars(ENT_COMPAT)` for classic editor, backslash-escaped for Gutenberg JSON-in-JSON)
+- `data-category`, `data-date`, `data-author`
+
+---
+
+## Local Dev
+
+```bash
+cd /Users/anton/projects/cherrylink-pro-ai/wp-dev
+docker compose up -d
+# WordPress: http://localhost:8088 (admin/admin)
+# Plugin mounted as live bind — PHP edits take effect immediately
+# Connect to API: use https://seocherry.apov.dev or http://host.docker.internal:8000
+```
+
+---
+
+## Non-obvious Things
+
+- **`data-suggestions` escaping**: classic editor uses `htmlspecialchars(ENT_COMPAT)` (HTML attribute safe); Gutenberg JSON-in-JSON uses `str_replace('"', '\\"', ...)` — these are different code paths in `cherrylink_main.php`
+- **Tab PNG icons**: `assets/gutenberg/tab-links.png`, `tab-taxonomies.png`, `tab-stats.png`
+- **`linkate_scheme_exists` option**: repurposed flag — means "Cherry Vector API is configured and accessible", NOT that a MySQL table exists (that table was migrated to Postgres on the API)
+- **`linkate_posts` MySQL table**: still used by `cherrylink_cf.php` for custom fields index — do not drop
+- **No CI for this plugin**: push to git = source of truth; client updates via plugin updater
+- **`cherry_write_log()`**: writes to PHP error log; in wp-dev: `docker compose logs wordpress`

@@ -4,5 +4,4 @@
 *.csv
 stats
 export_options.txt
-gutenberg-src
 vite-admin

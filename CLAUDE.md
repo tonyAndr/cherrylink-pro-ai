@@ -81,7 +81,7 @@ import { findBlocksWithUrl, scrollToBlockInEditor } from '../HOC/scrollToEditor'
 Source layout notes (`gutenberg-src/src/sidebar/`):
 - `HOC/blockUtils.js` — shared `BlockAttributes` map + `flattenBlocks()`. Both `scrollToEditor.js` and `withLinkInsert.js` import from here; do not duplicate.
 - `Data/` — render-less components (`GetData`, `GetAllTerms`, `GetIncomingLinks`, `GetArticleStats`). All fetch calls use `async/await`.
-- `snowball` is a **runtime** dependency (Russian stemming in the link-filter). Lives in `dependencies`, not `devDependencies`.
+- Text filtering is server-side (the `custom_text` payload in `GetData.loadData()`). There is no client-side filter in the Gutenberg sidebar.
 
 ---
 

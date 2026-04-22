@@ -1,0 +1,33 @@
+{
+    "name": "cherrylink-gutenberg",
+    "version": "1.0.0",
+    "description": "Extension for CherryLink to add Gutenberg Support",
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "start": "wp-scripts start --mode development",
+        "build": "wp-scripts build"
+    },
+    "author": "Anton SeoCherry.ru",
+    "license": "ISC",
+    "devDependencies": {
+        "@babel/plugin-proposal-class-properties": "^7.8.3",
+        "@svgr/webpack": "^8.1.0",
+        "@wordpress/scripts": "7.1.2",
+        "css-loader": "^3.4.2",
+        "snowball": "^0.3.1",
+        "style-loader": "^1.1.3"
+    },
+    "dependencies": {
+        "mark.js": "^8.11.1"
+    },
+    "babel": {
+        "presets": [
+            "@babel/preset-env",
+            "@babel/preset-react"
+        ],
+        "plugins": [
+            "@babel/plugin-proposal-class-properties"
+        ]
+    }
+}

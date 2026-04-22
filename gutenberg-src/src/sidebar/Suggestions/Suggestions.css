@@ -1,0 +1,121 @@
+.suggestion-panel {
+    display: block;
+    /* position: absolute; */
+    background: white;
+    width: 100%;
+    height: 100%;
+    /* z-index: 99; */
+}
+
+/* .suggestion-panel button {
+    margin: 10px;
+    display: block;
+    border: none;
+    background: #007cba;
+    color: white;
+    cursor: pointer;
+    border-radius: 3px;
+    padding: 8px;
+} */
+
+/* .suggestion-panel button:before {
+    background-image: url(/wp-content/plugins/cherrylink-pro-ai/assets/gutenberg/tab-links.png);
+    background-size: 15px, 15px;
+    background-repeat: no-repeat;
+    background-position: center;
+    display: inline-block;
+    width: 25px;
+    height: 20px;
+    content: "";
+} */
+.suggestion-block {
+    margin: 10px;
+    height: 500px;
+    overflow: auto;
+}
+
+/* .suggestion-block:hover {
+    cursor: pointer;
+    background: rgb(206, 215, 255);
+} */
+
+.suggestion-block .block-name {
+    padding-bottom: 4px;
+    border-bottom: 1px solid lightgray;
+    font-size: large;
+}
+
+/* .suggestion-list li:nth-child(odd) {
+    background: #fff0fb;
+} */
+
+.suggestion-list li:nth-child(even) {
+    background: #ebf3ff;
+}
+
+.suggestion-list li:hover {
+    background: #e8f4fb;
+    cursor: pointer;
+}
+
+.suggestion-list li:hover .suggestion-item__anchor {
+    color: #007cba;
+}
+
+.suggestion-hint {
+    margin: 10px;
+}
+
+.suggestion-action-buttons {
+    margin: 10px;
+}
+
+.suggestion-action-buttons button:nth-child(odd) {
+    margin-right: 5px;
+}
+
+/* AI anchor suggestions */
+.suggestion-list--ai {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.suggestion-item {
+    padding: 8px 10px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.suggestion-item:last-child {
+    border-bottom: none;
+}
+
+.suggestion-item__phrase {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.suggestion-item__anchor {
+    font-weight: 600;
+    flex: 1;
+}
+
+.suggestion-item__insert.components-button {
+    flex-shrink: 0;
+    font-size: 12px;
+    height: 28px;
+    padding: 0 8px;
+}
+
+.suggestion-item__context {
+    margin-top: 4px;
+    font-size: 12px;
+    color: #666;
+    line-height: 1.4;
+}
+
+.suggestion-item__context strong {
+    color: #007cba;
+}

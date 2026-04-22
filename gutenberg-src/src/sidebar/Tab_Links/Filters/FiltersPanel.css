@@ -1,0 +1,55 @@
+.cherry-filters-toggles {
+    display: flex;
+    flex-flow: nowrap row;
+}
+
+.cherry-filters-toggles>div {
+    flex-grow: 1;
+}
+
+.filter-terms-container {
+    border: 1px solid lightgray;
+    border-radius: 0;
+}
+
+.subheader {
+    font-size: 13px;
+    color: #7d8186;
+    margin-bottom: 0.5em;
+    margin-top: 1.0em;
+    font-weight: bold;
+}
+
+.term-checkbox-child {
+    margin-left: 10px;
+    padding: 1px 4px;
+}
+
+.term-checkbox-toplvl {
+    margin-left: 0;
+    padding: 1px 4px;
+}
+
+.filter-terms-container {
+    /* padding: 5px; */
+    height: 200px;
+    overflow: auto;
+}
+
+.cherry-text-filter input.components-text-control__input {
+    margin: 0;
+    border: none;
+    border-bottom: 1px solid lightgray;
+    font-size: 18px;
+    border-radius: 0;
+}
+
+.cherry-text-filter div {
+    margin: 0;
+    padding-bottom: 2px;
+    padding-top: 2px;
+}
+
+.cherry-filter-panel button.components-panel__body-toggle {
+    padding: 14px 48px 14px 10px;
+}

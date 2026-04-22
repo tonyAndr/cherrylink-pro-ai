@@ -1,0 +1,35 @@
+.cherry-incoming li > *,
+.cherry-stats li > *{
+    display: block;
+
+}
+.cherry-stats li > span{
+    overflow-wrap: break-word;
+    
+}
+
+.cherry-stats li > a{
+    color:lightcoral;
+}
+
+.cherry-stat-anchor {
+    color: lightcoral;
+    cursor: pointer;
+}
+
+.cherry-stat-anchor:hover {
+    text-decoration: underline;
+    color: #c0392b;
+}
+
+.cherry-stats-container {
+    padding: 5px;
+}
+
+.cherry-incoming-ankor {
+    color:lightcoral;  
+}
+
+.cherry-stats-container {
+    padding: 16px;
+}

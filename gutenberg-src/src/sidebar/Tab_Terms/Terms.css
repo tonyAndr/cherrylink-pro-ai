@@ -1,0 +1,95 @@
+.terms-tab-spinner {
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+}
+
+.term-divider {
+    text-transform: uppercase;
+    font-weight: bold;
+    font-size: 12px;
+    text-align: center;
+    padding: 5px;
+    background: #007cba;
+    color: white;
+}
+
+.term-item-container {
+    position: relative;
+    height: 35px;
+    padding: 5px;
+    border-bottom: 1px solid lightgrey;
+}
+/* .link-item-container:nth-child(odd) {
+    background: #f3f4f5;
+} */
+/* .link-item-container:nth-child(even) {
+    border-left: 3px solid rgb(168, 168, 168);
+} */
+.term-item-container > span  {
+    display: block;
+    overflow: hidden;
+    max-height: 60px;
+    line-height: 20px;
+}
+
+.term-item-container.inArticle {
+    border-left: 3px solid rgb(218, 92, 92);
+}
+
+.term-toolbar-overlay {
+    position: absolute;
+    padding: 3px;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(1, 1fr);
+    grid-column-gap: 0px;
+    grid-row-gap: 0px;
+    opacity: 0.10;
+    background: #00000000;
+    -webkit-transition: all 0.3s ease-in-out;
+    -moz-transition: all 0.3s ease-in-out;
+    -ms-transition: all 0.3s ease-in-out;
+    -o-transition: all 0.3s ease-in-out;
+    transition: all 0.3s ease-in-out;
+}
+
+.term-toolbar-overlay:hover {
+    opacity: 1;
+    background: #ffffff96;
+    cursor: pointer;
+}
+
+.term-toolbar-overlay .toolbar-actions { 
+    grid-area: 1 / 1 / 2 / 2; 
+}
+.term-toolbar-overlay .toolbar-article { 
+    grid-area: 1 / 2 / 2 / 3; 
+    justify-self: end;
+}
+
+.term-toolbar-overlay .toolbar-actions > div,
+.term-toolbar-overlay .toolbar-article > div {
+    border: 1px dashed #007cba;
+    width: 26px;
+    height: 26px;
+    background: #ffffffa6;
+    border-radius: 5px;
+    display: inline-block;
+    margin: 1px;
+}
+.term-toolbar-overlay .toolbar-actions > div:hover,
+.term-toolbar-overlay .toolbar-article > div:hover {
+    border: 2px solid #007cba;
+    background: #007cba;
+    cursor: pointer;
+}
+
+.term-toolbar-overlay .toolbar-actions>div:hover img,
+.term-toolbar-overlay .toolbar-article>div:hover img {
+    filter: invert(1);
+}

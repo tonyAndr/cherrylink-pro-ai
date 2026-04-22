@@ -1,0 +1,93 @@
+.get-data-button {
+    position: absolute;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+}
+
+.get-data-button>button {
+    min-width: 0;
+    border: none;
+    cursor: pointer;
+    flex-grow: 1;
+    background: lightcoral;
+    color: white;
+    padding: 5px;
+}
+
+.get-data-button>button:hover {
+    background: #da5c5c;
+    color: white;
+}
+
+.cherrylink-tabs-panel {
+    background: #f3f4f5;
+    border-bottom: 1px solid #e2e4e7;
+}
+
+.cherrylink-tabs-panel button:focus {
+    box-shadow: inset 0 -3px #007cba !important;
+    outline: 1px dotted #555d66 !important;
+}
+
+.cherrylink-tabs-panel button {
+    height: 35px;
+    flex-grow: 1;
+    border-radius: 0;
+}
+
+.cherrylink-tabs-panel>div[role="tablist"] {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    align-content: stretch;
+}
+
+.tab-general-style {
+    border: none;
+    box-shadow: none;
+    cursor: pointer;
+    padding: 3px 15px;
+    margin-left: 0;
+    font-weight: 400;
+    color: #191e23;
+    outline-offset: -1px;
+    transition: box-shadow .1s linear;
+}
+
+.tab-general-active {
+    box-shadow: inset 0 -3px #007cba;
+    font-weight: 600;
+    position: relative;
+}
+
+.components-tab-panel__tabs .tab-links,
+.components-tab-panel__tabs .tab-taxonomies,
+.components-tab-panel__tabs .tab-stats,
+.components-tab-panel__tabs .tab-blocklinks {
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 24px;
+}
+
+.components-tab-panel__tabs .tab-links {
+    background-image: url(/wp-content/plugins/cherrylink-pro-ai/assets/gutenberg/tab-links.png);
+}
+
+.components-tab-panel__tabs .tab-taxonomies {
+    background-image: url(/wp-content/plugins/cherrylink-pro-ai/assets/gutenberg/tab-taxonomies.png);
+}
+
+.components-tab-panel__tabs .tab-stats {
+    background-image: url(/wp-content/plugins/cherrylink-pro-ai/assets/gutenberg/tab-stats.png);
+}
+
+.components-tab-panel__tabs .tab-blocklinks {
+    background-image: url(/wp-content/plugins/cherrylink-pro-ai/assets/gutenberg/tab-block.png);
+}
+
+.components-tab-panel__tabs .error-text {
+    padding: 10px;
+    color: tomato;
+}

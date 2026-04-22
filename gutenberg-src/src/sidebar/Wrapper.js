@@ -231,14 +231,11 @@ class CherryLinkSidebar extends React.Component {
                     name="cherrylink-sidebar"
                     title={__("CherryLink Pro", "cherrylink")}
                 >
-                    {/* <NoticeContext.Provider value={this.updateNotice}> */}
                         <GetData onDataChange={this.updateLinksData} currentData={this.state.currentData} currentFilters={this.state.currentFilters} />
                         <GetArticleStats onChange={this.updateArticleStats} convertUrl={this.fcl_convertRelativeUrl} />
                         <GetAllTerms onTermsChange={this.updateTermsData} currentTerms={this.state.currentTerms} />
                         <GetIncomingLinks onChange={this.updateIncomingLinks} />
                         {renderPanel}
-                        
-                    {/* </NoticeContext.Provider> */}
                 </PluginSidebar>
             </Fragment>
         );

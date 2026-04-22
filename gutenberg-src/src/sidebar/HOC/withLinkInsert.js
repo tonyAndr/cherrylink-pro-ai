@@ -2,32 +2,7 @@ import React from 'react';
 import { select, dispatch } from '@wordpress/data';
 import { showNotice } from "../Notices";
 import { applyLinkAtSelection } from './cherryRichText';
-
-// Block types and their rich-text attributes for phrase-based insertion.
-// Manual selection (Insert button on link items) uses the format-type approach
-// and works for ANY block — this map is only needed for findAndInsertAtPhrase.
-const BlockAttributes = {
-    'core/paragraph':    ['content'],
-    'core/heading':      ['content'],
-    'core/list-item':    ['content'],
-    'core/quote':        ['value', 'citation'],
-    'core/pullquote':    ['value', 'citation'],
-    'core/preformatted': ['content'],
-    'core/verse':        ['content'],
-    'core/button':       ['text'],
-    'core/image':        ['caption'],
-    'core/gallery':      ['caption'],
-    'core/audio':        ['caption'],
-    'core/video':        ['caption'],
-    'core/embed':        ['caption'],
-}
-
-function flattenBlocks(blocks) {
-    return blocks.reduce(
-        (acc, b) => acc.concat([b], flattenBlocks(b.innerBlocks || [])),
-        []
-    );
-}
+import { BlockAttributes, flattenBlocks } from './blockUtils';
 
 const LinkWithInsertAction = OriginalComponent => {
     class NewComponent extends React.Component {

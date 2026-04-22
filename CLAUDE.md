@@ -23,7 +23,7 @@ WordPress plugin for AI-powered internal linking. Connects to Cherry Vector API 
 | `cherrylink_admin_options.php` | WP admin settings page + "Прочие настройки" actions |
 | `cherrylink_install.php` | Activation, `fill_options()` defaults |
 | `js/cherry-front.js` | Classic editor panel JS (suggestions, stats, link insertion) |
-| `js/cherry-gutenberg.js` | **Built artifact** from cherrylink-gutenberg-pro — do not hand-edit |
+| `js/cherry-gutenberg.js` | **Built artifact** from `gutenberg-src/` — do not hand-edit |
 | `css/cherry-main.css` | All plugin styles |
 
 ---
@@ -77,6 +77,11 @@ Scroll-to-block uses block data store, not DOM:
 ```js
 import { findBlocksWithUrl, scrollToBlockInEditor } from '../HOC/scrollToEditor';
 ```
+
+Source layout notes (`gutenberg-src/src/sidebar/`):
+- `HOC/blockUtils.js` — shared `BlockAttributes` map + `flattenBlocks()`. Both `scrollToEditor.js` and `withLinkInsert.js` import from here; do not duplicate.
+- `Data/` — render-less components (`GetData`, `GetAllTerms`, `GetIncomingLinks`, `GetArticleStats`). All fetch calls use `async/await`.
+- `snowball` is a **runtime** dependency (Russian stemming in the link-filter). Lives in `dependencies`, not `devDependencies`.
 
 ---
 

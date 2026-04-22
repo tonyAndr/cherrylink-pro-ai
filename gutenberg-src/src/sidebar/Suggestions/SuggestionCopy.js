@@ -12,5 +12,4 @@ class SuggestionCopy extends Component {
         )
     }
 }
-// SuggestionInsert.contextType = NoticeContext;
 export default LinkWithInsertAction(SuggestionCopy);

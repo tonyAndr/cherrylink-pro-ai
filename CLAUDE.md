@@ -59,14 +59,19 @@ Footer:
 - `.cl-footer-incoming` spans are shown/hidden independently
 
 ### Gutenberg sidebar (`cherry-gutenberg.js`)
-Built from `/Users/anton/projects/cherrylink-gutenberg-pro`.
+Built from `gutenberg-src/` (lives inside this repo). Toolchain: `@wordpress/scripts` v32 (webpack 5).
 
 Build + deploy:
 ```bash
-cd /Users/anton/projects/cherrylink-gutenberg-pro
+cd gutenberg-src
 npm run build
-cp build/cherry-gutenberg.js /Users/anton/projects/cherrylink-pro-ai/js/cherry-gutenberg.js
+cp build/cherry-gutenberg.js ../js/cherry-gutenberg.js
 ```
+
+`webpack.config.js` note: patches `css-loader` with `url: false` so absolute WP runtime paths
+(`/wp-content/plugins/.../assets/gutenberg/*.png`) are not resolved at build time.
+The check uses `/css-loader/` with slashes — `postcss-loader` contains `css-loader` as a substring
+and would otherwise also get patched.
 
 Scroll-to-block uses block data store, not DOM:
 ```js

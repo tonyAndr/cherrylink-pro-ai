@@ -5,3 +5,6 @@
 stats
 export_options.txt
 vite-admin
+.DS_Store
+js/*.map
+js/index-rtl.css

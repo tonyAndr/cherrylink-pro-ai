@@ -1,6 +1,12 @@
 import React from 'react';
-import { PluginSidebar, PluginSidebarMoreMenuItem } from '@wordpress/editPost';
 import { registerPlugin } from '@wordpress/plugins';
+
+// PluginSidebar moved from @wordpress/edit-post (WP ≤6.5) to @wordpress/editor (WP 6.6+).
+// Resolved lazily at render time so wp globals are guaranteed to be set.
+function getPluginSidebarComponents() {
+    const src = window.wp?.editor?.PluginSidebar ? window.wp.editor : window.wp.editPost;
+    return { PluginSidebar: src.PluginSidebar, PluginSidebarMoreMenuItem: src.PluginSidebarMoreMenuItem };
+}
 import { Fragment } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { GetData } from './Data/GetData';
@@ -221,6 +227,8 @@ class CherryLinkSidebar extends React.Component {
                     }
                 </div>;
         }
+
+        const { PluginSidebar, PluginSidebarMoreMenuItem } = getPluginSidebarComponents();
 
         return (
             <Fragment>

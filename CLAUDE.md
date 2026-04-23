@@ -1,6 +1,8 @@
 # CherryLink Pro AI — Plugin Context
 
-**Full ecosystem context** (API, VPS, CI/CD): `/Users/anton/projects/cherry-vector-api/CLAUDE.md`
+**Plugin specs** (editor UI, Gutenberg sidebar): `specs/` in this repo
+**API specs** (search, link graph, indexing, logging): `/Users/anton/projects/cherrylink/api/specs/`
+**Full API + infra context**: `/Users/anton/projects/cherrylink/api/CLAUDE.md`
 
 ---
 

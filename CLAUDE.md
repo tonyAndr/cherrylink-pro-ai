@@ -66,9 +66,11 @@ Built from `gutenberg-src/` (lives inside this repo). Toolchain: `@wordpress/scr
 Build + deploy:
 ```bash
 cd gutenberg-src
-npm run build
-cp build/cherry-gutenberg.js ../js/cherry-gutenberg.js
+npm run build        # CopyToJsPlugin auto-copies JS + CSS + asset.php to ../js/
+npm run start        # dev watcher — same copy on each rebuild
+npm test -- --watchAll=false  # 21 unit tests
 ```
+Clean build before committing: `rm -rf build && npm run build`
 
 `webpack.config.js` note: patches `css-loader` with `url: false` so absolute WP runtime paths
 (`/wp-content/plugins/.../assets/gutenberg/*.png`) are not resolved at build time.
@@ -138,7 +140,7 @@ Each `.linkate-link` element carries:
 ## Local Dev
 
 ```bash
-cd /Users/anton/projects/cherrylink-pro-ai/wp-dev
+cd /Users/anton/projects/cherrylink/plugin/wp-dev
 docker compose up -d
 # WordPress: http://localhost:8088 (admin/admin)
 # Plugin mounted as live bind — PHP edits take effect immediately

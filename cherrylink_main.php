@@ -406,16 +406,11 @@ function linkate_posts_wp_admin_style()
 {
     if (LinkatePosts::linkate_is_plugin_admin_page('settings')) {
         wp_register_style('cherrylink-css-admin', plugins_url('', __FILE__) . '/css/cherry-admin.css', false, LinkatePosts::$version);
-        wp_register_style('cherrylink-css-admin-table', plugins_url('', __FILE__) . '/css/tabulator.css', false, LinkatePosts::$version);
         wp_enqueue_style('cherrylink-css-admin');
-        wp_enqueue_style('cherrylink-css-admin-table');
 
         wp_register_script('cherrylink-js-tailwind', plugins_url('/js/tailwind.js', __FILE__), array(), LinkatePosts::get_linkate_version());
         wp_register_script('cherrylink-js-admin', plugins_url('/js/cherry-admin.js', __FILE__), array('jquery'), LinkatePosts::get_linkate_version());
         wp_register_script('cherrylink-js-admin-csv', plugins_url('/js/cherry-admin-csv.js', __FILE__), array('jquery'), LinkatePosts::get_linkate_version());
-
-        wp_register_script('cherrylink-js-admin-table', plugins_url('/js/tabulator.min.js', __FILE__), array('jquery'), LinkatePosts::get_linkate_version());
-        // wp_register_script( 'cherrylink-js-admin-table-wrapper', plugins_url( '/js/jquery_wrapper.js', __FILE__ ), array( 'jquery', 'cherrylink-js-admin-table' ), LinkatePosts::get_linkate_version() );
 
         wp_register_script('cherrylink-js-admin-index', plugins_url('/js/cherry-admin-index.js', __FILE__), array('jquery'), LinkatePosts::get_linkate_version());
 
@@ -425,7 +420,6 @@ function linkate_posts_wp_admin_style()
 
         wp_enqueue_script('cherrylink-js-tailwind');
         wp_enqueue_script('cherrylink-js-admin');
-        wp_enqueue_script('cherrylink-js-admin-table');
         wp_enqueue_script('cherrylink-js-admin-index');
         wp_enqueue_script('cherrylink-js-admin-csv');
     }

@@ -188,9 +188,6 @@ jQuery(document).ready(function ($) {
                 data: ajax_data,
                 datatype: 'json',
                 success: function (response) {
-                    const findTable = Tabulator.prototype.findTable("#example-table");
-                    findTable[0].setData();
-                    // $("#example-table").tabulator("setData");
                 }
             });
 

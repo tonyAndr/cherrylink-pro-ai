@@ -17,39 +17,19 @@ namespace Action_Scheduler\WP_CLI;
  */
 class ProgressBar {
 
-	/**
-	 * Current number of ticks.
-	 *
-	 * @var integer
-	 */
+	/** @var integer */
 	protected $total_ticks;
 
-	/**
-	 * Total number of ticks.
-	 *
-	 * @var integer
-	 */
+	/** @var integer */
 	protected $count;
 
-	/**
-	 * Progress bar update interval.
-	 *
-	 * @var integer
-	 */
+	/** @var integer */
 	protected $interval;
 
-	/**
-	 * Progress bar message.
-	 *
-	 * @var string
-	 */
+	/** @var string */
 	protected $message;
 
-	/**
-	 * Instance.
-	 *
-	 * @var \cli\progress\Bar
-	 */
+	/** @var \cli\progress\Bar */
 	protected $progress_bar;
 
 	/**
@@ -58,8 +38,8 @@ class ProgressBar {
 	 * @param string  $message    Text to display before the progress bar.
 	 * @param integer $count      Total number of ticks to be performed.
 	 * @param integer $interval   Optional. The interval in milliseconds between updates. Default 100.
-	 *
-	 * @throws \Exception When this is not run within WP CLI.
+ 	 *
+	 * @throws Exception When this is not run within WP CLI
 	 */
 	public function __construct( $message, $count, $interval = 100 ) {
 		if ( ! ( defined( 'WP_CLI' ) && WP_CLI ) ) {
@@ -84,7 +64,7 @@ class ProgressBar {
 		$this->progress_bar->tick();
 		$this->total_ticks++;
 
-		do_action( 'action_scheduler/progress_tick', $this->total_ticks ); // phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
+		do_action( 'action_scheduler/progress_tick', $this->total_ticks );
 	}
 
 	/**

@@ -439,8 +439,10 @@ class CherryVectorAPI
         }
 
         if ($timeout === 0) {
-            $is_batch  = str_ends_with($path, '/batch') || str_ends_with($path, '/all') || str_contains($path, '/parse');
-            $is_search = str_ends_with($path, '/search') || str_ends_with($path, '/problems') || str_ends_with($path, '/stats');
+            // Plain substr/strpos (not str_ends_with/str_contains) — those are PHP 8.0+
+            // and the plugin supports PHP 7.4.
+            $is_batch  = substr($path, -6) === '/batch' || substr($path, -4) === '/all' || strpos($path, '/parse') !== false;
+            $is_search = substr($path, -7) === '/search' || substr($path, -9) === '/problems' || substr($path, -6) === '/stats';
             $timeout   = $is_batch ? 120 : ($is_search ? 60 : 15);
         }
         $args = [

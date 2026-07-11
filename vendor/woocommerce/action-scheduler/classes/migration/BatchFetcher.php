@@ -1,6 +1,8 @@
 <?php
 
+
 namespace Action_Scheduler\Migration;
+
 
 use ActionScheduler_Store as Store;
 
@@ -14,11 +16,7 @@ use ActionScheduler_Store as Store;
  * @codeCoverageIgnore
  */
 class BatchFetcher {
-	/**
-	 * Store instance.
-	 *
-	 * @var ActionScheduler_Store
-	 */
+	/** var ActionScheduler_Store */
 	private $store;
 
 	/**
@@ -33,7 +31,7 @@ class BatchFetcher {
 	/**
 	 * Retrieve a list of actions.
 	 *
-	 * @param int $count The number of actions to retrieve.
+	 * @param int $count The number of actions to retrieve
 	 *
 	 * @return int[] A list of action IDs
 	 */
@@ -45,7 +43,7 @@ class BatchFetcher {
 			}
 		}
 
-		return array();
+		return [];
 	}
 
 	/**
@@ -57,39 +55,32 @@ class BatchFetcher {
 	 */
 	private function get_query_strategies( $count ) {
 		$now  = as_get_datetime_object();
-		$args = array(
+		$args = [
 			'date'     => $now,
 			'per_page' => $count,
 			'offset'   => 0,
 			'orderby'  => 'date',
 			'order'    => 'ASC',
-		);
+		];
 
-		$priorities = array(
+		$priorities = [
 			Store::STATUS_PENDING,
 			Store::STATUS_FAILED,
 			Store::STATUS_CANCELED,
 			Store::STATUS_COMPLETE,
 			Store::STATUS_RUNNING,
-			'', // any other unanticipated status.
-		);
+			'', // any other unanticipated status
+		];
 
 		foreach ( $priorities as $status ) {
-			yield wp_parse_args(
-				array(
-					'status'       => $status,
-					'date_compare' => '<=',
-				),
-				$args
-			);
-
-			yield wp_parse_args(
-				array(
-					'status'       => $status,
-					'date_compare' => '>=',
-				),
-				$args
-			);
+			yield wp_parse_args( [
+				'status'       => $status,
+				'date_compare' => '<=',
+			], $args );
+			yield wp_parse_args( [
+				'status'       => $status,
+				'date_compare' => '>=',
+			], $args );
 		}
 	}
 }

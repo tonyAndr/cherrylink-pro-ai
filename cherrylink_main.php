@@ -3,9 +3,11 @@
 Plugin Name: CherryLink Pro AI
 Plugin URI: http://seocherry.ru/
 Description: Плагин для автоматической внутренней перелинковки на основе семантического поиска (AI). Находит релевантные статьи и предлагает анкорные фразы с помощью векторных эмбеддингов.
-Version: 1.0.0
+Version: 1.0.1
 Author: Anton SeoCherry.ru
 Author URI: http://seocherry.ru/
+Requires at least: 5.6
+Requires PHP: 7.4
 Text Domain: cherrylink-td
 */
 

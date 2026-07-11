@@ -5,18 +5,14 @@
  */
 interface ActionScheduler_Schedule {
 	/**
-	 * Get the date & time this schedule was created to run, or calculate when it should be run
-	 * after a given date & time.
-	 *
-	 * @param null|DateTime $after Timestamp.
+	 * @param DateTime $after
 	 * @return DateTime|null
 	 */
-	public function next( ?DateTime $after = null );
+	public function next( DateTime $after = NULL );
 
 	/**
-	 * Identify the schedule as (not) recurring.
-	 *
 	 * @return bool
 	 */
 	public function is_recurring();
 }
+ 

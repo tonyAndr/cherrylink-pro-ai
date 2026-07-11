@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "f1c749d79abc576f004039ba8335c713",
+    "content-hash": "66cc7e115f7cc0eb99ccce346e27234a",
     "packages": [
         {
             "name": "abelcallejo/wordpress-environment",
@@ -47,26 +47,23 @@
         },
         {
             "name": "woocommerce/action-scheduler",
-            "version": "4.0.0",
+            "version": "3.6.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/woocommerce/action-scheduler.git",
-                "reference": "7321e865436e125a997de5ad95bdc8821c5a53e3"
+                "reference": "e7dafe215be5ef823392204535ee2e241f99a8cb"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/woocommerce/action-scheduler/zipball/7321e865436e125a997de5ad95bdc8821c5a53e3",
-                "reference": "7321e865436e125a997de5ad95bdc8821c5a53e3",
+                "url": "https://api.github.com/repos/woocommerce/action-scheduler/zipball/e7dafe215be5ef823392204535ee2e241f99a8cb",
+                "reference": "e7dafe215be5ef823392204535ee2e241f99a8cb",
                 "shasum": ""
             },
-            "require": {
-                "php": ">=7.2"
-            },
             "require-dev": {
-                "phpunit/phpunit": "^8.5",
+                "phpunit/phpunit": "^7.5",
                 "woocommerce/woocommerce-sniffs": "0.1.0",
                 "wp-cli/wp-cli": "~2.5.0",
-                "yoast/phpunit-polyfills": "^2.0"
+                "yoast/phpunit-polyfills": "^1.0"
             },
             "type": "wordpress-plugin",
             "extra": {
@@ -84,9 +81,9 @@
             "homepage": "https://actionscheduler.org/",
             "support": {
                 "issues": "https://github.com/woocommerce/action-scheduler/issues",
-                "source": "https://github.com/woocommerce/action-scheduler/tree/4.0.0"
+                "source": "https://github.com/woocommerce/action-scheduler/tree/3.6.4"
             },
-            "time": "2026-06-16T15:01:01+00:00"
+            "time": "2023-10-11T18:24:47+00:00"
         }
     ],
     "packages-dev": [],

@@ -48,4 +48,29 @@ class CL_Index_Helpers
         }
         return $list;
     }
+
+    /**
+     * Pure incremental-sync diff (no WP calls — unit-testable).
+     *
+     * @param array $manifest         [post_id => ['modified' => string|null, 'hash' => ...]] from the API
+     * @param array $current_modified [post_id => post_modified_gmt] for currently published posts
+     * @return array ['upsert' => int[], 'delete' => int[]]
+     *   upsert = posts new to the index or whose modified timestamp changed
+     *   delete = indexed posts that are no longer published (orphans)
+     */
+    public static function compute_sync_plan(array $manifest, array $current_modified): array
+    {
+        $upsert = [];
+        foreach ($current_modified as $id => $modified) {
+            $id = (int)$id;
+            if (!isset($manifest[$id]) || (string)($manifest[$id]['modified'] ?? '') !== (string)$modified) {
+                $upsert[] = $id;
+            }
+        }
+        $delete = array_values(array_diff(
+            array_map('intval', array_keys($manifest)),
+            array_map('intval', array_keys($current_modified))
+        ));
+        return ['upsert' => $upsert, 'delete' => $delete];
+    }
 }

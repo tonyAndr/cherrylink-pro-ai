@@ -363,23 +363,25 @@ jQuery(document).ready(function ($) {
 
         /* ================== API SUGGESTIONS =============== */
 
-        function fcl_render_api_suggestions(triggerEl, item) {
-            let suggestions = [];
-            let raw = (item.suggestions || '').trim();
-            if (raw) {
-                try { suggestions = JSON.parse(raw); } catch(e) {}
-            }
+        // Per-target cache so re-opening a hit's panel in the same session doesn't refetch.
+        let cl_api_suggestions_cache = {};
 
+        function fcl_build_suggestions_html(item, suggestions, loading) {
             let reindex_link = window.location.href.replace(window.location.href.slice(window.location.href.indexOf('/wp-admin/') + 10), 'options-general.php?page=cherrylink-pro&subpage=other');
             let insert_button = '<div class="suggestion-insert-anywhere" data-url="' + item.url + '" title="Вставить вокруг выделения">&#9088; Вставить вокруг выделения</div>';
-            let header = suggestions.length > 0
-                ? 'Подсказки для: <strong>' + (item.title_seo || item.titleseo || '') + '</strong>' + insert_button
-                : '<strong>Подсказки не найдены.<br>Убедитесь, что статья проиндексирована через Cherry Vector API. <a target="_blank" href="' + reindex_link + '">Настройки</a>.</strong>';
+            let header;
+            if (loading) {
+                header = '<strong>Подбираем анкорные подсказки…</strong>';
+            } else if (suggestions.length > 0) {
+                header = 'Подсказки для: <strong>' + (item.title_seo || item.titleseo || '') + '</strong>' + insert_button;
+            } else {
+                header = '<strong>Подсказки не найдены.<br>Убедитесь, что статья проиндексирована через Cherry Vector API. <a target="_blank" href="' + reindex_link + '">Настройки</a>.</strong>';
+            }
 
             let panel = '<div class="suggestions-panel"><div class="suggestions-panel-content">'
                 + '<div class="suggestions-panel-header">' + header + '</div>';
 
-            if (suggestions.length > 0) {
+            if (!loading && suggestions.length > 0) {
                 panel += '<ul class="cl-api-suggestions">';
                 suggestions.forEach(function(s) {
                     let phraseEsc = s.phrase.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -399,10 +401,45 @@ jQuery(document).ready(function ($) {
                 panel += '</ul>';
             }
             panel += '</div></div>';
+            return panel;
+        }
 
-            $(triggerEl).parent().parent().parent().parent().before(panel);
-            fcl_enableSuggestionSwitches();
+        // Anchor suggestions are fetched on demand when the panel opens (one hit at a time).
+        function fcl_render_api_suggestions(triggerEl, item) {
+            let anchorEl = $(triggerEl).parent().parent().parent().parent();
+            let $panel = $(fcl_build_suggestions_html(item, [], true));
+            anchorEl.before($panel);
             fcl_toggleOnOffGeneralUI(true);
+
+            let fill = function(suggestions) {
+                let $new = $(fcl_build_suggestions_html(item, suggestions, false));
+                $panel.replaceWith($new);
+                $panel = $new;
+                // .suggestions-panel is display:none by default; only the loading panel got
+                // faded in by fcl_toggleOnOffGeneralUI. The replacement must be shown too.
+                $new.show();
+                fcl_enableSuggestionSwitches();
+            };
+
+            let cacheKey = String(item.postid || '');
+            if (cl_api_suggestions_cache[cacheKey]) {
+                fill(cl_api_suggestions_cache[cacheKey]);
+                return;
+            }
+
+            let currentPostId = (typeof cherrylink_options !== 'undefined' && cherrylink_options['post_id']) ? cherrylink_options['post_id'] : 0;
+            $.ajax({
+                type: 'POST',
+                url: ajax_obj.ajaxurl,
+                dataType: 'json',
+                data: { action: 'get_linkate_suggestions', post_id: currentPostId, target_id: item.postid, target_title: item.title || '' },
+                success: function(resp) {
+                    let sugg = (resp && resp.suggestions) ? resp.suggestions : [];
+                    cl_api_suggestions_cache[cacheKey] = sugg;
+                    fill(sugg);
+                },
+                error: function() { fill([]); }
+            });
         }
 
 

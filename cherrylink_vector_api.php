@@ -26,7 +26,10 @@ class CherryVectorAPI
         $this->license_key = !empty($options['vector_api_key'])
             ? $options['vector_api_key']
             : ($options['hash_field'] ?: '123123');
-        $this->domain      = $_SERVER['HTTP_HOST'] ?? parse_url(home_url(), PHP_URL_HOST);
+        // Stable site identity: derive from home_url() (a stored WP option), NOT $_SERVER['HTTP_HOST'].
+        // HTTP_HOST varies by how the request arrives (localhost vs 127.0.0.1) and is absent in
+        // cron/WP-CLI, which would scatter documents across different API buckets.
+        $this->domain      = wp_parse_url(home_url(), PHP_URL_HOST) ?: ($_SERVER['HTTP_HOST'] ?? '');
     }
 
     // ── Public API ──────────────────────────────────────────────────────────
@@ -50,13 +53,49 @@ class CherryVectorAPI
 
         $custom_fields = array_filter(array_map('trim', explode("\n", $options['vector_custom_fields'] ?? '')));
         foreach ($custom_fields as $field) {
-            $value = get_post_meta($post->ID, $field, true);
-            if (!empty($value) && is_string($value)) {
-                $text .= "\n" . wp_strip_all_tags($value);
+            $flat = $this->flatten_meta_value(get_post_meta($post->ID, $field, true));
+            if ($flat !== '') {
+                $text .= "\n" . $flat;
             }
         }
 
         return trim($text);
+    }
+
+    /**
+     * Flatten a post-meta value into plain text for embedding. Strings are tag-stripped,
+     * numbers stringified, and arrays (e.g. ACF repeaters / groups / multi-value fields)
+     * walked recursively with their scalar leaves joined. Non-scalar leaves (objects,
+     * booleans, null) are skipped.
+     */
+    private function flatten_meta_value($value): string
+    {
+        if (is_string($value)) {
+            return wp_strip_all_tags($value);
+        }
+        if (is_int($value) || is_float($value)) {
+            return (string) $value;
+        }
+        if (is_array($value)) {
+            $parts = [];
+            foreach ($value as $item) {
+                $flat = $this->flatten_meta_value($item);
+                if ($flat !== '') {
+                    $parts[] = $flat;
+                }
+            }
+            return implode("\n", $parts);
+        }
+        return '';
+    }
+
+    /**
+     * Fingerprint of what we actually embed (text + title). A hash match means the stored
+     * vector is current. Used for incremental sync so unchanged posts are not re-embedded.
+     */
+    public function content_hash(WP_Post $post): string
+    {
+        return md5($this->build_text($post) . '|' . $post->post_title);
     }
 
     /**
@@ -65,11 +104,13 @@ class CherryVectorAPI
     public function upsert_post(WP_Post $post): bool
     {
         $body = [
-            'post_id' => $post->ID,
-            'title'   => $post->post_title,
-            'text'    => $this->build_text($post),
-            'url'     => get_permalink($post->ID),
-            'lang'    => 'ru',
+            'post_id'      => $post->ID,
+            'title'        => $post->post_title,
+            'text'         => $this->build_text($post),
+            'url'          => get_permalink($post->ID),
+            'lang'         => 'ru',
+            'content_hash' => $this->content_hash($post),
+            'modified_gmt' => $post->post_modified_gmt,
         ];
 
         $response = $this->request('POST', '/v1/documents', $body);
@@ -109,6 +150,23 @@ class CherryVectorAPI
     }
 
     /**
+     * On-demand anchor suggestions for a single target article (fetched when the editor
+     * expands a hit's suggestion panel). Returns a list of suggestion arrays.
+     */
+    public function suggest_anchors(string $source_html, string $target_title, int $limit = 10): array
+    {
+        if (empty($source_html) || empty($target_title)) {
+            return [];
+        }
+        $response = $this->request('POST', '/v1/suggest-anchors', [
+            'source_html'  => $source_html,
+            'target_title' => $target_title,
+            'limit'        => $limit,
+        ], 60);
+        return $response['suggestions'] ?? [];
+    }
+
+    /**
      * Batch-upsert multiple posts in a single API call.
      * Much faster than individual upserts — one TEI embed call for all posts.
      *
@@ -124,11 +182,13 @@ class CherryVectorAPI
         $documents = [];
         foreach ($wp_posts as $post) {
             $documents[] = [
-                'post_id' => $post->ID,
-                'title'   => $post->post_title,
-                'text'    => $this->build_text($post),
-                'url'     => get_permalink($post->ID),
-                'lang'    => 'ru',
+                'post_id'      => $post->ID,
+                'title'        => $post->post_title,
+                'text'         => $this->build_text($post),
+                'url'          => get_permalink($post->ID),
+                'lang'         => 'ru',
+                'content_hash' => $this->content_hash($post),
+                'modified_gmt' => $post->post_modified_gmt,
             ];
         }
 
@@ -174,6 +234,101 @@ class CherryVectorAPI
         $result   = $this->upsert_batch($wp_posts);
 
         return array_merge($result, ['total' => count($posts)]);
+    }
+
+    // ── Incremental sync helpers ──────────────────────────────────────────────
+
+    /**
+     * Fetch the full index manifest as [post_id => ['hash' => ?, 'modified' => ?]].
+     * Loops the paginated endpoint. This is the "known state" the scan diffs against.
+     */
+    public function fetch_manifest_map(): array
+    {
+        $map    = [];
+        $cursor = null;
+        $guard  = 0;
+        do {
+            $path = '/v1/documents/manifest?limit=1000';
+            if ($cursor) {
+                $path .= '&cursor=' . rawurlencode($cursor);
+            }
+            $resp = $this->request('GET', $path, [], 30);
+            if ($resp === null) {
+                break;  // API error — treat as empty so the scan can still upsert everything
+            }
+            foreach (($resp['docs'] ?? []) as $d) {
+                $map[(int)$d['post_id']] = [
+                    'hash'     => $d['content_hash'] ?? null,
+                    'modified' => $d['modified_gmt'] ?? null,
+                ];
+            }
+            $cursor = $resp['next_cursor'] ?? null;
+        } while ($cursor && ++$guard < 1000);
+
+        return $map;
+    }
+
+    /**
+     * Load posts by ID and upsert them in one batch. Returns ['indexed'=>int,'errors'=>int].
+     */
+    public function upsert_posts_by_ids(array $post_ids): array
+    {
+        $wp_posts = array_filter(array_map('get_post', $post_ids));
+        return $this->upsert_batch(array_values($wp_posts));
+    }
+
+    /**
+     * Build the link graph for the given posts in one batched API call.
+     * Returns the total number of links parsed across all posts.
+     */
+    public function parse_links_for_ids(array $post_ids): int
+    {
+        $items = [];
+        foreach ($post_ids as $pid) {
+            $post = get_post($pid);
+            if (!$post || $post->post_status !== 'publish') {
+                continue;
+            }
+            $url = get_permalink($pid);
+            if (empty($url)) {
+                continue;
+            }
+            $items[] = [
+                'source_id'   => (int)$pid,
+                'source_type' => 0,
+                'source_url'  => $url,
+                'html'        => $post->post_content,
+            ];
+        }
+        if (empty($items)) {
+            return 0;
+        }
+        $resp = $this->parse_links_batch($items);
+        return array_sum(array_map(fn($r) => (int)($r['count'] ?? 0), $resp['results'] ?? []));
+    }
+
+    /**
+     * Batched link parse — one broken-check + one transaction on the API side.
+     */
+    public function parse_links_batch(array $items): array
+    {
+        if (empty($items)) {
+            return ['results' => [], 'errors' => 0];
+        }
+        $resp = $this->request('POST', '/v1/links/parse-batch', ['items' => $items], 120);
+        return $resp ?? ['results' => [], 'errors' => count($items)];
+    }
+
+    /**
+     * Bulk-remove documents (orphan prune). Returns number deleted.
+     */
+    public function delete_documents_batch(array $post_ids): int
+    {
+        if (empty($post_ids)) {
+            return 0;
+        }
+        $resp = $this->request('POST', '/v1/documents/delete-batch', ['post_ids' => array_values($post_ids)]);
+        return (int)($resp['deleted'] ?? 0);
     }
 
     // ── Link graph API ──────────────────────────────────────────────────────

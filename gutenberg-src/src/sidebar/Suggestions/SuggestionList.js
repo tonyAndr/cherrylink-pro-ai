@@ -53,9 +53,13 @@ export class SuggestionList extends React.Component {
     }
 
     render() {
-        const { suggestions, linkItem, inArticle } = this.props;
+        const { suggestions, linkItem, inArticle, loading } = this.props;
 
         if (!linkItem) return null;
+
+        if (loading) {
+            return <p className="suggestion-hint">Подбираем анкорные подсказки…</p>;
+        }
 
         if (!suggestions || suggestions.length === 0) {
             return (

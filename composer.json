@@ -1,5 +1,6 @@
 {
     "require": {
-        "abelcallejo/wordpress-environment": "dev-master"
+        "abelcallejo/wordpress-environment": "dev-master",
+        "woocommerce/action-scheduler": "^4.0"
     }
 }

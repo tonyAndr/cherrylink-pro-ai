@@ -191,6 +191,15 @@ function linkate_posts_index_status_display($page = 'main')
         $scheme_status_class = "";
     }
 
+    // Last-scan drift summary (from the incremental reindex pipeline).
+    $last_scan_text = '';
+    if (!empty($options_meta['last_scan_gmt'])) {
+        $up   = (int)($options_meta['last_upserted'] ?? 0);
+        $del  = (int)($options_meta['last_deleted'] ?? 0);
+        $when = esc_html(get_date_from_gmt($options_meta['last_scan_gmt']));
+        $last_scan_text = " Последнее сканирование: {$when} (обновлено: {$up}, удалено: {$del}).";
+    }
+
     // Is there index, was it successful, is it in progress or crushed?
     $index_process_status = isset($options_meta['indexing_process']) ? $options_meta['indexing_process'] : 'VALUE_NOT_EXIST';
     $index_process_status_text = '';
@@ -215,6 +224,7 @@ function linkate_posts_index_status_display($page = 'main')
         <ul class="list-disc list-inside">
             <li><span id="cherry_index_status" class="<?php echo $index_status_class; ?>"><?php echo $index_status_text; ?></span></li>
             <li><span id="cherry_scheme_status" class="<?php echo $scheme_status_class; ?>"><?php echo $scheme_status_text; ?></span></li>
+            <?php if ($last_scan_text) { ?><li><span id="cherry_lastscan_status"><?php echo $last_scan_text; ?></span></li><?php } ?>
         </ul>
         <?php
         if ($page === 'main') {
@@ -238,6 +248,7 @@ function linkate_posts_index_progress()
         <div id="reindex_progress_text" class="text-lg pb-6"></div>
 
         <input type="submit" class="<?= CL_TWC::$BTN_SCAN ?> button-reindex" name="reindex_all" value="Начать сканирование" />
+        <button type="button" class="<?= CL_TWC::$BTN_ACTION ?> button-reindex-stop" style="display:none">Остановить</button>
         <?php if (function_exists('wp_nonce_field')) ?>
     </div>
 
@@ -609,14 +620,14 @@ function linkate_posts_statistics_options_subpage()
                     Найдены проблемы с перелинковкой
                 </h2>
                 <div class="mb-3" id="cherry_preview_stats_summary" data-linkscount="<?= $scheme_rows ?>"></div>
-                <input type="checkbox" id="spoiler_has_repeats" />
-                <label for="spoiler_has_repeats" id="label_spoiler_has_repeats"></label>
-                <div class="spoiler_has_repeats">
-                </div>
-                <br>
                 <input type="checkbox" id="spoiler_no_incoming" />
                 <label for="spoiler_no_incoming" id="label_spoiler_no_incoming"></label>
                 <div class="spoiler_no_incoming">
+                </div>
+                <br>
+                <input type="checkbox" id="spoiler_has_repeats" />
+                <label for="spoiler_has_repeats" id="label_spoiler_has_repeats"></label>
+                <div class="spoiler_has_repeats">
                 </div>
                 <br>
                 <input type="checkbox" id="spoiler_no_outgoing" />

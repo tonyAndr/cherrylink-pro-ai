@@ -5,7 +5,7 @@ import { Button, Tooltip } from '@wordpress/components';
 export class SuggestionsPanel extends React.Component {
     constructor(props) {
         super(props);
-        this.state = { suggestions: [], linkItem: null, inArticle: false };
+        this.state = { suggestions: [], linkItem: null, inArticle: false, loading: true };
         this.closePanel = this.closePanel.bind(this);
     }
 
@@ -17,22 +17,36 @@ export class SuggestionsPanel extends React.Component {
     componentDidMount() {
         const { suggestionsData, stats } = this.props;
         const { linkItem } = suggestionsData;
-
-        let suggestions = [];
-        const raw = linkItem['data-suggestions'];
-        if (raw) {
-            try {
-                suggestions = JSON.parse(raw);
-            } catch (e) {
-                console.warn('CherryLink: failed to parse suggestions JSON', e);
-            }
-        }
-
         this.setState({
-            suggestions,
             linkItem,
             inArticle: this.isInArticle(linkItem, stats),
+            loading: true,
         });
+        this.fetchSuggestions(linkItem);
+    }
+
+    // Anchor suggestions are fetched on demand when this panel opens (one hit at a time),
+    // not precomputed for every hit. The API caches candidate embeddings per source article,
+    // so opening multiple hits only pays the embedding cost once.
+    async fetchSuggestions(linkItem) {
+        const postId = (typeof cherrylink_options !== 'undefined' && cherrylink_options['post_id'])
+            ? cherrylink_options['post_id'] : 0;
+        const payload = {
+            post_id: postId,
+            target_id: linkItem['data-postid'],
+            target_title: linkItem['data-title'] || '',
+        };
+        try {
+            const resp = await fetch(ajax_var.url + '?action=get_linkate_suggestions', {
+                method: 'POST',
+                body: JSON.stringify(payload),
+            });
+            const data = await resp.json();
+            this.setState({ suggestions: (data && data.suggestions) ? data.suggestions : [], loading: false });
+        } catch (e) {
+            console.warn('CherryLink: suggestions fetch failed', e);
+            this.setState({ suggestions: [], loading: false });
+        }
     }
 
     closePanel() {

@@ -18,7 +18,7 @@
     overflow-y: scroll;
     overflow-x: hidden;
     margin-top: 0;
-    margin-bottom: 35px;
+    margin-bottom: 19px;
     height: 100%;
 }
 
@@ -895,9 +895,10 @@
     padding: 7px 10px;
     border-bottom: 1px solid #e0e0e0;
     cursor: pointer;
+    background: #fff;
+    margin: 0;   /* override wp-admin global `dd, li { margin-bottom: 6px }` that gaps the rows */
 }
 .cl-api-suggestion-item:last-child { border-bottom: none; }
-.cl-api-suggestion-item:nth-child(even) { background: #f5f9ff; }
 .cl-api-suggestion-item:hover { background: #e8f4fb; }
 .cl-api-suggestion-phrase {
     display: flex;

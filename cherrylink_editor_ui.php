@@ -44,6 +44,63 @@ function get_linkate_links()
 }
 
 
+/**
+ * Wrap plain-text content in <p> so the API's block-based NP extractor can find blocks.
+ * Mirrors the prep that linkate_posts() used to do before search.
+ */
+function linkate_build_source_html(string $content): string
+{
+    if ($content === '') {
+        return '';
+    }
+    if (strip_tags($content) === $content) {
+        $paras = array_filter(array_map('trim', preg_split('/\n{2,}/', $content)));
+        $content = '<p>' . implode('</p><p>', $paras) . '</p>';
+    }
+    return $content;
+}
+
+
+/**
+ * On-demand anchor suggestions for one target hit — called when the editor expands a
+ * suggestion panel. Source is the post being edited; target is the hit the user clicked.
+ */
+add_action('wp_ajax_get_linkate_suggestions', 'get_linkate_suggestions');
+function get_linkate_suggestions()
+{
+    if (!current_user_can('edit_posts')) {
+        wp_send_json(['suggestions' => []]);
+    }
+
+    $data = json_decode(file_get_contents('php://input'), true);
+    if (!is_array($data)) {
+        $data = $_POST;
+    }
+
+    $post_id      = isset($data['post_id'])      ? (int) $data['post_id']                       : 0;
+    $target_id    = isset($data['target_id'])    ? (int) $data['target_id']                     : 0;
+    $target_title = isset($data['target_title']) ? sanitize_text_field($data['target_title'])   : '';
+    $source_html  = isset($data['source_html'])  ? (string) $data['source_html']                : '';
+
+    // Prefer live editor HTML if the client sent it; else rebuild from the saved post.
+    if ($source_html === '' && $post_id) {
+        $post = get_post($post_id);
+        if ($post) {
+            $source_html = linkate_build_source_html($post->post_content);
+        }
+    }
+    if ($target_title === '' && $target_id) {
+        $target = get_post($target_id);
+        if ($target) {
+            $target_title = $target->post_title;
+        }
+    }
+
+    $api = new CherryVectorAPI();
+    wp_send_json(['suggestions' => $api->suggest_anchors($source_html, $target_title)]);
+}
+
+
 function hook_term_edit($hook_suffix)
 {
     // Taxonomy editor [custom plugins, TinyMCE]
@@ -69,14 +126,14 @@ function hook_term_edit($hook_suffix)
 
 function linkate_panel_css()
 {
-    wp_register_style('cherrylink-css-main', plugins_url('/css/cherry-main.css', __FILE__), '', LinkatePosts::get_linkate_version());
+    wp_register_style('cherrylink-css-main', plugins_url('/css/cherry-main.css', __FILE__), '', LinkatePosts::asset_ver('css/cherry-main.css'));
     wp_enqueue_style('cherrylink-css-main');
 }
 
 function linkate_panel_tinymce_js()
 {
     $classic_js = 'cherry-front.js';
-    wp_register_script('cherrylink-js-main', plugins_url('/js/' . $classic_js, __FILE__), array('jquery'), LinkatePosts::get_linkate_version());
+    wp_register_script('cherrylink-js-main', plugins_url('/js/' . $classic_js, __FILE__), array('jquery'), LinkatePosts::asset_ver('js/' . $classic_js));
     wp_localize_script('cherrylink-js-main', 'ajax_obj', ['ajaxurl' => admin_url('admin-ajax.php')]);
     wp_enqueue_script('cherrylink-js-main');
 }

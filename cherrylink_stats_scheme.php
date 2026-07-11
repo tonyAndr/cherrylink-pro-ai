@@ -25,11 +25,13 @@ class CL_Stats_Scheme
     }
 
     /**
-     * Full-site link scan. Called in batches from the admin AJAX handler.
+     * @deprecated Superseded by the incremental reindex pipeline in cherrylink_index.php,
+     * whose 'links' phase builds the graph via POST /v1/links/parse-batch for changed posts.
+     * This method is not wired to any AJAX handler and is kept only for reference — do not
+     * revive it as a second, divergent link-scan path.
      *
-     * On offset=0 the entire link graph for this client is cleared first,
-     * then each post's raw HTML is sent to the API for parsing.
-     * The API handles all <a> extraction, classification, and storage.
+     * Full-site link scan. On offset=0 the entire link graph for this client is cleared,
+     * then each post's raw HTML is sent to the API for parsing (extraction/classification/storage).
      */
     public function linkate_create_links_scheme(int $offset = 0, int $batch = 200): void
     {

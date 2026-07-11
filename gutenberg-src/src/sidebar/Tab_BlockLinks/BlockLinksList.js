@@ -70,7 +70,7 @@ class BlockLinksList extends React.Component {
                         ><strong>Удалить</strong></Button>
                     </PanelRow>
                     <div>
-                        {postMeta.manualEdit ? <TextControl value={x.m_keyword} onChange={(text) => this.onTyping(i, text)}></TextControl> : <Disabled><TextControl value={x.keyword}></TextControl></Disabled>}
+                        {postMeta.manualEdit ? <TextControl __next40pxDefaultSize value={x.m_keyword} onChange={(text) => this.onTyping(i, text)}></TextControl> : <Disabled><TextControl __next40pxDefaultSize value={x.keyword}></TextControl></Disabled>}
                     </div>
                 </div>
             ))

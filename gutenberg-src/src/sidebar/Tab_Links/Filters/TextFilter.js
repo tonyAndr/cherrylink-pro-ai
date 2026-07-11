@@ -92,6 +92,7 @@ export const TextFilter = (props) => {
     return (
         
         <TextControl
+            __next40pxDefaultSize
             className="cherry-text-filter"
             value={ serpQuery === false ? props.restoredText : serpQuery }
             placeholder='Поиск по сайту'

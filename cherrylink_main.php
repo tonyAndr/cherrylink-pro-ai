@@ -3,7 +3,7 @@
 Plugin Name: CherryLink Pro AI
 Plugin URI: http://seocherry.ru/
 Description: Плагин для автоматической внутренней перелинковки на основе семантического поиска (AI). Находит релевантные статьи и предлагает анкорные фразы с помощью векторных эмбеддингов.
-Version: 0.1.0
+Version: 1.0.0
 Author: Anton SeoCherry.ru
 Author URI: http://seocherry.ru/
 Text Domain: cherrylink-td
@@ -32,6 +32,11 @@ define('CHERRYLINK_DIR_URL', plugin_dir_url(__FILE__));
 
 require(CHERRYLINK_DIR . '/env-info/W18T.class.php');
 
+// Action Scheduler — background job queue for the incremental sync (must load early).
+if (file_exists(CHERRYLINK_DIR . '/vendor/woocommerce/action-scheduler/action-scheduler.php')) {
+    require_once(CHERRYLINK_DIR . '/vendor/woocommerce/action-scheduler/action-scheduler.php');
+}
+
 if (!defined('LINKATE_DEBUG')) require(CHERRYLINK_DIR . '/cherrylink_debug.php');
 
 if (!defined('LINKATE_INSTALL_LIBRARY')) require(CHERRYLINK_DIR . '/cherrylink_install.php');
@@ -44,6 +49,7 @@ if (!defined('LP_ADMIN_SUBPAGES_LIBRARY')) require(CHERRYLINK_DIR . '/cherrylink
 if (!defined('LINKATE_TERMS_LIBRARY')) require(CHERRYLINK_DIR . '/cherrylink_terms.php');
 if (!defined('CHERRY_VECTOR_API_CLIENT')) { define('CHERRY_VECTOR_API_CLIENT', true); require(CHERRYLINK_DIR . '/cherrylink_vector_api.php'); }
 if (!defined('LINKATE_INDEX_LIBRARY')) require(CHERRYLINK_DIR . '/cherrylink_index.php');
+if (!defined('LINKATE_SYNC_LIBRARY')) require(CHERRYLINK_DIR . '/cherrylink_sync.php');
 if (!defined('LINKATE_STATISTICS_LIBRARY')) require(CHERRYLINK_DIR . '/cherrylink_statistics.php');
 
 if (!defined('LINKATE_STATS_COLUMN_LIBRARY')) require(CHERRYLINK_DIR . '/cherrylink_stats_column.php');
@@ -75,6 +81,20 @@ class LinkatePosts
 
         return $plugin_data['version'];
     } // get_linkate_version
+
+    /**
+     * Cache-busting version for an enqueued asset, keyed on its file mtime so every edit
+     * invalidates the browser cache. The plugin header Version is static (0.1.0), which meant
+     * hand-written JS/CSS (e.g. cherry-front.js) stayed cached across updates. Falls back to
+     * the plugin version if the file can't be stat'd.
+     *
+     * @param string $rel path relative to the plugin dir, e.g. 'js/cherry-front.js'
+     */
+    static function asset_ver($rel)
+    {
+        $mtime = @filemtime(CHERRYLINK_DIR . $rel);
+        return $mtime ? (string) $mtime : self::get_linkate_version();
+    } // asset_ver
 
     // check if plugin's admin page is shown
     static function linkate_is_plugin_admin_page($page = 'settings')
@@ -131,20 +151,14 @@ class LinkatePosts
                 return LinkatePosts::_empty_result($mode, $options, $option_key);
             }
             $query_text  = $current_post->post_title . "\n" . wp_strip_all_tags($current_post->post_content);
-            $source_html = $current_post->post_content;
-
-            // If the content has no HTML tags (e.g. WP-CLI-seeded posts, classic editor
-            // plain text), wrap paragraphs in <p> so the API anchor extractor can find blocks.
-            if (!empty($source_html) && strip_tags($source_html) === $source_html) {
-                $paras = array_filter(array_map('trim', preg_split('/\n{2,}/', $source_html)));
-                $source_html = '<p>' . implode('</p><p>', $paras) . '</p>';
-            }
         }
 
         // ── Vector API search ─────────────────────────────────────────────────
         // Request extra results to have headroom after WP-level filtering.
+        // NOTE: source_html is intentionally omitted — anchor suggestions are no longer
+        // computed eagerly here; they're fetched on demand per hit (get_linkate_suggestions).
         $api         = new CherryVectorAPI();
-        $api_results = $api->search($query_text, $source_html, $limit * 3);
+        $api_results = $api->search($query_text, '', $limit * 3);
 
         if (empty($api_results)) {
             return LinkatePosts::_empty_result($mode, $options, $option_key);
@@ -405,14 +419,14 @@ function cherrylink_activation_notice()
 function linkate_posts_wp_admin_style()
 {
     if (LinkatePosts::linkate_is_plugin_admin_page('settings')) {
-        wp_register_style('cherrylink-css-admin', plugins_url('', __FILE__) . '/css/cherry-admin.css', false, LinkatePosts::$version);
+        wp_register_style('cherrylink-css-admin', plugins_url('', __FILE__) . '/css/cherry-admin.css', false, LinkatePosts::asset_ver('css/cherry-admin.css'));
         wp_enqueue_style('cherrylink-css-admin');
 
-        wp_register_script('cherrylink-js-tailwind', plugins_url('/js/tailwind.js', __FILE__), array(), LinkatePosts::get_linkate_version());
-        wp_register_script('cherrylink-js-admin', plugins_url('/js/cherry-admin.js', __FILE__), array('jquery'), LinkatePosts::get_linkate_version());
-        wp_register_script('cherrylink-js-admin-csv', plugins_url('/js/cherry-admin-csv.js', __FILE__), array('jquery'), LinkatePosts::get_linkate_version());
+        wp_register_script('cherrylink-js-tailwind', plugins_url('/js/tailwind.js', __FILE__), array(), LinkatePosts::asset_ver('js/tailwind.js'));
+        wp_register_script('cherrylink-js-admin', plugins_url('/js/cherry-admin.js', __FILE__), array('jquery'), LinkatePosts::asset_ver('js/cherry-admin.js'));
+        wp_register_script('cherrylink-js-admin-csv', plugins_url('/js/cherry-admin-csv.js', __FILE__), array('jquery'), LinkatePosts::asset_ver('js/cherry-admin-csv.js'));
 
-        wp_register_script('cherrylink-js-admin-index', plugins_url('/js/cherry-admin-index.js', __FILE__), array('jquery'), LinkatePosts::get_linkate_version());
+        wp_register_script('cherrylink-js-admin-index', plugins_url('/js/cherry-admin-index.js', __FILE__), array('jquery'), LinkatePosts::asset_ver('js/cherry-admin-index.js'));
 
         $options = (array) get_option('linkate-posts', []);
         $scheme_exists = array("state" => isset($options['linkate_scheme_exists']) ? true : false);

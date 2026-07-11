@@ -183,9 +183,6 @@ function link_cf_options_from_post($options, $args)
                 $options = $_POST['export'];
                 parse_str($_POST['export'], $options);
                 break;
-            case 'index_custom_fields':
-                $options['index_custom_fields'] = str_replace("\r", "", trim($_POST['index_custom_fields']));
-                break;
             default:
                 $options[$arg] = trim($_POST[$arg]);
         }
@@ -1333,20 +1330,6 @@ function link_cf_display_use_stemming($use_stemming)
             </select>
         <td><?php link_cf_prepare_tooltip("scan_use_stemming"); ?></td>
         </td>
-    </tr>
-<?php
-}
-
-function link_cf_display_index_custom_fields($index_custom_fields)
-{
-?>
-    <tr valign="top">
-        <th scope="row"><label for="index_custom_fields"><?php _e('Сканировать текст из произвольных полей', CHERRYLINK_TEXT_DOMAIN) ?></label></th>
-        <td>
-            <textarea name="index_custom_fields" id="index_custom_fields" rows="4" cols="38" placeholder="my_custom_keywords&#10;acf_field1&#10;..."><?php echo $index_custom_fields; ?></textarea>
-            <p>Ввeдите названия полей каждое с новой строки</p>
-        </td>
-        <td><?php link_cf_prepare_tooltip("scan_index_custom_fields"); ?></td>
     </tr>
 <?php
 }

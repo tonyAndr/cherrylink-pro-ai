@@ -195,7 +195,6 @@ function link_cf_set_options($option_key, $arg)
 
     // other
     $arg['show_cat_filter'] = @$options['show_cat_filter'];
-    $arg['index_custom_fields'] = @$options['index_custom_fields'];
     return $arg;
 }
 
@@ -546,41 +545,6 @@ function link_cf_where_omit_post($manual_current_ID = -1)
 function link_cf_where_hide_pass()
 {
     return "post_password =''";
-}
-
-function link_cf_where_fulltext_match($weight_title, $titleterms, $weight_content, $contentterms, $weight_custom, $customterms, $match_against_title)
-{
-    $wsql = array();
-    if ($match_against_title) {
-        $all_terms = trim($titleterms . " " . $contentterms . " " . $customterms);
-        $wsql[] = "MATCH (`title`) AGAINST ( \"$all_terms\" )";
-    } else {
-
-        if ($weight_title) $wsql[] = "MATCH (`title`) AGAINST ( \"$titleterms\" )";
-        if ($weight_content) $wsql[] = "MATCH (`content`) AGAINST ( \"$contentterms\" )";
-        if ($weight_custom) $wsql[] = "MATCH (`custom_fields`) AGAINST ( \"$customterms\" )";
-    }
-    return '(' . implode(' OR ', $wsql) . ') ';
-}
-
-function link_cf_score_fulltext_match($table_name, $weight_title, $titleterms, $weight_content, $contentterms, $weight_custom, $customterms, $match_against_title)
-{
-    $wsql = array();
-    if (!$match_against_title) {
-        if ($weight_title) $wsql[] = "(" . number_format($weight_title, 4, '.', '') . " * (MATCH (`title`) AGAINST ( \"$titleterms\" )))";
-        if ($weight_content) {
-            $wsql[] = "(" . number_format($weight_content, 4, '.', '') . " * (MATCH (`content`) AGAINST ( \"$contentterms\" )))";
-        }
-        if ($weight_custom) {
-            $wsql[] = "(" . number_format($weight_custom, 4, '.', '') . " * (MATCH (`custom_fields`) AGAINST ( \"$customterms\" )))";
-        }
-    } else {
-        // join terms
-        $all_terms = trim($titleterms . " " . $contentterms . " " . $customterms);
-        $wsql[] = "(" . number_format($weight_content + $weight_title + $weight_custom, 4, '.', '') . " * (MATCH (`title`) AGAINST ( \"$all_terms\" )))";
-    }
-
-    return '(' . implode(' + ', $wsql) . "  ) as score FROM `$table_name` ";
 }
 
 function link_cf_where_check_age($direction, $length, $duration)

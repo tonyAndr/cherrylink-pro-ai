@@ -18,7 +18,7 @@ WordPress plugin for AI-powered internal linking. Connects to Cherry Vector API 
 |---|---|
 | `cherrylink_main.php` | Plugin header, requires all modules |
 | `cherrylink_vector_api.php` | `CherryVectorAPI` class — all HTTP calls to API |
-| `cherrylink_index.php` | Post save/delete hooks + AJAX batch reindex |
+| `cherrylink_index.php` | Post save/delete hooks + **phased incremental** AJAX reindex (plan→upsert→links→prune→done) |
 | `cherrylink_stats_scheme.php` | Full-site link graph scanning (`CL_Stats_Scheme`) |
 | `cherrylink_editor_ui.php` | Classic editor panel HTML (tabs: articles / taxonomy / stats) |
 | `cherrylink_gutenberg.php` | Gutenberg sidebar enqueue + script registration |
@@ -155,5 +155,10 @@ docker compose up -d
 - **Tab PNG icons**: `assets/gutenberg/tab-links.png`, `tab-taxonomies.png`, `tab-stats.png`
 - **`linkate_scheme_exists` option**: repurposed flag — means "Cherry Vector API is configured and accessible", NOT that a MySQL table exists (that table was migrated to Postgres on the API)
 - **`linkate_posts` MySQL table**: still used by `cherrylink_cf.php` for custom fields index — do not drop
+- **Scan is incremental**: diffs current published posts against `GET /v1/documents/manifest` by `post_modified_gmt`, re-embeds only changed posts, builds their links via `POST /v1/links/parse-batch`, and prunes orphans via `POST /v1/documents/delete-batch`. The diff is a pure, unit-tested helper: `CL_Index_Helpers::compute_sync_plan()` (see `tests/test_sync_plan.php`).
+- **Scan runs in the background via Action Scheduler** (`cherrylink_sync.php`, bundled `vendor/woocommerce/action-scheduler`). Start it and leave the page — a self-rescheduling `cherrylink_sync_worker` action processes one batch (upsert→links→prune) and enqueues the next. AJAX: `linkate_sync_start` / `linkate_sync_cancel` / `linkate_sync_status`; JS (`cherry-admin-index.js`) starts it, polls status, and has a Stop button. Progress/worklists live in options `cherrylink_sync_state` / `cherrylink_sync_plan`. Cancel flags the state AND cancels pending actions by ID (`as_unschedule_all_actions([])` only matches arg-less actions). Needs WP-Cron enabled (or a server cron / `wp action-scheduler run`) to advance without traffic.
+- **Foreground `linkate_ajax_call_reindex`** (in `cherrylink_index.php`) is the older synchronous phase-loop; still functional as a fallback but the UI now uses the background sync.
+- **`CL_Stats_Scheme::linkate_create_links_scheme` is deprecated dead code** — the scan's links phase supersedes it; don't revive it as a second link-scan path.
+- **Anchor suggestions are lazy/on-demand**: `linkate_posts()` calls `/v1/search` with an empty `source_html` (no eager anchors, no top-5 cap). When the editor opens a hit's suggestion panel (loupe), it calls the `get_linkate_suggestions` AJAX action → `CherryVectorAPI::suggest_anchors()` → `POST /v1/suggest-anchors` for that one target. Wired in both editors: Gutenberg `SugestionsPanel.componentDidMount` fetches; classic `fcl_render_api_suggestions` fetches (both show a loading state, cache per target). `linkate_build_source_html()` wraps plain-text content in `<p>` for the extractor.
 - **No CI for this plugin**: push to git = source of truth; client updates via plugin updater
 - **`cherry_write_log()`**: writes to PHP error log; in wp-dev: `docker compose logs wordpress`

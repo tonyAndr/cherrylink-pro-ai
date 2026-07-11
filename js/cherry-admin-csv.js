@@ -43,6 +43,46 @@ jQuery(document).ready(function ($) {
         $("#links_direction_incoming").toggle()
     })
 
+    // Clicking a KPI card opens (and scrolls to) its problem section.
+    $(document).on('click', '.cl-stat-card--clickable', function () {
+        const spoiler = $(this).data('spoiler');
+        if (!spoiler) return;
+        $('#' + spoiler).prop('checked', true);
+        const label = document.getElementById('label_' + spoiler);
+        if (label) label.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+
+    // Orphan-fix: fetch donor posts + suggested anchors for one orphan on demand.
+    $(document).on('click', '.cl-find-donors', function () {
+        const $btn = $(this);
+        const postId = $btn.data('postid');
+        const $row = $btn.closest('tr');
+
+        // Toggle: if the panel is already open, close it.
+        const $existing = $row.next('.cl-donor-row');
+        if ($existing.length) {
+            $existing.remove();
+            $btn.text('Найти доноров');
+            return;
+        }
+
+        $btn.text('Загрузка...').prop('disabled', true);
+        $.ajax({
+            type: "POST",
+            url: ajaxurl,
+            dataType: 'json',
+            data: { action: 'linkate_orphan_donors', post_id: postId },
+            success: function (resp) {
+                $btn.text('Скрыть доноров').prop('disabled', false);
+                $row.after(render_donor_row(resp && resp.donors));
+            },
+            error: function () {
+                $btn.text('Найти доноров').prop('disabled', false);
+                $row.after('<tr class="cl-donor-row"><td colspan="3"><div class="cl-donors cl-donors-error">Не удалось получить рекомендации.</div></td></tr>');
+            }
+        });
+    });
+
     // Get posts count to know how many requests we have to make
     function stats_get_posts_count() {
         let ajax_data = stats_serialized_form + '&action=linkate_get_all_posts_count';
@@ -157,29 +197,76 @@ jQuery(document).ready(function ($) {
 
     // Stats preview
 
+    // One KPI tile. `spoilerId` (optional) makes it clickable → opens that spoiler.
+    function stat_card(label, value, tone, spoilerId) {
+        const clickable = spoilerId ? ' cl-stat-card--clickable' : '';
+        const dataAttr  = spoilerId ? ' data-spoiler="' + spoilerId + '"' : '';
+        return '<div class="cl-stat-card tone-' + tone + clickable + '"' + dataAttr + '>'
+            + '<div class="cl-stat-value">' + value + '</div>'
+            + '<div class="cl-stat-label">' + label + '</div>'
+            + '</div>';
+    }
+
     function create_preview_summary (posts_obj) {
-        let output = '';
-        let no_inc = posts_obj.no_incoming.length;
-        let no_out = posts_obj.no_outgoing.length;
-        let has_rep = posts_obj.has_repeats.length;
-        let has_404 = posts_obj.has_404.length;
-        let has_rec = posts_obj.has_recursion.length;
-        let links_count = $("#cherry_preview_stats_summary").attr('data-linkscount');
-        output += '<p>Было проверено <strong>' + stats_posts_count + '</strong> записей. Всего ссылок найдено: <strong>' + links_count + '</strong>.</p>';
-        output += '<ol class="list-decimal list-inside">';
-        output += '<li>Записи с повторами ссылок: <strong>' + (has_rep > 0 ? has_rep : 'Не обнаружены') + '</strong></li>';
-        output += '<li>Записи без входящих ссылок: <strong>' + (no_inc > 0 ? no_inc : 'Не обнаружены') + '</strong></li>';
-        output += '<li>Записи без исходящих ссылок: <strong>' + (no_out > 0 ? no_out : 'Не обнаружены') + '</strong></li>';
-        output += '<li>Записи cо сломанными ссылками: <strong>' + (has_404 > 0 ? has_404 : 'Не обнаружены') + '</strong></li>';
-        output += '<li>Записи ссылающиеся на себя: <strong>' + (has_rec > 0 ? has_rec : 'Не обнаружены') + '</strong></li>';
-        output += '</ol>';
-        if (no_inc > 0 || no_out > 0 || has_rep > 0 || has_404 > 0 || has_rec > 0) {
-        } else if (parseInt(links_count) === 0) {
-            output += '<p>Перелинковка не обнаружена.</p>';
-        } else {
-            output += '<p>Проблем с текущей перелинковкой не найдено. </p>';
+        const no_inc  = posts_obj.no_incoming.length;
+        const no_out  = posts_obj.no_outgoing.length;
+        const has_rep = posts_obj.has_repeats.length;
+        const has_404 = posts_obj.has_404.length;
+        const has_rec = posts_obj.has_recursion.length;
+        const links_count = parseInt($("#cherry_preview_stats_summary").attr('data-linkscount')) || 0;
+
+        let cards = '';
+        cards += stat_card('Проверено записей', stats_posts_count, 'neutral', null);
+        cards += stat_card('Всего ссылок',      links_count,       'neutral', null);
+        cards += stat_card('Без входящих',  no_inc,  no_inc  > 0 ? 'danger' : 'ok', no_inc  > 0 ? 'spoiler_no_incoming'   : null);
+        cards += stat_card('Без исходящих', no_out,  no_out  > 0 ? 'warn'   : 'ok', no_out  > 0 ? 'spoiler_no_outgoing'   : null);
+        cards += stat_card('Повторы ссылок', has_rep, has_rep > 0 ? 'warn'  : 'ok', has_rep > 0 ? 'spoiler_has_repeats'    : null);
+        cards += stat_card('Битые ссылки',  has_404, has_404 > 0 ? 'danger' : 'ok', has_404 > 0 ? 'spoiler_has_404'       : null);
+        cards += stat_card('Ссылки на себя', has_rec, has_rec > 0 ? 'warn'  : 'ok', has_rec > 0 ? 'spoiler_has_recursion'  : null);
+
+        let output = '<div class="cl-stat-cards">' + cards + '</div>';
+        if (!(no_inc || no_out || has_rep || has_404 || has_rec)) {
+            output += (links_count === 0)
+                ? '<p class="mt-3">Перелинковка не обнаружена.</p>'
+                : '<p class="mt-3">Проблем с текущей перелинковкой не найдено.</p>';
         }
         $("#cherry_preview_stats_summary").html(output);
+    }
+
+    // Shared cell builders — every problem table uses the real post id + title now,
+    // not the raw permalink (which used to fill both the "Post ID" and "URL" columns).
+    function cl_id_cell (v)    { return '<td>' + (v.post_id || '') + '</td>'; }
+    function cl_title_cell (v) {
+        const t = v.title || v.url;
+        return '<td><a href="' + v.url + '" target="_blank">' + t + '</a>'
+            + '<div class="cl-row-url">' + v.url + '</div></td>';
+    }
+    function cl_edit_link (v) {
+        return '<a href="/wp-admin/post.php?post=' + v.post_id + '&action=edit" target="_blank" class="button button-small">В редактор</a>';
+    }
+
+    // Orphan-fix: render the donor suggestions returned for one orphan into a sub-row.
+    function render_donor_row (donors) {
+        if (!donors || !donors.length) {
+            return '<tr class="cl-donor-row"><td colspan="3"><div class="cl-donors">Подходящих доноров не найдено.</div></td></tr>';
+        }
+        const items = donors.map(function (d) {
+            const anchor = d.anchor
+                ? 'якорь: «<strong>' + d.anchor + '</strong>»'
+                : '<em>подходящий анкор не найден</em>';
+            return '<li class="cl-donor-item">'
+                + '<div class="cl-donor-main">'
+                +   '<a href="' + d.source_url + '" target="_blank" class="cl-donor-title">' + d.source_title + '</a>'
+                +   '<div class="cl-donor-anchor">' + anchor + '</div>'
+                + '</div>'
+                + '<a href="' + d.edit_url + '" target="_blank" class="button button-small">Открыть донор</a>'
+                + '</li>';
+        }).join('');
+        return '<tr class="cl-donor-row"><td colspan="3">'
+            + '<div class="cl-donors">'
+            +   '<div class="cl-donors-title">Откуда можно сослаться на эту статью:</div>'
+            +   '<ul class="cl-donor-list">' + items + '</ul>'
+            + '</div></td></tr>';
     }
 
     function create_preview_html () {
@@ -228,11 +315,11 @@ jQuery(document).ready(function ($) {
                     }
                 }
                 repeats = "<ol>" + repeats + "</ol>";
-                return `<tr><td>${v.id}</td><td><a href="${v.url}" target="_blank">${v.url}</a></td><td>${repeats}</td><td><a href="/wp-admin/post.php?post=${v.id}&action=edit" target="_blank">В редактор</a></td></tr>`;
+                return `<tr>${cl_id_cell(v)}${cl_title_cell(v)}<td>${repeats}</td><td>${cl_edit_link(v)}</td></tr>`;
             }).join('\n');
             $("#label_spoiler_has_repeats").html("Найдены повторы ("+posts.has_repeats.length+")");
-            $("div.spoiler_has_repeats").html("<table class='cherry-stats-preview-table'><thead><tr><th>Post ID</th><th>URL</th><th>Ссылается на (количество)</th><th>Действия</th></tr></thead><tbody>" + out_repeats + "</tbody></table>")
-            open_spoiler_id = "#label_spoiler_has_repeats";
+            $("div.spoiler_has_repeats").html("<table class='cherry-stats-preview-table'><thead><tr><th>ID</th><th>Запись</th><th>Ссылается на (количество)</th><th>Действия</th></tr></thead><tbody>" + out_repeats + "</tbody></table>")
+            if (!open_spoiler_id) open_spoiler_id = "#label_spoiler_has_repeats";
         } else {
             $("#label_spoiler_has_repeats").hide();
             $("div.spoiler_has_repeats").hide();
@@ -241,15 +328,15 @@ jQuery(document).ready(function ($) {
         let out_incoming = '';
         if (posts.no_incoming.length > 0) {
             out_incoming = posts.no_incoming.slice(0,table_limit).map((v, k) => {
-                return `<tr><td>${v.id}</td><td><a href="${v.url}" target="_blank">${v.url}</a></td><td><a href="/wp-admin/post.php?post=${v.id}&action=edit" target="_blank">В редактор</a></td></tr>`;
+                return `<tr class="cl-orphan-row">${cl_id_cell(v)}${cl_title_cell(v)}<td class="cl-orphan-actions"><button type="button" class="cl-find-donors button button-small" data-postid="${v.post_id}">Найти доноров</button>${cl_edit_link(v)}</td></tr>`;
             }).join('\n');
             $("#label_spoiler_no_incoming").html("Статьи без входящих ссылок ("+posts.no_incoming.length+")");
-            out_incoming = "<table class='cherry-stats-preview-table'><thead><tr><th>Post ID</th><th>URL</th><th>Действия</th></tr></thead><tbody>" + out_incoming + "</tbody></table>";
+            out_incoming = "<table class='cherry-stats-preview-table'><thead><tr><th>ID</th><th>Запись</th><th>Действия</th></tr></thead><tbody>" + out_incoming + "</tbody></table>";
             if (posts.no_incoming.length > table_limit) {
                 out_incoming += "<p>Показано только 50 первых результатов.</p>";
             }
             $("div.spoiler_no_incoming").html(out_incoming);
-            if (!open_spoiler_id) open_spoiler_id = "#label_spoiler_no_incoming";
+            open_spoiler_id = "#label_spoiler_no_incoming";
         } else {
             $("#label_spoiler_no_incoming").hide();
             $("div.spoiler_no_incoming").html("Повторы ссылок не обнаружены")
@@ -257,10 +344,10 @@ jQuery(document).ready(function ($) {
         let out_outgoing = '';
         if (posts.no_outgoing.length > 0) {
             out_outgoing = posts.no_outgoing.slice(0,table_limit).map((v, k) => {
-                return `<tr><td>${v.id}</td><td><a href="${v.url}" target="_blank">${v.url}</a></td><td><a href="/wp-admin/post.php?post=${v.id}&action=edit" target="_blank">В редактор</a></td></tr>`;
+                return `<tr>${cl_id_cell(v)}${cl_title_cell(v)}<td>${cl_edit_link(v)}</td></tr>`;
             }).join('\n');
             $("#label_spoiler_no_outgoing").html("Статьи, которые никуда не ссылаются ("+posts.no_outgoing.length+")");
-            out_outgoing = "<table class='cherry-stats-preview-table'><thead><tr><th>Post ID</th><th>URL</th><th>Действия</th></tr></thead><tbody>" + out_outgoing + "</tbody></table>";
+            out_outgoing = "<table class='cherry-stats-preview-table'><thead><tr><th>ID</th><th>Запись</th><th>Действия</th></tr></thead><tbody>" + out_outgoing + "</tbody></table>";
             if (posts.no_outgoing.length > table_limit) {
                 out_outgoing += "<p>Показано только 50 первых результатов.</p>";
             }
@@ -281,10 +368,10 @@ jQuery(document).ready(function ($) {
                     }
                 }
                 bad_urls = "<ol>" + bad_urls + "</ol>";
-                return `<tr><td>${v.id}</td><td><a href="${v.url}" target="_blank">${v.url}</a></td><td>${bad_urls}</td><td><a href="/wp-admin/post.php?post=${v.id}&action=edit" target="_blank">В редактор</a></td></tr>`;
+                return `<tr>${cl_id_cell(v)}${cl_title_cell(v)}<td>${bad_urls}</td><td>${cl_edit_link(v)}</td></tr>`;
             }).join('\n');
             $("#label_spoiler_has_404").html("Статьи cо сломанными ссылками ("+posts.has_404.length+")");
-            out_404 = "<table class='cherry-stats-preview-table'><thead><tr><th>Post ID</th><th>URL</th><th>Нерабочие ссылки (анкор)</th><th>Действия</th></tr></thead><tbody>" + out_404 + "</tbody></table>";
+            out_404 = "<table class='cherry-stats-preview-table'><thead><tr><th>ID</th><th>Запись</th><th>Нерабочие ссылки (анкор)</th><th>Действия</th></tr></thead><tbody>" + out_404 + "</tbody></table>";
             if (posts.has_404.length > table_limit) {
                 out_404 += "<p>Показано только 50 первых результатов.</p>";
             }
@@ -303,10 +390,10 @@ jQuery(document).ready(function ($) {
                         bad_urls += "<li><strong>"+ankor+"</strong>";
                 }
                 bad_urls = "<ol>" + bad_urls + "</ol>";
-                return `<tr><td>${v.id}</td><td><a href="${v.url}" target="_blank">${v.url}</a></td><td>${bad_urls}</td><td><a href="/wp-admin/post.php?post=${v.id}&action=edit" target="_blank">В редактор</a></td></tr>`;
+                return `<tr>${cl_id_cell(v)}${cl_title_cell(v)}<td>${bad_urls}</td><td>${cl_edit_link(v)}</td></tr>`;
             }).join('\n');
             $("#label_spoiler_has_recursion").html("Статьи, которые ссылаются на себя ("+posts.has_recursion.length+")");
-            out_recursion = "<table class='cherry-stats-preview-table'><thead><tr><th>Post ID</th><th>URL</th><th>Анкор</th><th>Действия</th></tr></thead><tbody>" + out_recursion + "</tbody></table>";
+            out_recursion = "<table class='cherry-stats-preview-table'><thead><tr><th>ID</th><th>Запись</th><th>Анкор</th><th>Действия</th></tr></thead><tbody>" + out_recursion + "</tbody></table>";
             if (posts.has_recursion.length > table_limit) {
                 out_recursion += "<p>Показано только 50 первых результатов.</p>";
             }

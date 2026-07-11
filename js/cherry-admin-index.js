@@ -4,134 +4,93 @@ jQuery(document).ready(function ($) {
 	--- === REINDEX === --- 
 	*/
 
-    let index_interval_check, index_serialized_form;
-    let index_offset = 0, index_limit = 20, index_posts_count = 0, index_in_progress = false, php_execution_time = 0;
-    let ajax_index_error_occured = false;
+    // Background incremental sync (Action Scheduler). Start it and walk away — the server
+    // processes batches in the background; this page only polls status, so it's safe to
+    // refresh or navigate away. Returning to the page resumes the progress view.
+    let index_serialized_form;
+    let sync_poll_timer = null;
+    const SYNC_POLL_MS = 2000;
+
+    function sync_is_active(s) { return s && s.status === 'running'; }
+    function sync_show_running() { $('.button-reindex').hide(); $('.button-reindex-stop').show(); $('#reindex_progress').show().prop('max', 100); }
+    function sync_show_idle()    { $('.button-reindex').show(); $('.button-reindex-stop').hide(); }
+    function sync_stop_polling() { if (sync_poll_timer) { clearInterval(sync_poll_timer); sync_poll_timer = null; } }
+    function sync_start_polling(){ sync_stop_polling(); sync_poll_timer = setInterval(sync_poll, SYNC_POLL_MS); }
 
     $('.button-reindex').on("click", function (e) {
         e.preventDefault();
         index_serialized_form = $("#options_form").serialize();
-        $('#reindex_progress').show();
-        $('.button-reindex').hide();
-        $("input").prop('disabled', true);
-        $('#reindex_progress_text').html("Сканирование начинается...");
-        index_get_posts_count();
-        php_execution_time = 0;
-        console.time('overall_time')
-    })
-
-    // Get posts count to know how many requests we have to make
-    function index_get_posts_count() {
-        let ajax_data = index_serialized_form + '&action=linkate_get_posts_count_reindex';
-
+        sync_show_running();
+        $('#reindex_progress').val(0);
+        $('#reindex_progress_text').html("Запуск фонового сканирования…");
         $.ajax({
-            type: "POST",
-            url: ajaxurl,
-            data: ajax_data,
-            datatype: 'text',
-            success: function (response) {
-                // response = JSON.parse(response);
-                console.log("Starting process with " + response + " posts found");
-                index_posts_count = parseInt(response);
-                // update stats_posts_count
-                index_interval_check = setInterval(index_process_next, 200);
-            },
-            error: function (jqXHR, textStatus, errorThrown ) {
-                handle_errors(errorThrown, jqXHR.responseText);
-            }
+            type: "POST", url: ajaxurl, dataType: 'json',
+            data: index_serialized_form + '&action=linkate_sync_start',
+            success: function (state) { sync_render(state); sync_start_polling(); },
+            error: function (x, t, err) { handle_errors(err, x.responseText); }
+        });
+    });
+
+    $('.button-reindex-stop').on("click", function (e) {
+        e.preventDefault();
+        $('#reindex_progress_text').html("Остановка…");
+        $.ajax({
+            type: "POST", url: ajaxurl, dataType: 'json', data: 'action=linkate_sync_cancel',
+            success: function (state) { sync_render(state); if (!sync_is_active(state)) sync_stop_polling(); },
+            error: function (x, t, err) { handle_errors(err, x.responseText); }
+        });
+    });
+
+    function sync_poll() {
+        $.ajax({
+            type: "POST", url: ajaxurl, dataType: 'json', data: 'action=linkate_sync_status',
+            success: function (state) { sync_render(state); if (!sync_is_active(state)) sync_stop_polling(); },
+            error: function (x, t, err) { handle_errors(err, x.responseText); }
         });
     }
 
-    // Process next batch of posts
-    function index_process_next() {
-        // finish
-        if (index_offset >= index_posts_count) {
-            console.timeEnd('overall_time');
-            console.log('PHP execution time: ' + php_execution_time * 1000 + ' ms');
-            clearInterval(index_interval_check);
-
-            $('#reindex_progress').hide();
-            $('#reindex_progress').val(0);
-
-            // $('.button-reindex').show();
-            $("input").prop('disabled', false);
-            console.log("Index created successfully");
-
-            let output = `Сканирование завершено успешно!`
-            $('#reindex_progress_text').html(output);
-            // index_get_overused_words();
-            index_offset = 0;
-
-            $("#cherry_index_status").html(" обновите страницу...")
-            $("#cherry_scheme_status").html(" обновите страницу...")
-            return;
-        }
-
-        // Stop on error
-        if (ajax_index_error_occured) {
-            clearInterval(index_interval_check);
-            $('#reindex_progress').hide();
-            $('#reindex_progress').val(0);
-
-            $('.button-reindex').show();
-            $("input").prop('disabled', false);
-            console.log("Index creation failed");
-
-            let output = `Что-то пошло не так при сканировании. Проверьте консоль браузера (F12), чтобы узнать больше.`
-            $('#reindex_progress_text').html(output);
-            return;
-        }
-
-        // Skip if in progress
-        if (index_in_progress)
-            return;
-
-        // Process next batch
-        let ajax_data = index_serialized_form
-            + '&action=linkate_ajax_call_reindex'
-            + '&index_offset=' + index_offset
-            + '&batch_size=' + index_limit
-            + '&index_posts_count=' + index_posts_count;
-
-        index_in_progress = true;
-        $.ajax({
-            type: "POST",
-            url: ajaxurl,
-            data: ajax_data,
-            datatype: 'json',
-            success: function (response) {
-                response = JSON.parse(response);
-                console.log(response);
-                if (response.status === 'OK' || response.status === 'DONE') {
-                    if (response.time) {
-                        php_execution_time += parseFloat(response.time);
-                    }
-                    index_offset += index_limit;
-                    if (response.status === 'DONE') {
-                        index_posts_count = 0;
-                    }
-                    index_in_progress = false;
-                    index_update_progress();
-                } else {
-                    handle_errors("WPDB_ERROR: " + response.wpdb_error, "WPDB_QUERY: " + response.wpdb_query);
-                }
-            },
-            error: function (jqXHR, textStatus, errorThrown ) {
-                handle_errors(errorThrown, jqXHR.responseText);
+    // Render UI from the server state object.
+    function sync_render(state) {
+        if (!state || !state.status) return;
+        console.log(state);
+        if (state.status === 'running') {
+            sync_show_running();
+            let done = 0, total = state.upsert_total || 0, label = 'Индексация';
+            if (state.phase === 'upsert')      { done = state.indexed || 0; label = 'Индексация изменённых'; }
+            else if (state.phase === 'links')  { done = state.offset  || 0; label = 'Построение карты ссылок'; }
+            else if (state.phase === 'prune')  { label = 'Удаление устаревших'; total = 0; }
+            if (total > 0) {
+                $('#reindex_progress').val(Math.min(100, Math.round(done / total * 100)));
+                $('#reindex_progress_text').html(`${label}: ${done} из ${total}… (можно закрыть страницу)`);
+            } else {
+                $('#reindex_progress_text').html(`${label}… (можно закрыть страницу)`);
             }
-        });
+        } else if (state.status === 'done') {
+            sync_show_idle();
+            $('#reindex_progress').val(100).hide();
+            $('#reindex_progress_text').html(`Сканирование завершено! Обновлено: ${state.indexed || 0}, удалено: ${state.deleted || 0}. Обновите страницу.`);
+            $("#cherry_index_status").html(" обновите страницу...");
+            $("#cherry_scheme_status").html(" обновите страницу...");
+        } else if (state.status === 'cancelled') {
+            sync_show_idle();
+            $('#reindex_progress').hide();
+            $('#reindex_progress_text').html(`Остановлено. Частично проиндексировано: ${state.indexed || 0}.`);
+        } else if (state.status === 'error') {
+            sync_show_idle();
+            $('#reindex_progress').hide();
+            $('#reindex_progress_text').html(`Ошибка: ${state.message || 'неизвестно'}.`);
+        } else {
+            sync_show_idle();
+        }
     }
 
-    // Display index creation progress
-    function index_update_progress() {
-        let current = 0;
-        current = Math.round(index_offset / index_posts_count * 100)
-        current = current > 100 ? 100 : current;
-        $('#reindex_progress').prop('max', 100);
-        $('#reindex_progress').val(current);
-        let output = `Обработано ${index_offset} из ${index_posts_count} записей (${current}%)... `
-        $('#reindex_progress_text').html(output);
-    }
+    // Resume the progress view if a sync is already running (started earlier or in another tab).
+    (function () {
+        $.ajax({
+            type: "POST", url: ajaxurl, dataType: 'json', data: 'action=linkate_sync_status',
+            success: function (state) { if (sync_is_active(state)) { sync_render(state); sync_start_polling(); } }
+        });
+    })();
 
     // Get overused words after reindex
     function index_get_overused_words() {
@@ -195,8 +154,11 @@ jQuery(document).ready(function ($) {
     }
 
     function handle_errors (error_msg, error_details) {
-        ajax_index_error_occured = true;
         console.log(error_msg);
         console.log(error_details);
+        sync_stop_polling();
+        sync_show_idle();
+        $('#reindex_progress').hide().val(0);
+        $('#reindex_progress_text').html(`Что-то пошло не так при сканировании. Проверьте консоль браузера (F12), чтобы узнать больше.`);
     }
 });

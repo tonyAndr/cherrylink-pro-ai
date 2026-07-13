@@ -196,6 +196,57 @@ function linkate_checkNeededOption()
     return false;
 }
 
+// ── License gate + index-freshness tracking ──────────────────────────────────
+// All API indexing (save hook, deletes, scans) is gated on a valid, non-expired
+// license. While unlicensed, post changes are NOT pushed to the API, so the index
+// drifts out of sync — we flag that and warn until a scan reconciles it.
+
+function cl_is_licensed(): bool
+{
+    return (bool) linkate_checkNeededOption();
+}
+
+/** Flag the index as out-of-sync (a change happened while unlicensed). Records when it began. */
+function cl_mark_index_dirty(): void
+{
+    if (!get_option('cherrylink_index_dirty')) {
+        update_option('cherrylink_index_dirty', gmdate('Y-m-d H:i:s'), false);
+    }
+}
+
+function cl_clear_index_dirty(): void
+{
+    delete_option('cherrylink_index_dirty');
+}
+
+function cl_index_is_dirty(): bool
+{
+    return (bool) get_option('cherrylink_index_dirty');
+}
+
+add_action('admin_notices', 'cl_license_index_notice');
+function cl_license_index_notice(): void
+{
+    if (!current_user_can('edit_posts') || cl_is_licensed()) {
+        return;
+    }
+    // Only on the CherryLink settings page — not every admin screen.
+    if (!class_exists('LinkatePosts') || !LinkatePosts::linkate_is_plugin_admin_page('settings')) {
+        return;
+    }
+    $settings = admin_url('options-general.php?page=cherrylink-pro&subpage=main');
+    echo '<div class="notice notice-warning"><p><strong>CherryLink Pro</strong>: ';
+    echo 'лицензия неактивна — индексация и сканирование приостановлены, ссылки не обновляются.';
+    if (cl_index_is_dirty()) {
+        $since = esc_html(get_date_from_gmt(get_option('cherrylink_index_dirty')));
+        echo ' <strong>Индекс перелинковки не синхронизирован</strong> (изменения с ' . $since
+            . ' не проиндексированы). Активируйте ключ и запустите сканирование, чтобы восстановить синхронизацию.';
+    } else {
+        echo ' <a href="' . esc_url($settings) . '">Введите ключ лицензии</a>.';
+    }
+    echo '</p></div>';
+}
+
 function linkate_call_home_nocurl($val, $d)
 {
     $data = array('license_key' => $val, 'action' => 'check', 'domain' => $d);

@@ -41,10 +41,27 @@ jQuery(document).ready(function ($) {
         });
     });
 
+    // While the scan page is open, drive the Action Scheduler queue ourselves so the
+    // background sync advances even with zero site traffic (no WP-Cron tick). Guarded
+    // so ticks never overlap. Closing the page falls back to normal cron.
+    let tick_in_flight = false;
+    function sync_tick() {
+        if (tick_in_flight) return;
+        tick_in_flight = true;
+        $.ajax({
+            type: "POST", url: ajaxurl, dataType: 'json', data: 'action=linkate_sync_tick',
+            complete: function () { tick_in_flight = false; }
+        });
+    }
+
     function sync_poll() {
         $.ajax({
             type: "POST", url: ajaxurl, dataType: 'json', data: 'action=linkate_sync_status',
-            success: function (state) { sync_render(state); if (!sync_is_active(state)) sync_stop_polling(); },
+            success: function (state) {
+                sync_render(state);
+                if (sync_is_active(state)) sync_tick();
+                else sync_stop_polling();
+            },
             error: function (x, t, err) { handle_errors(err, x.responseText); }
         });
     }

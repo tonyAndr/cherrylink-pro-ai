@@ -59,6 +59,12 @@ function cl_sync_is_running(): bool
  */
 function cl_sync_start(bool $force_full = false): array
 {
+    if (!cl_is_licensed()) {
+        return cl_sync_set_state([
+            'status'  => 'error',
+            'message' => 'Лицензия неактивна — синхронизация недоступна. Введите ключ лицензии.',
+        ]);
+    }
     if (!function_exists('as_enqueue_async_action')) {
         return cl_sync_set_state(['status' => 'error', 'message' => 'Action Scheduler unavailable']);
     }
@@ -97,6 +103,7 @@ function cl_sync_start(bool $force_full = false): array
         $meta['last_deleted']      = 0;
         update_option('linkate_posts_meta', $meta);
         delete_option(CL_SYNC_PLAN);
+        cl_clear_index_dirty();   // index reconciled — clear any out-of-sync flag
         return cl_sync_set_state([
             'status' => 'done', 'phase' => 'done', 'offset' => 0,
             'upsert_total' => 0, 'delete_total' => 0,
@@ -222,6 +229,7 @@ function cl_sync_worker($phase = 'upsert', $offset = 0): void
         $meta['last_deleted']      = (int)$state['delete_total'];
         update_option('linkate_posts_meta', $meta);
         delete_option(CL_SYNC_PLAN);
+        cl_clear_index_dirty();   // index reconciled — clear any out-of-sync flag
         cl_sync_set_state(array_merge($state, ['status' => 'done', 'phase' => 'done', 'offset' => 0]));
         return;
     }
@@ -249,4 +257,25 @@ add_action('wp_ajax_linkate_sync_status', function () {
     $state['scheduled'] = function_exists('as_has_scheduled_action')
         ? as_has_scheduled_action(CL_SYNC_HOOK, null, CL_SYNC_GROUP) : null;
     wp_send_json($state);
+});
+
+// Nudge the Action Scheduler queue from the open scan page, so the background sync
+// advances on a fresh/no-traffic site without waiting for a WP-Cron tick. Close the
+// page and normal cron takes over. No-op unless our sync is running and queued.
+add_action('wp_ajax_linkate_sync_tick', function () {
+    if (!current_user_can('edit_posts')) wp_die();
+    $ran = 0;
+    if (
+        cl_sync_get_state()['status'] === 'running'
+        && class_exists('ActionScheduler')
+        && function_exists('as_has_scheduled_action')
+        && as_has_scheduled_action(CL_SYNC_HOOK, null, CL_SYNC_GROUP)
+    ) {
+        try {
+            $ran = (int) ActionScheduler::runner()->run('CherryLink admin');
+        } catch (\Throwable $e) {
+            // ignore — WP-Cron will catch up
+        }
+    }
+    wp_send_json(['ran' => $ran]);
 });

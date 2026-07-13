@@ -21,6 +21,12 @@ function linkate_sp_save_index_entry(int $post_id, WP_Post $post, bool $update):
         return;
     }
 
+    // No valid license → do no API work; record that the index is now out of sync.
+    if (!cl_is_licensed()) {
+        cl_mark_index_dirty();
+        return;
+    }
+
     $api = new CherryVectorAPI();
 
     if ($post->post_status === 'publish') {
@@ -46,6 +52,10 @@ function linkate_sp_save_index_entry(int $post_id, WP_Post $post, bool $update):
 add_action('delete_post', 'linkate_sp_delete_index_entry');
 function linkate_sp_delete_index_entry(int $post_id): void
 {
+    if (!cl_is_licensed()) {
+        cl_mark_index_dirty();
+        return;
+    }
     $api = new CherryVectorAPI();
     $api->delete_post($post_id);
     $api->delete_links($post_id, 0);
@@ -70,6 +80,10 @@ function linkate_ajax_call_reindex(): void
 {
     if (!current_user_can('edit_posts')) {
         wp_die();
+    }
+
+    if (!cl_is_licensed()) {
+        wp_send_json(['status' => 'error', 'message' => 'Лицензия неактивна — сканирование недоступно.']);
     }
 
     $phase      = isset($_POST['phase'])        ? sanitize_key($_POST['phase'])    : 'plan';

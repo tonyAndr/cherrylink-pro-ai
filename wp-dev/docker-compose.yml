@@ -35,7 +35,7 @@ services:
       # Share the entire WP root so wpcli can see wp-config.php and core files
       - wp_root:/var/www/html
       # Overlay the plugin as a live bind mount (takes priority over the named volume)
-      - /Users/anton/projects/cherrylink/plugin:/var/www/html/wp-content/plugins/cherrylink-pro-ai
+      - ../:/var/www/html/wp-content/plugins/cherrylink-pro-ai
     networks:
       - default
       - cherry_net
@@ -51,7 +51,7 @@ services:
       WORDPRESS_DB_PASSWORD: wordpress
     volumes:
       - wp_root:/var/www/html
-      - /Users/anton/projects/cherrylink/plugin:/var/www/html/wp-content/plugins/cherrylink-pro-ai
+      - ../:/var/www/html/wp-content/plugins/cherrylink-pro-ai
       - ./setup.sh:/setup.sh:ro
     entrypoint: ["/bin/bash", "/setup.sh"]
     networks:

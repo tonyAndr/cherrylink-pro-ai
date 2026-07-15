@@ -1,8 +1,7 @@
 # CherryLink Pro AI — Plugin Context
 
 **Plugin specs** (editor UI, Gutenberg sidebar): `specs/` in this repo
-**API specs** (search, link graph, indexing, logging): `/Users/anton/projects/cherrylink/api/specs/`
-**Full API + infra context**: `/Users/anton/projects/cherrylink/api/CLAUDE.md`
+**API**: the plugin talks to the companion Cherry Vector API service (semantic search, link graph, indexing).
 
 ---
 
@@ -18,8 +17,7 @@ WordPress plugin for AI-powered internal linking. Connects to Cherry Vector API 
 |---|---|
 | `cherrylink_main.php` | Plugin header, requires all modules |
 | `cherrylink_vector_api.php` | `CherryVectorAPI` class — all HTTP calls to API |
-| `cherrylink_index.php` | Post save/delete hooks + **phased incremental** AJAX reindex (plan→upsert→links→prune→done) |
-| `cherrylink_stats_scheme.php` | Full-site link graph scanning (`CL_Stats_Scheme`) |
+| `cherrylink_index.php` | Post save/delete hooks + readiness-status payload; background sync lives in `cherrylink_sync.php` |
 | `cherrylink_editor_ui.php` | Classic editor panel HTML (tabs: articles / taxonomy / stats) |
 | `cherrylink_gutenberg.php` | Gutenberg sidebar enqueue + script registration |
 | `cherrylink_admin_options.php` | WP admin settings page + "Прочие настройки" actions |
@@ -93,7 +91,7 @@ Source layout notes (`gutenberg-src/src/sidebar/`):
 
 All API calls go through `CherryVectorAPI` in `cherrylink_vector_api.php`.
 - API URL: `CHERRY_VECTOR_API_URL` constant in wp-config → admin settings → `https://seocherry.apov.dev`
-- License key: admin settings → `123123`
+- Auth key priority: `CHERRY_VECTOR_API_KEY` constant → `vector_api_key` setting → the license key (`hash_field`). A valid license key is normally the only key needed.
 - Headers sent: `X-License-Key`, `X-Site-Domain`
 - Errors: logged via `cherry_write_log()`
 
@@ -140,11 +138,11 @@ Each `.linkate-link` element carries:
 ## Local Dev
 
 ```bash
-cd /Users/anton/projects/cherrylink/plugin/wp-dev
+cd wp-dev
 docker compose up -d
 # WordPress: http://localhost:8088 (admin/admin)
 # Plugin mounted as live bind — PHP edits take effect immediately
-# Connect to API: use https://seocherry.apov.dev or http://host.docker.internal:8000
+# Connect to API: use https://seocherry.apov.dev or a local API at http://host.docker.internal:8000
 ```
 
 ---
@@ -157,8 +155,6 @@ docker compose up -d
 - **`linkate_posts` MySQL table**: still used by `cherrylink_cf.php` for custom fields index — do not drop
 - **Scan is incremental**: diffs current published posts against `GET /v1/documents/manifest` by `post_modified_gmt`, re-embeds only changed posts, builds their links via `POST /v1/links/parse-batch`, and prunes orphans via `POST /v1/documents/delete-batch`. The diff is a pure, unit-tested helper: `CL_Index_Helpers::compute_sync_plan()` (see `tests/test_sync_plan.php`).
 - **Scan runs in the background via Action Scheduler** (`cherrylink_sync.php`, bundled `vendor/woocommerce/action-scheduler`). Start it and leave the page — a self-rescheduling `cherrylink_sync_worker` action processes one batch (upsert→links→prune) and enqueues the next. AJAX: `linkate_sync_start` / `linkate_sync_cancel` / `linkate_sync_status`; JS (`cherry-admin-index.js`) starts it, polls status, and has a Stop button. Progress/worklists live in options `cherrylink_sync_state` / `cherrylink_sync_plan`. Cancel flags the state AND cancels pending actions by ID (`as_unschedule_all_actions([])` only matches arg-less actions). Needs WP-Cron enabled (or a server cron / `wp action-scheduler run`) to advance without traffic.
-- **Foreground `linkate_ajax_call_reindex`** (in `cherrylink_index.php`) is the older synchronous phase-loop; still functional as a fallback but the UI now uses the background sync.
-- **`CL_Stats_Scheme::linkate_create_links_scheme` is deprecated dead code** — the scan's links phase supersedes it; don't revive it as a second link-scan path.
 - **Anchor suggestions are lazy/on-demand**: `linkate_posts()` calls `/v1/search` with an empty `source_html` (no eager anchors, no top-5 cap). When the editor opens a hit's suggestion panel (loupe), it calls the `get_linkate_suggestions` AJAX action → `CherryVectorAPI::suggest_anchors()` → `POST /v1/suggest-anchors` for that one target. Wired in both editors: Gutenberg `SugestionsPanel.componentDidMount` fetches; classic `fcl_render_api_suggestions` fetches (both show a loading state, cache per target). `linkate_build_source_html()` wraps plain-text content in `<p>` for the extractor.
-- **No CI for this plugin**: push to git = source of truth; client updates via plugin updater
+- **Updates**: no CI; clients auto-update via the bundled Plugin Update Checker (v4.9), wired in `cherrylink_main.php` to this GitHub repo. Ship a new version by publishing a GitHub Release whose tag matches the `Version:` header, with the packaged plugin zip attached as a release asset.
 - **`cherry_write_log()`**: writes to PHP error log; in wp-dev: `docker compose logs wordpress`

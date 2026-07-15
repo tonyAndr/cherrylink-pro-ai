@@ -1,0 +1,36 @@
+name: Release plugin zip
+
+# Push a tag that matches the plugin's "Version:" header (e.g. v1.0.4) and this
+# builds a sanitized zip (dev files stripped via .gitattributes export-ignore)
+# and publishes it as a GitHub Release asset. The bundled Plugin Update Checker
+# (enableReleaseAssets) then serves it to clients as an update.
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build sanitized plugin zip
+        run: |
+          # git archive honours `export-ignore` in .gitattributes and only
+          # includes tracked files, so node_modules / *.map / gitignored files
+          # can never leak in. --prefix nests everything under the plugin folder
+          # WordPress expects.
+          git archive --format=zip --prefix=cherrylink-pro-ai/ -o cherrylink-pro-ai.zip HEAD
+          echo "::group::Zip contents"
+          unzip -l cherrylink-pro-ai.zip
+          echo "::endgroup::"
+
+      - name: Publish release with asset
+        uses: softprops/action-gh-release@v2
+        with:
+          files: cherrylink-pro-ai.zip
+          generate_release_notes: true

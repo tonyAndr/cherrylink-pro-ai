@@ -1,0 +1,14 @@
+# Paths excluded from `git archive` — i.e. from the distributed plugin zip built
+# by .github/workflows/release.yml. Everything NOT listed here ships to clients,
+# so keep runtime code (vendor/, updater/, env-info/, js/, css/, img/, assets/).
+# These are dev-only: source, tooling, tests, docs, and repo metadata.
+gutenberg-src   export-ignore
+wp-dev          export-ignore
+tests           export-ignore
+specs           export-ignore
+.github         export-ignore
+CLAUDE.md       export-ignore
+composer.json   export-ignore
+composer.lock   export-ignore
+.gitignore      export-ignore
+.gitattributes  export-ignore

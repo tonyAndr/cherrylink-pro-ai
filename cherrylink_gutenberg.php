@@ -9,34 +9,6 @@ defined( 'ABSPATH' ) || exit;
 // Define lib name
 define('LINKATE_GUTENBERG_ASSETS', true);
 
-function register_cherrylink_gutenberg_meta() {
-
-	register_post_meta( '', 'crb-meta-links', array(
-		'show_in_rest' => true,
-		'single' => true,
-		'type' => 'string',
-	) );
-
-	register_post_meta( '', 'crb-meta-show', array(
-		'show_in_rest' => true,
-		'single' => true,
-		'type' => 'string',
-	) );
-
-	register_post_meta( '', 'crb-meta-show-edited', array(
-		'show_in_rest' => true,
-		'single' => true,
-		'type' => 'string',
-	) );
-
-	register_post_meta( '', 'crb-meta-use-manual', array(
-		'show_in_rest' => true,
-		'single' => true,
-		'type' => 'string',
-    ) );
-
-}
-
 function register_cherrylink_gutenberg_scripts() {
     $asset_file = include( plugin_dir_path( __FILE__ ) . 'js/cherry-gutenberg.asset.php' );
 
@@ -61,5 +33,3 @@ function register_cherrylink_gutenberg_scripts() {
         $asset_file['version']
     );
 }
-
-add_action( 'init', 'register_cherrylink_gutenberg_meta' );

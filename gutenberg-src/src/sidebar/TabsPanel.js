@@ -21,11 +21,6 @@ export const TabsPanel = (props) => (
                     title: '',
                     className: 'tab-general-style tab-stats'
                 },
-                // {
-                //     name: 'tab-block',
-                //     title: '',
-                //     className: 'tab-general-style tab-blocklinks'
-                // }
             ] }>
             {
                 ( tab ) => <></>

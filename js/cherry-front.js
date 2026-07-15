@@ -40,112 +40,6 @@ jQuery(document).ready(function ($) {
     let cl_timerFilter;
     let cl_timerTotalLinks;
 
-    /* ===================       ==================== */
-    /* =================== CRB Meta ==================== */
-    /* ===================       ==================== */
-
-    const cl_crb_metabox = $('#crb-meta-links');
-
-    function fcl_update_meta_visual() {
-        if (cl_crb_metabox.length > 0) {
-            let meta_text = $(cl_crb_metabox).val();
-            if (meta_text.length > 0) {
-                meta_text = meta_text.split("\n");
-                let visual_content = '<p>Для данной записи выбраны ссылки:</p>';
-                if ($('#crb-meta-use-manual').is(':checked')) {
-                    meta_text.forEach(function (row) {
-                        let split = row.split('[|]');
-                        let row_id = split[0];
-                        let row_title = split[1];
-                        let row_m_title = split[2] === undefined ? "" : split[2];
-
-                        visual_content += "<div title='Намите на крестик, чтобы удалить из списка' class='crb-meta-visual-item crb-editable' data-postid='" + row_id + "' data-title='" + row_title + "'><div class='crb-remove-item'></div><span class='crb-manual-id'>Задайте свой анкор к статье: [ID: " + row_id + "] <strong>" + row_title + "</strong></span><div><input type='text' class='crb-manual-input " + row_id + "' value='" + row_m_title + "' /></div></div>";
-                    });
-                } else {
-                    meta_text.forEach(function (row) {
-                        let split = row.split('[|]');
-                        let row_id = split[0];
-                        let row_title = split[1];
-                        visual_content += "<div title='Намите, чтобы удалить из списка' class='crb-meta-visual-item' data-postid='" + row_id + "' data-title='" + row_title + "'><div class='crb-remove-item'></div>[ " + row_id + " ] " + row_title + "</div>";
-                    });
-                }
-
-                $('.crb-meta-visual').html(visual_content);
-            } else {
-                let host = window.location.href.replace(window.location.href.slice(window.location.href.indexOf('/wp-admin/') + 10), 'options-general.php?page=cherrylink-pro&subpage=output_block');
-                let visual_content = '<p>Ссылки не выбраны - будут показаны похожие статьи в соответствии с <a href="' + host + '">настройками плагина</a>.</p>';
-                $('.crb-meta-visual').html(visual_content);
-            }
-        }
-        $('.crb-remove-item').off().on('click', function (e) {
-            crb_remove_from_block($(this).parent().attr('data-postid'));
-        })
-
-        $('.crb-manual-input').on('change', function (e) {
-            let m_text = e.target.value;
-            let post_id = e.target.classList[1];
-            let meta_links = $(cl_crb_metabox).val();
-
-            meta_links = meta_links.length > 0 ? meta_links.split("\n").map(x => {
-                let y = x.split("[|]");
-                if (y[0] === post_id) {
-                    return y[0] + "[|]" + y[1] + "[|]" + m_text + "[|]" + y[3];
-                } else {
-                    return y[0] + "[|]" + y[1] + "[|]" + y[2] + "[|]" + y[3];
-                }
-            }) : [];
-
-            meta_links = meta_links.length > 0 ? meta_links.join("\n") : "";
-            $(cl_crb_metabox).val(meta_links).trigger('change');
-        })
-    }
-
-    fcl_update_meta_visual();
-
-    // for related block
-    function crb_remove_from_block(post_id) {
-        // let this_string = post_id + "[|]" + title;
-        if (cl_crb_metabox.length > 0) {
-            let meta_links = $(cl_crb_metabox).val();
-            let remIndex = crb_link_exist_in_metabox(meta_links, post_id);
-
-            if (remIndex !== false) {
-                meta_links = meta_links.split('\n');
-                meta_links.splice(remIndex, 1);
-                meta_links = meta_links.join('\n');
-                $(cl_crb_metabox).val(meta_links).trigger('change');
-            }
-
-        }
-    }
-
-    function crb_link_exist_in_metabox(crb_textarea_text, post_id) {
-        if (crb_textarea_text.length > 0) {
-            let meta_links = crb_textarea_text.split('\n');
-            let remIndex = false;
-
-            meta_links.some((x, i) => {
-                if (x.includes(post_id + "[|]")) {
-                    remIndex = i;
-                    return true;
-                }
-                return false;
-            })
-            return remIndex;
-        }
-
-        return false;
-    }
-
-    function crb_detect_show_options_edited() {
-        if ($('#crb-meta-show').length > 0) {
-            $('#crb-meta-show').on("change",function () {
-                $('#crb-meta-show-edited').prop('checked', true);
-            })
-        }
-    }
-    crb_detect_show_options_edited();
-
     // Find phrase in TinyMCE by walking text nodes; returns true if found and selected
     function fcl_findPhraseInEditor(phrase) {
         if (fcl_isTinyMCE()) {
@@ -195,15 +89,6 @@ jQuery(document).ready(function ($) {
 
         timeOutLinksChecker(T_WAIT_SHOW_PANEL);
 
-        $(cl_crb_metabox).off().on('change', function () {
-            timeOutLinksChecker(0);
-            fcl_update_meta_visual();
-        })
-
-        $('#crb-meta-use-manual').off().on('change', function () {
-            fcl_update_meta_visual();
-        })
-
         // incoming stats
         $('#links-count-targets').off().on("click",function () {
             fcl_toggle_links_stats();
@@ -248,34 +133,6 @@ jQuery(document).ready(function ($) {
                 }
             }
         });
-
-        if ($('.link-add-to-block').length > 0) { // For Related Block
-            $('.link-add-to-block').off().on("click",function () {
-                let post_id = $(this).parent().parent().find('div.linkate-link').attr('data-postid');
-                let title = $(this).parent().parent().find('div.linkate-link').attr('data-title');
-                let this_string = post_id + "[|]" + title + "[|]";
-                if (cl_crb_metabox.length > 0) {
-                    let meta_links = $(cl_crb_metabox).val();
-                    if (meta_links.length > 0) {
-                        meta_links = meta_links.split('\n');
-                        if (!meta_links.includes(this_string)) {
-                            meta_links.push(this_string);
-                            meta_links = meta_links.join('\n');
-                            $(cl_crb_metabox).val(meta_links).trigger('change');
-                        }
-                    } else {
-                        $(cl_crb_metabox).val(this_string).trigger('change');
-                    }
-                }
-            });
-        }
-        if ($('.link-del-from-block').length > 0) { // For Related Block
-            $('.link-del-from-block').off().on("click",function () {
-                let post_id = $(this).parent().parent().find('div.linkate-link').attr('data-postid');
-                let title = $(this).parent().parent().find('div.linkate-link').attr('data-title');
-                crb_remove_from_block(post_id)
-            });
-        }
 
         $('#hide_that_exists').on("change",function () {
             timeOutLinksFilter(T_WAIT_FILTER_CB);
@@ -1184,23 +1041,6 @@ jQuery(document).ready(function ($) {
                     el.parentElement.classList.add('link-hidden');
                 } else {
                     el.parentElement.classList.remove('link-hidden');
-                }
-
-                // check for related block
-                if (cl_crb_metabox.length > 0 && !el.classList.contains('link-term')) { // if metabox exists (plugin activated)
-
-                    let meta_links = $(cl_crb_metabox).val();
-                    let inDaBox = crb_link_exist_in_metabox(meta_links, el.getAttribute('data-postid'));
-
-                    if (inDaBox === false) {
-                        // show add button
-                        el.parentElement.querySelector(".link-add-to-block").classList.remove('btn-hidden');
-                        el.parentElement.querySelector(".link-del-from-block").classList.add('btn-hidden');
-                    } else {
-                        // show delete button
-                        el.parentElement.querySelector(".link-add-to-block").classList.add('btn-hidden');
-                        el.parentElement.querySelector(".link-del-from-block").classList.remove('btn-hidden');
-                    }
                 }
             }
         }

@@ -17,8 +17,7 @@ jQuery(document).ready(function ($) {
     function sync_stop_polling() { if (sync_poll_timer) { clearInterval(sync_poll_timer); sync_poll_timer = null; } }
     function sync_start_polling(){ sync_stop_polling(); sync_poll_timer = setInterval(sync_poll, SYNC_POLL_MS); }
 
-    $('.button-reindex').on("click", function (e) {
-        e.preventDefault();
+    function sync_do_start() {
         index_serialized_form = $("#options_form").serialize();
         sync_show_running();
         $('#reindex_progress').val(0);
@@ -29,7 +28,24 @@ jQuery(document).ready(function ($) {
             success: function (state) { sync_render(state); sync_start_polling(); },
             error: function (x, t, err) { handle_errors(err, x.responseText); }
         });
-    });
+    }
+    $('.button-reindex').on("click", function (e) { e.preventDefault(); sync_do_start(); });
+    // "Scan again" link shown in the completion message (button stays hidden on done).
+    $(document).on('click', '#cl-rescan', function (e) { e.preventDefault(); sync_do_start(); });
+
+    // Pull fresh readiness data after a scan and update the card in place (no page reload).
+    function sync_refresh_status() {
+        $.ajax({
+            type: "POST", url: ajaxurl, dataType: 'json', data: 'action=linkate_index_status_data',
+            success: function (d) {
+                if (!d) return;
+                $('#cherry_index_status').html(d.index_status_text || '');
+                $('#cherry_scheme_status').html(d.scheme_status_text || '');
+                $('#cherry_process_badge').html(d.badge_html || '');
+                $('#cherry_lastscan_status').html(d.last_scan_text || '');
+            }
+        });
+    }
 
     $('.button-reindex-stop').on("click", function (e) {
         e.preventDefault();
@@ -83,11 +99,14 @@ jQuery(document).ready(function ($) {
                 $('#reindex_progress_text').html(`${label}… (можно закрыть страницу)`);
             }
         } else if (state.status === 'done') {
-            sync_show_idle();
+            // Hide both buttons on completion — otherwise a 0-change scan finishes in <1s and
+            // the reappearing button makes it look like nothing happened. The "refresh" hint
+            // restores a clean state (with the button) on reload.
+            $('.button-reindex').hide();
+            $('.button-reindex-stop').hide();
             $('#reindex_progress').val(100).hide();
-            $('#reindex_progress_text').html(`Сканирование завершено! Обновлено: ${state.indexed || 0}, удалено: ${state.deleted || 0}. Обновите страницу.`);
-            $("#cherry_index_status").html(" обновите страницу...");
-            $("#cherry_scheme_status").html(" обновите страницу...");
+            sync_refresh_status();   // live-update the readiness card — no reload needed
+            $('#reindex_progress_text').html(`Сканирование завершено! Обновлено: ${state.indexed || 0}, удалено: ${state.deleted || 0}. <a href="#" id="cl-rescan">Сканировать снова</a>`);
         } else if (state.status === 'cancelled') {
             sync_show_idle();
             $('#reindex_progress').hide();

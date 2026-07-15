@@ -170,61 +170,15 @@ function linkate_posts_license_field()
 }
 function linkate_posts_index_status_display($page = 'main')
 {
-    $options_meta = get_option('linkate_posts_meta', []);
-
-    $api        = new CherryVectorAPI();
-    $index_rows = $api->get_count();
-    if ($index_rows > 0) {
-        $index_status_text  = " проиндексировано $index_rows статей в Vector API.";
-        $index_status_class = "";
-    } else {
-        $index_status_text  = " статьи не проиндексированы, запустите сканирование.";
-        $index_status_class = "";
-    }
-
-    $scheme_rows = $api->get_links_count();
-    if ($scheme_rows) {
-        $scheme_status_text  = " найдено $scheme_rows ссылок в записях и страницах.";
-        $scheme_status_class = "";
-    } else {
-        $scheme_status_text  = " ссылки не найдены.";
-        $scheme_status_class = "";
-    }
-
-    // Last-scan drift summary (from the incremental reindex pipeline).
-    $last_scan_text = '';
-    if (!empty($options_meta['last_scan_gmt'])) {
-        $up   = (int)($options_meta['last_upserted'] ?? 0);
-        $del  = (int)($options_meta['last_deleted'] ?? 0);
-        $when = esc_html(get_date_from_gmt($options_meta['last_scan_gmt']));
-        $last_scan_text = " Последнее сканирование: {$when} (обновлено: {$up}, удалено: {$del}).";
-    }
-
-    // Is there index, was it successful, is it in progress or crushed?
-    $index_process_status = isset($options_meta['indexing_process']) ? $options_meta['indexing_process'] : 'VALUE_NOT_EXIST';
-    $index_process_status_text = '';
-    switch ($index_process_status) {
-        case 'VALUE_NOT_EXIST':
-            $index_process_status_text = '<code class="bad-index">[Нужно просканировать сайт]</code>';
-            break;
-        case 'IN_PROGRESS':
-            $index_process_status_text = '<code class="bad-index">[Сканирование не завершено]</code>';
-            break;
-        case 'DONE':
-            $index_process_status_text = '<code class="good-index">[Все хорошо]</code>';
-            break;
-        default:
-            $index_process_status_text = '';
-            break;
-    }
-
+    $data = cl_index_status_data();
+    $index_process_status = get_option('linkate_posts_meta', [])['indexing_process'] ?? 'VALUE_NOT_EXIST';
 ?>
     <div class="p-6 rounded-lg shadow-xl bg-white">
-        <h2 class="<?= CL_TWC::$H2 ?>">Готовность к работе <?php echo $index_process_status_text; ?></h2>
+        <h2 class="<?= CL_TWC::$H2 ?>">Готовность к работе <span id="cherry_process_badge"><?php echo $data['badge_html']; ?></span></h2>
         <ul class="list-disc list-inside">
-            <li><span id="cherry_index_status" class="<?php echo $index_status_class; ?>"><?php echo $index_status_text; ?></span></li>
-            <li><span id="cherry_scheme_status" class="<?php echo $scheme_status_class; ?>"><?php echo $scheme_status_text; ?></span></li>
-            <?php if ($last_scan_text) { ?><li><span id="cherry_lastscan_status"><?php echo $last_scan_text; ?></span></li><?php } ?>
+            <li><span id="cherry_index_status"><?php echo $data['index_status_text']; ?></span></li>
+            <li><span id="cherry_scheme_status"><?php echo $data['scheme_status_text']; ?></span></li>
+            <li><span id="cherry_lastscan_status"><?php echo $data['last_scan_text']; ?></span></li>
         </ul>
         <?php
         if ($page === 'main') {
@@ -233,8 +187,6 @@ function linkate_posts_index_status_display($page = 'main')
             <a href="/wp-admin/options-general.php?page=cherrylink-pro&subpage=scan"><button class="<?= CL_TWC::$BTN_ACTION ?> mt-2"><?= $index_process_status === 'DONE' ? "Сканировать сайт" :  "Пересканировать" ?></button></a>
         <?php
         }
-
-        //link_cf_prepare_tooltip('                <p>Справа от заголовка "Статус индексирования" есть шильдик с одним из вариантов:</p><ul><li>[Индекс не создан]</li>                <li>[Создание индекса не закончено]</li><li>[Индекс создан]</li></ul>                <p>Текст "Создание индекса не закончено" обычно означает, что индексация не завершилась корректно.                 Рекомендуется пересоздать индекс. Эта же надпись появится, если вы создаете индекс прямо сейчас, например, в другой вкладке браузера.</p>                <p>Текст "Индекс не создан" говорит сам за себя. Необходимо его создать кнопкой "Пересоздать индекс".</p>                <p>Если [Индекс создан], или шильдика с надписью нет вообще, то никаких действий не требуется.</p>'); 
         ?>
     </div>
 <?php
@@ -578,7 +530,6 @@ function linkate_posts_index_options_subpage()
 
         </div>
 
-        <!--  We save and update index using ajax call, see function linkate_ajax_call_reindex below -->
     </div>
 
 <?php
@@ -662,7 +613,6 @@ function linkate_posts_statistics_options_subpage()
                 </form>
             </div>
         </div>
-        <!--  We save and update index using ajax call, see function linkate_ajax_call_reindex below -->
     </div>
 
 <?php

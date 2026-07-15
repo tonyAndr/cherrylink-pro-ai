@@ -3,7 +3,7 @@
 Plugin Name: CherryLink Pro AI
 Plugin URI: http://seocherry.ru/
 Description: Плагин для автоматической внутренней перелинковки на основе семантического поиска (AI). Находит релевантные статьи и предлагает анкорные фразы с помощью векторных эмбеддингов.
-Version: 1.0.2
+Version: 1.0.3
 Author: Anton SeoCherry.ru
 Author URI: http://seocherry.ru/
 Requires at least: 5.6
@@ -39,6 +39,22 @@ if (file_exists(CHERRYLINK_DIR . '/vendor/woocommerce/action-scheduler/action-sc
     require_once(CHERRYLINK_DIR . '/vendor/woocommerce/action-scheduler/action-scheduler.php');
 }
 
+// Automatic updates from the public GitHub repo (Plugin Update Checker v4.9).
+// Ships new versions via GitHub Releases — publish a release whose tag matches the
+// "Version:" header above (e.g. v1.0.3) and attach the packaged plugin zip as a
+// release asset. Clients then see the update in wp-admin like any WordPress.org plugin.
+if (file_exists(CHERRYLINK_DIR . '/updater/plugin-update-checker.php')) {
+    require_once(CHERRYLINK_DIR . '/updater/plugin-update-checker.php');
+    $cl_update_checker = Puc_v4_Factory::buildUpdateChecker(
+        'https://github.com/tonyAndr/cherrylink-pro-ai/',
+        __FILE__,
+        'cherrylink-pro-ai'
+    );
+    // Prefer the attached release-asset zip over GitHub's auto-generated source archive
+    // (keeps dev files like gutenberg-src/ and node_modules out of client installs).
+    $cl_update_checker->getVcsApi()->enableReleaseAssets();
+}
+
 if (!defined('LINKATE_DEBUG')) require(CHERRYLINK_DIR . '/cherrylink_debug.php');
 
 if (!defined('LINKATE_INSTALL_LIBRARY')) require(CHERRYLINK_DIR . '/cherrylink_install.php');
@@ -55,12 +71,10 @@ if (!defined('LINKATE_SYNC_LIBRARY')) require(CHERRYLINK_DIR . '/cherrylink_sync
 if (!defined('LINKATE_STATISTICS_LIBRARY')) require(CHERRYLINK_DIR . '/cherrylink_statistics.php');
 
 if (!defined('LINKATE_STATS_COLUMN_LIBRARY')) require(CHERRYLINK_DIR . '/cherrylink_stats_column.php');
-// if (!defined('LINKATE_CRB_LIBRARY')) require(CHERRYLINK_DIR . '/crb_main.php');
 
 if (!defined('LINKATE_GUTENBERG_ASSETS')) require(CHERRYLINK_DIR . '/cherrylink_gutenberg.php');
 if (!defined('LINKATE_TAILWIND_CONSTANTS')) require(CHERRYLINK_DIR . '/cherrylink_tailwind_constants.php');
 if (!defined('LINKATE_INDEX_HELPERS')) require(CHERRYLINK_DIR . "/cherrylink_index_helpers.php");
-if (!defined('LINKATE_STATS_SCHEME')) require(CHERRYLINK_DIR . "/cherrylink_stats_scheme.php");
 
 if (is_admin()) {
     require(CHERRYLINK_DIR . '/cherrylink_admin_options.php');
@@ -307,7 +321,6 @@ class LinkatePosts
 				
 			</div>
 			<div class="linkate-link" title="Нажмите для вставки в текст" data-url="{url}" data-titleseo="{title_seo}" data-title="{title}" data-category="{categorynames}" data-date="{date}" data-author="{author}" data-postid="{postid}" data-imagesrc="{imagesrc}" data-anons="{anons}" data-suggestions="{suggestions}"><span class="link-title" >';
-        // <div class="link-add-to-block" title="Добавить в блок релевантных ссылок"></div><div class="link-del-from-block btn-hidden" title="Убрать из блока ссылок"></div>
 
         $output_template_item_suffix = '</span></div>
 			<div class="link-right-controls"><div class="link-individual-stats-income" title="Сколько раз сослались на эту статью">?</div><div class="link-individual-stats-out" title="Сколько исходящих ссылок содержит статья">?</div><div class="link-suggestions" title="Подсказка"></div></div></div>';

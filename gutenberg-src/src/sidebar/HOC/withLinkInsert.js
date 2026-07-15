@@ -11,7 +11,6 @@ const LinkWithInsertAction = OriginalComponent => {
             this.handleClick           = this.handleClick.bind(this);
             this.copyLink              = this.copyLink.bind(this);
             this.findAndInsertAtPhrase = this.findAndInsertAtPhrase.bind(this);
-            this.changeBlockLinks      = this.changeBlockLinks.bind(this);
         }
 
         // ── Shared helpers ───────────────────────────────────────────────────
@@ -161,24 +160,6 @@ const LinkWithInsertAction = OriginalComponent => {
             return url;
         }
 
-        // ── Block-links panel ────────────────────────────────────────────────
-
-        changeBlockLinks(postId, title, postMeta, updateCallback) {
-            const { blockLinks, manualEdit, showAfter } = postMeta;
-            let wasInBlock = false, index = 0;
-            blockLinks.forEach((el, i) => { if (el.post_id === postId) { wasInBlock = true; index = i; } });
-
-            if (!wasInBlock) {
-                blockLinks.push({ post_id: postId, keyword: title, m_keyword: "", use_manual: "false" });
-                showNotice('Ссылка добавлена в блок');
-            } else {
-                blockLinks.splice(index, 1);
-                showNotice('Ссылка удалена из блока');
-            }
-
-            updateCallback({ blockLinks, manualEdit, showAfter });
-        }
-
         // ── Render ───────────────────────────────────────────────────────────
 
         render() {
@@ -187,7 +168,6 @@ const LinkWithInsertAction = OriginalComponent => {
                     {...this.props}
                     clickHandler={this.handleClick}
                     copyLink={this.copyLink}
-                    changeBlockLinks={this.changeBlockLinks}
                     insertAtPhraseHandler={this.findAndInsertAtPhrase}
                 />
             );

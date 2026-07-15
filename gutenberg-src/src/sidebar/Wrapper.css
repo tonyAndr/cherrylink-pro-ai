@@ -64,8 +64,7 @@
 
 .components-tab-panel__tabs .tab-links,
 .components-tab-panel__tabs .tab-taxonomies,
-.components-tab-panel__tabs .tab-stats,
-.components-tab-panel__tabs .tab-blocklinks {
+.components-tab-panel__tabs .tab-stats {
     background-repeat: no-repeat;
     background-position: center;
     background-size: 24px;
@@ -81,10 +80,6 @@
 
 .components-tab-panel__tabs .tab-stats {
     background-image: url(/wp-content/plugins/cherrylink-pro-ai/assets/gutenberg/tab-stats.png);
-}
-
-.components-tab-panel__tabs .tab-blocklinks {
-    background-image: url(/wp-content/plugins/cherrylink-pro-ai/assets/gutenberg/tab-block.png);
 }
 
 .components-tab-panel__tabs .error-text {

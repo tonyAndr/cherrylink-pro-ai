@@ -170,27 +170,6 @@ function link_cf_set_options($option_key, $arg)
     $arg['use_stemming'] = @$options['use_stemming'];
     $arg['batch'] = @$options['batch'];
 
-    // for related block
-    $arg['crb_show_after_content'] = @$options['crb_show_after_content'];
-    $arg['crb_hide_existing_links'] = @$options['crb_hide_existing_links'];
-    $arg['crb_show_for_pages'] = @$options['crb_show_for_pages'];
-    $arg['crb_num_of_links_to_show'] = @$options['crb_num_of_links_to_show'];
-    $arg['crb_default_offset'] = @$options['crb_default_offset'];
-    $arg['crb_temp_before'] = @$options['crb_temp_before'];
-    $arg['crb_temp_link'] = @$options['crb_temp_link'];
-    $arg['crb_temp_after'] = @$options['crb_temp_after'];
-    $arg['crb_installed'] = @$options['crb_installed'];
-
-    $arg['crb_cache_minutes'] = @$options['crb_cache_minutes'];
-    $arg['crb_show_latest'] = @$options['crb_show_latest'];
-    $arg['crb_image_size'] = @$options['crb_image_size'];
-    $arg['crb_placeholder_path'] = @$options['crb_placeholder_path'];
-    $arg['crb_content_filter'] = @$options['crb_content_filter'];
-    $arg['crb_choose_template'] = @$options['crb_choose_template'];
-    $arg['crb_css_tuning'] = @$options['crb_css_tuning'];
-    $arg['crb_css_override'] = @$options['crb_css_override'];
-
-    // So far is used in CRB only to maintain manually established order
     $arg['ignore_sorting'] = isset($arg['ignore_sorting']) && $arg['ignore_sorting'] !== 'false';
 
     // other

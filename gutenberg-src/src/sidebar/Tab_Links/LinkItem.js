@@ -49,21 +49,13 @@ class LinkItem extends React.Component {
 
     render() {
 
-        const { linkObj, editUrl, clickHandler, copyLink, postMeta, inArticle, changeBlockLinks, onMetaChange, isIncoming } = this.props;
+        const { linkObj, editUrl, clickHandler, copyLink, inArticle, isIncoming } = this.props;
         const postId = linkObj["data-postid"],
             url = linkObj["data-url"],
             title = cherrylink_options.templates.isH1 === "true" ? this.decodeHtml(linkObj["data-title"]) : this.decodeHtml(linkObj["data-titleseo"]),
             incoming = linkObj["data-incoming"],
             outgoing = linkObj["data-outgoing"],
             sugg = linkObj["data-suggestions"];
-
-        let inBlock = false;
-
-        postMeta.blockLinks.forEach(element => {
-            if (element.post_id === postId) {
-                inBlock = true;
-            }
-        });
 
         const containerClass = inArticle ? `link-item-container insert-allowed inArticle` : "link-item-container insert-allowed";
 
@@ -85,11 +77,6 @@ class LinkItem extends React.Component {
                                 <img src="/wp-content/plugins/cherrylink-pro-ai/assets/gutenberg/find_suggestions.png" alt="Подсказки" />
                             </Tooltip>
                         </div>
-                        {/* <div onMouseDown={() => changeBlockLinks(postId, title, postMeta, onMetaChange)}>
-                            <img src={inBlock ? "/wp-content/plugins/cherrylink-pro-ai/assets/gutenberg/del_from_block2.png" :
-                                "/wp-content/plugins/cherrylink-pro-ai/assets/gutenberg/add_to_block2.png"}
-                                title={inBlock ? "Убрать из блока ссылок" : "Добавить в блок ссылок"} alt="" />
-                        </div> */}
                     </div>
                     <div className='toolbar-article'>
                         <div onMouseDown={() => copyLink(url)}>

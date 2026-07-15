@@ -18,7 +18,6 @@ import { GetAllTerms } from "./Data/GetAllTerms";
 import { GetArticleStats } from './Data/GetArticleStats';
 import { StatsTab } from './Tab_Stats/StatsTab';
 import { SuggestionsPanel } from './Suggestions/SugestionsPanel';
-import BlockLinks from './Tab_BlockLinks/BlockLinksPanel';
 import { GetIncomingLinks } from './Data/GetIncomingLinks';
 import Icons from './Icons';
 import "./Wrapper.css";
@@ -206,8 +205,7 @@ class CherryLinkSidebar extends React.Component {
                                 stats={this.state.articleStats}
                                 convertUrl={this.fcl_convertRelativeUrl}
                                 showSuggestions={this.updateSuggestions}
-                                incomingLinks={this.state.incomingLinks}
-                                blockLinks={this.state.blockLinks} />
+                                incomingLinks={this.state.incomingLinks} />
                             <GetMoreBtn {...this.state.currentData } requestUpdate={this.updateRequested} />
                         </div>
                     )
@@ -221,9 +219,6 @@ class CherryLinkSidebar extends React.Component {
                     }
                     {tabToRender === 'tab-stats' &&
                         (<StatsTab stats={this.state.articleStats} incoming={this.state.incomingLinks} />)
-                    }
-                    {tabToRender === 'tab-block' &&
-                        (<BlockLinks />)
                     }
                 </div>;
         }

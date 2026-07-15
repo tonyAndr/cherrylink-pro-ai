@@ -170,13 +170,7 @@ function link_cf_options_from_post($options, $args)
             case 'term_after':
             case 'link_temp_alt':
             case 'term_temp_alt':
-            case 'crb_temp_before': // For Relevant Block Addon
-            case 'crb_temp_link':
-            case 'crb_temp_after':
                 $options[$arg] = link_cf_is_base64_encoded($_POST[$arg]) ? $_POST[$arg] : base64_encode(urlencode(str_replace("'", "\"", $_POST[$arg])));
-                break;
-            case 'crb_css_override':
-                $options[$arg] = $_POST[$arg];
                 break;
             case 'export':
                 //        	parse_str(base64_decode($_POST['export']),$options);

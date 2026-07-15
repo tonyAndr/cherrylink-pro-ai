@@ -3,7 +3,7 @@
 Plugin Name: CherryLink Pro AI
 Plugin URI: http://seocherry.ru/
 Description: Плагин для автоматической внутренней перелинковки на основе семантического поиска (AI). Находит релевантные статьи и предлагает анкорные фразы с помощью векторных эмбеддингов.
-Version: 1.0.4
+Version: 1.0.5
 Author: Anton SeoCherry.ru
 Author URI: http://seocherry.ru/
 Requires at least: 5.6
@@ -58,7 +58,6 @@ if (file_exists(CHERRYLINK_DIR . '/updater/plugin-update-checker.php')) {
 if (!defined('LINKATE_DEBUG')) require(CHERRYLINK_DIR . '/cherrylink_debug.php');
 
 if (!defined('LINKATE_INSTALL_LIBRARY')) require(CHERRYLINK_DIR . '/cherrylink_install.php');
-if (!defined('LINKATE_EF_LIBRARY')) require(CHERRYLINK_DIR . '/cherrylink_editor_functions.php');
 
 if (!defined('LINKATE_CF_LIBRARY')) require(CHERRYLINK_DIR . '/cherrylink_cf.php');
 if (!defined('LINKATE_ACF_LIBRARY')) require(CHERRYLINK_DIR . '/cherrylink_acf.php');
@@ -146,7 +145,7 @@ class LinkatePosts
         $is_term           = isset($arg_options['is_term'])    ? (int)$arg_options['is_term']    : 0;
         $offset            = isset($arg_options['offset'])     ? (int)$arg_options['offset']     : 0;
         $post_id           = isset($arg_options['manual_ID'])  ? (int)$arg_options['manual_ID']  : -1;
-        $mode              = !empty($arg_options['mode'])      ? $arg_options['mode']             : 'related_block';
+        $mode              = !empty($arg_options['mode'])      ? $arg_options['mode']             : 'classic';
         $custom_text       = isset($arg_options['custom_text']) ? trim($arg_options['custom_text']) : '';
 
         $options = link_cf_set_options($option_key, $arg_options);
@@ -242,7 +241,7 @@ class LinkatePosts
         $results = $wpdb->get_results($sql);
 
         // Filter by max incoming links
-        if ($consider_max && $mode !== 'related_block' && $results) {
+        if ($consider_max && $results) {
             $max = (int)$options['max_incoming_links'];
             $results = array_values(array_filter($results, function ($row) use ($max) {
                 return (int)get_post_meta($row->ID, 'cherry_income', true) < $max;

@@ -17,8 +17,6 @@ jQuery(document).ready(function ($) {
 
     let cl_individual_stats = false;
     let incoming_links_array = []; // to mark links which point to the current article
-    let cl_whitelist = [];
-    let cl_blacklist = [];
 
     const cl_open_button = $('.linkate-button');
     // var cl_editor_textarea = $("#content")[0];
@@ -361,35 +359,6 @@ jQuery(document).ready(function ($) {
                 }
                 let el = $(this).parent().parent();
                 fcl_suggestionFindandInsertLink(el);
-            })
-
-            $('.suggestion-stop').off().on("click",function (e) {
-                let reindex_link = window.location.href.replace(window.location.href.slice(window.location.href.indexOf('/wp-admin/') + 10), 'options-general.php?page=cherrylink-pro&subpage=other');
-                let word = $(this).parent().parent().attr("data-text");
-                e.preventDefault();
-
-                let ajax_data = {
-                    words: [word],
-                    action: 'linkate_add_stopwords',
-                    is_white: 0
-                };
-                $.each($(this).parent().parent().parent().children(), function (ind, val) {
-                    if ($(val).attr('data-text').toLowerCase() === word.toLowerCase()) {
-                        $(val).css('background', 'tomato');
-                        $(val).find('.suggestion-stop').remove();
-                    }
-                });
-
-                $.ajax({
-                    type: "POST",
-                    url: ajaxurl,
-                    data: ajax_data,
-                    datatype: 'json',
-                    success: function (response) {
-                        if ($('.suggestions-panel-content').find('.suggestions-reindex-notice').length === 0)
-                            $('.suggestions-panel-header').before('<div class="suggestions-reindex-notice">Для учета новых стоп-слов необходимо сделать реиндексацию в <a target="_blank" href="' + reindex_link + '">настройках</a>.</div>')
-                    }
-                });
             })
 
             $('.suggestion-insert-anywhere').off().on("click",function (e) {
@@ -1205,12 +1174,6 @@ jQuery(document).ready(function ($) {
                 ajax_get_data_from_server();
                 fcl_toggle_links_stats();
                 //fcl_individual_links_stats();
-
-                // Use_stemming in this case determines whether we use stoplists or no. 
-                // Stemming for suggestions in js still applies, but not in php, if === false
-                if (cherrylink_options["use_stemming"] === 'true') {
-                    fcl_get_stop_lists();
-                }
             }
             $('#linkate-box').toggleClass('hide-or-show');
         });
@@ -1405,31 +1368,6 @@ jQuery(document).ready(function ($) {
     }
 
     // Stop words
-    function fcl_get_stop_lists() {
-        let ajax_data = {
-            'action': 'linkate_get_whitelist'
-        };
-        $.ajax({
-            type: "POST",
-            url: ajax_obj.ajaxurl,
-            data: ajax_data,
-            datatype: 'json',
-            success: function (response) {
-                cl_whitelist = response;
-            }
-        });
-        ajax_data.action = 'linkate_get_blacklist';
-        $.ajax({
-            type: "POST",
-            url: ajax_obj.ajaxurl,
-            data: ajax_data,
-            datatype: 'json',
-            success: function (response) {
-                cl_blacklist = response;
-            }
-        });
-    }
-
     /* ===================       ==================== */
     /* =================== Init ==================== */
     /* ===================       ==================== */

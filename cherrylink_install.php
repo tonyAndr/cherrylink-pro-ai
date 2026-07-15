@@ -32,10 +32,6 @@ function fill_options($options)
         $options['hash_field'] = $hash_field;
     }
 
-    // Remove stopwords from options, read from files directly - v 1.4.9
-    $options['base_stopwords'] = "";
-    $options['base_tinywords'] = "";
-
     if (!isset($options['append_on'])) $options['append_on'] = 'false';
     if (!isset($options['append_priority'])) $options['append_priority'] = '10';
     if (!isset($options['append_condition'])) $options['append_condition'] = 'is_single()';

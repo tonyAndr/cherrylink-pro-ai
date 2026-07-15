@@ -1238,18 +1238,6 @@ function link_cf_display_weights($options)
     </tr>
 <?php
 }
-function link_cf_display_stopwords()
-{
-?>
-    <h3><label for="custom_stopwords"><?php _e('Ваши стоп-слова:', CHERRYLINK_TEXT_DOMAIN) ?></label></h3>
-    <textarea name="custom_stopwords" id="custom_stopwords" rows="6" cols="38" placeholder="слово1&#10;слово2"></textarea>
-    <br><br>
-    <input name="is_white" type="checkbox" id="is_white" value="is_white" /><label for="is_white"><?php _e('Добавить в белый список', CHERRYLINK_TEXT_DOMAIN) ?></label>
-    <br><br>
-    <? link_cf_prepare_tooltip("scan_stopwords_white"); ?>
-<?php
-}
-
 function link_cf_display_match_against_title($match_all_against_title)
 {
 ?>
@@ -1289,45 +1277,6 @@ function link_cf_display_ignore_relevance($ignore_relevance)
     </tr>
 <?php
 }
-function link_cf_display_clean_suggestions_stoplist($clean_suggestions_stoplist)
-{
-?>
-    <tr valign="top">
-        <th scope="row"><label for="clean_suggestions_stoplist"><?php _e('Применить стоп-слова к подсказкам анкоров?', CHERRYLINK_TEXT_DOMAIN) ?></label></th>
-        <td>
-            <select name="clean_suggestions_stoplist" id="clean_suggestions_stoplist">
-                <option <?php if ($clean_suggestions_stoplist == 'false') {
-                            echo 'selected="selected"';
-                        } ?> value="false">Нет</option>
-                <option <?php if ($clean_suggestions_stoplist == 'true') {
-                            echo 'selected="selected"';
-                        } ?> value="true">Да</option>
-            </select>
-        <td><?php link_cf_prepare_tooltip("Фильтрация подсказок по черным и белым спискам стоп-слов."); ?></td>
-        </td>
-    </tr>
-<?php
-}
-function link_cf_display_use_stemming($use_stemming)
-{
-?>
-    <tr valign="top">
-        <th scope="row"><label for="use_stemming"><?php _e('Использовать стемминг и стоп-слова', CHERRYLINK_TEXT_DOMAIN) ?></label></th>
-        <td>
-            <select name="use_stemming" id="use_stemming">
-                <option <?php if ($use_stemming == 'false') {
-                            echo 'selected="selected"';
-                        } ?> value="false">Нет</option>
-                <option <?php if ($use_stemming == 'true') {
-                            echo 'selected="selected"';
-                        } ?> value="true">Да</option>
-            </select>
-        <td><?php link_cf_prepare_tooltip("scan_use_stemming"); ?></td>
-        </td>
-    </tr>
-<?php
-}
-
 function link_cf_display_seo_meta_source($seo_meta_source = "none")
 {
 ?>

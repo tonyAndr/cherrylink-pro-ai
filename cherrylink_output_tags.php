@@ -104,11 +104,6 @@ function linkate_otf_author($option_key, $result, $ext)
     return $author;
 }
 
-function linkate_otf_authorurl($option_key, $result, $ext)
-{
-    return get_author_posts_url($result->post_author);
-}
-
 function linkate_otf_date($option_key, $result, $ext)
 {
     if ($ext === 'raw') return $result->post_date;
@@ -149,11 +144,6 @@ function linkate_otf_suggestions($option_key, $result, $ext) {
     return trim($result->suggestions);
 }
 
-function linkate_otf_catnames($option_key, $result, $ext)
-{
-    return linkate_otf_categorynames($option_key, $result, $ext);
-}
-
 function linkate_otf_categorynames($option_key, $result, $ext)
 {
     $cats = get_the_category($result->ID);
@@ -164,33 +154,13 @@ function linkate_otf_categorynames($option_key, $result, $ext)
     return $value;
 }
 
-function linkate_otf_tags($option_key, $result, $ext)
-{
-    $tags = (array) get_the_tags($result->ID);
-    $tag_list = array();
-    foreach ($tags as $tag) {
-        $tag_list[] = $tag->name;
-    }
-    if (!$ext) $ext = ', ';
-    $tag_list = join($ext, $tag_list);
-    return $tag_list;
-}
-
-function linkate_otf_score($option_key, $result, $ext)
-{
-    return sprintf("%.0f", $result->score);
-}
-
 function linkate_otf_imagesrc($option_key, $result, $ext)
 {
     $options = get_option($option_key);
     $url_option = $options['relative_links'];
-    // $crb_image_size = $options['crb_image_size'];
     $template_image_size = isset($options['template_image_size']) ? $options['template_image_size'] : '';
     $crb_placeholder_path = CHERRYLINK_DIR_URL . 'img/imgsrc_placeholder.jpg';
-    // $crb_content_filter = $options['crb_content_filter'] == 1;
 
-    // $size_to_use = ($ext && $ext === 'crb') ? $crb_image_size : $template_image_size;
     $size_to_use = $template_image_size;
 
     // Check Featured Image first
@@ -205,10 +175,6 @@ function linkate_otf_imagesrc($option_key, $result, $ext)
 
     // DANGEROUS but possibly can find more images
     $content = $result->post_content;
-    // if ($crb_content_filter) {
-    //     $content = str_replace("[crb_show_block]", "", $content); // preventing nesting overflow
-    //     $content = apply_filters('the_content', $content);
-    // }
 
     // Try to extract img tags from html
     $pattern = '/<img.+?src\s*=\s*[\'|\"](.*?)[\'|\"].+?>/i';
@@ -252,88 +218,6 @@ function linkate_otf_imagesrc($option_key, $result, $ext)
         $imgsrc = $crb_placeholder_path;
 
     return $imgsrc;
-}
-
-function linkate_otf_imgtag($option_key, $result, $ext)
-{
-    $options = get_option($option_key);
-    // $crb_image_size = $options['crb_image_size'];
-    $template_image_size = isset($options['template_image_size']) ? $options['template_image_size'] : '';
-    $crb_placeholder_path = CHERRYLINK_DIR_URL . 'img/imgsrc_placeholder.jpg';
-    // $crb_content_filter = $options['crb_content_filter'] == 1;
-
-    $size_to_use = $template_image_size;
-
-    // Check Featured Image first
-    $imgtag = get_the_post_thumbnail(intval($result->ID), $size_to_use ? $size_to_use : '');
-
-    if ($imgtag) {
-        return $imgtag;
-    }
-
-    $imgsrc = '';
-    $alt = linkate_otf_title($option_key, $result, $ext);
-    // DANGEROUS but possibly can find more images
-    $content = $result->post_content;
-    // if ($crb_content_filter) {
-    //     $content = str_replace("[crb_show_block]", "", $content); // preventing nesting overflow
-    //     $content = apply_filters('the_content', $content);
-    // }
-
-    // Try to extract img tags from html
-    $pattern = '/<img.+?src\s*=\s*[\'|\"](.*?)[\'|\"].+?>/i';
-    $found = preg_match_all($pattern, $content, $matches);
-    if ($found) {
-        // $i = isset($s[0]) ? $s[0] : false;
-        // if (!$i) $i = 0;
-        // $imgsrc = $matches[1][$i];
-        $imgsrc = $matches[1][0];
-    }
-
-    // Well, shite, return placeholder
-    if (!$imgsrc) { // placeholder
-        return "<img src=\"" . $crb_placeholder_path . "\" alt=\"" . $alt . "\">";
-    }
-
-    // Now we try to find suitable size
-    // first check using vanilla url
-    $att_id = attachment_url_to_postid($imgsrc);
-
-    // cut the shit outta here
-    if (!$att_id) {
-        $tempsrc = preg_replace("~-\d{2,4}x\d{2,4}(?!.*-\d{2,4}x\d{2,4})~", '', $imgsrc);
-        $att_id = attachment_url_to_postid($tempsrc);
-    }
-
-    // If not found again, return imgsrc from prev step and relax
-    if (!$att_id) {
-        return "<img src=\"" . $imgsrc . "\" alt=\"" . $alt . "\">";
-    }
-
-    // Now lets try to get needed size
-    // If size is empty then original will be returned
-    $attachement = wp_get_attachment_image($att_id, $size_to_use ? $size_to_use : '');
-    if ($attachement) {
-        return $attachement;
-    }
-
-    if (!$imgsrc) // placeholder
-        $imgsrc = "<img src=\"" . $crb_placeholder_path . "\" alt=\"" . $alt . "\">";
-
-    return $imgsrc;
-}
-
-// returns the principal category id of a post -- if a cats are hierarchical chooses the most specific -- if multiple cats chooses the first (numerically smallest)
-function linkate_otf_categoryid($option_key, $result, $ext)
-{
-    $cats = get_the_category($result->ID);
-    foreach ($cats as $cat) {
-        $parents[] = $cat->category_parent;
-    }
-    foreach ($cats as $cat) {
-        if (!in_array($cat->cat_ID, $parents)) $categories[] = $cat->cat_ID;
-    }
-    return $categories[0];
 }
 
 // ****************************** Helper Functions *********************************************

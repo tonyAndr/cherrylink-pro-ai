@@ -126,17 +126,7 @@ function link_cf_set_options($option_key, $arg)
     if (!isset($arg['included_cats'])) $arg['included_cats'] = stripslashes(@$options['included_cats']);
     if (!isset($arg['excluded_authors'])) $arg['excluded_authors'] = stripslashes(@$options['excluded_authors']);
     if (!isset($arg['included_authors'])) $arg['included_authors'] = stripslashes(@$options['included_authors']);
-    // БЫЛО if (!isset($arg['excluded_posts'])) $arg['excluded_posts'] = stripslashes(@$options['excluded_posts']);
-
-    // get from options + add from CRB args
-    if (!isset($arg['excluded_posts']) || empty($arg['excluded_posts'])) {
-        $arg['excluded_posts'] = stripslashes(@$options['excluded_posts']);
-    } else {
-        $excl_from_options = trim(stripslashes(@$options['excluded_posts']));
-        if (isset($excl_from_options) && !empty($excl_from_options)) {
-            $arg['excluded_posts'] .= "," . $excl_from_options;
-        }
-    }
+    if (!isset($arg['excluded_posts'])) $arg['excluded_posts'] = stripslashes(@$options['excluded_posts']);
 
     if (!isset($arg['included_posts'])) $arg['included_posts'] = stripslashes(@$options['included_posts']);
     if (!isset($arg['show_customs'])) $arg['show_customs'] = stripslashes(@$options['show_customs']);
@@ -153,7 +143,6 @@ function link_cf_set_options($option_key, $arg)
     if (!isset($arg['custom'])) $arg['custom'] = @$options['custom'];
     if (!isset($arg['sort'])) $arg['sort'] = @$options['sort'];
     if (!isset($arg['status'])) $arg['status'] = @$options['status'];
-    if (!isset($arg['clean_suggestions_stoplist'])) $arg['clean_suggestions_stoplist'] = @$options['clean_suggestions_stoplist'];
     if (!isset($arg['ignore_relevance'])) $arg['ignore_relevance'] = @$options['ignore_relevance'];
     if (!isset($arg['weight_content'])) $arg['weight_content'] = @$options['weight_content'];
     if (!isset($arg['weight_title'])) $arg['weight_title'] = @$options['weight_title'];
@@ -167,7 +156,6 @@ function link_cf_set_options($option_key, $arg)
     // the last options cannot be set via arguments
     $arg['stripcodes'] = @$options['stripcodes'];
     $arg['utf8'] = @$options['utf8'];
-    $arg['use_stemming'] = @$options['use_stemming'];
     $arg['batch'] = @$options['batch'];
 
     $arg['ignore_sorting'] = isset($arg['ignore_sorting']) && $arg['ignore_sorting'] !== 'false';

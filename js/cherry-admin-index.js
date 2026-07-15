@@ -128,67 +128,6 @@ jQuery(document).ready(function ($) {
         });
     })();
 
-    // Get overused words after reindex
-    function index_get_overused_words() {
-        let ajax_data = 'action=linkate_last_index_overused_words';
-
-        $.ajax({
-            type: "POST",
-            url: ajaxurl,
-            data: ajax_data,
-            datatype: 'json',
-            success: function (response) {
-                let prog = JSON.parse(response);
-                if (prog['common_words'] && prog['common_words'].length > 0) {
-                    var w = confirm('Найдены общие слова, которые можно добавить в список стоп-слов. Желаете посмотреть?');
-                    if (w) {
-                        if (!document.querySelector('#spoiler_stop').checked) {
-                            $("#label_spoiler_stop").click();
-                        }
-
-                        var output_string = '<h2>Самые часто используемые слова на вашем сайте</h2><p>Формат - <strong>слово: количество использований</strong>.</p><p><strong>Нажмите на слова</strong>, которые хотите добавить в черный список.</p><ol>';
-                        prog['common_words'].forEach(function (item) {
-                            output_string += "<li title='Нажмите, чтобы добавить в стоп-лист' data-stemm='" + item.word + "' class='index-stopsugg-add'><strong>" + item.word + "</strong>: " + item.count + "</li>";
-                        });
-                        output_string += "</ol>";
-                        $("#index_stopwords_suggestions").html(output_string);
-                        $("#index_stopwords_suggestions").show();
-                        document.querySelector('#index_stopwords_suggestions').scrollIntoView({
-                            behavior: 'smooth' 
-                        });
-
-                        bind_action_add_overused_word_to_stoplist();
-                    }
-                }
-            }
-        });
-    }
-
-    function bind_action_add_overused_word_to_stoplist () {
-        // quick add suggestions
-        $(".index-stopsugg-add").click(function (event) {
-            event.preventDefault();
-
-            let words = [$(this).attr('data-stemm').trim()];
-            let ajax_data = {
-                words: words,
-                action: 'linkate_add_stopwords',
-                is_white: 0,
-                is_stemm: 0
-            };
-            $(this).remove();
-            $.ajax({
-                type: "POST",
-                url: ajaxurl,
-                data: ajax_data,
-                datatype: 'json',
-                success: function (response) {
-                }
-            });
-
-        });
-    }
-
     function handle_errors (error_msg, error_details) {
         console.log(error_msg);
         console.log(error_details);

@@ -165,7 +165,6 @@ function linkate_send_options_frontend()
         cherrylink_options['linkate_scheme_exists'] = <?php echo '"' . $scheme_exists . '"'; ?>;
         cherrylink_options['quickfilter_dblclick'] = <?php echo '"' . $options['quickfilter_dblclick'] . '"'; ?>;
         cherrylink_options['singleword_suggestions'] = <?php echo '"' . $options['singleword_suggestions'] . '"'; ?>;
-        cherrylink_options['use_stemming'] = <?php echo '"' . $options['use_stemming'] . '"'; ?>;
         cherrylink_options['multilink'] = <?php echo '"' . $options['multilink'] . '"'; ?>;
         cherrylink_options['term_length_limit'] = <?php echo $options['term_length_limit']; ?>;
         cherrylink_options['show_cat_filter'] = <?php echo $options['show_cat_filter']; ?>;

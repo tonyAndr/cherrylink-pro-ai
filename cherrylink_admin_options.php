@@ -319,23 +319,13 @@ function linkate_posts_expert_options_subpage()
         // Fill up the options with the values chosen...
         $options = link_cf_options_from_post($options, array(
             'show_customs',
-            'excluded_posts',
-            // 'included_posts',
             'excluded_authors',
-            // 'included_authors',
             'excluded_cats',
-            // 'included_cats',
-            // 'tag_str', 
-            // 'custom', 
             'limit_ajax',
-            // 'show_private', 
+            // 'show_private',
             'show_pages',
             'status',
-            // 'age', 
             'match_cat',
-            // 'match_tags',
-            // 'sort', 
-            // 'quickfilter_dblclick', 
             'consider_max_incoming_links',
             'max_incoming_links',
             'relative_links',
@@ -409,11 +399,6 @@ function linkate_posts_expert_options_subpage()
                         link_cf_display_match_cat($options['match_cat']);
                         link_cf_display_status($options['status']);
                         // link_cf_display_show_private($options['show_private']);
-                        // link_cf_display_age($options['age']);
-
-                        // link_cf_display_quickfilter_dblclick($options['quickfilter_dblclick']);
-
-
                         ?>
                     </table>
                     <input type="checkbox" id="spoiler_filter" />
@@ -426,15 +411,8 @@ function linkate_posts_expert_options_subpage()
                             link_cf_display_show_catergory_filter($options['show_cat_filter']);
                             link_cf_display_show_custom_posts($options['show_customs']);
                             link_cf_display_max_incoming_links($options['consider_max_incoming_links'], $options['max_incoming_links']);
-                            // link_cf_display_sort($options['sort']);
-                            // link_cf_display_match_tags($options['match_tags']);
-                            // link_cf_display_match_author($options['match_author']);
-                            // link_cf_display_tag_str($options['tag_str']);
-                            link_cf_display_excluded_posts($options['excluded_posts']);
-                            // link_cf_display_included_posts($options['included_posts']);
-                            link_cf_display_authors($options['excluded_authors'], $options['included_authors']);
-                            link_cf_display_cats($options['excluded_cats'], $options['included_cats']);
-                            // link_cf_display_custom($options['custom']);
+                            link_cf_display_authors($options['excluded_authors']);
+                            link_cf_display_cats($options['excluded_cats']);
                             ?>
                         </table>
                     </div>

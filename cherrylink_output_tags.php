@@ -8,28 +8,17 @@ defined('ABSPATH') || exit;
 // Define lib name
 define('LP_OT_LIBRARY', true);
 
-// Called by the post plugins to match output tags to the actions that evaluate them
-function lp_output_tag_action($tag)
-{
-    return 'linkate_otf_' . $tag;
-}
+// Field getters for one search result — each returns a single value for the link card.
+// These were once dispatched dynamically from user-editable {tag} templates; the templates
+// are now fixed (see linkate_render_gutenberg / linkate_render_classic at the bottom), so the
+// getters are just called directly by linkate_link_fields().
 
-// To add a new output template tag all you need to do is write a tag function like those below.
-
-// All the tag functions must follow the pattern of 'linkate_otf_title' below. 
-//	the name is the tag name prefixed by 'linkate_otf_'
-//	the arguments are always $option_key, $result and $ext
-//		$option_key	the key to the plugin's options
-//		$result		the particular row of the query result
-//		$ext			some extra data which a tag may use
-//	the return value is the value of the tag as a string  
-
-function linkate_otf_postid($option_key, $result, $ext)
+function linkate_otf_postid($option_key, $result)
 {
     return $result->ID;
 }
 
-function linkate_otf_title($option_key, $result, $ext)
+function linkate_otf_title($option_key, $result)
 {
     if (isset($result->manual_title))
         return $result->manual_title; // return manual title for block links
@@ -40,7 +29,7 @@ function linkate_otf_title($option_key, $result, $ext)
     return $value;
 }
 
-function linkate_otf_title_seo($option_key, $result, $ext)
+function linkate_otf_title_seo($option_key, $result)
 {
     if (isset($result->manual_title))
         return $result->manual_title; // return manual title for block links
@@ -60,7 +49,7 @@ function linkate_otf_title_seo($option_key, $result, $ext)
     return $seotitle;
 }
 
-function linkate_otf_url($option_key, $result, $ext)
+function linkate_otf_url($option_key, $result)
 {
     $options = get_option('linkate-posts', []);
     $url_option = $options['relative_links'];
@@ -69,48 +58,17 @@ function linkate_otf_url($option_key, $result, $ext)
     return $value;
 }
 
-function linkate_otf_author($option_key, $result, $ext)
+function linkate_otf_author($option_key, $result)
 {
-    $type = false;
-    if ($ext) {
-        $s = explode(':', $ext);
-        if (count($s) == 1) {
-            $type = $s[0];
-        }
-    }
-    switch ($type) {
-        case 'display':
-            $author = get_the_author_meta('display_name', $result->post_author);
-            break;
-        case 'full':
-            $auth = get_userdata($result->post_author);
-            $author = $auth->first_name . ' ' . $auth->last_name;
-            break;
-        case 'reverse':
-            $auth = get_userdata($result->post_author);
-            $author = $auth->last_name . ', ' . $auth->first_name;
-            break;
-        case 'first':
-            $auth = get_userdata($result->post_author);
-            $author = $auth->first_name;
-            break;
-        case 'last':
-            $auth = get_userdata($result->post_author);
-            $author = $auth->last_name;
-            break;
-        default:
-            $author = get_the_author_meta('display_name', $result->post_author);
-    }
-    return $author;
+    return get_the_author_meta('display_name', $result->post_author);
 }
 
-function linkate_otf_date($option_key, $result, $ext)
+function linkate_otf_date($option_key, $result)
 {
-    if ($ext === 'raw') return $result->post_date;
-    else return linkate_oth_format_date($result->post_date, $ext, $result->ID);
+    return linkate_oth_format_date($result->post_date, false, $result->ID);
 }
 
-function linkate_otf_anons($option_key, $result, $ext)
+function linkate_otf_anons($option_key, $result)
 {
     $options = get_option($option_key);
 
@@ -140,11 +98,11 @@ function linkate_otf_anons($option_key, $result, $ext)
     return $excerpt;
 }
 
-function linkate_otf_suggestions($option_key, $result, $ext) {
+function linkate_otf_suggestions($option_key, $result) {
     return trim($result->suggestions);
 }
 
-function linkate_otf_categorynames($option_key, $result, $ext)
+function linkate_otf_categorynames($option_key, $result)
 {
     $cats = get_the_category($result->ID);
     $value = ''; //$n = 0;
@@ -154,7 +112,7 @@ function linkate_otf_categorynames($option_key, $result, $ext)
     return $value;
 }
 
-function linkate_otf_imagesrc($option_key, $result, $ext)
+function linkate_otf_imagesrc($option_key, $result)
 {
     $options = get_option($option_key);
     $url_option = $options['relative_links'];
@@ -218,6 +176,26 @@ function linkate_otf_imagesrc($option_key, $result, $ext)
         $imgsrc = $crb_placeholder_path;
 
     return $imgsrc;
+}
+
+// Build the {tag} => value map for one result, used by the two panel renderers in
+// cherrylink_main.php via strtr(). This replaced the old reflection-based dispatch
+// (lp_output_tag_action + function_exists + call_user_func) now that the templates
+// are fixed. Keys must cover every placeholder the templates reference.
+function linkate_link_fields($option_key, $result)
+{
+    return array(
+        '{url}'           => linkate_otf_url($option_key, $result),
+        '{title_seo}'     => linkate_otf_title_seo($option_key, $result),
+        '{title}'         => linkate_otf_title($option_key, $result),
+        '{categorynames}' => linkate_otf_categorynames($option_key, $result),
+        '{date}'          => linkate_otf_date($option_key, $result),
+        '{author}'        => linkate_otf_author($option_key, $result),
+        '{postid}'        => linkate_otf_postid($option_key, $result),
+        '{imagesrc}'      => linkate_otf_imagesrc($option_key, $result),
+        '{anons}'         => linkate_otf_anons($option_key, $result),
+        '{suggestions}'   => linkate_otf_suggestions($option_key, $result),
+    );
 }
 
 // ****************************** Helper Functions *********************************************

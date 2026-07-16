@@ -169,17 +169,6 @@ jQuery(document).ready(function ($) {
             $("textarea").on('focus keyup mousedown', function (e) {
                 cl_editor_lastfocus = e.target;
             });
-            if (cherrylink_options['quickfilter_dblclick'] === "true")
-                $("textarea").on('mouseup', function (e) {
-                    var start = this.selectionStart;
-                    var finish = this.selectionEnd;
-                    var sel = this.value.substring(start, finish);
-                    if (sel) {
-                        $('#filter_by_title').val(sel);
-                        $('#filter_by_title').trigger("propertychange");
-                    }
-
-                });
             try {
                 for (let editor of tinymce.editors) {
                     editor.on('ExecCommand change', function (event) {
@@ -188,13 +177,6 @@ jQuery(document).ready(function ($) {
                     editor.on('focus mousedown keyup change', function (event) {
                         cl_editor_lastfocus = 'RICH_EDITOR';
                     });
-                    if (cherrylink_options['quickfilter_dblclick'] === "true")
-                        editor.on('mouseup', function (event) {
-                            if (editor.selection.getContent()) {
-                                $('#filter_by_title').val(editor.selection.getContent({ format: 'text' }));
-                                $('#filter_by_title').trigger("propertychange");
-                            }
-                        })
                 }
             } catch (err) {
                 console.log(err)

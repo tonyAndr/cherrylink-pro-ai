@@ -3,7 +3,7 @@
 Plugin Name: CherryLink Pro AI
 Plugin URI: http://seocherry.ru/
 Description: Плагин для автоматической внутренней перелинковки на основе семантического поиска (AI). Находит релевантные статьи и предлагает анкорные фразы с помощью векторных эмбеддингов.
-Version: 1.0.5
+Version: 1.0.6
 Author: Anton SeoCherry.ru
 Author URI: http://seocherry.ru/
 Requires at least: 5.6
@@ -195,45 +195,25 @@ class LinkatePosts
 
         // ── Filter through WordPress (status, type, cats, age …) ─────────────
         $ids_in          = implode(',', array_map('intval', $ordered_ids));
-        $check_custom    = (trim($options['custom']['key']) !== '');
         $match_category  = ($options['match_cat'] === 'true');
-        $match_tags      = ($options['match_tags'] !== 'false');
-        $match_author    = ($options['match_author'] === 'true');
         $exclude_cats    = ($options['excluded_cats'] !== '');
-        $include_cats    = ($options['included_cats'] !== '');
         $exclude_authors = ($options['excluded_authors'] !== '');
-        $include_authors = ($options['included_authors'] !== '');
-        $exclude_posts   = (trim($options['excluded_posts']) !== '');
-        $include_posts   = (trim($options['included_posts']) !== '');
-        $use_tag_str     = ('' != trim($options['tag_str']));
         $hide_pass       = ($options['show_private'] === 'false');
-        $check_age       = ('none' !== $options['age']['direction']);
         $consider_max    = (isset($options['consider_max_incoming_links']) && $options['consider_max_incoming_links'] !== 'false');
 
         $sql = "SELECT ID, post_content, post_title, post_author, post_excerpt, post_date, post_type FROM {$wpdb->posts} ";
-        if ($check_custom) $sql .= "LEFT JOIN {$wpdb->postmeta} wpp ON post_id = ID ";
 
         $where   = ["ID IN ($ids_in)"];
         $where[] = link_cf_where_show_status($options['status']);
         if ($is_term == 0) {
             if ($match_category) $where[] = link_cf_where_match_category($post_id);
-            if ($match_tags)     $where[] = link_cf_where_match_tags($options['match_tags']);
-            if ($match_author)   $where[] = link_cf_where_match_author();
-            if ($check_custom)   $where[] = link_cf_where_check_custom($options['custom']['key'], $options['custom']['op'], $options['custom']['value']);
         }
         $where[] = link_cf_where_show_pages($options['show_pages'], $options['show_customs']);
-        if ($include_cats)    $where[] = link_cf_where_included_cats($options['included_cats']);
         if ($exclude_cats)    $where[] = link_cf_where_excluded_cats($options['excluded_cats']);
         if ($exclude_authors) $where[] = link_cf_where_excluded_authors($options['excluded_authors']);
-        if ($include_authors) $where[] = link_cf_where_included_authors($options['included_authors']);
-        if ($exclude_posts)   $where[] = link_cf_where_excluded_posts(trim($options['excluded_posts']));
-        if ($include_posts)   $where[] = link_cf_where_included_posts(trim($options['included_posts']));
-        if ($use_tag_str)     $where[] = link_cf_where_tag_str($options['tag_str']);
         if ($hide_pass)       $where[] = link_cf_where_hide_pass();
-        if ($check_age)       $where[] = link_cf_where_check_age($options['age']['direction'], $options['age']['length'], $options['age']['duration']);
 
         $sql .= "WHERE " . implode(' AND ', $where);
-        if ($check_custom) $sql .= " GROUP BY {$wpdb->posts}.ID";
         // Preserve vector similarity ranking
         $sql .= " ORDER BY FIELD(ID, $ids_in)";
         $sql .= " LIMIT $offset, $limit";
@@ -277,8 +257,7 @@ class LinkatePosts
         if ($mode === 'gutenberg') {
             return ['links' => [], 'count' => -1];
         }
-        $translations = link_cf_prepare_template($options['none_text']);
-        $output = '<p>' . link_cf_expand_template([], $options['none_text'], $translations, $option_key) . '</p>';
+        $output = '<p>' . $options['none_text'] . "\n</p>";
         return ['links' => trim($output), 'count' => 0];
     }
 
@@ -288,17 +267,13 @@ class LinkatePosts
 
         $results_count = 0;
         if ($results) {
-            $out_final    = $output_template;
-            $translations = link_cf_prepare_template($out_final);
-
+            $items = array();
             foreach ($results as $result) {
                 // JSON-inside-JSON: escape quotes so the value is valid inside "data-suggestions":"{suggestions}"
                 $result->suggestions = str_replace('"', '\\"', $result->suggestions);
-                $items[] = "{" . link_cf_expand_template($result, $out_final, $translations, $option_key) . "}";
+                $items[] = "{" . strtr($output_template, linkate_link_fields($option_key, $result)) . "}";
             }
-
-            if ($options['sort']['by1'] !== '') $items = link_cf_sort_items($options['sort'], $results, $option_key, $options['group_template'], $items);
-            $output = "[" . implode(",", str_replace("\n", "", $items)) . "]";
+            $output = "[" . implode(",", $items) . "]";
 
             $results_count = count($results);
             $send_data['links'] = $output;
@@ -328,20 +303,17 @@ class LinkatePosts
         if ($results) {
             $output_template = (!isset($options['output_template']) || $options['output_template'] === 'h1' || $options['output_template'] === '{title}') ? '{title}' : '{title_seo}';
             $out_final = $output_template_item_prefix . $output_template . $output_template_item_suffix;
-            $translations = link_cf_prepare_template($out_final);
+            $items = array();
             foreach ($results as $result) {
                 // HTML attribute context: encode quotes so they don't break data-suggestions="..."
                 $result->suggestions = htmlspecialchars($result->suggestions, ENT_COMPAT, 'UTF-8');
-                $items[] = link_cf_expand_template($result, $out_final, $translations, $option_key);
+                $items[] = strtr($out_final, linkate_link_fields($option_key, $result)) . "\n";
             }
-            if ($options['sort']['by1'] !== '') $items = link_cf_sort_items($options['sort'], $results, $option_key, $options['group_template'], $items);
             $output = implode(($options['divider']) ? $options['divider'] : "\n", $items);
 
             $results_count = sizeof($results);
         } else {
-            // we display the blank message, with tags expanded if necessary
-            $translations = link_cf_prepare_template($options['none_text']);
-            $output = "<p>" . link_cf_expand_template(array(), $options['none_text'], $translations, $option_key) . "</p>";
+            $output = "<p>" . $options['none_text'] . "\n</p>";
         }
 
         $send_data['links'] = trim($output);

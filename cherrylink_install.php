@@ -35,16 +35,8 @@ function fill_options($options)
     if (!isset($options['append_on'])) $options['append_on'] = 'false';
     if (!isset($options['append_priority'])) $options['append_priority'] = '10';
     if (!isset($options['append_condition'])) $options['append_condition'] = 'is_single()';
-    if (!isset($options['limit'])) $options['limit'] = 1000;
     if (!isset($options['limit_ajax'])) $options['limit_ajax'] = 50; // since 1.4.0
-    if (!isset($options['skip'])) $options['skip'] = 0;
-    if (!isset($options['age'])) {
-        $options['age']['direction'] = 'none';
-        $options['age']['length'] = '0';
-        $options['age']['duration'] = 'month';
-    }
     if (!isset($options['divider'])) $options['divider'] = '';
-    $options['omit_current_post'] = 'true';
     if (!isset($options['show_private'])) $options['show_private'] = 'false';
     if (!isset($options['show_pages'])) $options['show_pages'] = 'false';
     // show_static is now show_pages
@@ -53,42 +45,15 @@ function fill_options($options)
         unset($options['show_static']);
     };
     if (!isset($options['none_text'])) $options['none_text'] = __('Ничего не найдено...', CHERRYLINK_TEXT_DOMAIN);
-    if (!isset($options['no_text'])) $options['no_text'] = 'false';
-    if (!isset($options['tag_str'])) $options['tag_str'] = '';
     if (!isset($options['excluded_cats'])) $options['excluded_cats'] = '';
     if ($options['excluded_cats'] === '9999') $options['excluded_cats'] = '';
-    if (!isset($options['included_cats'])) $options['included_cats'] = '';
-    if ($options['included_cats'] === '9999') $options['included_cats'] = '';
     if (!isset($options['excluded_authors'])) $options['excluded_authors'] = '';
     if ($options['excluded_authors'] === '9999') $options['excluded_authors'] = '';
-    if (!isset($options['included_authors'])) $options['included_authors'] = '';
-    if ($options['included_authors'] === '9999') $options['included_authors'] = '';
-    if (!isset($options['included_posts'])) $options['included_posts'] = '';
-    if (!isset($options['excluded_posts'])) $options['excluded_posts'] = '';
-    if ($options['excluded_posts'] === '9999') $options['excluded_posts'] = '';
     if (!isset($options['show_customs'])) $options['show_customs'] = ''; // custom post types v1.2.10
     if ($options['show_customs'] === '9999') $options['show_customs'] = '';
-    if (!isset($options['stripcodes'])) $options['stripcodes'] = array(array());
-    $options['prefix'] = '<div class="linkate-box-container"><ol id="linkate-links-list">';
-    $options['suffix'] = '</ol></div>';
     if (!isset($options['output_template'])) $options['output_template'] = 'h1';
     if (!isset($options['match_cat'])) $options['match_cat'] = 'false';
-    if (!isset($options['match_tags'])) $options['match_tags'] = 'false';
-    if (!isset($options['match_author'])) $options['match_author'] = 'false';
     if (!isset($options['content_filter'])) $options['content_filter'] = 'false';
-    if (!isset($options['custom'])) {
-        $options['custom']['key'] = '';
-        $options['custom']['op'] = '=';
-        $options['custom']['value'] = '';
-    }
-    if (!isset($options['sort'])) {
-        $options['sort']['by1'] = '';
-        $options['sort']['order1'] = SORT_ASC;
-        $options['sort']['case1'] = 'false';
-        $options['sort']['by2'] = '';
-        $options['sort']['order2'] = SORT_ASC;
-        $options['sort']['case2'] = 'false';
-    }
     if (!isset($options['status'])) {
         $options['status']['publish'] = 'true';
         $options['status']['private'] = 'false';
@@ -96,8 +61,6 @@ function fill_options($options)
         $options['status']['future'] = 'false';
     }
     if (!isset($options['group_template'])) $options['group_template'] = '';
-    if (!isset($options['utf8'])) $options['utf8'] = 'true';
-    if (!function_exists('mb_internal_encoding')) $options['utf8'] = 'false';
     if (!isset($options['link_before'])) $options['link_before'] = base64_encode(urlencode('<a href="{url}" title="{title}">'));
     if (!isset($options['link_after'])) $options['link_after'] = base64_encode(urlencode('</a>'));
     if (!isset($options['link_temp_alt'])) $options['link_temp_alt'] = base64_encode(urlencode("<div style=\"padding:10px;margin:10px;border-top:1px solid lightgrey;border-bottom:1px solid lightgrey;\"><span style=\"color:lightgrey;font-size:smaller;\">Читайте также</span><div style=\"position:relative;max-width: 660px;margin: 0 auto;padding: 0 20px 20px 20px;display:flex;flex-wrap: wrap;\"><div style=\"width: 35%; min-width: 180px; height: auto; box-sizing: border-box;padding-right: 5%;\"><img src=\"{imagesrc}\" style=\"width:100%;\"></div><div style=\"width: 60%; min-width: 180px; height: auto; box-sizing: border-box;\"><strong>{title}</strong><br>{anons}</div><a target=\"_blank\" href=\"{url}\"><span style=\"position:absolute;width:100%;height:100%;top:0;left: 0;z-index: 1;\">&nbsp;</span></a></div></div>"));
@@ -116,7 +79,6 @@ function fill_options($options)
     if (!isset($options['linkate_scheme_exists'])) $options['linkate_scheme_exists'] = false; // since 1.4.0
     if (!isset($options['linkate_scheme_time'])) $options['linkate_scheme_time'] = 0; // since 1.4.0
     if (!isset($options['relative_links'])) $options['relative_links'] = "full"; // since 1.4.9
-    if (!isset($options['quickfilter_dblclick'])) $options['quickfilter_dblclick'] = "false"; // since 1.5.0
 if (!isset($options['debug_enabled'])) $options['debug_enabled'] = "false"; // since 2.0.6
     if (!isset($options['seo_meta_source'])) $options['seo_meta_source'] = "none"; // since 2.3.0
     if (!isset($options['consider_max_incoming_links'])) $options['consider_max_incoming_links'] = 'false';

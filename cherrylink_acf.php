@@ -62,7 +62,6 @@ function link_cf_options_from_post($options, $args)
                 }
                 break;
             case 'multilink':
-            case 'compare_seotitle':
                 if (isset($_POST[$arg])) {
                     $options[$arg] = 'checked';
                 } else {

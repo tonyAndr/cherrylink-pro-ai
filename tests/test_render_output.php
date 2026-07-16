@@ -19,11 +19,9 @@ if (!defined('CHERRYLINK_TEXT_DOMAIN')) define('CHERRYLINK_TEXT_DOMAIN', 'cherry
 // ---- minimal WordPress stubs (values are dummy; both paths use them equally) ----
 $GLOBALS['OPTS'] = array(
     'relative_links'      => 'full',
-    'seo_meta_source'     => 'none',
     'anons_len'           => 0,
     'template_image_size' => '',
     'divider'             => '',
-    'output_template'     => 'h1',
     'none_text'           => 'Ничего не найдено...',
 );
 function get_option($k, $d = false) { return $k === 'date_format' ? 'Y-m-d' : $GLOBALS['OPTS']; }
@@ -40,7 +38,7 @@ function __($s, $d = null)                  { return $s; }
 function strip_shortcodes($c)               { return $c; }
 
 $PLUGIN = dirname(__DIR__);
-require $PLUGIN . '/cherrylink_cf.php';          // linkate_get_post_seo_title
+require $PLUGIN . '/cherrylink_cf.php';          // linkate_unparse_url deps
 require $PLUGIN . '/cherrylink_output_tags.php'; // otf getters + linkate_link_fields + linkate_unparse_url
 
 // ---- OLD machinery, reproduced verbatim as the oracle ----
@@ -120,12 +118,10 @@ function new_classic($ids, $out_final, $ok, $div) {
 
 $ids = array(11, 22);
 $classic_h1  = $PREFIX . '{title}'     . $SUFFIX;
-$classic_seo = $PREFIX . '{title_seo}' . $SUFFIX;
 
 $cases = array(
     'gutenberg'   => array(old_gutenberg($ids, $GUT_TPL, $ok),        new_gutenberg($ids, $GUT_TPL, $ok)),
     'classic_h1'  => array(old_classic($ids, $classic_h1, $ok, ''),   new_classic($ids, $classic_h1, $ok, '')),
-    'classic_seo' => array(old_classic($ids, $classic_seo, $ok, ''),  new_classic($ids, $classic_seo, $ok, '')),
     'none_text'   => array(
         trim('<p>' . ref_expand(array(), $GLOBALS['OPTS']['none_text'], ref_prepare($GLOBALS['OPTS']['none_text']), $ok) . '</p>'),
         trim('<p>' . $GLOBALS['OPTS']['none_text'] . "\n</p>"),

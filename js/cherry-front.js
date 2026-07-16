@@ -210,7 +210,7 @@ jQuery(document).ready(function ($) {
             if (loading) {
                 header = '<strong>Подбираем анкорные подсказки…</strong>';
             } else if (suggestions.length > 0) {
-                header = 'Подсказки для: <strong>' + (item.title_seo || item.titleseo || '') + '</strong>' + insert_button;
+                header = 'Подсказки для: <strong>' + (item.title || '') + '</strong>' + insert_button;
             } else {
                 header = '<strong>Подсказки не найдены.<br>Убедитесь, что статья проиндексирована через Cherry Vector API. <a target="_blank" href="' + reindex_link + '">Настройки</a>.</strong>';
             }
@@ -485,7 +485,6 @@ jQuery(document).ready(function ($) {
         function fcl_replace_placeholders_post(i, template) {
             return template.replace(/{url}/g, i.url)
                 .replace(/{title}/g, i.title)
-                .replace(/{title_seo}/g, i.title_seo)
                 .replace(/{categorynames}/g, i.categorynames)
                 .replace(/{date}/g, i.date)
                 .replace(/{author}/g, i.author)
@@ -552,7 +551,7 @@ jQuery(document).ready(function ($) {
 
             if (!(event.ctrlKey || event.metaKey) && (between == undefined || between.length == 0)) {
                 switch (cherrylink_options['no_selection_action']) {
-                    case 'title': between = item.title_seo; break;
+                    case 'title': between = item.title; break;
                     case 'h1': between = item.title; break;
                     case 'placeholder': between = 'ТЕКСТ_ССЫЛКИ'; break;
                     case 'empty': between = '&nbsp;'; break;
@@ -586,7 +585,7 @@ jQuery(document).ready(function ($) {
                 let between = '';
                 if (!(event.ctrlKey || event.metaKey) && (between == undefined || between.length == 0)) {
                     switch (cherrylink_options['no_selection_action']) {
-                        case 'title': between = item.title_seo; break;
+                        case 'title': between = item.title; break;
                         case 'h1': between = item.title; break;
                         case 'placeholder': between = 'ТЕКСТ_ССЫЛКИ'; break;
                         case 'empty': between = '&nbsp;'; break;
@@ -641,7 +640,6 @@ jQuery(document).ready(function ($) {
                 let taxonomy = fcl_getAttr(element, 'data-taxonomy');
                 return { url, title, taxonomy, exists };
             } else {
-                let title_seo = fcl_getAttr(element, 'data-titleseo');
                 let categorynames = fcl_getAttr(element, 'data-category');
                 let date = fcl_getAttr(element, 'data-date');
                 let author = fcl_getAttr(element, 'data-author');
@@ -649,11 +647,10 @@ jQuery(document).ready(function ($) {
                 let imagesrc = fcl_getAttr(element, 'data-imagesrc');
                 let anons = fcl_getAttr(element, 'data-anons');
                 let suggestions = fcl_getAttr(element, 'data-suggestions');
-                return { 
-                    url, 
-                    title, 
-                    title_seo, 
-                    categorynames, 
+                return {
+                    url,
+                    title,
+                    categorynames,
                     date, 
                     author, 
                     postid, 
@@ -1026,7 +1023,7 @@ jQuery(document).ready(function ($) {
             let cat_el = $("#quick_cat_filter option:selected")[0]; // selected item
             let parent = cat_el.parentElement;
             let childrenSize = parent.childElementCount;
-            let cat = $(cat_el).val(); // selected val + sub val
+            cat = $(cat_el).val(); // selected val + sub val
             if (cat !== "0" && cat_el.index < childrenSize - 1) {
                 let cat_class_ind = parseInt($(cat_el).attr("class").substr(11)); // selected class index
                 let next_el = $(cat_el).next(); // next sibling
@@ -1036,7 +1033,7 @@ jQuery(document).ready(function ($) {
                 }
                 cat = cat.split(",");
             }
-            let cat_found = false;
+            cat_found = false;
             if (!el.classList.contains("link-term")) {
                 let link_cats = $(el).attr("data-category").split(", ");
                 link_cats.forEach(function (item, index) {
@@ -1066,15 +1063,13 @@ jQuery(document).ready(function ($) {
         return hide || !contains || hide_not_exist || dont_show_cat;
     }
 
-    // Use title, seotitle, multiple words and stemming
+    // Use title, multiple words and stemming
     function improvedFilterContains(el, filter) {
-        // combine all possible words from the link (titles + suggestion?)
+        // combine all possible words from the link (title + suggestion?)
         let h1 = $(el).attr("data-title")
-        let seo = $(el).attr("data-titleseo")
         let sugg = $(el).attr("data-suggestions")
 
         let combine = h1;
-        if (seo) combine += ' ' + seo;
         if (sugg) combine += ' ' + sugg;
 
         let combinedStemms = textToSetOfStemms(combine);

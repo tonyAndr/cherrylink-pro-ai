@@ -52,7 +52,7 @@ class LinkItem extends React.Component {
         const { linkObj, editUrl, clickHandler, copyLink, inArticle, isIncoming } = this.props;
         const postId = linkObj["data-postid"],
             url = linkObj["data-url"],
-            title = cherrylink_options.templates.isH1 === "true" ? this.decodeHtml(linkObj["data-title"]) : this.decodeHtml(linkObj["data-titleseo"]),
+            title = this.decodeHtml(linkObj["data-title"]),
             incoming = linkObj["data-incoming"],
             outgoing = linkObj["data-outgoing"],
             sugg = linkObj["data-suggestions"];

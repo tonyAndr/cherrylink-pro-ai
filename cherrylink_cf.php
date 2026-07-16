@@ -56,9 +56,6 @@ function link_cf_set_options($option_key, $arg)
     if (!isset($arg['excluded_cats'])) $arg['excluded_cats'] = stripslashes(@$options['excluded_cats']);
     if (!isset($arg['excluded_authors'])) $arg['excluded_authors'] = stripslashes(@$options['excluded_authors']);
     if (!isset($arg['show_customs'])) $arg['show_customs'] = stripslashes(@$options['show_customs']);
-    if (!isset($arg['output_template'])) $arg['output_template'] = stripslashes(@$options['output_template']);
-    // an empty output_template makes no sense so we fall back to the default
-    if ($arg['output_template'] == '') $arg['output_template'] = 'h1';
     if (!isset($arg['match_cat'])) $arg['match_cat'] = @$options['match_cat'];
     if (!isset($arg['status'])) $arg['status'] = @$options['status'];
     if (!isset($arg['consider_max_incoming_links'])) $arg['consider_max_incoming_links'] = @$options['consider_max_incoming_links'];
@@ -221,60 +218,6 @@ function link_cf_get_suggestions_for_ids($results)
     }
     return $results;
 }
-
-function linkate_decode_yoast_variables($post_id, $is_term = false)
-{
-    $string =  WPSEO_Meta::get_value('title', $post_id);
-    if ($string !== '') {
-        $replacer = new WPSEO_Replace_Vars();
-
-        return $replacer->replace($string, get_post($post_id));
-    } else {
-        return '';
-    }
-}
-
-function linkate_get_post_seo_title($post, $seo_meta_source = 'none')
-{
-    if (!$seo_meta_source || $seo_meta_source === 'none') {
-        return '';
-    }
-    $seotitle = '';
-    switch ($seo_meta_source) {
-        case 'yoast':
-            if (function_exists('YoastSEO')) {
-                $seotitle = linkate_decode_yoast_variables($post->ID); // weird but works
-                // YoastSEO()->meta->for_current_page()->title; https://developer.yoast.com/customization/apis/surfaces-api/
-                // !! this returns old data $seotitle = YoastSEO()->meta->for_post( $post->ID )->title;
-            }
-            break;
-        case 'aioseo':
-            //All in One SEO Pack 4.0 Before
-            if (!empty(get_post_meta($post->ID, '_aioseop_title', true))) {
-                $seotitle = get_post_meta($post->ID, '_aioseop_title', true);
-                break;
-            }
-            //All in One SEO 4.0 After
-            if (function_exists('aioseo')) {
-                // $seotitle = aioseo()->meta->metaData->getMetaData($post)->title;
-                // if (!empty($seotitle)) {
-                    $seotitle = aioseo()->meta->title->getPostTitle($post->ID);
-                // }
-            }
-            break;
-        case 'rankmath':
-            if (class_exists('RankMath')) {
-                $seotitle = RankMath\Post::get_meta('title', $post->ID, RankMath\Paper\Paper::get_from_options("pt_{$post->post_type}_title", $post, '%title% %sep% %sitename%'));
-            }
-            break;
-        default:
-            $seotitle = '';
-            break;
-    }
-    return is_string($seotitle) ? $seotitle : '';
-}
-
-
 
 function linkate_get_image_sizes()
 {

@@ -29,26 +29,6 @@ function linkate_otf_title($option_key, $result)
     return $value;
 }
 
-function linkate_otf_title_seo($option_key, $result)
-{
-    if (isset($result->manual_title))
-        return $result->manual_title; // return manual title for block links
-    $seotitle = '';
-    $options = get_option($option_key);
-    $seo_meta_source = $options['seo_meta_source'];
-
-    $seotitle = linkate_get_post_seo_title($result, $seo_meta_source);
-
-    if (empty(trim($seotitle))) {
-        $seotitle = $result->post_title;
-    }
-    $seotitle = htmlspecialchars($seotitle, ENT_QUOTES);
-    if (defined('QTRANSLATE_FILE')) {
-        $seotitle = apply_filters('translate_text', $seotitle);
-    }
-    return $seotitle;
-}
-
 function linkate_otf_url($option_key, $result)
 {
     $options = get_option('linkate-posts', []);
@@ -186,7 +166,6 @@ function linkate_link_fields($option_key, $result)
 {
     return array(
         '{url}'           => linkate_otf_url($option_key, $result),
-        '{title_seo}'     => linkate_otf_title_seo($option_key, $result),
         '{title}'         => linkate_otf_title($option_key, $result),
         '{categorynames}' => linkate_otf_categorynames($option_key, $result),
         '{date}'          => linkate_otf_date($option_key, $result),

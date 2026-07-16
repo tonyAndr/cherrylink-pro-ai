@@ -168,7 +168,6 @@ function linkate_send_options_frontend()
         cherrylink_options['term_length_limit'] = <?php echo $options['term_length_limit']; ?>;
         cherrylink_options['show_cat_filter'] = <?php echo $options['show_cat_filter']; ?>;
         cherrylink_options['templates'] = {
-            isH1: '<?php echo $options['output_template'] === "h1" ? 'true' : 'false'; ?>',
             term: {
                 before: '<?php echo base64_decode($options['term_before']); ?>',
                 after: '<?php echo base64_decode($options['term_after']); ?>',

@@ -3,7 +3,7 @@
 Plugin Name: CherryLink Pro AI
 Plugin URI: http://seocherry.ru/
 Description: Плагин для автоматической внутренней перелинковки на основе семантического поиска (AI). Находит релевантные статьи и предлагает анкорные фразы с помощью векторных эмбеддингов.
-Version: 1.0.6
+Version: 1.0.7
 Author: Anton SeoCherry.ru
 Author URI: http://seocherry.ru/
 Requires at least: 5.6
@@ -263,7 +263,7 @@ class LinkatePosts
 
     static function prepare_for_cherry_gutenberg($results, $option_key, $options)
     {
-        $output_template = '"data-url":"{url}","data-titleseo":"{title_seo}","data-title":"{title}","data-category":"{categorynames}","data-date":"{date}","data-author":"{author}","data-postid":"{postid}","data-imagesrc":"{imagesrc}","data-anons":"{anons}","data-suggestions":"{suggestions}"';
+        $output_template = '"data-url":"{url}","data-title":"{title}","data-category":"{categorynames}","data-date":"{date}","data-author":"{author}","data-postid":"{postid}","data-imagesrc":"{imagesrc}","data-anons":"{anons}","data-suggestions":"{suggestions}"';
 
         $results_count = 0;
         if ($results) {
@@ -294,15 +294,14 @@ class LinkatePosts
 				<div class="link-preview" title="Редактировать статью в новой вкладке"></div>
 				
 			</div>
-			<div class="linkate-link" title="Нажмите для вставки в текст" data-url="{url}" data-titleseo="{title_seo}" data-title="{title}" data-category="{categorynames}" data-date="{date}" data-author="{author}" data-postid="{postid}" data-imagesrc="{imagesrc}" data-anons="{anons}" data-suggestions="{suggestions}"><span class="link-title" >';
+			<div class="linkate-link" title="Нажмите для вставки в текст" data-url="{url}" data-title="{title}" data-category="{categorynames}" data-date="{date}" data-author="{author}" data-postid="{postid}" data-imagesrc="{imagesrc}" data-anons="{anons}" data-suggestions="{suggestions}"><span class="link-title" >';
 
         $output_template_item_suffix = '</span></div>
 			<div class="link-right-controls"><div class="link-individual-stats-income" title="Сколько раз сослались на эту статью">?</div><div class="link-individual-stats-out" title="Сколько исходящих ссылок содержит статья">?</div><div class="link-suggestions" title="Подсказка"></div></div></div>';
 
         $results_count = 0;
         if ($results) {
-            $output_template = (!isset($options['output_template']) || $options['output_template'] === 'h1' || $options['output_template'] === '{title}') ? '{title}' : '{title_seo}';
-            $out_final = $output_template_item_prefix . $output_template . $output_template_item_suffix;
+            $out_final = $output_template_item_prefix . '{title}' . $output_template_item_suffix;
             $items = array();
             foreach ($results as $result) {
                 // HTML attribute context: encode quotes so they don't break data-suggestions="..."

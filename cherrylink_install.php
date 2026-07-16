@@ -51,7 +51,6 @@ function fill_options($options)
     if ($options['excluded_authors'] === '9999') $options['excluded_authors'] = '';
     if (!isset($options['show_customs'])) $options['show_customs'] = ''; // custom post types v1.2.10
     if ($options['show_customs'] === '9999') $options['show_customs'] = '';
-    if (!isset($options['output_template'])) $options['output_template'] = 'h1';
     if (!isset($options['match_cat'])) $options['match_cat'] = 'false';
     if (!isset($options['content_filter'])) $options['content_filter'] = 'false';
     if (!isset($options['status'])) {
@@ -70,7 +69,6 @@ function fill_options($options)
     $options['no_selection_action'] = 'placeholder'; // always use placeholder, not configurable
     if (!isset($options['hash_field'])) $options['hash_field'] = '';
     $options['multilink'] = 'checked'; // always allow multiple links, not configurable
-    if (!isset($options['compare_seotitle'])) $options['compare_seotitle'] = '';
     if (!isset($options['hash_last_check'])) $options['hash_last_check'] = 1523569887;
     if (!isset($options['hash_last_status'])) $options['hash_last_status'] = false;
     if (!isset($options['anons_len'])) $options['anons_len'] = 200;
@@ -80,7 +78,6 @@ function fill_options($options)
     if (!isset($options['linkate_scheme_time'])) $options['linkate_scheme_time'] = 0; // since 1.4.0
     if (!isset($options['relative_links'])) $options['relative_links'] = "full"; // since 1.4.9
 if (!isset($options['debug_enabled'])) $options['debug_enabled'] = "false"; // since 2.0.6
-    if (!isset($options['seo_meta_source'])) $options['seo_meta_source'] = "none"; // since 2.3.0
     if (!isset($options['consider_max_incoming_links'])) $options['consider_max_incoming_links'] = 'false';
     if (!isset($options['max_incoming_links'])) $options['max_incoming_links'] = 20;
     if (!isset($options['template_image_size'])) $options['template_image_size'] = '';

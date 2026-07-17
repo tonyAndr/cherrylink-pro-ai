@@ -11,6 +11,21 @@ jQuery(document).ready(function ($) {
     let sync_poll_timer = null;
     const SYNC_POLL_MS = 2000;
 
+    // Rewrite server-rendered <time class="cl-localtime" datetime="…Z"> elements to the
+    // viewer's browser-local time. Idempotent (skips already-converted nodes). Called on
+    // load and after each status refresh, since last_scan_text is re-injected via AJAX.
+    function cl_localize_times(root) {
+        $(root || document).find('time.cl-localtime:not([data-cl-localized])').each(function () {
+            var iso = this.getAttribute('datetime');
+            var d = iso ? new Date(iso) : null;
+            if (!d || isNaN(d.getTime())) return; // leave server-tz fallback text as-is
+            this.textContent = d.toLocaleString();
+            this.setAttribute('title', d.toString());
+            this.setAttribute('data-cl-localized', '1');
+        });
+    }
+    cl_localize_times();
+
     function sync_is_active(s) { return s && s.status === 'running'; }
     function sync_show_running() { $('.button-reindex').hide(); $('.button-reindex-stop').show(); $('#reindex_progress').show().prop('max', 100); }
     function sync_show_idle()    { $('.button-reindex').show(); $('.button-reindex-stop').hide(); }
@@ -43,6 +58,7 @@ jQuery(document).ready(function ($) {
                 $('#cherry_scheme_status').html(d.scheme_status_text || '');
                 $('#cherry_process_badge').html(d.badge_html || '');
                 $('#cherry_lastscan_status').html(d.last_scan_text || '');
+                cl_localize_times('#cherry_lastscan_status');
             }
         });
     }

@@ -155,30 +155,12 @@ function linkate_send_options_frontend()
 ?>
     <script>
         var cherrylink_options = [];
-        cherrylink_options['suggestions_click'] = <?php echo '"' . $options['suggestions_click'] . '"'; ?>;
-        cherrylink_options['suggestions_join'] = <?php echo '"' . $options['suggestions_join'] . '"'; ?>;
-        cherrylink_options['suggestions_donors_src'] = <?php echo '"' . $options['suggestions_donors_src'] . '"'; ?>;
-        cherrylink_options['suggestions_switch_action'] = <?php echo '"' . $options['suggestions_switch_action'] . '"'; ?>;
         cherrylink_options['no_selection_action'] = <?php echo '"' . $options['no_selection_action'] . '"'; ?>;
         cherrylink_options['get_data_limit'] = <?php echo '"' . $options['limit_ajax'] . '"'; ?>;
         cherrylink_options['post_id'] = <?php echo '"' . $current_id . '"'; ?>;
         cherrylink_options['linkate_scheme_exists'] = <?php echo '"' . $scheme_exists . '"'; ?>;
-        cherrylink_options['singleword_suggestions'] = <?php echo '"' . $options['singleword_suggestions'] . '"'; ?>;
         cherrylink_options['multilink'] = <?php echo '"' . $options['multilink'] . '"'; ?>;
-        cherrylink_options['term_length_limit'] = <?php echo $options['term_length_limit']; ?>;
         cherrylink_options['show_cat_filter'] = <?php echo $options['show_cat_filter']; ?>;
-        cherrylink_options['templates'] = {
-            term: {
-                before: '<?php echo base64_decode($options['term_before']); ?>',
-                after: '<?php echo base64_decode($options['term_after']); ?>',
-                alt: '<?php echo base64_decode($options['term_temp_alt']); ?>',
-            },
-            link: {
-                before: '<?php echo base64_decode($options['link_before']); ?>',
-                after: '<?php echo base64_decode($options['link_after']); ?>',
-                alt: '<?php echo base64_decode($options['link_temp_alt']); ?>',
-            }
-        };
     </script>
 <?php
 }

@@ -39,7 +39,6 @@ function link_cf_options_from_post($options, $args)
                 break;
             case 'excluded_authors':
             case 'show_customs':
-            case 'suggestions_donors_src':
                 if (isset($_POST[$arg]) && !empty($_POST[$arg])) {
 
                     $options[$arg] = is_array($_POST[$arg]) ? implode(',', $_POST[$arg]) : $_POST[$arg];

@@ -85,8 +85,11 @@ function cl_index_status_data(): array
     if (!empty($meta['last_scan_gmt'])) {
         $up   = (int)($meta['last_upserted'] ?? 0);
         $del  = (int)($meta['last_deleted'] ?? 0);
+        // Machine-readable UTC instant + site-tz fallback text. cherry-admin-index.js
+        // rewrites the <time> to the viewer's browser-local time on load and after AJAX.
+        $iso  = esc_attr(str_replace(' ', 'T', $meta['last_scan_gmt']) . 'Z');
         $when = esc_html(get_date_from_gmt($meta['last_scan_gmt']));
-        $last_scan_text = " Последнее сканирование: {$when} (обновлено: {$up}, удалено: {$del}).";
+        $last_scan_text = " Последнее сканирование: <time class=\"cl-localtime\" datetime=\"{$iso}\">{$when}</time> (обновлено: {$up}, удалено: {$del}).";
     }
 
     $status = $meta['indexing_process'] ?? 'VALUE_NOT_EXIST';

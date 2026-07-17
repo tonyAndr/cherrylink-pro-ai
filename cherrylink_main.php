@@ -3,7 +3,7 @@
 Plugin Name: CherryLink Pro AI
 Plugin URI: http://seocherry.ru/
 Description: Плагин для автоматической внутренней перелинковки на основе семантического поиска (AI). Находит релевантные статьи и предлагает анкорные фразы с помощью векторных эмбеддингов.
-Version: 1.0.7
+Version: 1.0.8
 Author: Anton SeoCherry.ru
 Author URI: http://seocherry.ru/
 Requires at least: 5.6
@@ -342,7 +342,7 @@ class LinkatePosts
 
 
 // call install func on activation
-add_action('activate_' . str_replace('-admin', '', link_cf_plugin_basename(__FILE__)), 'linkate_posts_install');
+add_action('activate_' . str_replace('-admin', '', plugin_basename(__FILE__)), 'linkate_posts_install');
 // call on update
 add_action('upgrader_process_complete', 'linkate_on_update', 10, 2);
 // call after update
@@ -351,7 +351,7 @@ add_action('plugins_loaded', 'linkate_redirectToUpdatePlugin');
 // call this when plugin updates
 function linkate_on_update($upgrader_object, $options)
 {
-    $current_plugin_path_name = str_replace('-admin', '', link_cf_plugin_basename(__FILE__));
+    $current_plugin_path_name = str_replace('-admin', '', plugin_basename(__FILE__));
 
     if ($options['action'] == 'update' && $options['type'] == 'plugin') {
         foreach ($options['plugins'] as $each_plugin) {

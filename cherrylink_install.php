@@ -32,9 +32,6 @@ function fill_options($options)
         $options['hash_field'] = $hash_field;
     }
 
-    if (!isset($options['append_on'])) $options['append_on'] = 'false';
-    if (!isset($options['append_priority'])) $options['append_priority'] = '10';
-    if (!isset($options['append_condition'])) $options['append_condition'] = 'is_single()';
     if (!isset($options['limit_ajax'])) $options['limit_ajax'] = 50; // since 1.4.0
     if (!isset($options['divider'])) $options['divider'] = '';
     if (!isset($options['show_private'])) $options['show_private'] = 'false';
@@ -52,14 +49,12 @@ function fill_options($options)
     if (!isset($options['show_customs'])) $options['show_customs'] = ''; // custom post types v1.2.10
     if ($options['show_customs'] === '9999') $options['show_customs'] = '';
     if (!isset($options['match_cat'])) $options['match_cat'] = 'false';
-    if (!isset($options['content_filter'])) $options['content_filter'] = 'false';
     if (!isset($options['status'])) {
         $options['status']['publish'] = 'true';
         $options['status']['private'] = 'false';
         $options['status']['draft'] = 'false';
         $options['status']['future'] = 'false';
     }
-    if (!isset($options['group_template'])) $options['group_template'] = '';
     if (!isset($options['link_before'])) $options['link_before'] = base64_encode(urlencode('<a href="{url}" title="{title}">'));
     if (!isset($options['link_after'])) $options['link_after'] = base64_encode(urlencode('</a>'));
     if (!isset($options['link_temp_alt'])) $options['link_temp_alt'] = base64_encode(urlencode("<div style=\"padding:10px;margin:10px;border-top:1px solid lightgrey;border-bottom:1px solid lightgrey;\"><span style=\"color:lightgrey;font-size:smaller;\">Читайте также</span><div style=\"position:relative;max-width: 660px;margin: 0 auto;padding: 0 20px 20px 20px;display:flex;flex-wrap: wrap;\"><div style=\"width: 35%; min-width: 180px; height: auto; box-sizing: border-box;padding-right: 5%;\"><img src=\"{imagesrc}\" style=\"width:100%;\"></div><div style=\"width: 60%; min-width: 180px; height: auto; box-sizing: border-box;\"><strong>{title}</strong><br>{anons}</div><a target=\"_blank\" href=\"{url}\"><span style=\"position:absolute;width:100%;height:100%;top:0;left: 0;z-index: 1;\">&nbsp;</span></a></div></div>"));
@@ -69,13 +64,8 @@ function fill_options($options)
     $options['no_selection_action'] = 'placeholder'; // always use placeholder, not configurable
     if (!isset($options['hash_field'])) $options['hash_field'] = '';
     $options['multilink'] = 'checked'; // always allow multiple links, not configurable
-    if (!isset($options['hash_last_check'])) $options['hash_last_check'] = 1523569887;
-    if (!isset($options['hash_last_status'])) $options['hash_last_status'] = false;
     if (!isset($options['anons_len'])) $options['anons_len'] = 200;
-    if (!isset($options['suggestions_click'])) $options['suggestions_click'] = 'select';
-    if (!isset($options['suggestions_join'])) $options['suggestions_join'] = 'all';
     if (!isset($options['linkate_scheme_exists'])) $options['linkate_scheme_exists'] = false; // since 1.4.0
-    if (!isset($options['linkate_scheme_time'])) $options['linkate_scheme_time'] = 0; // since 1.4.0
     if (!isset($options['relative_links'])) $options['relative_links'] = "full"; // since 1.4.9
 if (!isset($options['debug_enabled'])) $options['debug_enabled'] = "false"; // since 2.0.6
     if (!isset($options['consider_max_incoming_links'])) $options['consider_max_incoming_links'] = 'false';
@@ -89,19 +79,6 @@ if (!isset($options['debug_enabled'])) $options['debug_enabled'] = "false"; // s
     return $options;
 }
 
-
-if (!function_exists('link_cf_plugin_basename')) {
-    if (!defined('WP_PLUGIN_DIR')) define('WP_PLUGIN_DIR', ABSPATH . 'wp-content/plugins');
-    function link_cf_plugin_basename($file)
-    {
-        $file = str_replace('\\', '/', $file); // sanitize for Win32 installs
-        $file = preg_replace('|/+|', '/', $file); // remove any duplicate slash
-        $plugin_dir = str_replace('\\', '/', WP_PLUGIN_DIR); // sanitize for Win32 installs
-        $plugin_dir = preg_replace('|/+|', '/', $plugin_dir); // remove any duplicate slash
-        $file = preg_replace('|^' . preg_quote($plugin_dir, '|') . '/|', '', $file); // get relative path from plugins dir
-        return $file;
-    }
-}
 
 function linkate_handle_license_response()
 {

@@ -17,8 +17,8 @@ if (!defined('CHERRY_VECTOR_API_URL')) {
 // is blocked upstream (e.g. RKN). We keep the real hostname on the request and only override
 // the connect address (via the http_api_curl resolve hook below), so end-to-end TLS and
 // certificate validation are unchanged — the relay just pipes encrypted bytes to the API.
-if (!defined('CL_ALT_API_PORT')) define('CL_ALT_API_PORT', 8443);
-if (!defined('CL_ALT_API_IP'))   define('CL_ALT_API_IP', '49.13.105.95');
+if (!defined('CL_ALT_API_PORT')) define('CL_ALT_API_PORT', 9443);
+if (!defined('CL_ALT_API_IP'))   define('CL_ALT_API_IP', '31.129.48.202');
 
 class CherryVectorAPI
 {

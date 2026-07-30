@@ -8,6 +8,7 @@ define('LINKATE_DEBUG', true);
 add_action('wp_ajax_output_admin_debug_env', array('CHERRYLINK_DEBUGGER', '_admin_debug_env'));
 add_action('wp_ajax_output_admin_debug_links', array('CHERRYLINK_DEBUGGER', '_admin_debug_links'));
 add_action('wp_ajax_output_admin_debug_wpdb', array('CHERRYLINK_DEBUGGER', '_admin_debug_wpdb'));
+add_action('wp_ajax_output_admin_debug_connectivity', array('CHERRYLINK_DEBUGGER', '_admin_debug_connectivity'));
 
 class CHERRYLINK_DEBUGGER
 {
@@ -60,7 +61,10 @@ class CHERRYLINK_DEBUGGER
     }
     public static function _admin_debug_links()
     {
-        $post_id = $_POST['post_id'];
+        $post_id = isset($_POST['post_id']) ? trim((string) $_POST['post_id']) : '';
+        if ($post_id === '') {
+            wp_send_json(array('links' => '(ID записи не указан)', 'count' => 0));
+        }
 
         $is_term = 0;
         $offset = 0;
@@ -77,6 +81,40 @@ class CHERRYLINK_DEBUGGER
         // }
 
         wp_send_json($data);
+    }
+
+    // Raw TCP-connect probe to each hop we care about, run FROM this server. Distinguishes
+    // "connected", "refused" (host reachable, nothing on that port) and "timeout" (blocked /
+    // dropped) — a hop map for figuring out whether a proxy/relay path is viable. Output is
+    // developer-facing (goes into the debug textarea), not shown to end users.
+    public static function _admin_debug_connectivity()
+    {
+        $targets = array(
+            'Cherry API (наш сервер)' => array('seocherry.apov.dev', 443),
+            'GitHub (обновления)'     => array('release-assets.githubusercontent.com', 443),
+            'index-ru (RU релей)'     => array('31.129.48.202', 443),
+            'index-com (COM выход)'   => array('49.13.105.95', 443),
+        );
+
+        $dmt = PHP_EOL . PHP_EOL . "==================================" . PHP_EOL;
+        $output = $dmt . "> Connectivity (TCP connect, timeout 8s)" . PHP_EOL;
+        foreach ($targets as $label => $hostport) {
+            list($host, $port) = $hostport;
+            $errno = 0;
+            $errstr = '';
+            $start = microtime(true);
+            $fp = @fsockopen($host, $port, $errno, $errstr, 8);
+            $ms = (int) round((microtime(true) - $start) * 1000);
+            if ($fp) {
+                fclose($fp);
+                $output .= sprintf("[OK]    %-26s %s:%d  — %d ms" . PHP_EOL, $label, $host, $port, $ms);
+            } else {
+                $output .= sprintf("[FAIL]  %-26s %s:%d  — %d ms  (errno %d: %s)" . PHP_EOL, $label, $host, $port, $ms, $errno, $errstr);
+            }
+        }
+
+        echo $output;
+        wp_die();
     }
 
     public static function _admin_debug_wpdb()

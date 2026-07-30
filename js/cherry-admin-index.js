@@ -158,12 +158,10 @@ jQuery(document).ready(function ($) {
     }
 
     function cl_srv_render(d) {
-        console.log('[CherryLink] Диагностика сервера / server diagnostics:', d);
         var $lines = $('#cl-srv-lines'), $badge = $('#cl-srv-badge');
         if (!d || !d.probes) {
             $badge.html('<code class="bad-index">[нет ответа]</code>');
-            $lines.html('<li>Не удалось получить данные диагностики. Подробности в консоли браузера (F12).</li>');
-            $('#cl-srv-hint').show();
+            $lines.html('<li>Не удалось получить данные о состоянии сервера.</li>');
             return;
         }
         var p = d.probes;
@@ -176,17 +174,15 @@ jQuery(document).ready(function ($) {
         else            $badge.html('<code class="good-index">[связь в норме]</code>');
 
         var html = '';
-        html += cl_srv_fmt_probe('Доступность сервера (health)', p.health);
+        html += cl_srv_fmt_probe('Доступность сервера', p.health);
         html += cl_srv_fmt_probe('Чтение индекса статей', p.documents_count);
         html += cl_srv_fmt_probe('Чтение карты ссылок', p.links_count);
-        html += '<li>Сервер: <code>' + (d.api_url || '?') + '</code> · домен сайта: <code>' + (d.site_domain || '?') + '</code></li>';
         if (reachable && slow) {
             html += '<li style="color:#b45309"><strong>Внимание:</strong> ответы приходят дольше 3 секунд. ' +
                     'На медленном канале плагин может показывать «0» и подсказки могут не грузиться ' +
                     '(таймаут чтения — ' + readTimeout + ' с).</li>';
         }
         $lines.html(html);
-        $('#cl-srv-hint').show();
     }
 
     function cl_srv_check() {
@@ -204,6 +200,11 @@ jQuery(document).ready(function ($) {
     }
     $(document).on('click', '#cl-srv-recheck', function (e) { e.preventDefault(); cl_srv_check(); });
     if ($('#cl-server-status-card').length) { cl_srv_check(); }
+
+    // The readiness card renders from a cached snapshot (no API call on page load). Refresh it
+    // in the background only when that snapshot is stale, so navigation stays instant and we
+    // don't hit the API on every settings view.
+    if ($('#cl-readiness-card').data('cl-stale') == 1) { sync_refresh_status(); }
 
     function handle_errors (error_msg, error_details) {
         console.log(error_msg);

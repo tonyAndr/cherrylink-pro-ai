@@ -42,11 +42,15 @@ class CherryVectorAPI
     // ── Public API ──────────────────────────────────────────────────────────
 
     /**
-     * Return the number of documents indexed for this client.
+     * Return the number of documents indexed for this client, or null if the API could not
+     * be reached (so callers can distinguish "unreachable" from a genuine empty index of 0).
      */
-    public function get_count(): int
+    public function get_count(): ?int
     {
         $response = $this->request('GET', '/v1/documents/count');
+        if ($response === null) {
+            return null;
+        }
         return (int)($response['count'] ?? 0);
     }
 
@@ -404,9 +408,12 @@ class CherryVectorAPI
     /**
      * Total link count for this client (replaces SELECT COUNT(*) from linkate_scheme).
      */
-    public function get_links_count(): int
+    public function get_links_count(): ?int
     {
         $response = $this->request('GET', '/v1/links/count');
+        if ($response === null) {
+            return null;
+        }
         return (int)($response['count'] ?? 0);
     }
 

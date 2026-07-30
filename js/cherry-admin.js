@@ -90,28 +90,30 @@ jQuery(document).ready(function($){
     $("#admin_debug_btn").on('click', function (e) {
         e.preventDefault()
         $("#admin_debug_output_field").html("Идет загрузка...")
-        let post_id = $("#admin_debug_post_id").val();
-        if (!post_id) {
-            alert('Нужен ID записи')
-        }
+        let post_id = $("#admin_debug_post_id").val();   // optional — check runs without it
         show_debugger_env(post_id);
     })
 
     function show_debugger_env(post_id) {
-        
+
         $.ajax({
             type: "GET",
             url: ajaxurl + "?action=output_admin_debug_env",
             datatype: 'json',
             success: function (response) {
                 $("#admin_debug_output_field").text(response)
-                show_debugger_links(post_id);
-            }
+            },
+            complete: function () { show_debugger_links(post_id); }
         });
     }
 
     function show_debugger_links(post_id)
     {
+        if (!post_id) {
+            $("#admin_debug_output_field").append("\n(ID записи не указан — проверка подбора ссылок пропущена)\n");
+            show_debugger_connectivity();
+            return;
+        }
         $.ajax({
             type: "POST",
             url: ajaxurl + "?action=output_admin_debug_links",
@@ -147,10 +149,21 @@ jQuery(document).ready(function($){
                 }
             }, 
             complete: function (data, textStatus, errorThrown) { //data|jqXHR, textStatus, jqXHR|errorThrown
-                show_debugger_wpdb()
+                show_debugger_connectivity()
             }
         });
-        
+
+    }
+
+    function show_debugger_connectivity() {
+        $.ajax({
+            type: "GET",
+            url: ajaxurl + "?action=output_admin_debug_connectivity",
+            datatype: 'json',
+            success: function (response) { $("#admin_debug_output_field").append(response) },
+            error:   function (jqXHR) { $("#admin_debug_output_field").append("\n(проверка связи не выполнена)\n") },
+            complete: function () { show_debugger_wpdb() }
+        });
     }
 
     function show_debugger_wpdb() {

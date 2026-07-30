@@ -173,7 +173,7 @@ function linkate_posts_index_status_display($page = 'main')
     $data = cl_index_status_data();
     $index_process_status = get_option('linkate_posts_meta', [])['indexing_process'] ?? 'VALUE_NOT_EXIST';
 ?>
-    <div class="p-6 rounded-lg shadow-xl bg-white">
+    <div class="p-6 rounded-lg shadow-xl bg-white" id="cl-readiness-card" data-cl-stale="<?php echo !empty($data['stale']) ? '1' : '0'; ?>">
         <h2 class="<?= CL_TWC::$H2 ?>">Готовность к работе <span id="cherry_process_badge"><?php echo $data['badge_html']; ?></span></h2>
         <ul class="list-disc list-inside">
             <li><span id="cherry_index_status"><?php echo $data['index_status_text']; ?></span></li>
@@ -190,15 +190,12 @@ function linkate_posts_index_status_display($page = 'main')
         ?>
     </div>
 
-    <div class="<?= CL_TWC::$CARD ?> mt-6" id="cl-server-status-card">
+    <div class="<?= CL_TWC::$CARD ?>" id="cl-server-status-card">
         <h2 class="<?= CL_TWC::$H2 ?>">Состояние сервера <span id="cl-srv-badge"><code>[проверка…]</code></span></h2>
         <ul class="list-disc list-inside" id="cl-srv-lines">
             <li>Проверяем соединение с сервером CherryLink…</li>
         </ul>
         <button type="button" id="cl-srv-recheck" class="<?= CL_TWC::$BTN_ACTION ?> mt-2">Проверить связь</button>
-        <p class="text-sm text-stone-500 mt-2" id="cl-srv-hint" style="display:none">
-            Полные данные диагностики выведены в консоль браузера (F12 → Console). Скопируйте их и отправьте разработчику.
-        </p>
     </div>
 <?php
 }
@@ -529,8 +526,8 @@ function linkate_posts_statistics_options_subpage()
     $options      = get_option('linkate-posts', []);
     $options_meta = get_option('linkate_posts_meta', []);
 
-    $api         = new CherryVectorAPI();
-    $scheme_rows = $api->get_links_count();
+    // Use the cached readiness snapshot — no blocking API call on page render.
+    $scheme_rows = (int) (cl_index_status_data()['scheme_rows'] ?? 0);
 
     //php moved below for ajax
 ?>

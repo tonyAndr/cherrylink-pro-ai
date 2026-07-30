@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<ruleset name="CherryLink">
+    <description>PSR-12 for our src/, plus WordPress security sniffs and a PHP 7.4 floor.</description>
+
+    <!-- Only our new namespaced code is held to this standard. The legacy procedural
+         files are migrated slice by slice; once a slice lands in src/ it is linted here. -->
+    <file>src</file>
+
+    <arg name="extensions" value="php"/>
+    <arg name="colors"/>
+    <arg value="sp"/><!-- show sniff codes + progress -->
+
+    <!-- Modern OOP style for our own code. -->
+    <rule ref="PSR12"/>
+
+    <!-- WordPress security sniffs (the parts we care about), enforced across src/. -->
+    <rule ref="WordPress.Security.NonceVerification"/>
+    <rule ref="WordPress.Security.EscapeOutput"/>
+    <rule ref="WordPress.Security.ValidatedSanitizedInput"/>
+
+    <!-- Enforce the PHP 7.4 floor: fail on any 8.0+ only construct. -->
+    <config name="testVersion" value="7.4-"/>
+    <rule ref="PHPCompatibilityWP"/>
+</ruleset>

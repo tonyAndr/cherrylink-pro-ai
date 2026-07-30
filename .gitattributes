@@ -12,3 +12,9 @@ composer.json   export-ignore
 composer.lock   export-ignore
 .gitignore      export-ignore
 .gitattributes  export-ignore
+
+# QA tooling + config — dev-only, excluded from the client zip.
+dev               export-ignore
+phpunit.xml.dist  export-ignore
+phpcs.xml.dist    export-ignore
+phpstan.neon.dist export-ignore

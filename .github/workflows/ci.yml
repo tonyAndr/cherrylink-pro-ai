@@ -1,0 +1,47 @@
+name: CI
+
+# Quality gate for the refactor: lint + static analysis + unit tests on the PHP
+# floor (7.4) and a modern runtime (8.2). Separate from release.yml, which only
+# builds the client zip on a version tag.
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['7.4', '8.2']
+    name: QA (PHP ${{ matrix.php }})
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          tools: composer:v2
+          coverage: none
+
+      - name: Cache Composer packages
+        uses: actions/cache@v4
+        with:
+          path: dev/vendor
+          key: composer-${{ matrix.php }}-${{ hashFiles('dev/composer.json') }}
+          restore-keys: composer-${{ matrix.php }}-
+
+      - name: Install dev tooling
+        working-directory: dev
+        run: composer install --no-interaction --no-progress
+
+      - name: Lint (PHPCS)
+        run: dev/vendor/bin/phpcs -p
+
+      - name: Static analysis (PHPStan)
+        run: dev/vendor/bin/phpstan analyse --no-progress
+
+      - name: Unit tests (PHPUnit)
+        run: dev/vendor/bin/phpunit -c phpunit.xml.dist

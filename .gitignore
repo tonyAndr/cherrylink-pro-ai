@@ -8,3 +8,8 @@ vite-admin
 .DS_Store
 js/*.map
 js/index-rtl.css
+
+# Dev QA tooling (installed via dev/qa.sh) — never shipped.
+dev/vendor/
+dev/composer.lock
+.phpunit.result.cache

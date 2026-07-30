@@ -436,6 +436,58 @@ class CherryVectorAPI
         $this->request('POST', '/v1/logs', $body, 5);
     }
 
+    // ── Connectivity diagnostics ──────────────────────────────────────────────
+
+    /**
+     * Timed connectivity check, run FROM the client server, so we can see the real
+     * round-trip latency to the API (the RU→VPS path we otherwise can't measure).
+     * Each probe reports ok/ms/http_code/error + the parsed body. Probes use a generous
+     * 30s timeout on purpose — we want to SEE a slow response, not just a generic timeout;
+     * the readiness card's real reads use 15s, so a probe of e.g. 18s explains a card of 0.
+     */
+    public function diagnostics(): array
+    {
+        return [
+            'generated_at'    => gmdate('c'),
+            'api_url'         => $this->base_url,
+            'site_domain'     => $this->domain,
+            'has_key'         => $this->license_key !== '',
+            'read_timeout_s'  => 15,   // timeout the plugin's real reads use (request())
+            'probes'          => [
+                'health'          => $this->probe('GET', '/health', false, 30),
+                'documents_count' => $this->probe('GET', '/v1/documents/count', true, 30),
+                'links_count'     => $this->probe('GET', '/v1/links/count', true, 30),
+            ],
+        ];
+    }
+
+    private function probe(string $method, string $path, bool $auth, int $timeout): array
+    {
+        $args = ['method' => $method, 'timeout' => $timeout, 'headers' => ['Content-Type' => 'application/json']];
+        if ($auth) {
+            $args['headers']['X-License-Key'] = $this->license_key;
+            $args['headers']['X-Site-Domain'] = $this->domain;
+        }
+        $start    = microtime(true);
+        $response = wp_remote_request($this->base_url . $path, $args);
+        $ms       = (int) round((microtime(true) - $start) * 1000);
+
+        if (is_wp_error($response)) {
+            return ['ok' => false, 'ms' => $ms, 'http_code' => 0, 'error' => $response->get_error_message(), 'body' => null];
+        }
+        $code    = (int) wp_remote_retrieve_response_code($response);
+        $raw     = wp_remote_retrieve_body($response);
+        $decoded = json_decode($raw, true);
+        $ok      = $code >= 200 && $code < 300;
+        return [
+            'ok'        => $ok,
+            'ms'        => $ms,
+            'http_code' => $code,
+            'error'     => $ok ? '' : ('HTTP ' . $code),
+            'body'      => is_array($decoded) ? $decoded : (strlen($raw) > 300 ? substr($raw, 0, 300) . '…' : $raw),
+        ];
+    }
+
     // ── HTTP ────────────────────────────────────────────────────────────────
 
     private function request(string $method, string $path, array $body = [], int $timeout = 0): ?array

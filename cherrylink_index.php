@@ -116,3 +116,13 @@ add_action('wp_ajax_linkate_index_status_data', function () {
     }
     wp_send_json(cl_index_status_data());
 });
+
+// Server connectivity diagnostics for the "Состояние сервера" card. Runs timed probes
+// against the API from this server so we can see the real round-trip latency.
+add_action('wp_ajax_cherrylink_server_status', function () {
+    if (!current_user_can('edit_posts')) {
+        wp_die();
+    }
+    $api = new CherryVectorAPI();
+    wp_send_json($api->diagnostics());
+});

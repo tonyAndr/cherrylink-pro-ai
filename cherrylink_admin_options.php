@@ -189,6 +189,17 @@ function linkate_posts_index_status_display($page = 'main')
         }
         ?>
     </div>
+
+    <div class="<?= CL_TWC::$CARD ?> mt-6" id="cl-server-status-card">
+        <h2 class="<?= CL_TWC::$H2 ?>">Состояние сервера <span id="cl-srv-badge"><code>[проверка…]</code></span></h2>
+        <ul class="list-disc list-inside" id="cl-srv-lines">
+            <li>Проверяем соединение с сервером CherryLink…</li>
+        </ul>
+        <button type="button" id="cl-srv-recheck" class="<?= CL_TWC::$BTN_ACTION ?> mt-2">Проверить связь</button>
+        <p class="text-sm text-stone-500 mt-2" id="cl-srv-hint" style="display:none">
+            Полные данные диагностики выведены в консоль браузера (F12 → Console). Скопируйте их и отправьте разработчику.
+        </p>
+    </div>
 <?php
 }
 

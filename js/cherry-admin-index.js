@@ -144,6 +144,67 @@ jQuery(document).ready(function ($) {
         });
     })();
 
+    /*
+    --- === SERVER STATUS / CONNECTIVITY DIAGNOSTICS === ---
+    Times a round-trip to the API from this server so we can see the real latency
+    (the RU→VPS path). Full payload is dumped to the console for copy/paste.
+    */
+    function cl_srv_fmt_probe(label, pr) {
+        if (!pr) return '<li>' + label + ': —</li>';
+        var status = pr.ok ? ('OK · ' + pr.ms + ' мс') : ('ОШИБКА (' + (pr.error || ('HTTP ' + pr.http_code)) + ') · ' + pr.ms + ' мс');
+        var extra = '';
+        if (pr.body && typeof pr.body === 'object' && typeof pr.body.count !== 'undefined') extra = ' · значение: ' + pr.body.count;
+        return '<li>' + label + ': <strong>' + status + '</strong>' + extra + '</li>';
+    }
+
+    function cl_srv_render(d) {
+        console.log('[CherryLink] Диагностика сервера / server diagnostics:', d);
+        var $lines = $('#cl-srv-lines'), $badge = $('#cl-srv-badge');
+        if (!d || !d.probes) {
+            $badge.html('<code class="bad-index">[нет ответа]</code>');
+            $lines.html('<li>Не удалось получить данные диагностики. Подробности в консоли браузера (F12).</li>');
+            $('#cl-srv-hint').show();
+            return;
+        }
+        var p = d.probes;
+        var reachable = p.health && p.health.ok;
+        var slow = p.health && p.health.ms > 3000;
+        var readTimeout = d.read_timeout_s || 15;
+
+        if (!reachable) $badge.html('<code class="bad-index">[нет связи с сервером]</code>');
+        else if (slow)  $badge.html('<code class="bad-index">[связь медленная]</code>');
+        else            $badge.html('<code class="good-index">[связь в норме]</code>');
+
+        var html = '';
+        html += cl_srv_fmt_probe('Доступность сервера (health)', p.health);
+        html += cl_srv_fmt_probe('Чтение индекса статей', p.documents_count);
+        html += cl_srv_fmt_probe('Чтение карты ссылок', p.links_count);
+        html += '<li>Сервер: <code>' + (d.api_url || '?') + '</code> · домен сайта: <code>' + (d.site_domain || '?') + '</code></li>';
+        if (reachable && slow) {
+            html += '<li style="color:#b45309"><strong>Внимание:</strong> ответы приходят дольше 3 секунд. ' +
+                    'На медленном канале плагин может показывать «0» и подсказки могут не грузиться ' +
+                    '(таймаут чтения — ' + readTimeout + ' с).</li>';
+        }
+        $lines.html(html);
+        $('#cl-srv-hint').show();
+    }
+
+    function cl_srv_check() {
+        $('#cl-srv-recheck').prop('disabled', true).text('Проверяем…');
+        $('#cl-srv-badge').html('<code>[проверка…]</code>');
+        $.ajax({
+            type: 'POST', url: ajaxurl, dataType: 'json', data: 'action=cherrylink_server_status',
+            success: function (d) { cl_srv_render(d); },
+            error: function (x, t, err) {
+                console.log('[CherryLink] server status request failed:', err, x && x.responseText);
+                cl_srv_render(null);
+            },
+            complete: function () { $('#cl-srv-recheck').prop('disabled', false).text('Проверить связь'); }
+        });
+    }
+    $(document).on('click', '#cl-srv-recheck', function (e) { e.preventDefault(); cl_srv_check(); });
+    if ($('#cl-server-status-card').length) { cl_srv_check(); }
+
     function handle_errors (error_msg, error_details) {
         console.log(error_msg);
         console.log(error_details);

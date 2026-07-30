@@ -190,6 +190,7 @@ function linkate_posts_index_status_display($page = 'main')
         ?>
     </div>
 
+    <?php if ($page === 'main') { ?>
     <div class="<?= CL_TWC::$CARD ?>" id="cl-server-status-card">
         <h2 class="<?= CL_TWC::$H2 ?>">Состояние сервера <span id="cl-srv-badge"><code>[проверка…]</code></span></h2>
         <ul class="list-disc list-inside" id="cl-srv-lines">
@@ -197,6 +198,7 @@ function linkate_posts_index_status_display($page = 'main')
         </ul>
         <button type="button" id="cl-srv-recheck" class="<?= CL_TWC::$BTN_ACTION ?> mt-2">Проверить связь</button>
     </div>
+    <?php } ?>
 <?php
 }
 
@@ -337,7 +339,8 @@ function linkate_posts_expert_options_subpage()
             'consider_max_incoming_links',
             'max_incoming_links',
             'relative_links',
-            'show_cat_filter'
+            'show_cat_filter',
+            'use_alt_server'
         ));
         update_option('linkate-posts', $options);
         // Show a message to say we've done something
@@ -436,6 +439,18 @@ function linkate_posts_expert_options_subpage()
                     <?php if (function_exists('wp_nonce_field')) wp_nonce_field('linkate-posts-update-options'); ?>
                 </div>
 <div class="<?= CL_TWC::$CARD ?>">
+                    <h2 class="<?= CL_TWC::$H2 ?>">Соединение с сервером</h2>
+                    <p>Если основной сервер недоступен (например, из-за блокировки провайдером), включите альтернативный маршрут подключения и сохраните настройки.</p>
+                    <div style="margin-top:1em">
+                        <label class="font-bold" for="use_alt_server">Альтернативный сервер:&nbsp;</label>
+                        <select id="use_alt_server" name="use_alt_server" class="<?= CL_TWC::$INP_BASE ?>" style="display:inline-block;width:auto">
+                            <option value="false" <?php selected(($options['use_alt_server'] ?? 'false'), 'false'); ?>>Выключен</option>
+                            <option value="true" <?php selected(($options['use_alt_server'] ?? 'false'), 'true'); ?>>Включён</option>
+                        </select>
+                        <input type="submit" class="<?= CL_TWC::$BTN_SAVE ?> ml-2" name="update_options_output" value="<?php _e('Сохранить', CHERRYLINK_TEXT_DOMAIN) ?>" />
+                    </div>
+                </div>
+                <div class="<?= CL_TWC::$CARD ?>">
                     <input type="checkbox" id="spoiler_debug" />
                     <label for="spoiler_debug" id="label_spoiler_debug" class="hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100 hover:cursor-pointer">⚙ Отладка</label>
 

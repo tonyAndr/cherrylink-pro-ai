@@ -75,6 +75,7 @@ if (!isset($options['debug_enabled'])) $options['debug_enabled'] = "false"; // s
     if (!isset($options['vector_api_url'])) $options['vector_api_url'] = '';
     if (!isset($options['vector_api_key'])) $options['vector_api_key'] = '';
     if (!isset($options['vector_custom_fields'])) $options['vector_custom_fields'] = '';
+    if (!isset($options['use_alt_server'])) $options['use_alt_server'] = 'false'; // alternative connection route
     update_option('linkate-posts', $options);
     return $options;
 }

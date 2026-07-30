@@ -13,15 +13,37 @@ if (!defined('CHERRY_VECTOR_API_URL')) {
     define('CHERRY_VECTOR_API_URL', $saved_url);
 }
 
+// Alternative connection endpoint — a transport-only TCP relay used when the primary API IP
+// is blocked upstream (e.g. RKN). We keep the real hostname on the request and only override
+// the connect address (via the http_api_curl resolve hook below), so end-to-end TLS and
+// certificate validation are unchanged — the relay just pipes encrypted bytes to the API.
+if (!defined('CL_ALT_API_PORT')) define('CL_ALT_API_PORT', 8443);
+if (!defined('CL_ALT_API_IP'))   define('CL_ALT_API_IP', '49.13.105.95');
+
 class CherryVectorAPI
 {
     private string $base_url;
     private string $license_key;
     private string $domain;
 
+    /** Is the alternative-server route toggled on in settings? */
+    public static function alt_enabled(): bool
+    {
+        $options = get_option('linkate-posts', []);
+        return isset($options['use_alt_server']) && $options['use_alt_server'] === 'true';
+    }
+
     public function __construct()
     {
         $this->base_url = rtrim(CHERRY_VECTOR_API_URL, '/');
+        // When the alternative route is on, hit the relay port on the SAME hostname (so TLS is
+        // unchanged); the http_api_curl hook redirects the connection to the relay IP.
+        if (self::alt_enabled()) {
+            $host = wp_parse_url($this->base_url, PHP_URL_HOST);
+            if ($host) {
+                $this->base_url = 'https://' . $host . ':' . CL_ALT_API_PORT;
+            }
+        }
         $options        = get_option('linkate-posts', []);
         // Auth-key priority: wp-config constant (for dev) → explicit API-key setting →
         // the license key. NO hardcoded fallback — an unconfigured site sends nothing and
@@ -542,3 +564,17 @@ class CherryVectorAPI
         return is_array($decoded) ? $decoded : [];
     }
 }
+
+// Single choke point for the alternative route: for our relay-port requests only, override the
+// connect address to the relay IP while keeping the real hostname (SNI/Host/cert unchanged).
+// Other requests (license → seocherry.ru, GitHub updater, etc.) are never touched.
+add_action('http_api_curl', function ($handle, $args, $url) {
+    if (!CherryVectorAPI::alt_enabled()) {
+        return;
+    }
+    $parts = wp_parse_url($url);
+    if (empty($parts['host']) || (int)($parts['port'] ?? 0) !== CL_ALT_API_PORT) {
+        return;
+    }
+    curl_setopt($handle, CURLOPT_RESOLVE, array($parts['host'] . ':' . CL_ALT_API_PORT . ':' . CL_ALT_API_IP));
+}, 10, 3);

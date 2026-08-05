@@ -8,7 +8,7 @@ export class GetAllTerms extends React.Component {
 
     async getTerms() {
         const handleUpdate = this.props.onTermsChange;
-        const url = ajax_var.url + '?action=linkate_gutenberg_hierarchical_terms_json';
+        const url = ajax_var.url + '?action=linkate_gutenberg_hierarchical_terms_json&_ajax_nonce=' + ajax_var.nonce;
 
         handleUpdate({ inProgress: true });
 

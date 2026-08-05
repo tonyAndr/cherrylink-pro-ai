@@ -6,7 +6,7 @@ export class GetIncomingLinks extends React.Component {
     }
 
     async getLinkStats() {
-        const url = ajax_var.url + '?action=linkate_generate_json';
+        const url = ajax_var.url + '?action=linkate_generate_json&_ajax_nonce=' + ajax_var.nonce;
         const payload = {
             'this_id': wp.data.select("core/editor").getCurrentPostId(),
             'this_type': 'post'

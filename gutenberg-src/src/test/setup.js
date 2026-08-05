@@ -1,7 +1,7 @@
 require('@testing-library/jest-dom');
 
 // WordPress globals expected by plugin components
-global.ajax_var = { url: 'http://localhost/wp-admin/admin-ajax.php' };
+global.ajax_var = { url: 'http://localhost/wp-admin/admin-ajax.php', nonce: 'test-nonce' };
 
 global.cherrylink_options = {
     post_id: '42',

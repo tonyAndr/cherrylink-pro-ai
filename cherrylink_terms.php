@@ -153,6 +153,7 @@ function linkate_gutenberg_hierarchical_terms($category = 0, $taxonomy = array()
 
 //, returns json
 function linkate_gutenberg_hierarchical_terms_json() {
+    \CherryLink\Ajax\Security::verify('edit_posts');
     $cats = linkate_gutenberg_hierarchical_terms();
     echo json_encode($cats);
     wp_die();
@@ -190,6 +191,7 @@ function linkate_get_all_categories_gutenberg($category = 0) {
 }
 //, returns json
 function linkate_get_all_categories_json() {
+    \CherryLink\Ajax\Security::verify('edit_posts');
     $cats = linkate_get_all_categories_gutenberg();
     echo json_encode($cats);
     wp_die();

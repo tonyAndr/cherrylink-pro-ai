@@ -242,17 +242,17 @@ add_action(CL_SYNC_HOOK, 'cl_sync_worker', 10, 2);
 // ── AJAX endpoints (admin) ────────────────────────────────────────────────────
 
 add_action('wp_ajax_linkate_sync_start', function () {
-    if (!current_user_can('edit_posts')) wp_die();
+    \CherryLink\Ajax\Security::verify('edit_posts');
     wp_send_json(cl_sync_start(!empty($_POST['force_full'])));
 });
 
 add_action('wp_ajax_linkate_sync_cancel', function () {
-    if (!current_user_can('edit_posts')) wp_die();
+    \CherryLink\Ajax\Security::verify('edit_posts');
     wp_send_json(cl_sync_cancel());
 });
 
 add_action('wp_ajax_linkate_sync_status', function () {
-    if (!current_user_can('edit_posts')) wp_die();
+    \CherryLink\Ajax\Security::verify('edit_posts');
     $state = cl_sync_get_state();
     $state['scheduled'] = function_exists('as_has_scheduled_action')
         ? as_has_scheduled_action(CL_SYNC_HOOK, null, CL_SYNC_GROUP) : null;
@@ -263,7 +263,7 @@ add_action('wp_ajax_linkate_sync_status', function () {
 // advances on a fresh/no-traffic site without waiting for a WP-Cron tick. Close the
 // page and normal cron takes over. No-op unless our sync is running and queued.
 add_action('wp_ajax_linkate_sync_tick', function () {
-    if (!current_user_can('edit_posts')) wp_die();
+    \CherryLink\Ajax\Security::verify('edit_posts');
     $ran = 0;
     if (
         cl_sync_get_state()['status'] === 'running'

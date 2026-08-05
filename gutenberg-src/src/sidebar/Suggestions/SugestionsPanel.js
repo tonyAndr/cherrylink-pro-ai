@@ -37,7 +37,7 @@ export class SuggestionsPanel extends React.Component {
             target_title: linkItem['data-title'] || '',
         };
         try {
-            const resp = await fetch(ajax_var.url + '?action=get_linkate_suggestions', {
+            const resp = await fetch(ajax_var.url + '?action=get_linkate_suggestions&_ajax_nonce=' + ajax_var.nonce, {
                 method: 'POST',
                 body: JSON.stringify(payload),
             });

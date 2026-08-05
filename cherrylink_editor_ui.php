@@ -22,6 +22,8 @@ if (function_exists('register_cherrylink_gutenberg_scripts')) {
 // Using linkateposts to get relevant results
 function get_linkate_links()
 {
+    \CherryLink\Ajax\Security::verify('edit_posts');
+
     $data = json_decode(file_get_contents('php://input'), true);
 
     if (isset($data)) {
@@ -68,9 +70,7 @@ function linkate_build_source_html(string $content): string
 add_action('wp_ajax_get_linkate_suggestions', 'get_linkate_suggestions');
 function get_linkate_suggestions()
 {
-    if (!current_user_can('edit_posts')) {
-        wp_send_json(['suggestions' => []]);
-    }
+    \CherryLink\Ajax\Security::verify('edit_posts');
 
     $data = json_decode(file_get_contents('php://input'), true);
     if (!is_array($data)) {
@@ -134,7 +134,10 @@ function linkate_panel_tinymce_js()
 {
     $classic_js = 'cherry-front.js';
     wp_register_script('cherrylink-js-main', plugins_url('/js/' . $classic_js, __FILE__), array('jquery'), LinkatePosts::asset_ver('js/' . $classic_js));
-    wp_localize_script('cherrylink-js-main', 'ajax_obj', ['ajaxurl' => admin_url('admin-ajax.php')]);
+    wp_localize_script('cherrylink-js-main', 'ajax_obj', [
+        'ajaxurl' => admin_url('admin-ajax.php'),
+        'nonce'   => \CherryLink\Ajax\Security::nonce(),
+    ]);
     wp_enqueue_script('cherrylink-js-main');
 }
 

@@ -15,6 +15,8 @@ define('LINKATE_STATISTICS_LIBRARY', true);
 add_action('wp_ajax_linkate_generate_json', 'linkate_generate_json');
 function linkate_generate_json()
 {
+    \CherryLink\Ajax\Security::verify('edit_posts');
+
     $gutenberg_data = json_decode(file_get_contents('php://input'), true);
     $this_id   = isset($gutenberg_data['this_id'])   ? $gutenberg_data['this_id']   : $_POST['this_id'];
     $this_type = isset($gutenberg_data['this_type']) ? $gutenberg_data['this_type'] : $_POST['this_type'];
@@ -51,6 +53,8 @@ function linkate_generate_json()
 add_action('wp_ajax_linkate_get_all_posts_count', 'linkate_get_all_posts_count');
 function linkate_get_all_posts_count()
 {
+    \CherryLink\Ajax\Security::verify('edit_posts');
+
     global $wpdb, $table_prefix;
     $types = array_map(function ($el) {
         return "'" . esc_sql($el) . "'";
@@ -69,6 +73,8 @@ function linkate_get_all_posts_count()
 add_action('wp_ajax_linkate_generate_csv_or_json_prettyfied', 'linkate_generate_csv_or_json_prettyfied');
 function linkate_generate_csv_or_json_prettyfied()
 {
+    \CherryLink\Ajax\Security::verify('edit_posts');
+
     $gutenberg_data = json_decode(file_get_contents('php://input'), true);
 
     $from_editor   = false;
@@ -187,6 +193,8 @@ function linkate_results_to_array_forward(array $results, bool $from_editor, arr
 add_action('wp_ajax_linkate_generate_csv_or_json_prettyfied_backwards', 'linkate_generate_csv_or_json_prettyfied_backwards');
 function linkate_generate_csv_or_json_prettyfied_backwards()
 {
+    \CherryLink\Ajax\Security::verify('edit_posts');
+
     $offset        = (int)($_POST['stats_offset'] ?? 0);
     $limit         = (int)($_POST['stats_limit']  ?? 200);
     $include_types = $_POST['export_types'] ?? [];
@@ -330,9 +338,7 @@ function linkate_admin_preview_stats(array $ignored = []): array
 add_action('wp_ajax_linkate_orphan_donors', 'linkate_orphan_donors');
 function linkate_orphan_donors()
 {
-    if (!current_user_can('edit_posts')) {
-        wp_send_json(['donors' => []]);
-    }
+    \CherryLink\Ajax\Security::verify('edit_posts');
 
     $post_id = (int) ($_POST['post_id'] ?? 0);
     $orphan  = $post_id ? get_post($post_id) : null;
@@ -442,6 +448,8 @@ function linkate_query_to_csv(array $array, string $filename): void
 add_action('wp_ajax_linkate_merge_csv_files', 'linkate_merge_csv_files');
 function linkate_merge_csv_files()
 {
+    \CherryLink\Ajax\Security::verify('edit_posts');
+
     $directory     = CHERRYLINK_DIR . 'stats/*';
     $masterCSVFile = fopen(CHERRYLINK_DIR . 'stats/cherrylink_stats.csv', 'w+');
     $first_file    = true;

@@ -71,7 +71,7 @@ jQuery(document).ready(function ($) {
             type: "POST",
             url: ajaxurl,
             dataType: 'json',
-            data: { action: 'linkate_orphan_donors', post_id: postId },
+            data: { action: 'linkate_orphan_donors', _ajax_nonce: cherry_ajax.nonce, post_id: postId },
             success: function (resp) {
                 $btn.text('Скрыть доноров').prop('disabled', false);
                 $row.after(render_donor_row(resp && resp.donors));
@@ -85,7 +85,7 @@ jQuery(document).ready(function ($) {
 
     // Get posts count to know how many requests we have to make
     function stats_get_posts_count() {
-        let ajax_data = stats_serialized_form + '&action=linkate_get_all_posts_count';
+        let ajax_data = stats_serialized_form + '&action=linkate_get_all_posts_count&_ajax_nonce=' + cherry_ajax.nonce;
 
         $.ajax({
             type: "POST",
@@ -138,7 +138,8 @@ jQuery(document).ready(function ($) {
         let ajax_data = stats_serialized_form
             + '&action=' + ajax_action
             + '&stats_offset=' + stats_offset
-            + '&stats_limit=' + stats_limit;
+            + '&stats_limit=' + stats_limit
+            + '&_ajax_nonce=' + cherry_ajax.nonce;
 
         in_progress = true;
         $.ajax({
@@ -176,7 +177,7 @@ jQuery(document).ready(function ($) {
 
     // Create results file
     function stats_get_file() {
-        let ajax_data = 'action=linkate_merge_csv_files';
+        let ajax_data = 'action=linkate_merge_csv_files&_ajax_nonce=' + cherry_ajax.nonce;
 
         $.ajax({
             type: "POST",

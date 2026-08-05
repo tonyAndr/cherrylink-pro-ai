@@ -269,7 +269,7 @@ jQuery(document).ready(function ($) {
                 type: 'POST',
                 url: ajax_obj.ajaxurl,
                 dataType: 'json',
-                data: { action: 'get_linkate_suggestions', post_id: currentPostId, target_id: item.postid, target_title: item.title || '' },
+                data: { action: 'get_linkate_suggestions', _ajax_nonce: ajax_obj.nonce, post_id: currentPostId, target_id: item.postid, target_title: item.title || '' },
                 success: function(resp) {
                     let sugg = (resp && resp.suggestions) ? resp.suggestions : [];
                     cl_api_suggestions_cache[cacheKey] = sugg;
@@ -1172,9 +1172,10 @@ jQuery(document).ready(function ($) {
         var this_id = cherrylink_options['post_id'].length === 0 || cherrylink_options['post_id'] == 0 ? window.location.href.match(/tag_ID=(\d+)\&/i)[1] : cherrylink_options['post_id'];
         var ajax_data = {
             'action': 'get_linkate_links',
+            '_ajax_nonce': ajax_obj.nonce,
             'post_id': this_id,
             'offset': fcl_get_data_offset,
-            'is_term': fcl_is_term(),  
+            'is_term': fcl_is_term(),
         };
         if ($('#filter_by_title').val()) {
             ajax_data.custom_text = $('#filter_by_title').val()
@@ -1225,6 +1226,7 @@ jQuery(document).ready(function ($) {
             : cherrylink_options['post_id'];
         let ajax_data = {
             action: 'linkate_generate_json',
+            _ajax_nonce: ajax_obj.nonce,
             this_id: this_id,
             this_type: cherrylink_options['post_id'].length === 0 || cherrylink_options['post_id'] == 0 ? 'term' : 'post'
         };
@@ -1321,6 +1323,7 @@ jQuery(document).ready(function ($) {
 
             let ajax_data = {
                 'action': 'linkate_generate_csv_or_json_prettyfied',
+                '_ajax_nonce': ajax_obj.nonce,
                 'from_editor': true,
                 'post_ids': ids
             };

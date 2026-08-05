@@ -98,7 +98,7 @@ jQuery(document).ready(function($){
 
         $.ajax({
             type: "GET",
-            url: ajaxurl + "?action=output_admin_debug_env",
+            url: ajaxurl + "?action=output_admin_debug_env&_ajax_nonce=" + cherry_ajax.nonce,
             datatype: 'json',
             success: function (response) {
                 $("#admin_debug_output_field").text(response)
@@ -116,7 +116,7 @@ jQuery(document).ready(function($){
         }
         $.ajax({
             type: "POST",
-            url: ajaxurl + "?action=output_admin_debug_links",
+            url: ajaxurl + "?action=output_admin_debug_links&_ajax_nonce=" + cherry_ajax.nonce,
             data: {post_id},
             datatype: 'json',
             success: function (data, textStatus, jqXHR) {
@@ -158,7 +158,7 @@ jQuery(document).ready(function($){
     function show_debugger_connectivity() {
         $.ajax({
             type: "GET",
-            url: ajaxurl + "?action=output_admin_debug_connectivity",
+            url: ajaxurl + "?action=output_admin_debug_connectivity&_ajax_nonce=" + cherry_ajax.nonce,
             datatype: 'json',
             success: function (response) { $("#admin_debug_output_field").append(response) },
             error:   function (jqXHR) { $("#admin_debug_output_field").append("\n(проверка связи не выполнена)\n") },
@@ -170,7 +170,7 @@ jQuery(document).ready(function($){
         
         $.ajax({
             type: "GET",
-            url: ajaxurl + "?action=output_admin_debug_wpdb",
+            url: ajaxurl + "?action=output_admin_debug_wpdb&_ajax_nonce=" + cherry_ajax.nonce,
             datatype: 'json',
             success: function (response) {
                 $("#admin_debug_output_field").append(response)

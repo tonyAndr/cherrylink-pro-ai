@@ -28,6 +28,8 @@ class CHERRYLINK_DEBUGGER
 
     public static function _admin_debug_env()
     {
+        \CherryLink\Ajax\Security::verify('manage_options');
+
         $environment = new \W18T();
         $theme = wp_get_theme();
 
@@ -61,6 +63,8 @@ class CHERRYLINK_DEBUGGER
     }
     public static function _admin_debug_links()
     {
+        \CherryLink\Ajax\Security::verify('manage_options');
+
         $post_id = isset($_POST['post_id']) ? trim((string) $_POST['post_id']) : '';
         if ($post_id === '') {
             wp_send_json(array('links' => '(ID записи не указан)', 'count' => 0));
@@ -89,6 +93,8 @@ class CHERRYLINK_DEBUGGER
     // developer-facing (goes into the debug textarea), not shown to end users.
     public static function _admin_debug_connectivity()
     {
+        \CherryLink\Ajax\Security::verify('manage_options');
+
         $targets = array(
             'Cherry API (наш сервер)' => array('seocherry.apov.dev', 443),
             'GitHub (обновления)'     => array('release-assets.githubusercontent.com', 443),
@@ -119,6 +125,8 @@ class CHERRYLINK_DEBUGGER
 
     public static function _admin_debug_wpdb()
     {
+        \CherryLink\Ajax\Security::verify('manage_options');
+
         $dmt = PHP_EOL . PHP_EOL . "==================================" . PHP_EOL;
         $output = $dmt . "> WPDB" . PHP_EOL;
         

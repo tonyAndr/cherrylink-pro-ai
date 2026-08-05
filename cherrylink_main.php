@@ -427,6 +427,12 @@ function linkate_posts_wp_admin_style()
         $scheme_exists = array("state" => isset($options['linkate_scheme_exists']) ? true : false);
         wp_localize_script('cherrylink-js-admin', 'scheme', $scheme_exists);
 
+        // Shared AJAX nonce for the admin scripts (admin / index / csv). Localized to the
+        // first-enqueued admin handle so the cherry_ajax global is defined before the others run.
+        wp_localize_script('cherrylink-js-admin', 'cherry_ajax', array(
+            'nonce' => \CherryLink\Ajax\Security::nonce(),
+        ));
+
         wp_enqueue_script('cherrylink-js-tailwind');
         wp_enqueue_script('cherrylink-js-admin');
         wp_enqueue_script('cherrylink-js-admin-index');

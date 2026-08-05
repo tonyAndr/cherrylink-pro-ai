@@ -23,7 +23,7 @@ export class GetData extends React.Component {
             ? window.location.href.match(/tag_ID=(\d+)\&/i)[1]
             : cherrylink_options['post_id'];
         const is_term = window.location.href.indexOf('term.php') > -1 ? 1 : 0;
-        const url = ajax_var.url + '?action=get_linkate_links';
+        const url = ajax_var.url + '?action=get_linkate_links&_ajax_nonce=' + ajax_var.nonce;
         const payload = {
             post_id: this_id,
             offset: withFilter ? 0 : currentData.dataOffset,
@@ -93,7 +93,7 @@ export class GetData extends React.Component {
             return;
         }
 
-        const url = ajax_var.url + '?action=linkate_generate_csv_or_json_prettyfied';
+        const url = ajax_var.url + '?action=linkate_generate_csv_or_json_prettyfied&_ajax_nonce=' + ajax_var.nonce;
         const payload = {
             'from_editor': true,
             'post_ids': ids.join(",")

@@ -39,7 +39,7 @@ jQuery(document).ready(function ($) {
         $('#reindex_progress_text').html("Запуск фонового сканирования…");
         $.ajax({
             type: "POST", url: ajaxurl, dataType: 'json',
-            data: index_serialized_form + '&action=linkate_sync_start',
+            data: index_serialized_form + '&action=linkate_sync_start&_ajax_nonce=' + cherry_ajax.nonce,
             success: function (state) { sync_render(state); sync_start_polling(); },
             error: function (x, t, err) { handle_errors(err, x.responseText); }
         });
@@ -51,7 +51,7 @@ jQuery(document).ready(function ($) {
     // Pull fresh readiness data after a scan and update the card in place (no page reload).
     function sync_refresh_status() {
         $.ajax({
-            type: "POST", url: ajaxurl, dataType: 'json', data: 'action=linkate_index_status_data',
+            type: "POST", url: ajaxurl, dataType: 'json', data: 'action=linkate_index_status_data&_ajax_nonce=' + cherry_ajax.nonce,
             success: function (d) {
                 if (!d) return;
                 $('#cherry_index_status').html(d.index_status_text || '');
@@ -67,7 +67,7 @@ jQuery(document).ready(function ($) {
         e.preventDefault();
         $('#reindex_progress_text').html("Остановка…");
         $.ajax({
-            type: "POST", url: ajaxurl, dataType: 'json', data: 'action=linkate_sync_cancel',
+            type: "POST", url: ajaxurl, dataType: 'json', data: 'action=linkate_sync_cancel&_ajax_nonce=' + cherry_ajax.nonce,
             success: function (state) { sync_render(state); if (!sync_is_active(state)) sync_stop_polling(); },
             error: function (x, t, err) { handle_errors(err, x.responseText); }
         });
@@ -81,14 +81,14 @@ jQuery(document).ready(function ($) {
         if (tick_in_flight) return;
         tick_in_flight = true;
         $.ajax({
-            type: "POST", url: ajaxurl, dataType: 'json', data: 'action=linkate_sync_tick',
+            type: "POST", url: ajaxurl, dataType: 'json', data: 'action=linkate_sync_tick&_ajax_nonce=' + cherry_ajax.nonce,
             complete: function () { tick_in_flight = false; }
         });
     }
 
     function sync_poll() {
         $.ajax({
-            type: "POST", url: ajaxurl, dataType: 'json', data: 'action=linkate_sync_status',
+            type: "POST", url: ajaxurl, dataType: 'json', data: 'action=linkate_sync_status&_ajax_nonce=' + cherry_ajax.nonce,
             success: function (state) {
                 sync_render(state);
                 if (sync_is_active(state)) sync_tick();
@@ -139,7 +139,7 @@ jQuery(document).ready(function ($) {
     // Resume the progress view if a sync is already running (started earlier or in another tab).
     (function () {
         $.ajax({
-            type: "POST", url: ajaxurl, dataType: 'json', data: 'action=linkate_sync_status',
+            type: "POST", url: ajaxurl, dataType: 'json', data: 'action=linkate_sync_status&_ajax_nonce=' + cherry_ajax.nonce,
             success: function (state) { if (sync_is_active(state)) { sync_render(state); sync_start_polling(); } }
         });
     })();
@@ -189,7 +189,7 @@ jQuery(document).ready(function ($) {
         $('#cl-srv-recheck').prop('disabled', true).text('Проверяем…');
         $('#cl-srv-badge').html('<code>[проверка…]</code>');
         $.ajax({
-            type: 'POST', url: ajaxurl, dataType: 'json', data: 'action=cherrylink_server_status',
+            type: 'POST', url: ajaxurl, dataType: 'json', data: 'action=cherrylink_server_status&_ajax_nonce=' + cherry_ajax.nonce,
             success: function (d) { cl_srv_render(d); },
             error: function (x, t, err) {
                 console.log('[CherryLink] server status request failed:', err, x && x.responseText);

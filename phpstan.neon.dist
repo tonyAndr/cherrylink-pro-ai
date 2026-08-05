@@ -4,5 +4,7 @@ includes:
 parameters:
     level: 5
     phpVersion: 70400
+    bootstrapFiles:
+        - dev/phpstan-bootstrap.php
     paths:
         - src

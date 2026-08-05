@@ -22,62 +22,11 @@ function linkate_posts_install()
 
 
 // used on install, import settings, revert to defaults
+// Defaults now live in \CherryLink\Support\Options::fill(); this stays as a thin
+// back-compat shim for the legacy callers (install + "revert to defaults").
 function fill_options($options)
 {
-    if ($options == NULL) {
-        // saving license on options reset
-        $options = (array) get_option('linkate-posts', []);
-        $hash_field = $options['hash_field'];
-        $options = array();
-        $options['hash_field'] = $hash_field;
-    }
-
-    if (!isset($options['limit_ajax'])) $options['limit_ajax'] = 50; // since 1.4.0
-    if (!isset($options['divider'])) $options['divider'] = '';
-    if (!isset($options['show_private'])) $options['show_private'] = 'false';
-    if (!isset($options['show_pages'])) $options['show_pages'] = 'false';
-    // show_static is now show_pages
-    if (isset($options['show_static'])) {
-        $options['show_pages'] = $options['show_static'];
-        unset($options['show_static']);
-    };
-    if (!isset($options['none_text'])) $options['none_text'] = __('Ничего не найдено...', CHERRYLINK_TEXT_DOMAIN);
-    if (!isset($options['excluded_cats'])) $options['excluded_cats'] = '';
-    if ($options['excluded_cats'] === '9999') $options['excluded_cats'] = '';
-    if (!isset($options['excluded_authors'])) $options['excluded_authors'] = '';
-    if ($options['excluded_authors'] === '9999') $options['excluded_authors'] = '';
-    if (!isset($options['show_customs'])) $options['show_customs'] = ''; // custom post types v1.2.10
-    if ($options['show_customs'] === '9999') $options['show_customs'] = '';
-    if (!isset($options['match_cat'])) $options['match_cat'] = 'false';
-    if (!isset($options['status'])) {
-        $options['status']['publish'] = 'true';
-        $options['status']['private'] = 'false';
-        $options['status']['draft'] = 'false';
-        $options['status']['future'] = 'false';
-    }
-    if (!isset($options['link_before'])) $options['link_before'] = base64_encode(urlencode('<a href="{url}" title="{title}">'));
-    if (!isset($options['link_after'])) $options['link_after'] = base64_encode(urlencode('</a>'));
-    if (!isset($options['link_temp_alt'])) $options['link_temp_alt'] = base64_encode(urlencode("<div style=\"padding:10px;margin:10px;border-top:1px solid lightgrey;border-bottom:1px solid lightgrey;\"><span style=\"color:lightgrey;font-size:smaller;\">Читайте также</span><div style=\"position:relative;max-width: 660px;margin: 0 auto;padding: 0 20px 20px 20px;display:flex;flex-wrap: wrap;\"><div style=\"width: 35%; min-width: 180px; height: auto; box-sizing: border-box;padding-right: 5%;\"><img src=\"{imagesrc}\" style=\"width:100%;\"></div><div style=\"width: 60%; min-width: 180px; height: auto; box-sizing: border-box;\"><strong>{title}</strong><br>{anons}</div><a target=\"_blank\" href=\"{url}\"><span style=\"position:absolute;width:100%;height:100%;top:0;left: 0;z-index: 1;\">&nbsp;</span></a></div></div>"));
-    if (!isset($options['term_temp_alt'])) $options['term_temp_alt'] = base64_encode(urlencode("<div style=\"padding:10px;margin:10px;border-top:1px solid lightgrey;border-bottom:1px solid lightgrey;\">Больше интересной информации по данной теме вы найдете в разделе нашего сайта \"<a href=\"{url}\"><strong>{title}</strong></a>\".</div>"));
-    if (!isset($options['term_before'])) $options['term_before'] = base64_encode(urlencode('<a href="{url}" title="{title}">'));
-    if (!isset($options['term_after'])) $options['term_after'] = base64_encode(urlencode('</a>'));
-    $options['no_selection_action'] = 'placeholder'; // always use placeholder, not configurable
-    if (!isset($options['hash_field'])) $options['hash_field'] = '';
-    $options['multilink'] = 'checked'; // always allow multiple links, not configurable
-    if (!isset($options['anons_len'])) $options['anons_len'] = 200;
-    if (!isset($options['linkate_scheme_exists'])) $options['linkate_scheme_exists'] = false; // since 1.4.0
-    if (!isset($options['relative_links'])) $options['relative_links'] = "full"; // since 1.4.9
-if (!isset($options['debug_enabled'])) $options['debug_enabled'] = "false"; // since 2.0.6
-    if (!isset($options['consider_max_incoming_links'])) $options['consider_max_incoming_links'] = 'false';
-    if (!isset($options['max_incoming_links'])) $options['max_incoming_links'] = 20;
-    if (!isset($options['template_image_size'])) $options['template_image_size'] = '';
-    if (!isset($options['show_cat_filter'])) $options['show_cat_filter'] = 'false';
-    if (!isset($options['vector_api_url'])) $options['vector_api_url'] = '';
-    if (!isset($options['vector_api_key'])) $options['vector_api_key'] = '';
-    if (!isset($options['vector_custom_fields'])) $options['vector_custom_fields'] = '';
-    if (!isset($options['use_alt_server'])) $options['use_alt_server'] = 'false'; // alternative connection route
-    update_option('linkate-posts', $options);
-    return $options;
+    return \CherryLink\Support\Options::fill($options);
 }
 
 
@@ -139,22 +88,23 @@ function cl_is_licensed(): bool
     return (bool) linkate_checkNeededOption();
 }
 
+// The index-dirty flag semantics now live on \CherryLink\Support\Options; these
+// stay as thin back-compat shims for the legacy callers (save/delete hooks, sync).
+
 /** Flag the index as out-of-sync (a change happened while unlicensed). Records when it began. */
 function cl_mark_index_dirty(): void
 {
-    if (!get_option('cherrylink_index_dirty')) {
-        update_option('cherrylink_index_dirty', gmdate('Y-m-d H:i:s'), false);
-    }
+    (new \CherryLink\Support\Options())->markIndexDirty();
 }
 
 function cl_clear_index_dirty(): void
 {
-    delete_option('cherrylink_index_dirty');
+    (new \CherryLink\Support\Options())->clearIndexDirty();
 }
 
 function cl_index_is_dirty(): bool
 {
-    return (bool) get_option('cherrylink_index_dirty');
+    return (new \CherryLink\Support\Options())->indexIsDirty();
 }
 
 add_action('admin_notices', 'cl_license_index_notice');
@@ -171,7 +121,7 @@ function cl_license_index_notice(): void
     echo '<div class="notice notice-warning"><p><strong>CherryLink Pro</strong>: ';
     echo 'лицензия неактивна — индексация и сканирование приостановлены, ссылки не обновляются.';
     if (cl_index_is_dirty()) {
-        $since = esc_html(get_date_from_gmt(get_option('cherrylink_index_dirty')));
+        $since = esc_html(get_date_from_gmt((new \CherryLink\Support\Options())->indexDirtySince()));
         echo ' <strong>Индекс перелинковки не синхронизирован</strong> (изменения с ' . $since
             . ' не проиндексированы). Активируйте ключ и запустите сканирование, чтобы восстановить синхронизацию.';
     } else {

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace CherryLink;
 
 use CherryLink\Contracts\Registerable;
+use CherryLink\Support\Options;
 
 /**
  * Plugin bootstrap / lightweight service container.
@@ -31,11 +32,15 @@ final class Plugin
     /** @var Registerable[] */
     private $services = [];
 
+    /** @var Options */
+    private $options;
+
     private function __construct(string $file)
     {
-        $this->file = $file;
-        $this->dir  = \plugin_dir_path($file);
-        $this->url  = \plugin_dir_url($file);
+        $this->file    = $file;
+        $this->dir     = \plugin_dir_path($file);
+        $this->url     = \plugin_dir_url($file);
+        $this->options = new Options();
     }
 
     /**
@@ -80,5 +85,11 @@ final class Plugin
     public function url(): string
     {
         return $this->url;
+    }
+
+    /** Shared settings repository, injected into services as they migrate here. */
+    public function options(): Options
+    {
+        return $this->options;
     }
 }

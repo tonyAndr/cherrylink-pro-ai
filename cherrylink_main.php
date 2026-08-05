@@ -458,13 +458,9 @@ add_action('init', 'linkate_posts_init', 1);
 register_activation_hook(__FILE__, array('LinkatePosts', 'lp_activate'));
 
 
+// Debug logging moved to \CherryLink\Support\Logger; this stays as a thin
+// back-compat shim for the legacy callers.
 function cherry_write_log($data)
 {
-    if (true === WP_DEBUG) {
-        if (is_array($data) || is_object($data)) {
-            error_log(print_r($data, true));
-        } else {
-            error_log($data);
-        }
-    }
+    (new \CherryLink\Support\Logger())->log($data);
 }

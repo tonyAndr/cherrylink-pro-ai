@@ -24,6 +24,10 @@ if (!defined('ABSPATH')) {
 if (!defined('CHERRYLINK_TEXT_DOMAIN')) {
     define('CHERRYLINK_TEXT_DOMAIN', 'cherrylink-td');
 }
+// Support\Logger gates on WP_DEBUG; keep it off in tests so error_log stays quiet.
+if (!defined('WP_DEBUG')) {
+    define('WP_DEBUG', false);
+}
 if (!defined('CHERRYLINK_DIR_URL')) {
     define('CHERRYLINK_DIR_URL', 'http://example.test/wp-content/plugins/cherrylink-pro-ai/');
 }

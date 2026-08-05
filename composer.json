@@ -2,5 +2,10 @@
     "require": {
         "abelcallejo/wordpress-environment": "dev-master",
         "woocommerce/action-scheduler": "~3.6.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "CherryLink\\": "src/"
+        }
     }
 }

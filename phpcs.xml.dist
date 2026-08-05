@@ -10,8 +10,15 @@
     <arg name="colors"/>
     <arg value="sp"/><!-- show sniff codes + progress -->
 
-    <!-- Modern OOP style for our own code. -->
-    <rule ref="PSR12"/>
+    <!-- Modern OOP style for our own code. We keep PSR-12 structure (bracing,
+         spacing, imports, visibility, StudlyCase classes, short arrays) but allow
+         snake_case method names: this is a WordPress plugin whose methods mirror
+         WP's own snake_case conventions and are called from legacy snake_case sites.
+         Forcing camelCase would mean renaming every method + caller mid-refactor. -->
+    <rule ref="PSR12">
+        <exclude name="PSR1.Methods.CamelCapsMethodName"/>
+        <exclude name="PSR2.Methods.MethodDeclaration.Underscore"/>
+    </rule>
 
     <!-- WordPress security sniffs (the parts we care about), enforced across src/. -->
     <rule ref="WordPress.Security.NonceVerification"/>

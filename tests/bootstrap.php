@@ -31,4 +31,11 @@ if (!defined('CHERRYLINK_PLUGIN_DIR')) {
     define('CHERRYLINK_PLUGIN_DIR', dirname(__DIR__));
 }
 
+// The plugin's own Composer autoloader registers the CherryLink\ namespace (src/),
+// so tests can resolve namespaced classes and the legacy class_alias shims.
+$pluginAutoload = CHERRYLINK_PLUGIN_DIR . '/vendor/autoload.php';
+if (is_file($pluginAutoload)) {
+    require $pluginAutoload;
+}
+
 require __DIR__ . '/stubs/wp-functions.php';

@@ -32,6 +32,16 @@ define('CHERRYLINK_TEXT_DOMAIN', 'cherrylink-td');
 define('CHERRYLINK_DIR', plugin_dir_path(__FILE__));
 define('CHERRYLINK_DIR_URL', plugin_dir_url(__FILE__));
 
+// Composer PSR-4 autoloader for the CherryLink\ namespace (src/) + bundled deps.
+// autoload_files.php is empty, so this only registers the classloader (no side
+// effects); Action Scheduler is still loaded explicitly below with its own
+// double-load guards.
+require_once(CHERRYLINK_DIR . 'vendor/autoload.php');
+
+// Bootstrap the plugin container. Legacy procedural modules still register their
+// own hooks for now; services migrate into the container across the refactor stages.
+\CherryLink\Plugin::boot(__FILE__);
+
 require(CHERRYLINK_DIR . '/env-info/W18T.class.php');
 
 // Action Scheduler — background job queue for the incremental sync (must load early).

@@ -41,7 +41,7 @@ jobs:
         run: dev/vendor/bin/phpcs -p
 
       - name: Static analysis (PHPStan)
-        run: dev/vendor/bin/phpstan analyse --no-progress
+        run: dev/vendor/bin/phpstan analyse --no-progress --memory-limit=512M
 
       - name: Unit tests (PHPUnit)
         run: dev/vendor/bin/phpunit -c phpunit.xml.dist

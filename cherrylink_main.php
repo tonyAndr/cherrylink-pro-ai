@@ -273,7 +273,7 @@ class LinkatePosts
 
     static function prepare_for_cherry_gutenberg($results, $option_key, $options)
     {
-        $output_template = '"data-url":"{url}","data-title":"{title}","data-category":"{categorynames}","data-date":"{date}","data-author":"{author}","data-postid":"{postid}","data-imagesrc":"{imagesrc}","data-anons":"{anons}","data-suggestions":"{suggestions}"';
+        $output_template = (new \CherryLink\Support\View())->string('link-card/gutenberg');
 
         $results_count = 0;
         if ($results) {
@@ -297,21 +297,9 @@ class LinkatePosts
 
     static function prepare_for_cherrylink_panel($results, $option_key, $options)
     {
-        $output_template_item_prefix = '
-		<div class="linkate-item-container">
-			<div class="linkate-controls">
-				<div class="link-counter" title="Найдено в тексте / переход к ссылке">0</div>
-				<div class="link-preview" title="Редактировать статью в новой вкладке"></div>
-				
-			</div>
-			<div class="linkate-link" title="Нажмите для вставки в текст" data-url="{url}" data-title="{title}" data-category="{categorynames}" data-date="{date}" data-author="{author}" data-postid="{postid}" data-imagesrc="{imagesrc}" data-anons="{anons}" data-suggestions="{suggestions}"><span class="link-title" >';
-
-        $output_template_item_suffix = '</span></div>
-			<div class="link-right-controls"><div class="link-individual-stats-income" title="Сколько раз сослались на эту статью">?</div><div class="link-individual-stats-out" title="Сколько исходящих ссылок содержит статья">?</div><div class="link-suggestions" title="Подсказка"></div></div></div>';
-
         $results_count = 0;
         if ($results) {
-            $out_final = $output_template_item_prefix . '{title}' . $output_template_item_suffix;
+            $out_final = (new \CherryLink\Support\View())->string('link-card/classic');
             $items = array();
             foreach ($results as $result) {
                 // HTML attribute context: encode quotes so they don't break data-suggestions="..."
@@ -389,25 +377,24 @@ function cherrylink_activation_notice()
     $index_process_status = (isset($options_meta['indexing_process']) && !empty($options_meta['indexing_process'])) ? $options_meta['indexing_process'] : 'VALUE_NOT_EXIST';
 
 
+    $scan_url = site_url() . '/wp-admin/options-general.php?page=cherrylink-pro&subpage=scan';
+    $view     = new \CherryLink\Support\View();
+
     /* Check transient, if available display notice */
     if (get_transient('cherry-manual-indexation-needed')) {
-?>
-        <div class="notice notice-warning is-dismissable">
-            <p><strong>CherryLink Pro</strong> установлен!</p>
-            <p>Для начала работы с ним <strong>необходимо просканировать ваш сайт</strong>.</p>
-            <p>Перейдите в настройки плагина на вкладку <a href="<?php echo site_url() . '/wp-admin/options-general.php?page=cherrylink-pro&subpage=scan'; ?>">Сканирование</a>, и нажмите на кнопку "<strong>Начать сканирование</strong>".</p>
-        </div>
-    <?php
+        echo $view->render('notices/scan-prompt', [
+            'line1'    => '<strong>CherryLink Pro</strong> установлен!',
+            'line2'    => 'Для начала работы с ним <strong>необходимо просканировать ваш сайт</strong>.',
+            'scan_url' => $scan_url,
+        ]);
         /* Delete transient, only display this notice once. */
         delete_transient('cherry-manual-indexation-needed');
     } else if ($index_process_status === 'VALUE_NOT_EXIST' || $index_process_status === 'IN_PROGRESS') {
-    ?>
-        <div class="notice notice-warning is-dismissable">
-            <p><strong>CherryLink Pro</strong>: сканирование не завершено!</p>
-            <p>Плагин может работать некорректно или не видеть все записи, <strong>необходимо завершить сканирование</strong>.</p>
-            <p>Перейдите в настройки плагина на вкладку <a href="<?php echo site_url() . '/wp-admin/options-general.php?page=cherrylink-pro&subpage=scan'; ?>">Сканирование</a>, и нажмите на кнопку "<strong>Начать сканирование</strong>".</p>
-        </div>
-<?php
+        echo $view->render('notices/scan-prompt', [
+            'line1'    => '<strong>CherryLink Pro</strong>: сканирование не завершено!',
+            'line2'    => 'Плагин может работать некорректно или не видеть все записи, <strong>необходимо завершить сканирование</strong>.',
+            'scan_url' => $scan_url,
+        ]);
     }
 }
 

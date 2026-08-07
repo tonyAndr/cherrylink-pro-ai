@@ -56,24 +56,28 @@ class lp_admin_subpages
 
     function display_menu()
     {
-        echo "\n<ul id=\"submenu\" class=\"linkateposts-tabs-menu rounded-lg bg-white shadow-xl p-2 \" style=\"display: block\">\n";
         // for compatibility with WP mu
-        $base = (isset($_SERVER['REDIRECT_URL'])) ? $_SERVER['REDIRECT_URL'] : $_SERVER['PHP_SELF'];
+        $base = isset($_SERVER['REDIRECT_URL'])
+            ? sanitize_text_field(wp_unslash($_SERVER['REDIRECT_URL']))
+            : (isset($_SERVER['PHP_SELF']) ? sanitize_text_field(wp_unslash($_SERVER['PHP_SELF'])) : '');
         $base .= '?page=' . $this->parent_page . '&subpage=';
-        $this->current_page = (isset($_GET['subpage'])) ? $this->page_from_slug($_GET['subpage']) : $this->page_from_slug(false);
+        $subpage = isset($_GET['subpage']) ? sanitize_text_field(wp_unslash($_GET['subpage'])) : false;
+        $this->current_page = $subpage ? $this->page_from_slug($subpage) : $this->page_from_slug(false);
+
+        $items = array();
         foreach ($this->pages as $page) {
-            // Hide link stats tab 
+            // Hide link stats tab
             if ($page['slug'] === 'statistics') {
                 continue;
             }
-            // Add tabs
-            if ($page === $this->current_page) {
-                echo "<li style=\"display: inline\"><a href=\"$base{$page['slug']}\" class=\"current\" style=\"display: inline\">{$page['title']}</a></li>\n";
-            } else {
-                echo "<li style=\"display: inline\"><a href=\"$base{$page['slug']}\" style=\"display: inline\">{$page['title']}</a></li>\n";
-            }
+            $items[] = array(
+                'title'   => $page['title'],
+                'url'     => $base . $page['slug'],
+                'current' => $page === $this->current_page,
+            );
         }
-        echo "</ul>\n";
+
+        echo (new \CherryLink\Support\View())->render('admin/subpage-menu', array('items' => $items));
     }
 
     function display_view()

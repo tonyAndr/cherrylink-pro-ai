@@ -19,25 +19,7 @@ add_action('admin_menu', 'linkate_posts_option_menu', 1);
 
 function cherrylink_pro_options_page()
 {
-?>
-
-    <div class="wrap">
-        <div class="cherry-admin-logo">
-            <h1></h1>
-            <div class="<?= CL_TWC::$H1 ?>">CherryLink Pro 🍒</div>
-        </div>
-
-        <?php
-        $m = new lp_admin_subpages();
-        $m->add_subpage('Основные', 'main', 'linkate_posts_main_options_subpage');
-        $m->add_subpage('Сканирование сайта', 'scan', 'linkate_posts_index_options_subpage');
-        $m->add_subpage('Для экспертов', 'pro', 'linkate_posts_expert_options_subpage');
-        $m->add_subpage('Статистика', 'statistics', 'linkate_posts_statistics_options_subpage');
-        $m->display();
-        // add_action('in_admin_footer', 'linkate_posts_admin_footer');
-        ?>
-    </div>
-<?php
+    echo (new \CherryLink\Support\View())->render('admin/settings-page');
 }
 
 function linkate_posts_vector_api_field()
@@ -52,32 +34,14 @@ function linkate_posts_vector_api_field()
         echo '<div class="notice-success notice"><p><b>Настройки Vector API сохранены</b></p></div>';
     }
 
-    $current_url = $options['vector_api_url'] ?? '';
-    $current_key = $options['vector_api_key'] ?? '';
     // Note: CHERRY_VECTOR_API_URL and CHERRY_VECTOR_API_KEY can be defined in wp-config.php
     // to override the admin settings. If defined, the form below is not shown.
     if (defined('CHERRY_VECTOR_API_URL')) return;
-?>
-    <div class="<?= CL_TWC::$CARD ?>">
-        <h2 class="<?= CL_TWC::$H2 ?>">Cherry Vector API</h2>
-        <p class="text-sm text-gray-500 mb-2">
-            URL и ключ доступа к вашему Cherry Vector API.<br>
-            Ключ должен совпадать с <code>ADMIN_KEY</code> в <code>.env</code> на сервере.
-        </p>
-        <form method="post" action="">
-            <label class="font-bold" for="vector_api_url">URL:</label><br>
-            <input type="url" name="vector_api_url" id="vector_api_url" class="mt-2 <?= CL_TWC::$INP_BASE ?>"
-                value="<?= esc_attr($current_url) ?>" placeholder="https://your-api.example.com">
-            <br><br>
-            <label class="font-bold" for="vector_api_key">API Key:</label><br>
-            <input type="text" name="vector_api_key" id="vector_api_key" class="mt-2 <?= CL_TWC::$INP_BASE ?>"
-                value="<?= esc_attr($current_key) ?>" placeholder="your-admin-key">
-            <br>
-            <input type="submit" class="<?= CL_TWC::$BTN_SAVE ?> mt-3" name="update_vector_api" value="Сохранить">
-            <?php if (function_exists('wp_nonce_field')) wp_nonce_field('linkate-posts-update-options'); ?>
-        </form>
-    </div>
-<?php
+
+    echo (new \CherryLink\Support\View())->render('admin/partials/vector-api-card', [
+        'current_url' => $options['vector_api_url'] ?? '',
+        'current_key' => $options['vector_api_key'] ?? '',
+    ]);
 }
 
 function linkate_posts_license_field()
@@ -138,83 +102,26 @@ function linkate_posts_license_field()
         $license_header = "<h2 class='" . CL_TWC::$H2 . "'>Введите ключ лицензии</h2><p>Получите ключ у нас на сайте: [<strong><a href=\"https://seocherry.ru/\">SeoCherry.ru</a></strong>].</p>";
     }
 
-?>
-    <div class="p-6 rounded-lg shadow-xl <?php echo $license_class; ?>">
-        <?php echo $license_header; ?>
-        <?php if ($info) : ?>
-            <p>Действует лицензия на текущий домен, ключ скрыт в целях безопасности.</p>
-            <form method="post" action="">
-                <input type="submit" class="<?= CL_TWC::$BTN_NORMAL ?> " name="remove_license" value="<?php _e('Сбросить лицензию', CHERRYLINK_TEXT_DOMAIN) ?>" />
-                <?php if (function_exists('wp_nonce_field')) wp_nonce_field('linkate-posts-update-options'); ?>
-            </form>
-        <?php else : ?>
-            <form method="post" action="">
-                <label class="font-bold" for="hash_field"><?php _e('Ваш ключ:', CHERRYLINK_TEXT_DOMAIN) ?></label>
-                <br>
-                <input type="text" name="hash_field" id="hash_field" required class=" mt-2 <?= CL_TWC::$INP_BASE ?>" value="<?php echo htmlspecialchars(stripslashes($options['hash_field'])); ?>">
-                <?php
-                if ($key_error) {
-                ?>
-                    <p style="font-weight:bold; color:red"><?= $key_error ?></p>
-                <?php
-                }
-                ?>
-                <br>
-                <input type="submit" class="<?= CL_TWC::$BTN_SAVE ?> " name="update_license" value="<?php _e('Сохранить', CHERRYLINK_TEXT_DOMAIN) ?>" />
-                <?php if (function_exists('wp_nonce_field')) wp_nonce_field('linkate-posts-update-options'); ?>
-            </form>
-        <?php endif; ?>
-    </div>
-<?php
-
+    echo (new \CherryLink\Support\View())->render('admin/partials/license-card', [
+        'info'           => $info,
+        'license_class'  => $license_class,
+        'license_header' => $license_header,
+        'options'        => $options,
+        'key_error'      => $key_error,
+    ]);
 }
 function linkate_posts_index_status_display($page = 'main')
 {
-    $data = cl_index_status_data();
-    $index_process_status = get_option('linkate_posts_meta', [])['indexing_process'] ?? 'VALUE_NOT_EXIST';
-?>
-    <div class="p-6 rounded-lg shadow-xl bg-white" id="cl-readiness-card" data-cl-stale="<?php echo !empty($data['stale']) ? '1' : '0'; ?>">
-        <h2 class="<?= CL_TWC::$H2 ?>">Готовность к работе <span id="cherry_process_badge"><?php echo $data['badge_html']; ?></span></h2>
-        <ul class="list-disc list-inside">
-            <li><span id="cherry_index_status"><?php echo $data['index_status_text']; ?></span></li>
-            <li><span id="cherry_scheme_status"><?php echo $data['scheme_status_text']; ?></span></li>
-            <li><span id="cherry_lastscan_status"><?php echo $data['last_scan_text']; ?></span></li>
-        </ul>
-        <?php
-        if ($page === 'main') {
-        ?>
-            <a href="/wp-admin/options-general.php?page=cherrylink-pro&subpage=statistics"><button class="<?= CL_TWC::$BTN_ACTION ?> mt-2">Проверьте сайт</button></a>
-            <a href="/wp-admin/options-general.php?page=cherrylink-pro&subpage=scan"><button class="<?= CL_TWC::$BTN_ACTION ?> mt-2"><?= $index_process_status === 'DONE' ? "Сканировать сайт" :  "Пересканировать" ?></button></a>
-        <?php
-        }
-        ?>
-    </div>
-
-    <?php if ($page === 'main') { ?>
-    <div class="<?= CL_TWC::$CARD ?>" id="cl-server-status-card">
-        <h2 class="<?= CL_TWC::$H2 ?>">Состояние сервера <span id="cl-srv-badge"><code>[проверка…]</code></span></h2>
-        <ul class="list-disc list-inside" id="cl-srv-lines">
-            <li>Проверяем соединение с сервером CherryLink…</li>
-        </ul>
-        <button type="button" id="cl-srv-recheck" class="<?= CL_TWC::$BTN_ACTION ?> mt-2">Проверить связь</button>
-    </div>
-    <?php } ?>
-<?php
+    echo (new \CherryLink\Support\View())->render('admin/partials/readiness-card', [
+        'data'                 => cl_index_status_data(),
+        'index_process_status' => get_option('linkate_posts_meta', [])['indexing_process'] ?? 'VALUE_NOT_EXIST',
+        'page'                 => $page,
+    ]);
 }
 
 function linkate_posts_index_progress()
 {
-?>
-    <div class="text-center">
-        <progress id="reindex_progress" class="rounded-lg"></progress>
-        <div id="reindex_progress_text" class="text-lg pb-6"></div>
-
-        <input type="submit" class="<?= CL_TWC::$BTN_SCAN ?> button-reindex" name="reindex_all" value="Начать сканирование" />
-        <button type="button" class="<?= CL_TWC::$BTN_ACTION ?> button-reindex-stop" style="display:none">Остановить</button>
-        <?php if (function_exists('wp_nonce_field')) ?>
-    </div>
-
-<?php
+    echo (new \CherryLink\Support\View())->render('admin/partials/index-progress');
 }
 
 // ========================================================================================= //
@@ -256,55 +163,10 @@ function linkate_posts_main_options_subpage()
         }
     }
     //now we drop into html to display the option page form
-?>
-    <div class="linkateposts-tab-content pt-3">
-        <div class="grid grid-cols-2 gap-4 content-start items-start">
-            <div class="grid grid-col-1 gap-4">
-                <?php linkate_posts_index_status_display('main'); ?>
+    echo (new \CherryLink\Support\View())->render('admin/main-subpage', [
+        'export_url' => CHERRYLINK_DIR_URL . '/export_options.txt',
+    ]);
 
-                <div class="<?= CL_TWC::$CARD ?>">
-                    <h2 class="<?= CL_TWC::$H2 ?>">Справочные материалы</h2>
-                    <ol>
-                        <li><a target="_blank" href="https://seocherry.ru/plagin-cherrylink-pro-arenda/">🔗 Тарифы и получение ключа</a></li>
-                        <li><a target="_blank" href="https://seocherry.ru/instruktsiya-po-nastroike-plagina-cherrylink/">🔗 Настройки плагина</a></li>
-                        <li><a target="_blank" href="https://seocherry.ru/instruktsiya-po-rabote-s-plaginom-perelinkovki-v-redaktore-wordpress/">🔗 Работа в редакторе WP</a></li>
-                        <li><a target="_blank" href="https://seocherry.ru/instruktsii-plaginov-wordpress-v-video-formate-shorts/">🔗 Видео-инструкции</a></li>
-                        <li><a target="_blank" href="https://seocherry.ru/zapisi-o-rabote-v-internet-seti-seo-instrumenty-znacheniya-pravila/">🔗 Полезные материалы про перелинковку</a></li>
-                    </ol>
-                </div>
-            </div>
-            <div class="grid grid-col-1 gap-4">
-                <?php linkate_posts_license_field(); ?>
-                <?php linkate_posts_vector_api_field(); ?>
-
-                <div class="<?= CL_TWC::$CARD ?> cherry-settings-export-container">
-
-                    <div>
-                        <h2 class="<?= CL_TWC::$H2 ?>">Экспорт и импорт настроек</h2>
-                        <p>Для переноса настроек между сайтами, скачайте файл настроек <strong>export_options.txt</strong> и импортируйте его на другом сайте. </p>
-                        <a class="inline-block <?= CL_TWC::$BTN_NORMAL ?> " href="<?php echo CHERRYLINK_DIR_URL . '/export_options.txt'; ?>" download>Скачать файл настроек</a>
-                    </div>
-
-                    <div class="mt-6">
-                        <p>Для импорта настроек плагина загрузите текстовый файл <strong>export_options.txt</strong>, полученный при экспорте настроек.</p>
-                        <form method="post" action="" enctype="multipart/form-data">
-                            <div class="p-0 my-3">
-                                <!-- <p><strong>Поле для импорта:</strong></p> -->
-                                <input type="file" name="upload_options" required class="block w-full text-sm text-stone-500 border p-0 file:rounded-l-lg file:mr-5 file:py-2 file:px-3 rounded-lg  file:text-xs    file:bg-slate-600 file:border-0 file:text-white   hover:file:cursor-pointer hover:file:bg-blue-50   hover:file:text-blue-700" style="padding:0">
-                                <input type="submit" class="<?= CL_TWC::$BTN_NORMAL ?> " name="import_settings" value="<?php _e('Импортировать настройки', CHERRYLINK_TEXT_DOMAIN) ?>" />
-                            </div>
-                            <?php if (function_exists('wp_nonce_field')) wp_nonce_field('linkate-posts-update-options'); ?>
-                        </form>
-                    </div>
-
-
-                </div>
-            </div>
-        </div>
-
-    </div>
-
-    <?php
     if (isset($_POST['export_settings'])) {
         check_admin_referer('linkate-posts-update-options');
 
@@ -384,103 +246,9 @@ function linkate_posts_expert_options_subpage()
         }
     }
 
-    ?>
-    <div class="linkateposts-tab-content pt-6">
-        <form method="post" action="">
-            <div class="grid grid-cols-1 gap-4">
-                <div class="pl-6">
-                    <div class="grid grid-rows-1 grid-cols-2">
-                        <div class="justify-self-start grid gap-2 grid-rows-1 grid-cols-2">
-                            <a href="#anchor-editor " class="underline text-base text-blue-400"># Опции редактора</a>
-                            <a href="#anchor-template" class="underline text-base text-blue-400"># Разметка ссылок</a>
-                        </div>
-                        <div class="justify-self-end">
-
-                            <input type="submit" class="<?= CL_TWC::$BTN_SAVE ?>" name="update_options_filter" value="<?php _e('Сохранить настройки', CHERRYLINK_TEXT_DOMAIN) ?>" />
-                            <?php if (function_exists('wp_nonce_field')) wp_nonce_field('linkate-posts-update-options'); ?>
-                        </div>
-                    </div>
-                </div>
-                <div class="<?= CL_TWC::$CARD ?>">
-                    <h2 id="anchor-editor" class="<?= CL_TWC::$H2 ?>">Настройки работы в редакторе WP</h2>
-                    <table class="optiontable form-table">
-                        <?php
-                        link_cf_display_limit_ajax($options['limit_ajax']);
-                        link_cf_display_show_pages($options['show_pages']);
-                        link_cf_display_match_cat($options['match_cat']);
-                        link_cf_display_status($options['status']);
-                        // link_cf_display_show_private($options['show_private']);
-                        ?>
-                    </table>
-                    <input type="checkbox" id="spoiler_filter" />
-                    <label for="spoiler_filter">Показать еще...</label>
-
-
-                    <div class="spoiler_filter">
-                        <table class="optiontable form-table">
-                            <?php
-                            link_cf_display_show_catergory_filter($options['show_cat_filter']);
-                            link_cf_display_show_custom_posts($options['show_customs']);
-                            link_cf_display_max_incoming_links($options['consider_max_incoming_links'], $options['max_incoming_links']);
-                            link_cf_display_authors($options['excluded_authors']);
-                            link_cf_display_cats($options['excluded_cats']);
-                            ?>
-                        </table>
-                    </div>
-                    <input type="submit" class="<?= CL_TWC::$BTN_SAVE ?> mt-6" name="update_options_filter" value="<?php _e('Сохранить настройки', CHERRYLINK_TEXT_DOMAIN) ?>" />
-                    <?php if (function_exists('wp_nonce_field')) wp_nonce_field('linkate-posts-update-options'); ?>
-                </div>
-                <div class="<?= CL_TWC::$CARD ?>">
-                    <h2 id="anchor-template" class="<?= CL_TWC::$H2 ?>">Настройки ссылок</h2>
-                    <table class="optiontable form-table">
-                        <?php link_cf_display_relative_links($options['relative_links']); ?>
-                    </table>
-                    <input type="submit" class="<?= CL_TWC::$BTN_SAVE ?> mt-6" name="update_options_output" value="<?php _e('Сохранить настройки', CHERRYLINK_TEXT_DOMAIN) ?>" />
-                    <?php if (function_exists('wp_nonce_field')) wp_nonce_field('linkate-posts-update-options'); ?>
-                </div>
-<div class="<?= CL_TWC::$CARD ?>">
-                    <h2 class="<?= CL_TWC::$H2 ?>">Соединение с сервером</h2>
-                    <p>Если основной сервер недоступен (например, из-за блокировки провайдером), включите альтернативный маршрут подключения и сохраните настройки.</p>
-                    <div style="margin-top:1em">
-                        <label class="font-bold" for="use_alt_server">Альтернативный сервер:&nbsp;</label>
-                        <select id="use_alt_server" name="use_alt_server" class="<?= CL_TWC::$INP_BASE ?>" style="display:inline-block;width:auto">
-                            <option value="false" <?php selected(($options['use_alt_server'] ?? 'false'), 'false'); ?>>Выключен</option>
-                            <option value="true" <?php selected(($options['use_alt_server'] ?? 'false'), 'true'); ?>>Включён</option>
-                        </select>
-                        <input type="submit" class="<?= CL_TWC::$BTN_SAVE ?> ml-2" name="update_options_output" value="<?php _e('Сохранить', CHERRYLINK_TEXT_DOMAIN) ?>" />
-                    </div>
-                </div>
-                <div class="<?= CL_TWC::$CARD ?>">
-                    <input type="checkbox" id="spoiler_debug" />
-                    <label for="spoiler_debug" id="label_spoiler_debug" class="hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100 hover:cursor-pointer">⚙ Отладка</label>
-
-                    <div class="spoiler_debug">
-                        <p>Служебный блок для отладки ошибок.</p>
-                        <hr>
-                        <div style="display:flex;flex-flow: column; width: 100%;">
-                            <div style="display:flex;flex-flow: row; width: 100%; gap: 1em; margin-top:2em; margin-bottom:2em">
-                                <input type="text" id="admin_debug_post_id" placeholder="ID записи" />
-                                <button id="admin_debug_btn" class="<?= CL_TWC::$BTN_NORMAL ?>">Проверить</button>
-                            </div>  
-                            
-                            <h3>Информация для разработчиков</h3>
-                            <textarea id="admin_debug_output_field" style="width: 100%" rows="10"></textarea>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-        </form>
-        <div class="mt-4 <?= CL_TWC::$CARD_SPECIAL ?>">
-            <h2 id="recovery" class="<?= CL_TWC::$H2 ?>">Прочие настройки</h2>
-            <form method="post" action="">
-                <input class="<?= CL_TWC::$BTN_DANGER ?> mt-2" name="truncate_all" type="submit" value="Очистить данные сайта в API (потребуется переиндексация)" onclick="return confirm('Удалить все векторы и граф ссылок для этого сайта из API?')" />
-                <input type="submit" class="<?= CL_TWC::$BTN_DANGER ?> mt-2" name="reset_options" value="<?php _e('Вернуть настройки по умолчанию', CHERRYLINK_TEXT_DOMAIN) ?>" />
-                <?php if (function_exists('wp_nonce_field')) wp_nonce_field('linkate-posts-update-options'); ?>
-            </form>
-        </div>
-    </div>
-<?php
+    echo (new \CherryLink\Support\View())->render('admin/expert-subpage', [
+        'options' => $options,
+    ]);
 }
 
 function linkate_posts_index_options_subpage()
@@ -495,45 +263,9 @@ function linkate_posts_index_options_subpage()
     }
 
     //php moved below for ajax
-?>
-    <div class=" linkateposts-tab-content pt-6 ">
-        <div class="grid grid-rows-1 grid-cols-2 grid-flow-col gap-4 justify-items-stretch justify-stretch items-center">
-            <div class="">
-                <?php linkate_posts_index_status_display('scan'); ?>
-            </div>
-            <div class="">
-                <?= linkate_posts_index_progress() ?>
-            </div>
-        </div>
-
-        <div class="<?= CL_TWC::$CARD ?> mt-6">
-
-            <!-- <h2 class="<?= CL_TWC::$H2 ?>">Настройка сканирования</h2> -->
-
-            <input type="checkbox" id="spoiler_scan" />
-            <label for="spoiler_scan" id="label_spoiler_scan" class="hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100 hover:cursor-pointer">Настройка сканирования</label>
-
-            <div class="spoiler_scan">
-
-                <hr class="my-4">
-
-                <form method="post" action="">
-                    <label class="font-bold" for="vector_custom_fields">Дополнительные поля для индексирования (по одному на строку):</label>
-                    <p class="text-sm text-gray-500 mb-2">Ключи пользовательских полей (ACF, meta и др.), содержимое которых будет добавлено к тексту статьи при индексировании.</p>
-                    <textarea name="vector_custom_fields" id="vector_custom_fields" rows="4"
-                        class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm font-mono"
-                        placeholder="my_acf_field&#10;another_field"><?= esc_textarea($options['vector_custom_fields'] ?? '') ?></textarea>
-                    <br>
-                    <input type="submit" class="<?= CL_TWC::$BTN_SAVE ?> mt-2" name="update_custom_fields" value="Сохранить поля">
-                    <?php if (function_exists('wp_nonce_field')) wp_nonce_field('linkate-posts-update-options'); ?>
-                </form>
-            </div>
-
-        </div>
-
-    </div>
-
-<?php
+    echo (new \CherryLink\Support\View())->render('admin/scan-subpage', [
+        'options' => $options,
+    ]);
 }
 
 function linkate_posts_statistics_options_subpage()
@@ -545,76 +277,8 @@ function linkate_posts_statistics_options_subpage()
     $scheme_rows = (int) (cl_index_status_data()['scheme_rows'] ?? 0);
 
     //php moved below for ajax
-?>
-    <div class=" linkateposts-tab-content pt-3">
-        <div class="<?= CL_TWC::$CARD ?>">
-            <h2 class="<?= CL_TWC::$H2 ?>">Поиск проблем с перелинковкой</h2>
-            <p>Нажмите на кнопку "Проверить перелинковку", чтобы найти записи, в которых:</p>
-            <ol class="list-inside list-decimal">
-                <li>Есть повторяющиеся ссылки;</li>
-                <li>Нет входящих ссылок;</li>
-                <li>Нет исходящих ссылок.</li>
-            </ol>
-            <!-- <p>Подробную статистику по перелинковке вы можете скачать в формате CSV с помощью инструмента Экспорт перелинковки на вкладке "Индекс ссылок".</p> -->
-            <?php //link_cf_prepare_tooltip(''); 
-            ?>
-            <form id="form_generate_stats" method="post" action="">
-                <?php link_cf_display_scheme_statistics_options(); ?>
-                <progress id="link_check_progress"></progress>
-                <input id="generate_preview" type="submit" class="<?= CL_TWC::$BTN_NORMAL ?>" name="generate_preview" value="<?php _e('Проверить перелинковку', CHERRYLINK_TEXT_DOMAIN) ?>" />
-            </form>
-            <br>
-        </div>
-
-        <div id="cherry_preview_stats_container" style="display:none">
-            <div class="<?= CL_TWC::$CARD ?> mt-3">
-                <h2 class="<?= CL_TWC::$H2 ?>">
-                    Найдены проблемы с перелинковкой
-                </h2>
-                <div class="mb-3" id="cherry_preview_stats_summary" data-linkscount="<?= $scheme_rows ?>"></div>
-                <input type="checkbox" id="spoiler_no_incoming" />
-                <label for="spoiler_no_incoming" id="label_spoiler_no_incoming"></label>
-                <div class="spoiler_no_incoming">
-                </div>
-                <br>
-                <input type="checkbox" id="spoiler_has_repeats" />
-                <label for="spoiler_has_repeats" id="label_spoiler_has_repeats"></label>
-                <div class="spoiler_has_repeats">
-                </div>
-                <br>
-                <input type="checkbox" id="spoiler_no_outgoing" />
-                <label for="spoiler_no_outgoing" id="label_spoiler_no_outgoing"></label>
-                <div class="spoiler_no_outgoing">
-                </div>
-                <br>
-                <input type="checkbox" id="spoiler_has_404" />
-                <label for="spoiler_has_404" id="label_spoiler_has_404"></label>
-                <div class="spoiler_has_404">
-                </div>
-                <br>
-                <input type="checkbox" id="spoiler_has_recursion" />
-                <label for="spoiler_has_recursion" id="label_spoiler_has_recursion"></label>
-                <div class="spoiler_has_recursion">
-                </div>
-            </div>
-        </div>
-        <?php $show_options = (isset($options['linkate_scheme_exists']) &&  $options['linkate_scheme_exists']) ? 'block' : 'none'; ?>
-        <div class="<?= CL_TWC::$CARD ?> mt-6" style="display: <?php echo $show_options; ?>">
-
-            <input type="checkbox" id="spoiler_scheme" />
-            <label for="spoiler_scheme" class="hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100 hover:cursor-pointer">Экспорт перелинковки в .CSV</label>
-
-            <div class="spoiler_scheme">
-
-                <form id="form_generate_csv" method="post" action="">
-                    <?php link_cf_display_scheme_export_options(); ?>
-                    <progress id="csv_progress"></progress>
-                    <input id="generate_csv" type="submit" class="<?= CL_TWC::$BTN_NORMAL ?>" name="generate_csv" value="<?php _e('Скачать схему в .CSV', CHERRYLINK_TEXT_DOMAIN) ?>" />
-
-                </form>
-            </div>
-        </div>
-    </div>
-
-<?php
+    echo (new \CherryLink\Support\View())->render('admin/statistics-subpage', [
+        'scheme_rows'  => $scheme_rows,
+        'show_options' => (isset($options['linkate_scheme_exists']) && $options['linkate_scheme_exists']) ? 'block' : 'none',
+    ]);
 }

@@ -32,9 +32,7 @@ final class RenderOutputTest extends TestCase
     /** @var string */
     private $gutTpl;
     /** @var string */
-    private $prefix;
-    /** @var string */
-    private $suffix;
+    private $classic;
 
     protected function setUp(): void
     {
@@ -65,14 +63,11 @@ final class RenderOutputTest extends TestCase
         require_once CHERRYLINK_PLUGIN_DIR . '/cherrylink_output_tags.php';
 
         // Pull the REAL templates out of the plugin so the test tracks production.
-        $src = file_get_contents(CHERRYLINK_PLUGIN_DIR . '/cherrylink_main.php');
-        $this->assertIsString($src);
-        $this->assertSame(1, preg_match('/\$output_template = \'(.*?)\';/s', $src, $mg), 'gutenberg tpl not found');
-        $this->assertSame(1, preg_match('/\$output_template_item_prefix = \'(.*?)\';/s', $src, $mp), 'prefix not found');
-        $this->assertSame(1, preg_match('/\$output_template_item_suffix = \'(.*?)\';/s', $src, $ms), 'suffix not found');
-        $this->gutTpl = $mg[1];
-        $this->prefix = $mp[1];
-        $this->suffix = $ms[1];
+        // Stage 5 moved them from inline strings in cherrylink_main.php to
+        // return-style partials under templates/link-card/, loaded via View::string().
+        $view          = new \CherryLink\Support\View(CHERRYLINK_PLUGIN_DIR . '/templates');
+        $this->gutTpl  = $view->string('link-card/gutenberg');
+        $this->classic = $view->string('link-card/classic');
     }
 
     protected function tearDown(): void
@@ -93,7 +88,7 @@ final class RenderOutputTest extends TestCase
     public function testClassicRenderMatchesOracle(): void
     {
         $ids       = [11, 22];
-        $classicH1 = $this->prefix . '{title}' . $this->suffix;
+        $classicH1 = $this->classic;
         $this->assertSame(
             $this->oldClassic($ids, $classicH1, ''),
             $this->newClassic($ids, $classicH1, '')
@@ -110,7 +105,7 @@ final class RenderOutputTest extends TestCase
 
     public function testNoUnresolvedPlaceholders(): void
     {
-        $classicH1 = $this->prefix . '{title}' . $this->suffix;
+        $classicH1 = $this->classic;
         $leftover  = strtr($classicH1, \linkate_link_fields(self::OPTION_KEY, $this->mk(1)));
         $this->assertSame(0, preg_match('/\{[a-z_]+\}/', $leftover), "unresolved placeholder: $leftover");
     }

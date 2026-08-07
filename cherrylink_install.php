@@ -117,17 +117,12 @@ function cl_license_index_notice(): void
     if (!class_exists('LinkatePosts') || !LinkatePosts::linkate_is_plugin_admin_page('settings')) {
         return;
     }
-    $settings = admin_url('options-general.php?page=cherrylink-pro&subpage=main');
-    echo '<div class="notice notice-warning"><p><strong>CherryLink Pro</strong>: ';
-    echo 'лицензия неактивна — индексация и сканирование приостановлены, ссылки не обновляются.';
-    if (cl_index_is_dirty()) {
-        $since = esc_html(get_date_from_gmt((new \CherryLink\Support\Options())->indexDirtySince()));
-        echo ' <strong>Индекс перелинковки не синхронизирован</strong> (изменения с ' . $since
-            . ' не проиндексированы). Активируйте ключ и запустите сканирование, чтобы восстановить синхронизацию.';
-    } else {
-        echo ' <a href="' . esc_url($settings) . '">Введите ключ лицензии</a>.';
-    }
-    echo '</p></div>';
+    $dirty = cl_index_is_dirty();
+    echo (new \CherryLink\Support\View())->render('notices/license-inactive', [
+        'dirty'        => $dirty,
+        'since'        => $dirty ? get_date_from_gmt((new \CherryLink\Support\Options())->indexDirtySince()) : '',
+        'settings_url' => admin_url('options-general.php?page=cherrylink-pro&subpage=main'),
+    ]);
 }
 
 function linkate_call_home_nocurl($val, $d)

@@ -20,7 +20,11 @@
         <exclude name="PSR2.Methods.MethodDeclaration.Underscore"/>
     </rule>
 
-    <!-- WordPress security sniffs (the parts we care about), enforced across src/. -->
+    <!-- WordPress security sniffs (the parts we care about), enforced across src/.
+         Every plugin AJAX handler gates on \CherryLink\Ajax\Security::verify() (which
+         runs check_ajax_referer() + a capability check); the sniff can't see through
+         that static-method indirection, so the verified handlers carry a targeted
+         phpcs:ignore on their superglobal reads. -->
     <rule ref="WordPress.Security.NonceVerification"/>
     <rule ref="WordPress.Security.EscapeOutput"/>
     <rule ref="WordPress.Security.ValidatedSanitizedInput"/>

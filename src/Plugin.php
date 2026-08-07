@@ -67,6 +67,22 @@ final class Plugin
 
     private function registerServices(): void
     {
+        // Namespaced services migrated out of the legacy procedural files. Each is a
+        // Registerable that wires its own WordPress hooks (guarding on admin/license/
+        // screen exactly as the old file-scope code did). Construction is cheap and
+        // side-effect-free; the actual API/DB work happens inside the hook callbacks
+        // at request time, so boot order relative to the legacy require chain is safe.
+        $this->services = [
+            new \CherryLink\Admin\StatsColumn(),
+            new \CherryLink\Editor\GutenbergAssets($this->options),
+            new \CherryLink\Indexing\IndexHooks(),
+            new \CherryLink\Indexing\SyncService(),
+            new \CherryLink\Terms\TermsService(),
+            new \CherryLink\Statistics\StatisticsService(),
+            new \CherryLink\Csv\CsvService(),
+            new \CherryLink\Editor\ClassicPanel($this->options),
+        ];
+
         foreach ($this->services as $service) {
             $service->register();
         }

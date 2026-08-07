@@ -31,7 +31,7 @@ case "$cmd" in
     test)    run_php dev/vendor/bin/phpunit -c phpunit.xml.dist "$@" ;;
     lint)    run_php dev/vendor/bin/phpcs   -p "$@" ;;
     fix)     run_php dev/vendor/bin/phpcbf  "$@" ;;
-    analyze) run_php dev/vendor/bin/phpstan analyse --no-progress --memory-limit=512M "$@" ;;
+    analyze) run_php dev/vendor/bin/phpstan analyse --no-progress --memory-limit=1G "$@" ;;
     all)
         "${BASH_SOURCE[0]}" lint
         "${BASH_SOURCE[0]}" analyze

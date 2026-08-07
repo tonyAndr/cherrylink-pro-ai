@@ -8,89 +8,23 @@ defined('ABSPATH') || exit;
 // Define lib name
 define('LINKATE_ACF_LIBRARY', true);
 
+// The options-parsing logic moved to \CherryLink\CustomFields\Acf; these stay as
+// thin delegators (the settings page calls link_cf_options_from_post). The
+// link_cf_display_* form emitters below are presentation and remain here for now.
+
 function link_cf_is_base64_encoded($data)
 {
-    if (preg_match('%^[a-zA-Z0-9/+]*={0,2}$%', $data)) {
-        return TRUE;
-    } else {
-        return FALSE;
-    }
-};
+    return \CherryLink\CustomFields\Acf::isBase64Encoded((string) $data);
+}
 
 function link_cf_options_from_post($options, $args)
 {
-    foreach ($args as $arg) {
-        switch ($arg) {
-            case 'excluded_cats':
-                if (isset($_POST[$arg]) && !empty($_POST[$arg])) {
-                    // get the subcategories too
-                    if (function_exists('get_term_children')) {
-                        $catarray = $_POST[$arg];
-                        $catarray = is_array($catarray) ? $catarray : explode(",", $catarray);
-                        foreach ($catarray as $cat) {
-                            $catarray = array_merge($catarray, get_term_children($cat, 'category'));
-                        }
-                        $_POST[$arg] = array_unique($catarray);
-                    }
-                    $options[$arg] = implode(',', $_POST[$arg]);
-                } else {
-                    $options[$arg] = '';
-                }
-                break;
-            case 'excluded_authors':
-            case 'show_customs':
-                if (isset($_POST[$arg]) && !empty($_POST[$arg])) {
-
-                    $options[$arg] = is_array($_POST[$arg]) ? implode(',', $_POST[$arg]) : $_POST[$arg];
-                } else {
-                    $options[$arg] = '';
-                }
-                break;
-            case 'status':
-                unset($options['status']);
-                if (isset($_POST['status']) && is_array($_POST['status'])) {
-                    $options['status']['publish'] = $_POST['status']['publish'];
-                    $options['status']['private'] = $_POST['status']['private'];
-                    $options['status']['draft'] = $_POST['status']['draft'];
-                    $options['status']['future'] = $_POST['status']['future'];
-                } else {
-                    $options['status']['publish'] = $_POST['status-publish'];
-                    $options['status']['private'] = $_POST['status-private'];
-                    $options['status']['draft'] = $_POST['status-draft'];
-                    $options['status']['future'] = $_POST['status-future'];
-                }
-                break;
-            case 'multilink':
-                if (isset($_POST[$arg])) {
-                    $options[$arg] = 'checked';
-                } else {
-                    $options[$arg] = '';
-                }
-                break;
-            case 'link_before':
-            case 'link_after':
-            case 'term_before':
-            case 'term_after':
-            case 'link_temp_alt':
-            case 'term_temp_alt':
-                $options[$arg] = link_cf_is_base64_encoded($_POST[$arg]) ? $_POST[$arg] : base64_encode(urlencode(str_replace("'", "\"", $_POST[$arg])));
-                break;
-            case 'export':
-                //        	parse_str(base64_decode($_POST['export']),$options);
-                $options = $_POST['export'];
-                parse_str($_POST['export'], $options);
-                break;
-            default:
-                $options[$arg] = trim($_POST[$arg]);
-        }
-    }
-    return $options;
+    return \CherryLink\CustomFields\Acf::optionsFromPost((array) $options, (array) $args);
 }
 
 function encodeURIComponent($str)
 {
-    $revert = array('%21' => '!', '%2A' => '*', '%27' => "'", '%28' => '(', '%29' => ')');
-    return strtr(rawurlencode($str), $revert);
+    return \CherryLink\CustomFields\Acf::encodeURIComponent((string) $str);
 }
 
 

@@ -29,6 +29,22 @@ final class StatisticsService implements Registerable
         \add_action('wp_ajax_linkate_orphan_donors', [$this, 'ajaxOrphanDonors']);
     }
 
+    /**
+     * Echo a raw JSON body exactly as the legacy handlers did: a text/html response
+     * (admin-ajax's default) whose string body the classic-editor + admin-CSV JS
+     * JSON.parse() themselves. wp_send_json() must NOT be used for these — its
+     * application/json header makes jQuery pre-parse the body to an object, and the
+     * client-side JSON.parse(response) then fails (progress bar hangs / "?" badges).
+     *
+     * @param mixed $data
+     */
+    private function sendRaw($data): void
+    {
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- JSON body for admin-ajax
+        echo \json_encode($data);
+        \wp_die();
+    }
+
     // ── In-editor incoming links ───────────────────────────────────────────────
 
     public function ajaxIncomingLinks(): void
@@ -48,14 +64,14 @@ final class StatisticsService implements Registerable
         $target_url = $this_type === 'post' ? \get_permalink((int) $this_id) : \get_term_link((int) $this_id);
 
         if (\is_wp_error($target_url) || empty($target_url)) {
-            \wp_send_json(['links' => '', 'count' => 0]);
+            $this->sendRaw(['links' => '', 'count' => 0]);
         }
 
         $api      = new Client();
         $response = $api->get_incoming_links($target_url);
 
         if (! $response || empty($response['links'])) {
-            \wp_send_json(['links' => '', 'count' => 0]);
+            $this->sendRaw(['links' => '', 'count' => 0]);
         }
 
         $output = [];
@@ -67,7 +83,7 @@ final class StatisticsService implements Registerable
             ];
         }
 
-        \wp_send_json(['links' => $output, 'count' => $response['count']]);
+        $this->sendRaw(['links' => $output, 'count' => $response['count']]);
     }
 
     // ── Count of posts for export batch sizing ──────────────────────────────────
@@ -128,18 +144,18 @@ final class StatisticsService implements Registerable
         $response = $api->get_links_stats('forward', $offset, $limit);
 
         if ($response === null) {
-            \wp_send_json(['status' => 'ERROR']);
+            $this->sendRaw(['status' => 'ERROR']);
         }
 
         $results      = $response['results'] ?? [];
         $output_array = $this->resultsToArrayForward($results, false, $include_types, $duplicate);
 
         if ($admin_preview) {
-            \wp_send_json($this->adminPreviewStats());
+            $this->sendRaw($this->adminPreviewStats());
         }
 
         CsvService::queryToCsv($output_array, 'cherrylink_stats_' . $offset . '.csv', $direction);
-        \wp_send_json([
+        $this->sendRaw([
             'status' => 'OK',
             'url'    => CHERRYLINK_DIR_URL . 'stats/cherrylink_stats_' . $offset . '.csv',
         ]);
@@ -227,14 +243,14 @@ final class StatisticsService implements Registerable
         $response = $api->get_links_stats('backward', $offset, $limit);
 
         if ($response === null) {
-            \wp_send_json(['status' => 'ERROR']);
+            $this->sendRaw(['status' => 'ERROR']);
         }
 
         $results      = $response['results'] ?? [];
         $output_array = $this->resultsToArrayBackward($results, $include_types, $duplicate);
 
         CsvService::queryToCsv($output_array, 'cherrylink_stats_' . $offset . '.csv', $direction);
-        \wp_send_json([
+        $this->sendRaw([
             'status' => 'OK',
             'url'    => CHERRYLINK_DIR_URL . 'stats/cherrylink_stats_' . $offset . '.csv',
         ]);

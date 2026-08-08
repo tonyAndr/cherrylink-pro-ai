@@ -37,18 +37,18 @@ function link_cf_display_relative_links($relative_links = "full")
 {
 ?>
     <tr valign="top">
-        <th scope="row"><label for="relative_links"><?php _e('Относительные ссылки', CHERRYLINK_TEXT_DOMAIN) ?></label></th>
+        <th scope="row"><label for="relative_links"><?php _e('Относительные ссылки', 'cherrylink') ?></label></th>
         <td>
             <select name="relative_links" id="relative_links">
                 <option <?php if ($relative_links == 'full') {
                             echo 'selected="selected"';
-                        } ?> value="full">Полный путь (http://domain.ru/page.html)</option>
+                        } ?> value="full"><?php esc_html_e('Полный путь (http://domain.ru/page.html)', 'cherrylink'); ?></option>
                 <option <?php if ($relative_links == 'no_proto') {
                             echo 'selected="selected"';
-                        } ?> value="no_proto">Без протокола (//domain.ru/page.html)</option>
+                        } ?> value="no_proto"><?php esc_html_e('Без протокола (//domain.ru/page.html)', 'cherrylink'); ?></option>
                 <option <?php if ($relative_links == 'no_domain') {
                             echo 'selected="selected"';
-                        } ?> value="no_domain">Без домена (/page.html)</option>
+                        } ?> value="no_domain"><?php esc_html_e('Без домена (/page.html)', 'cherrylink'); ?></option>
             </select>
         </td>
         <td><?php link_cf_prepare_tooltip("expert_template_relative_links"); ?></td>
@@ -60,7 +60,7 @@ function link_cf_display_limit_ajax($limit_ajax)
 {
 ?>
     <tr valign="top">
-        <th scope="row"><label for="limit_ajax"><?php _e('Количество ссылок :', CHERRYLINK_TEXT_DOMAIN) ?></label></th>
+        <th scope="row"><label for="limit_ajax"><?php _e('Количество ссылок :', 'cherrylink') ?></label></th>
         <td><input name="limit_ajax" type="number" id="limit_ajax" style="width: 60px;" value="<?php echo $limit_ajax; ?>" size="2" /></td>
         <td><?php link_cf_prepare_tooltip("expert_panel_limit_ajax"); ?></td>
     </tr>
@@ -72,15 +72,15 @@ function link_cf_display_show_private($show_private)
 {
 ?>
     <tr valign="top">
-        <th scope="row"><label for="show_private"><?php _e('Показывать защищенные паролем?', CHERRYLINK_TEXT_DOMAIN) ?></label></th>
+        <th scope="row"><label for="show_private"><?php _e('Показывать защищенные паролем?', 'cherrylink') ?></label></th>
         <td>
             <select name="show_private" id="show_private">
                 <option <?php if ($show_private == 'false') {
                             echo 'selected="selected"';
-                        } ?> value="false">Нет</option>
+                        } ?> value="false"><?php esc_html_e('Нет', 'cherrylink'); ?></option>
                 <option <?php if ($show_private == 'true') {
                             echo 'selected="selected"';
-                        } ?> value="true">Да</option>
+                        } ?> value="true"><?php esc_html_e('Да', 'cherrylink'); ?></option>
             </select>
         </td>
     </tr>
@@ -96,12 +96,12 @@ function link_cf_display_show_pages($show_pages)
     $pages_on = in_array($show_pages, ['but',   'true']);
 ?>
     <tr valign="top">
-        <th scope="row"><?php _e('Тип контента:', CHERRYLINK_TEXT_DOMAIN) ?></th>
+        <th scope="row"><?php _e('Тип контента:', 'cherrylink') ?></th>
         <td>
             <input type="hidden" name="show_pages" id="show_pages_val"
                    value="<?= esc_attr($show_pages) ?>">
             <div class="flex flex-wrap gap-2 mt-1" id="show_pages_chips">
-                <?php foreach (['posts' => 'Записи', 'pages' => 'Страницы'] as $key => $label) :
+                <?php foreach (['posts' => esc_html__('Записи', 'cherrylink'), 'pages' => esc_html__('Страницы', 'cherrylink')] as $key => $label) :
                     $checked = $key === 'posts' ? $posts_on : $pages_on;
                 ?>
                 <label class="inline-flex items-center gap-2 cursor-pointer select-none
@@ -157,11 +157,11 @@ function link_cf_display_show_custom_posts($show_customs)
     if (!empty($output)) :
     ?>
         <tr valign="top">
-            <th scope="row"><?php _e('Включить в список произвольные типы записей?', CHERRYLINK_TEXT_DOMAIN) ?></th>
+            <th scope="row"><?php _e('Включить в список произвольные типы записей?', 'cherrylink') ?></th>
             <td>
                 <table class="linkateposts-inner-table">
                     <?php
-                    echo "\n\t<tr valign=\"top\"><td><strong>Тип записи</strong></td><td><strong>Показать</strong></td></tr>";
+                    echo "\n\t<tr valign=\"top\"><td><strong>" . esc_html__('Тип записи', 'cherrylink') . "</strong></td><td><strong>" . esc_html__('Показать', 'cherrylink') . "</strong></td></tr>";
                     echo $output;
                     ?>
                 </table>
@@ -175,15 +175,15 @@ function link_cf_display_show_catergory_filter($show_cat_filter = 'false')
 {
     ?>
     <tr valign="top">
-        <th scope="row"><label for="show_cat_filter"><?php _e('Показать на панели фильтр ссылок по рубрике', CHERRYLINK_TEXT_DOMAIN) ?></label></th>
+        <th scope="row"><label for="show_cat_filter"><?php _e('Показать на панели фильтр ссылок по рубрике', 'cherrylink') ?></label></th>
         <td>
             <select name="show_cat_filter" id="show_cat_filter">
                 <option <?php if ($show_cat_filter == 'false') {
                             echo 'selected="selected"';
-                        } ?> value="false">Нет</option>
+                        } ?> value="false"><?php esc_html_e('Нет', 'cherrylink'); ?></option>
                 <option <?php if ($show_cat_filter == 'true') {
                             echo 'selected="selected"';
-                        } ?> value="true">Да</option>
+                        } ?> value="true"><?php esc_html_e('Да', 'cherrylink'); ?></option>
             </select>
         </td>
     </tr>
@@ -193,18 +193,18 @@ function link_cf_display_max_incoming_links($consider_max_incoming_links, $max_i
 {
 ?>
     <tr valign="top">
-        <th scope="row"><label for="max_incoming_links"><?php _e('Максимальное число входящих ссылок', CHERRYLINK_TEXT_DOMAIN) ?></label></th>
+        <th scope="row"><label for="max_incoming_links"><?php _e('Максимальное число входящих ссылок', 'cherrylink') ?></label></th>
         <td>
-            Скрыть?
+            <?php esc_html_e('Скрыть?', 'cherrylink'); ?>
             <select name="consider_max_incoming_links" id="consider_max_incoming_links">
                 <option <?php if ($consider_max_incoming_links == 'false') {
                             echo 'selected="selected"';
-                        } ?> value="false">Нет</option>
+                        } ?> value="false"><?php esc_html_e('Нет', 'cherrylink'); ?></option>
                 <option <?php if ($consider_max_incoming_links == 'true') {
                             echo 'selected="selected"';
-                        } ?> value="true">Да</option>
+                        } ?> value="true"><?php esc_html_e('Да', 'cherrylink'); ?></option>
             </select>
-            Количество ссылок
+            <?php esc_html_e('Количество ссылок', 'cherrylink'); ?>
             <input name="max_incoming_links" type="number" min="1" id="max_incoming_links" value="<?php echo htmlspecialchars(stripslashes($max_incoming_links)); ?>" />
         </td>
         </td>
@@ -218,15 +218,15 @@ function link_cf_display_match_cat($match_cat)
 {
 ?>
     <tr valign="top">
-        <th scope="row"><label for="match_cat"><?php _e('Только ссылки из той же рубрики?', CHERRYLINK_TEXT_DOMAIN) ?></label></th>
+        <th scope="row"><label for="match_cat"><?php _e('Только ссылки из той же рубрики?', 'cherrylink') ?></label></th>
         <td>
             <select name="match_cat" id="match_cat">
                 <option <?php if ($match_cat == 'false') {
                             echo 'selected="selected"';
-                        } ?> value="false">Нет</option>
+                        } ?> value="false"><?php esc_html_e('Нет', 'cherrylink'); ?></option>
                 <option <?php if ($match_cat == 'true') {
                             echo 'selected="selected"';
-                        } ?> value="true">Да</option>
+                        } ?> value="true"><?php esc_html_e('Да', 'cherrylink'); ?></option>
             </select>
         </td>
     </tr>
@@ -240,12 +240,12 @@ function link_cf_template_image_size($template_image_size)
     $sizes = linkate_get_image_sizes();
 ?>
     <tr valign="top">
-        <th scope="row"><label for="template_image_size">Размер изображения для тега {imagesrc} для шаблонов</label></th>
+        <th scope="row"><label for="template_image_size"><?php esc_html_e('Размер изображения для тега {imagesrc} для шаблонов', 'cherrylink'); ?></label></th>
         <td>
             <select name="template_image_size" id="template_image_size">
                 <option <?php if (empty($template_image_size)) {
                             echo 'selected="selected"';
-                        } ?> value="">Оригинальный размер</option>
+                        } ?> value=""><?php esc_html_e('Оригинальный размер', 'cherrylink'); ?></option>
                 <?php
                 foreach ($sizes as $k => $arr) {
                 ?>
@@ -274,12 +274,12 @@ function link_cf_display_scheme_export_options()
 ?>
     <div style="display: flex">
         <div>
-            <p><strong>Типы записей</strong></p>
+            <p><strong><?php esc_html_e('Типы записей', 'cherrylink'); ?></strong></p>
             <table class="linkateposts-inner-table">
                 <?php
                 $types = get_post_types($args, 'objects');
                 if ($types) {
-                    echo "\n\t<tr valign=\"top\"><td colspan=\"2\"><strong>Типы публикаций</strong></td></tr>";
+                    echo "\n\t<tr valign=\"top\"><td colspan=\"2\"><strong>" . esc_html__('Типы публикаций', 'cherrylink') . "</strong></td></tr>";
                     foreach ($types as $type) {
                         if (!in_array($type->name, $hide_types)) {
                             echo "\n\t<tr valign=\"top\"><td>$type->label</td><td><input type=\"checkbox\" name=\"export_types[]\" value=\"$type->name\" checked /></td></tr>";
@@ -300,30 +300,30 @@ function link_cf_display_scheme_export_options()
             </table>
         </div>
         <div style="margin-left: 50px">
-            <p><strong>Поля данных</strong></p>
-            Ориентация ссылок
+            <p><strong><?php esc_html_e('Поля данных', 'cherrylink'); ?></strong></p>
+            <?php esc_html_e('Ориентация ссылок', 'cherrylink'); ?>
             <select name="links_direction" id="links_direction">
-                <option value="outgoing" selected>Исходящие</option>
-                <option value="incoming">Входящие</option>
+                <option value="outgoing" selected><?php esc_html_e('Исходящие', 'cherrylink'); ?></option>
+                <option value="incoming"><?php esc_html_e('Входящие', 'cherrylink'); ?></option>
             </select>
             <div id="links_direction_outgoing">
-                <input name="source_id" type="checkbox" value="cb_source_id" checked>ID источника</input><br>
-                <input name="source_type" type="checkbox" value="cb_source_type" checked>Тип источника</input><br>
-                <input name="source_cats" type="checkbox" value="cb_source_cats" checked>Рубрики</input><br>
-                <input name="source_url" type="checkbox" value="cb_source_url" checked>URL источника</input><br>
-                <input name="target_url" type="checkbox" value="cb_target_url" checked>URL цели</input><br>
+                <input name="source_id" type="checkbox" value="cb_source_id" checked><?php esc_html_e('ID источника', 'cherrylink'); ?></input><br>
+                <input name="source_type" type="checkbox" value="cb_source_type" checked><?php esc_html_e('Тип источника', 'cherrylink'); ?></input><br>
+                <input name="source_cats" type="checkbox" value="cb_source_cats" checked><?php esc_html_e('Рубрики', 'cherrylink'); ?></input><br>
+                <input name="source_url" type="checkbox" value="cb_source_url" checked><?php esc_html_e('URL источника', 'cherrylink'); ?></input><br>
+                <input name="target_url" type="checkbox" value="cb_target_url" checked><?php esc_html_e('URL цели', 'cherrylink'); ?></input><br>
             </div>
             <div id="links_direction_incoming" style="display:none">
-                <input name="target_id" type="checkbox" value="cb_target_id" checked>ID цели</input><br>
-                <input name="target_type" type="checkbox" value="cb_target_type" checked>Тип цели</input><br>
-                <input name="target_cats" type="checkbox" value="cb_target_cats" checked>Рубрики цели</input><br>
-                <input name="target_url" type="checkbox" value="cb_target_url" checked>URL цели</input><br>
-                <input name="source_url" type="checkbox" value="cb_source_url" checked>URL источника</input><br>
+                <input name="target_id" type="checkbox" value="cb_target_id" checked><?php esc_html_e('ID цели', 'cherrylink'); ?></input><br>
+                <input name="target_type" type="checkbox" value="cb_target_type" checked><?php esc_html_e('Тип цели', 'cherrylink'); ?></input><br>
+                <input name="target_cats" type="checkbox" value="cb_target_cats" checked><?php esc_html_e('Рубрики цели', 'cherrylink'); ?></input><br>
+                <input name="target_url" type="checkbox" value="cb_target_url" checked><?php esc_html_e('URL цели', 'cherrylink'); ?></input><br>
+                <input name="source_url" type="checkbox" value="cb_source_url" checked><?php esc_html_e('URL источника', 'cherrylink'); ?></input><br>
             </div>
-            <input name="ankor" type="checkbox" value="cb_ankor" checked>Анкор</input><br>
-            <input name="count_out" type="checkbox" value="cb_count_out" checked>Кол-во исходящих ссылок</input><br>
-            <input name="count_in" type="checkbox" value="cb_count_in" checked>Кол-во входящих ссылок</input><br>
-            <input name="duplicate_fields" type="checkbox" value="cb_duplicate_fields" checked>Дублировать поля (id, тип, ...)</input><br>
+            <input name="ankor" type="checkbox" value="cb_ankor" checked><?php esc_html_e('Анкор', 'cherrylink'); ?></input><br>
+            <input name="count_out" type="checkbox" value="cb_count_out" checked><?php esc_html_e('Кол-во исходящих ссылок', 'cherrylink'); ?></input><br>
+            <input name="count_in" type="checkbox" value="cb_count_in" checked><?php esc_html_e('Кол-во входящих ссылок', 'cherrylink'); ?></input><br>
+            <input name="duplicate_fields" type="checkbox" value="cb_duplicate_fields" checked><?php esc_html_e('Дублировать поля (id, тип, ...)', 'cherrylink'); ?></input><br>
 
         </div>
     </div>
@@ -337,13 +337,13 @@ function link_cf_display_scheme_statistics_options()
         // '_builtin' => false
     );
 ?>
-    <h2>Опции поиска</h2>
+    <h2><?php esc_html_e('Опции поиска', 'cherrylink'); ?></h2>
     <div style="display: flex">
         <div style="display: inline-flex;">
             <?php
             $types = get_post_types($args, 'objects');
             if ($types) {
-                echo "\n\t<table class=\"linkateposts-inner-table\"><tr valign=\"top\"><td colspan=\"2\"><strong>Типы публикаций</strong></td></tr>";
+                echo "\n\t<table class=\"linkateposts-inner-table\"><tr valign=\"top\"><td colspan=\"2\"><strong>" . esc_html__('Типы публикаций', 'cherrylink') . "</strong></td></tr>";
                 foreach ($types as $type) {
                     if (!in_array($type->name, $hide_types)) {
                         echo "\n\t<tr valign=\"top\"><td>$type->label</td><td><input type=\"checkbox\" name=\"export_types[]\" value=\"$type->name\" checked /></td></tr>";
@@ -353,7 +353,7 @@ function link_cf_display_scheme_statistics_options()
             }
             $statuses = get_post_statuses();
             if ($statuses) {
-                echo "\n\t<table class=\"linkateposts-inner-table\"><tr valign=\"top\"><td colspan=\"2\"><strong>Статус публикаций</strong></td></tr>";
+                echo "\n\t<table class=\"linkateposts-inner-table\"><tr valign=\"top\"><td colspan=\"2\"><strong>" . esc_html__('Статус публикаций', 'cherrylink') . "</strong></td></tr>";
                 foreach ($statuses as $k => $status) {
                     $checked = $k === 'publish' ? "checked" : "";
                     echo "\n\t<tr valign=\"top\"><td>$status</td><td><input type=\"checkbox\" name=\"export_status[]\" value=\"$k\" " . $checked . " /></td></tr>";
@@ -363,16 +363,16 @@ function link_cf_display_scheme_statistics_options()
             ?>
         </div>
         <div style="display:none">
-            <p><strong>Поля данных</strong></p>
-            <input name="source_id" type="checkbox" value="cb_source_id" checked>ID источника</input><br>
-            <input name="source_type" type="checkbox" value="cb_source_type" checked>Тип источника</input><br>
-            <input name="source_cats" type="checkbox" value="cb_source_cats" checked>Рубрики</input><br>
-            <input name="source_url" type="checkbox" value="cb_source_url" checked>URL источника</input><br>
-            <input name="target_url" type="checkbox" value="cb_target_url" checked>URL цели</input><br>
-            <input name="ankor" type="checkbox" value="cb_ankor" checked>Анкор</input><br>
-            <input name="count_out" type="checkbox" value="cb_count_out" checked>Кол-во исходящих ссылок</input><br>
-            <input name="count_in" type="checkbox" value="cb_count_in" checked>Кол-во входящих ссылок</input><br>
-            <input name="duplicate_fields" type="checkbox" value="cb_duplicate_fields" checked>Дублировать поля (id, тип, ...)</input><br>
+            <p><strong><?php esc_html_e('Поля данных', 'cherrylink'); ?></strong></p>
+            <input name="source_id" type="checkbox" value="cb_source_id" checked><?php esc_html_e('ID источника', 'cherrylink'); ?></input><br>
+            <input name="source_type" type="checkbox" value="cb_source_type" checked><?php esc_html_e('Тип источника', 'cherrylink'); ?></input><br>
+            <input name="source_cats" type="checkbox" value="cb_source_cats" checked><?php esc_html_e('Рубрики', 'cherrylink'); ?></input><br>
+            <input name="source_url" type="checkbox" value="cb_source_url" checked><?php esc_html_e('URL источника', 'cherrylink'); ?></input><br>
+            <input name="target_url" type="checkbox" value="cb_target_url" checked><?php esc_html_e('URL цели', 'cherrylink'); ?></input><br>
+            <input name="ankor" type="checkbox" value="cb_ankor" checked><?php esc_html_e('Анкор', 'cherrylink'); ?></input><br>
+            <input name="count_out" type="checkbox" value="cb_count_out" checked><?php esc_html_e('Кол-во исходящих ссылок', 'cherrylink'); ?></input><br>
+            <input name="count_in" type="checkbox" value="cb_count_in" checked><?php esc_html_e('Кол-во входящих ссылок', 'cherrylink'); ?></input><br>
+            <input name="duplicate_fields" type="checkbox" value="cb_duplicate_fields" checked><?php esc_html_e('Дублировать поля (id, тип, ...)', 'cherrylink'); ?></input><br>
 
         </div>
     </div>
@@ -385,18 +385,18 @@ function link_cf_display_authors($excluded_authors)
     global $wpdb;
 ?>
     <tr valign="top">
-        <th scope="row"><?php _e('Пояснение к фильтрам авторов и рубрик:', CHERRYLINK_TEXT_DOMAIN) ?></th>
-        <td>Ниже вы можете скрыть записи определенных авторов и рубрик. Чтобы видеть все записи, снимите все галочки.</td>
+        <th scope="row"><?php _e('Пояснение к фильтрам авторов и рубрик:', 'cherrylink') ?></th>
+        <td><?php esc_html_e('Ниже вы можете скрыть записи определенных авторов и рубрик. Чтобы видеть все записи, снимите все галочки.', 'cherrylink'); ?></td>
     </tr>
     <tr valign="top">
-        <th scope="row"><?php _e('Скрыть записи по автору:', CHERRYLINK_TEXT_DOMAIN) ?></th>
+        <th scope="row"><?php _e('Скрыть записи по автору:', 'cherrylink') ?></th>
         <td>
             <table class="linkateposts-inner-table">
                 <?php
                 $users = $wpdb->get_results("SELECT ID, user_login FROM $wpdb->users ORDER BY user_login");
                 if ($users) {
                     $excluded = explode(',', $excluded_authors);
-                    echo "\n\t<tr valign=\"top\"><td><strong>Имя юзера</strong></td><td><strong>Скрыть</strong></td></tr>";
+                    echo "\n\t<tr valign=\"top\"><td><strong>" . esc_html__('Имя юзера', 'cherrylink') . "</strong></td><td><strong>" . esc_html__('Скрыть', 'cherrylink') . "</strong></td></tr>";
                     foreach ($users as $user) {
                         if (false === in_array($user->ID, $excluded)) {
                             $ex_ischecked = '';
@@ -418,7 +418,7 @@ function link_cf_display_cats($excluded_cats)
     global $wpdb;
 ?>
     <tr valign="top">
-        <th scope="row"><?php _e('Скрыть записи из рубрик:', CHERRYLINK_TEXT_DOMAIN) ?></th>
+        <th scope="row"><?php _e('Скрыть записи из рубрик:', 'cherrylink') ?></th>
         <td>
             <table class="linkateposts-inner-table">
                 <?php
@@ -429,7 +429,7 @@ function link_cf_display_cats($excluded_cats)
                     $categories = $wpdb->get_results("SELECT * FROM $wpdb->categories ORDER BY cat_name");
                 }
                 if ($categories) {
-                    echo "\n\t<tr valign=\"top\"><td><strong>Рубрика</strong></td><td><strong>Скрыть</strong></td></tr>";
+                    echo "\n\t<tr valign=\"top\"><td><strong>" . esc_html__('Рубрика', 'cherrylink') . "</strong></td><td><strong>" . esc_html__('Скрыть', 'cherrylink') . "</strong></td></tr>";
                     $excluded = explode(',', $excluded_cats);
                     $level = 0;
                     $cats_added = array();
@@ -472,14 +472,14 @@ function link_cf_display_cats($excluded_cats)
 function link_cf_display_status($status)
 {
     $statuses = [
-        'publish' => 'Опубликованы',
-        'private' => 'Личные',
-        'draft'   => 'Черновик',
-        'future'  => 'Запланированные',
+        'publish' => __('Опубликованы', 'cherrylink'),
+        'private' => __('Личные', 'cherrylink'),
+        'draft'   => __('Черновик', 'cherrylink'),
+        'future'  => __('Запланированные', 'cherrylink'),
     ];
 ?>
     <tr valign="top">
-        <th scope="row"><?php _e('Статус записей:', CHERRYLINK_TEXT_DOMAIN) ?></th>
+        <th scope="row"><?php _e('Статус записей:', 'cherrylink') ?></th>
         <td>
             <div class="flex flex-wrap gap-2 mt-1">
                 <?php foreach ($statuses as $key => $label) :
@@ -520,7 +520,7 @@ function link_cf_display_status($status)
 function link_cf_prepare_tooltip($anchor)
 {
 ?>
-    <div class='cherry-adm-tooltip'><a target="_blank" href="https://seocherry.ru/?page_id=1699#<?= $anchor; ?>" title="Перейти к справке"><img src='<?php echo CHERRYLINK_DIR_URL; ?>img/question-mark.png'></a>
+    <div class='cherry-adm-tooltip'><a target="_blank" href="https://seocherry.ru/?page_id=1699#<?= $anchor; ?>" title="<?php esc_attr_e('Перейти к справке', 'cherrylink'); ?>"><img src='<?php echo CHERRYLINK_DIR_URL; ?>img/question-mark.png'></a>
     </div>
 <?php
 }

@@ -48,7 +48,7 @@ final class TermsService implements Registerable
      */
     public static function classicTree($category = 0, $taxonomy = []): string
     {
-        $output_template_item_prefix = '<li><span class="link-counter"  title="Найдено в тексте / переход к ссылке">[ 0 ]</span><div  title="Нажмите для вставки в текст" class="linkate-link link-term" data-url="{url}" data-title="{title}" data-taxonomy="{taxonomy}"><span class="link-title">';
+        $output_template_item_prefix = '<li><span class="link-counter"  title="' . \esc_attr__('Найдено в тексте / переход к ссылке', 'cherrylink') . '">[ 0 ]</span><div  title="' . \esc_attr__('Нажмите для вставки в текст', 'cherrylink') . '" class="linkate-link link-term" data-url="{url}" data-title="{title}" data-taxonomy="{taxonomy}"><span class="link-title">';
         $output_template_item_suffix = '</span></div></li>';
         $list_prefix                 = '<ul class="linkate-terms-list">';
         $list_suffix                 = '</ul>';

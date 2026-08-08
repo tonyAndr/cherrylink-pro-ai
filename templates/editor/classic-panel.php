@@ -30,16 +30,16 @@ defined('ABSPATH') || exit;
                 </div>
             </div> -->
             <div>
-                <input id="filter_by_title" type="text" placeholder="Фильтр">
+                <input id="filter_by_title" type="text" placeholder="<?php esc_attr_e('Фильтр', 'cherrylink'); ?>">
                 <span class="filter-clear-box"></span>
             </div>
         </div>
         <div class="linkate-tabs">
-            <div class="tab tab-articles linkate-tab-selected" title="Записи"><img src="<?php echo esc_url($tab_links_url); ?>" width="20" height="20" alt="Записи"></div>
-            <div class="tab tab-taxonomy" title="Таксономии"><img src="<?php echo esc_url($tab_taxonomies_url); ?>" width="20" height="20" alt="Таксономии"></div>
-            <div class="tab tab-stats" title="Статистика ссылок"><img src="<?php echo esc_url($tab_stats_url); ?>" width="20" height="20" alt="Статистика"></div>
+            <div class="tab tab-articles linkate-tab-selected" title="<?php esc_attr_e('Записи', 'cherrylink'); ?>"><img src="<?php echo esc_url($tab_links_url); ?>" width="20" height="20" alt="<?php esc_attr_e('Записи', 'cherrylink'); ?>"></div>
+            <div class="tab tab-taxonomy" title="<?php esc_attr_e('Таксономии', 'cherrylink'); ?>"><img src="<?php echo esc_url($tab_taxonomies_url); ?>" width="20" height="20" alt="<?php esc_attr_e('Таксономии', 'cherrylink'); ?>"></div>
+            <div class="tab tab-stats" title="<?php esc_attr_e('Статистика ссылок', 'cherrylink'); ?>"><img src="<?php echo esc_url($tab_stats_url); ?>" width="20" height="20" alt="<?php esc_attr_e('Статистика', 'cherrylink'); ?>"></div>
         </div>
-        <div class="suggestions-panel-back">&#10094; Назад</div>
+        <div class="suggestions-panel-back">&#10094; <?php esc_html_e('Назад', 'cherrylink'); ?></div>
         <div class="inside" id="cherrylink_meta_inside">
             <span id="link_template" data-before="<?php echo esc_attr($options['link_before']); ?>" data-after="<?php echo esc_attr($options['link_after']); ?>" data-temp-alt="<?php echo esc_attr($options['link_temp_alt']); ?>" hidden></span>
             <span id="term_template" data-before="<?php echo esc_attr($options['term_before']); ?>" data-after="<?php echo esc_attr($options['term_after']); ?>" data-term-temp-alt="<?php echo esc_attr($options['term_temp_alt']); ?>" hidden></span>
@@ -58,7 +58,7 @@ defined('ABSPATH') || exit;
                         <div></div>
                         <div></div>
                     </div>
-                    <div class="load-more-text">Загрузить еще...</div>
+                    <div class="load-more-text"><?php esc_html_e('Загрузить еще...', 'cherrylink'); ?></div>
                 </div>
             </div>
             <div class="linkate-box-container container-taxonomy">
@@ -72,14 +72,14 @@ defined('ABSPATH') || exit;
                 ?>
             </div>
             <div class="linkate-box-container container-stats" style="display:none">
-                <div id="cl-incoming-list"><div class="cl-incoming-loading">Загрузка...</div></div>
+                <div id="cl-incoming-list"><div class="cl-incoming-loading"><?php esc_html_e('Загрузка...', 'cherrylink'); ?></div></div>
             </div>
         </div>
         <div class="linkate-total-links">
             <div class="total-links-counter">
-                <div> Исходящих</div>
+                <div> <?php esc_html_e('Исходящих', 'cherrylink'); ?></div>
                 <div id="links-count-total">?</div>
-                <div class="cl-footer-incoming"> Входящих</div>
+                <div class="cl-footer-incoming"> <?php esc_html_e('Входящих', 'cherrylink'); ?></div>
                 <div id="links-count-targets" class="cl-footer-incoming">?</div>
             </div>
         </div>

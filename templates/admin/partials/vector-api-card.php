@@ -11,8 +11,11 @@ defined('ABSPATH') || exit;
     <div class="<?= CL_TWC::$CARD ?>">
         <h2 class="<?= CL_TWC::$H2 ?>">Cherry Vector API</h2>
         <p class="text-sm text-gray-500 mb-2">
-            URL и ключ доступа к вашему Cherry Vector API.<br>
-            Ключ должен совпадать с <code>ADMIN_KEY</code> в <code>.env</code> на сервере.
+            <?php esc_html_e('URL и ключ доступа к вашему Cherry Vector API.', 'cherrylink'); ?><br>
+            <?php
+            /* translators: 1: ADMIN_KEY (code), 2: .env (code) */
+            printf(esc_html__('Ключ должен совпадать с %1$s в %2$s на сервере.', 'cherrylink'), '<code>ADMIN_KEY</code>', '<code>.env</code>');
+            ?>
         </p>
         <form method="post" action="">
             <label class="font-bold" for="vector_api_url">URL:</label><br>
@@ -23,7 +26,7 @@ defined('ABSPATH') || exit;
             <input type="text" name="vector_api_key" id="vector_api_key" class="mt-2 <?= CL_TWC::$INP_BASE ?>"
                 value="<?= esc_attr($current_key) ?>" placeholder="your-admin-key">
             <br>
-            <input type="submit" class="<?= CL_TWC::$BTN_SAVE ?> mt-3" name="update_vector_api" value="Сохранить">
+            <input type="submit" class="<?= CL_TWC::$BTN_SAVE ?> mt-3" name="update_vector_api" value="<?php esc_attr_e('Сохранить', 'cherrylink'); ?>">
             <?php if (function_exists('wp_nonce_field')) wp_nonce_field('linkate-posts-update-options'); ?>
         </form>
     </div>

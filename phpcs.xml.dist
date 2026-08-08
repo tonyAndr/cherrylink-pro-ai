@@ -29,6 +29,16 @@
     <rule ref="WordPress.Security.EscapeOutput"/>
     <rule ref="WordPress.Security.ValidatedSanitizedInput"/>
 
+    <!-- i18n correctness for src/: require the literal 'cherrylink' text domain and
+         flag missing domains, non-literal strings, and malformed translator comments. -->
+    <rule ref="WordPress.WP.I18n">
+        <properties>
+            <property name="text_domain" type="array">
+                <element value="cherrylink"/>
+            </property>
+        </properties>
+    </rule>
+
     <!-- Enforce the PHP 7.4 floor: fail on any 8.0+ only construct. -->
     <config name="testVersion" value="7.4-"/>
     <rule ref="PHPCompatibilityWP"/>

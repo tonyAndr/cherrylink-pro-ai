@@ -14,10 +14,10 @@ defined('ABSPATH') || exit;
 
         <?php
         $m = new lp_admin_subpages();
-        $m->add_subpage('Основные', 'main', 'linkate_posts_main_options_subpage');
-        $m->add_subpage('Сканирование сайта', 'scan', 'linkate_posts_index_options_subpage');
-        $m->add_subpage('Для экспертов', 'pro', 'linkate_posts_expert_options_subpage');
-        $m->add_subpage('Статистика', 'statistics', 'linkate_posts_statistics_options_subpage');
+        $m->add_subpage(__('Основные', 'cherrylink'), 'main', 'linkate_posts_main_options_subpage');
+        $m->add_subpage(__('Сканирование сайта', 'cherrylink'), 'scan', 'linkate_posts_index_options_subpage');
+        $m->add_subpage(__('Для экспертов', 'cherrylink'), 'pro', 'linkate_posts_expert_options_subpage');
+        $m->add_subpage(__('Статистика', 'cherrylink'), 'statistics', 'linkate_posts_statistics_options_subpage');
         $m->display();
         // add_action('in_admin_footer', 'linkate_posts_admin_footer');
         ?>

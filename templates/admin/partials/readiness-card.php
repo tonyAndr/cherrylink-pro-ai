@@ -12,7 +12,7 @@
 defined('ABSPATH') || exit;
 ?>
     <div class="p-6 rounded-lg shadow-xl bg-white" id="cl-readiness-card" data-cl-stale="<?php echo !empty($data['stale']) ? '1' : '0'; ?>">
-        <h2 class="<?= CL_TWC::$H2 ?>">Готовность к работе <span id="cherry_process_badge"><?php echo $data['badge_html']; ?></span></h2>
+        <h2 class="<?= CL_TWC::$H2 ?>"><?php esc_html_e('Готовность к работе', 'cherrylink'); ?> <span id="cherry_process_badge"><?php echo $data['badge_html']; ?></span></h2>
         <ul class="list-disc list-inside">
             <li><span id="cherry_index_status"><?php echo $data['index_status_text']; ?></span></li>
             <li><span id="cherry_scheme_status"><?php echo $data['scheme_status_text']; ?></span></li>
@@ -21,8 +21,8 @@ defined('ABSPATH') || exit;
         <?php
         if ($page === 'main') {
         ?>
-            <a href="/wp-admin/options-general.php?page=cherrylink-pro&subpage=statistics"><button class="<?= CL_TWC::$BTN_ACTION ?> mt-2">Проверьте сайт</button></a>
-            <a href="/wp-admin/options-general.php?page=cherrylink-pro&subpage=scan"><button class="<?= CL_TWC::$BTN_ACTION ?> mt-2"><?= $index_process_status === 'DONE' ? "Сканировать сайт" :  "Пересканировать" ?></button></a>
+            <a href="/wp-admin/options-general.php?page=cherrylink-pro&subpage=statistics"><button class="<?= CL_TWC::$BTN_ACTION ?> mt-2"><?php esc_html_e('Проверьте сайт', 'cherrylink'); ?></button></a>
+            <a href="/wp-admin/options-general.php?page=cherrylink-pro&subpage=scan"><button class="<?= CL_TWC::$BTN_ACTION ?> mt-2"><?= $index_process_status === 'DONE' ? esc_html__('Сканировать сайт', 'cherrylink') : esc_html__('Пересканировать', 'cherrylink') ?></button></a>
         <?php
         }
         ?>
@@ -30,11 +30,11 @@ defined('ABSPATH') || exit;
 
     <?php if ($page === 'main') { ?>
     <div class="<?= CL_TWC::$CARD ?>" id="cl-server-status-card">
-        <h2 class="<?= CL_TWC::$H2 ?>">Состояние сервера <span id="cl-srv-badge"><code>[проверка…]</code></span></h2>
+        <h2 class="<?= CL_TWC::$H2 ?>"><?php esc_html_e('Состояние сервера', 'cherrylink'); ?> <span id="cl-srv-badge"><code>[<?php esc_html_e('проверка…', 'cherrylink'); ?>]</code></span></h2>
         <ul class="list-disc list-inside" id="cl-srv-lines">
-            <li>Проверяем соединение с сервером CherryLink…</li>
+            <li><?php esc_html_e('Проверяем соединение с сервером CherryLink…', 'cherrylink'); ?></li>
         </ul>
-        <button type="button" id="cl-srv-recheck" class="<?= CL_TWC::$BTN_ACTION ?> mt-2">Проверить связь</button>
+        <button type="button" id="cl-srv-recheck" class="<?= CL_TWC::$BTN_ACTION ?> mt-2"><?php esc_html_e('Проверить связь', 'cherrylink'); ?></button>
     </div>
     <?php } ?>
 <?php

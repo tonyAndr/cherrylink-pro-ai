@@ -62,15 +62,17 @@ final class CsvService implements Registerable
      */
     public static function queryToCsv(array $array, string $filename, string $direction = 'outgoing'): void
     {
+        // Column headers are written into a CSV file (not HTML), so use plain __()
+        // without escaping — esc_* would corrupt the values.
         $headers = [
             'ID',
-            'Тип',
-            $direction === 'outgoing' ? 'Рубрики_источника' : 'Рубрики_цели',
-            $direction === 'outgoing' ? 'URL_источника'     : 'URL_цели',
-            $direction === 'outgoing' ? 'URL_цели'          : 'URL_источника',
-            'Анкор',
-            'Исходящих_ссылок',
-            'Входящих_ссылок',
+            \__('Тип', 'cherrylink'),
+            $direction === 'outgoing' ? \__('Рубрики_источника', 'cherrylink') : \__('Рубрики_цели', 'cherrylink'),
+            $direction === 'outgoing' ? \__('URL_источника', 'cherrylink')     : \__('URL_цели', 'cherrylink'),
+            $direction === 'outgoing' ? \__('URL_цели', 'cherrylink')          : \__('URL_источника', 'cherrylink'),
+            \__('Анкор', 'cherrylink'),
+            \__('Исходящих_ссылок', 'cherrylink'),
+            \__('Входящих_ссылок', 'cherrylink'),
         ];
 
         if (! \file_exists(CHERRYLINK_DIR . 'stats')) {

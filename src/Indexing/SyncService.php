@@ -108,7 +108,7 @@ final class SyncService implements Registerable
         if (! \cl_is_licensed()) {
             return $this->setState([
                 'status'  => 'error',
-                'message' => 'Лицензия неактивна — синхронизация недоступна. Введите ключ лицензии.',
+                'message' => \__('Лицензия неактивна — синхронизация недоступна. Введите ключ лицензии.', 'cherrylink'),
             ]);
         }
         if (! \function_exists('as_enqueue_async_action')) {
@@ -160,7 +160,7 @@ final class SyncService implements Registerable
                 'links'        => 0,
                 'deleted'      => 0,
                 'started_gmt'  => \gmdate('Y-m-d H:i:s'),
-                'message'      => 'Изменений не найдено',
+                'message'      => \__('Изменений не найдено', 'cherrylink'),
             ]);
         }
 
@@ -192,7 +192,7 @@ final class SyncService implements Registerable
     public function cancel(): array
     {
         // Flag first so any worker already mid-flight aborts and stops rescheduling.
-        $state = $this->setState(['status' => 'cancelled', 'message' => 'Остановлено пользователем']);
+        $state = $this->setState(['status' => 'cancelled', 'message' => \__('Остановлено пользователем', 'cherrylink')]);
 
         // Then drop pending queued actions. as_unschedule_all_actions() with empty args only
         // matches argument-less actions, so cancel each pending action by ID instead.

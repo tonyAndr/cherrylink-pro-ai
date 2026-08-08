@@ -12,7 +12,7 @@ defined('ABSPATH') || exit;
 
 function linkate_posts_option_menu()
 {
-    add_options_page(__('CherryLink Options', CHERRYLINK_TEXT_DOMAIN), __('CherryLink Pro', CHERRYLINK_TEXT_DOMAIN), 'cherrylink_settings', 'cherrylink-pro', 'cherrylink_pro_options_page');
+    add_options_page(__('CherryLink Options', 'cherrylink'), __('CherryLink Pro', 'cherrylink'), 'cherrylink_settings', 'cherrylink-pro', 'cherrylink_pro_options_page');
 }
 
 add_action('admin_menu', 'linkate_posts_option_menu', 1);
@@ -31,7 +31,7 @@ function linkate_posts_vector_api_field()
         $options['vector_api_url'] = esc_url_raw(trim($_POST['vector_api_url'] ?? ''));
         $options['vector_api_key'] = sanitize_text_field(trim($_POST['vector_api_key'] ?? ''));
         update_option('linkate-posts', $options);
-        echo '<div class="notice-success notice"><p><b>Настройки Vector API сохранены</b></p></div>';
+        echo '<div class="notice-success notice"><p><b>' . esc_html__('Настройки Vector API сохранены', 'cherrylink') . '</b></p></div>';
     }
 
     // Note: CHERRY_VECTOR_API_URL and CHERRY_VECTOR_API_KEY can be defined in wp-config.php
@@ -55,7 +55,7 @@ function linkate_posts_license_field()
         update_option('linkate-posts', $options);
         linkate_handle_license_response();
         // Show a message to say we've done something
-        echo '<div class=" notice-success notice"><p>' . __('<b>Обновление ключа</b>', CHERRYLINK_TEXT_DOMAIN) . '</p></div>';
+        echo '<div class=" notice-success notice"><p><b>' . esc_html__('Обновление ключа', 'cherrylink') . '</b></p></div>';
     }
     if (isset($_POST['remove_license'])) {
         check_admin_referer('linkate-posts-update-options');
@@ -68,7 +68,7 @@ function linkate_posts_license_field()
         update_option('linkate-posts', $options);
         update_option('linkate_posts_meta', $options_meta);
         // Show a message to say we've done something
-        echo '<div class="notice-error notice"><p>' . __('<b>Ключ сброшен</b>', CHERRYLINK_TEXT_DOMAIN) . '</p></div>';
+        echo '<div class="notice-error notice"><p><b>' . esc_html__('Ключ сброшен', 'cherrylink') . '</b></p></div>';
     }
     // get updated meta
     $options_meta = get_option('linkate_posts_meta', []);
@@ -78,16 +78,16 @@ function linkate_posts_license_field()
 
         switch ($options_meta['key_error_reason']) {
             case 'no_connection':
-                $key_error = 'Нет связи с сервером. Попробуйте позже или обратитесь в тех. поддержку.';
+                $key_error = esc_html__('Нет связи с сервером. Попробуйте позже или обратитесь в тех. поддержку.', 'cherrylink');
                 break;
             case 'bad_domain':
-                $key_error = 'Ключ привязан к другому домену, активация невозможна.';
+                $key_error = esc_html__('Ключ привязан к другому домену, активация невозможна.', 'cherrylink');
                 break;
             case 'key_expired':
-                $key_error = 'Срок действия ключа истек.';
+                $key_error = esc_html__('Срок действия ключа истек.', 'cherrylink');
                 break;
             case 'wrong_key':
-                $key_error = 'Неверно указан ключ.';
+                $key_error = esc_html__('Неверно указан ключ.', 'cherrylink');
                 break;
             default:
                 $key_error = '';
@@ -96,10 +96,16 @@ function linkate_posts_license_field()
     }
     if ($info) {
         $license_class = "border-4 border-lime-300 bg-white text-black";
-        $license_header = "<h2 class='" . CL_TWC::$H2 . "'>Лицензия активирована</h2>";
+        $license_header = "<h2 class='" . CL_TWC::$H2 . "'>" . esc_html__('Лицензия активирована', 'cherrylink') . "</h2>";
     } else {
         $license_class = "border-4 border-amber-300 bg-white text-black";
-        $license_header = "<h2 class='" . CL_TWC::$H2 . "'>Введите ключ лицензии</h2><p>Получите ключ у нас на сайте: [<strong><a href=\"https://seocherry.ru/\">SeoCherry.ru</a></strong>].</p>";
+        $license_header = "<h2 class='" . CL_TWC::$H2 . "'>" . esc_html__('Введите ключ лицензии', 'cherrylink') . "</h2><p>"
+            . sprintf(
+                /* translators: %s: link to seocherry.ru */
+                esc_html__('Получите ключ у нас на сайте: [%s].', 'cherrylink'),
+                '<strong><a href="https://seocherry.ru/">SeoCherry.ru</a></strong>'
+            )
+            . "</p>";
     }
 
     echo (new \CherryLink\Support\View())->render('admin/partials/license-card', [
@@ -157,9 +163,9 @@ function linkate_posts_main_options_subpage()
             // rewrite options
             $options = link_cf_options_from_post($options, $keys);
             update_option('linkate-posts', $options);
-            echo '<div class="notice-success notice"><p>' . __('<b>Настройки импортированы.</b>', CHERRYLINK_TEXT_DOMAIN) . '</p></div>';
+            echo '<div class="notice-success notice"><p><b>' . esc_html__('Настройки импортированы.', 'cherrylink') . '</b></p></div>';
         } else {
-            echo '<div class="notice-error notice"><p>' . __('<b>Не удалось импортировать...</b>', CHERRYLINK_TEXT_DOMAIN) . '</p></div>';
+            echo '<div class="notice-error notice"><p><b>' . esc_html__('Не удалось импортировать...', 'cherrylink') . '</b></p></div>';
         }
     }
     //now we drop into html to display the option page form
@@ -206,7 +212,7 @@ function linkate_posts_expert_options_subpage()
         ));
         update_option('linkate-posts', $options);
         // Show a message to say we've done something
-        echo '<div class="notice-success notice"><p>' . __('<b>Настройки обновлены.</b>', CHERRYLINK_TEXT_DOMAIN) . '</p></div>';
+        echo '<div class="notice-success notice"><p><b>' . esc_html__('Настройки обновлены.', 'cherrylink') . '</b></p></div>';
     }
 
     if (isset($_POST['recreate_db'])) {
@@ -214,9 +220,9 @@ function linkate_posts_expert_options_subpage()
         delete_option('linkate_posts_meta');
         $result = linkate_posts_install();
         if ($result) {
-            echo '<div class="notice-success notice"><p>' . __('<b>Настройки плагина сброшены.</b>', CHERRYLINK_TEXT_DOMAIN) . '</p></div>';
+            echo '<div class="notice-success notice"><p><b>' . esc_html__('Настройки плагина сброшены.', 'cherrylink') . '</b></p></div>';
         } else {
-            echo '<div class="notice-error notice"><p>' . __('<b>Операция завершилась с ошибкой.</b>', CHERRYLINK_TEXT_DOMAIN) . '</p></div>';
+            echo '<div class="notice-error notice"><p><b>' . esc_html__('Операция завершилась с ошибкой.', 'cherrylink') . '</b></p></div>';
         }
     }
 
@@ -225,7 +231,7 @@ function linkate_posts_expert_options_subpage()
         // Fill up the options with the values chosen...
         fill_options(NULL);
         // Show a message to say we've done something
-        echo '<div class="notice-success notice"><p>' . __('<b>Настройки сброшены.</b>', CHERRYLINK_TEXT_DOMAIN) . '</p></div>';
+        echo '<div class="notice-success notice"><p><b>' . esc_html__('Настройки сброшены.', 'cherrylink') . '</b></p></div>';
     }
 
 
@@ -240,9 +246,9 @@ function linkate_posts_expert_options_subpage()
         unset($options_meta['indexing_process']);
         update_option('linkate_posts_meta', $options_meta);
         if ($ok_docs && $ok_links) {
-            echo '<div class="notice-success notice"><p><b>Данные сайта удалены из API. Выполните полную переиндексацию.</b></p></div>';
+            echo '<div class="notice-success notice"><p><b>' . esc_html__('Данные сайта удалены из API. Выполните полную переиндексацию.', 'cherrylink') . '</b></p></div>';
         } else {
-            echo '<div class="notice-warning notice"><p><b>Локальный индекс очищен, но API вернул ошибку. Проверьте подключение к Cherry Vector API.</b></p></div>';
+            echo '<div class="notice-warning notice"><p><b>' . esc_html__('Локальный индекс очищен, но API вернул ошибку. Проверьте подключение к Cherry Vector API.', 'cherrylink') . '</b></p></div>';
         }
     }
 
@@ -259,7 +265,7 @@ function linkate_posts_index_options_subpage()
         check_admin_referer('linkate-posts-update-options');
         $options['vector_custom_fields'] = sanitize_textarea_field($_POST['vector_custom_fields'] ?? '');
         update_option('linkate-posts', $options);
-        echo '<div class="notice-success notice"><p><b>Дополнительные поля сохранены.</b></p></div>';
+        echo '<div class="notice-success notice"><p><b>' . esc_html__('Дополнительные поля сохранены.', 'cherrylink') . '</b></p></div>';
     }
 
     //php moved below for ajax

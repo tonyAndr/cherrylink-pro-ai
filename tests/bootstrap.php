@@ -22,7 +22,7 @@ if (!defined('ABSPATH')) {
     define('ABSPATH', sys_get_temp_dir() . '/');
 }
 if (!defined('CHERRYLINK_TEXT_DOMAIN')) {
-    define('CHERRYLINK_TEXT_DOMAIN', 'cherrylink-td');
+    define('CHERRYLINK_TEXT_DOMAIN', 'cherrylink');
 }
 // Support\Logger gates on WP_DEBUG; keep it off in tests so error_log stays quiet.
 if (!defined('WP_DEBUG')) {

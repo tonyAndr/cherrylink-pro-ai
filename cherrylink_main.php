@@ -8,7 +8,8 @@ Author: Anton SeoCherry.ru
 Author URI: http://seocherry.ru/
 Requires at least: 5.6
 Requires PHP: 7.4
-Text Domain: cherrylink-td
+Text Domain: cherrylink
+Domain Path: /languages
 */
 
 function linkate_posts($args = '')
@@ -28,7 +29,7 @@ function linkate_posts_mark_current()
 // ========================================================================================= //
 
 define('CHERRYLINK_INITIAL_LIMIT', 100);
-define('CHERRYLINK_TEXT_DOMAIN', 'cherrylink-td');
+define('CHERRYLINK_TEXT_DOMAIN', 'cherrylink');
 define('CHERRYLINK_DIR', plugin_dir_path(__FILE__));
 define('CHERRYLINK_DIR_URL', plugin_dir_url(__FILE__));
 
@@ -136,7 +137,7 @@ class LinkatePosts
     // add settings link to plugins page
     static function linkate_plugin_action_links($links)
     {
-        $settings_link = '<a href="' . admin_url('options-general.php?page=cherrylink-pro') . '" title="Настройки CherryLink">Настройки</a>';
+        $settings_link = '<a href="' . admin_url('options-general.php?page=cherrylink-pro') . '" title="' . esc_attr__('Настройки CherryLink', 'cherrylink') . '">' . esc_html__('Настройки', 'cherrylink') . '</a>';
 
         array_unshift($links, $settings_link);
 
@@ -219,16 +220,18 @@ function cherrylink_activation_notice()
     /* Check transient, if available display notice */
     if (get_transient('cherry-manual-indexation-needed')) {
         echo $view->render('notices/scan-prompt', [
-            'line1'    => '<strong>CherryLink Pro</strong> установлен!',
-            'line2'    => 'Для начала работы с ним <strong>необходимо просканировать ваш сайт</strong>.',
+            'line1'    => '<strong>CherryLink Pro</strong> ' . esc_html__('установлен!', 'cherrylink'),
+            /* translators: %s: bold "you need to scan your site" phrase */
+            'line2'    => sprintf(esc_html__('Для начала работы с ним %s.', 'cherrylink'), '<strong>' . esc_html__('необходимо просканировать ваш сайт', 'cherrylink') . '</strong>'),
             'scan_url' => $scan_url,
         ]);
         /* Delete transient, only display this notice once. */
         delete_transient('cherry-manual-indexation-needed');
     } else if ($index_process_status === 'VALUE_NOT_EXIST' || $index_process_status === 'IN_PROGRESS') {
         echo $view->render('notices/scan-prompt', [
-            'line1'    => '<strong>CherryLink Pro</strong>: сканирование не завершено!',
-            'line2'    => 'Плагин может работать некорректно или не видеть все записи, <strong>необходимо завершить сканирование</strong>.',
+            'line1'    => '<strong>CherryLink Pro</strong>: ' . esc_html__('сканирование не завершено!', 'cherrylink'),
+            /* translators: %s: bold "you need to finish scanning" phrase */
+            'line2'    => sprintf(esc_html__('Плагин может работать некорректно или не видеть все записи, %s.', 'cherrylink'), '<strong>' . esc_html__('необходимо завершить сканирование', 'cherrylink') . '</strong>'),
             'scan_url' => $scan_url,
         ]);
     }
@@ -266,7 +269,7 @@ function linkate_posts_wp_admin_style()
 function linkate_posts_init()
 {
     global $wpdb;
-    load_plugin_textdomain(CHERRYLINK_TEXT_DOMAIN);
+    load_plugin_textdomain('cherrylink', false, dirname(plugin_basename(__FILE__)) . '/languages');
 
     LinkatePosts::get_linkate_version();
 

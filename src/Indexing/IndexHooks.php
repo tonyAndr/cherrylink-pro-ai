@@ -128,19 +128,26 @@ final class IndexHooks implements Registerable
             $del = (int) ($meta['last_deleted'] ?? 0);
             // Machine-readable UTC instant + site-tz fallback text. cherry-admin-index.js
             // rewrites the <time> to the viewer's browser-local time on load and after AJAX.
-            $iso  = \esc_attr(\str_replace(' ', 'T', $meta['last_scan_gmt']) . 'Z');
-            $when = \esc_html(\get_date_from_gmt($meta['last_scan_gmt']));
-            $last_scan_text = " Последнее сканирование: <time class=\"cl-localtime\" datetime=\"{$iso}\">{$when}</time> (обновлено: {$up}, удалено: {$del}).";
+            $iso       = \esc_attr(\str_replace(' ', 'T', $meta['last_scan_gmt']) . 'Z');
+            $when      = \esc_html(\get_date_from_gmt($meta['last_scan_gmt']));
+            $time_html = "<time class=\"cl-localtime\" datetime=\"{$iso}\">{$when}</time>";
+            $last_scan_text = ' ' . \sprintf(
+                /* translators: 1: <time> element with the formatted scan date, 2: upserted count, 3: deleted count */
+                \esc_html__('Последнее сканирование: %1$s (обновлено: %2$d, удалено: %3$d).', 'cherrylink'),
+                $time_html,
+                $up,
+                $del
+            );
         }
         switch ($meta['indexing_process'] ?? 'VALUE_NOT_EXIST') {
             case 'IN_PROGRESS':
-                $badge = '<code class="bad-index">[Сканирование не завершено]</code>';
+                $badge = '<code class="bad-index">[' . \esc_html__('Сканирование не завершено', 'cherrylink') . ']</code>';
                 break;
             case 'DONE':
-                $badge = '<code class="good-index">[Все хорошо]</code>';
+                $badge = '<code class="good-index">[' . \esc_html__('Все хорошо', 'cherrylink') . ']</code>';
                 break;
             case 'VALUE_NOT_EXIST':
-                $badge = '<code class="bad-index">[Нужно просканировать сайт]</code>';
+                $badge = '<code class="bad-index">[' . \esc_html__('Нужно просканировать сайт', 'cherrylink') . ']</code>';
                 break;
             default:
                 $badge = '';
@@ -174,8 +181,8 @@ final class IndexHooks implements Registerable
             return \array_merge($local, [
                 'index_rows'         => null,
                 'scheme_rows'        => null,
-                'index_status_text'  => ' загрузка данных…',
-                'scheme_status_text' => ' загрузка данных…',
+                'index_status_text'  => \esc_html__(' загрузка данных…', 'cherrylink'),
+                'scheme_status_text' => \esc_html__(' загрузка данных…', 'cherrylink'),
                 'reachable'          => null,
                 'checked_gmt'        => '',
                 'stale'              => true,
@@ -197,18 +204,20 @@ final class IndexHooks implements Registerable
         }
 
         if ($index_rows === null) {
-            $index_status_text = ' не удалось получить данные (нет связи с сервером).';
+            $index_status_text = \esc_html__(' не удалось получить данные (нет связи с сервером).', 'cherrylink');
         } else {
             $index_status_text = $index_rows > 0
-                ? " проиндексировано {$index_rows} статей в Vector API."
-                : ' статьи не проиндексированы, запустите сканирование.';
+                /* translators: %d: number of indexed articles */
+                ? \sprintf(\esc_html__(' проиндексировано %d статей в Vector API.', 'cherrylink'), $index_rows)
+                : \esc_html__(' статьи не проиндексированы, запустите сканирование.', 'cherrylink');
         }
         if ($scheme_rows === null) {
-            $scheme_status_text = ' не удалось получить данные (нет связи с сервером).';
+            $scheme_status_text = \esc_html__(' не удалось получить данные (нет связи с сервером).', 'cherrylink');
         } else {
             $scheme_status_text = $scheme_rows
-                ? " найдено {$scheme_rows} ссылок в записях и страницах."
-                : ' ссылки не найдены.';
+                /* translators: %d: number of links found */
+                ? \sprintf(\esc_html__(' найдено %d ссылок в записях и страницах.', 'cherrylink'), $scheme_rows)
+                : \esc_html__(' ссылки не найдены.', 'cherrylink');
         }
 
         $data = \array_merge($local, [

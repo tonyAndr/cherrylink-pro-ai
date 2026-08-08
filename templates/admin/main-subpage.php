@@ -16,13 +16,13 @@ defined('ABSPATH') || exit;
                 <?php linkate_posts_index_status_display('main'); ?>
 
                 <div class="<?= CL_TWC::$CARD ?>">
-                    <h2 class="<?= CL_TWC::$H2 ?>">Справочные материалы</h2>
+                    <h2 class="<?= CL_TWC::$H2 ?>"><?php esc_html_e('Справочные материалы', 'cherrylink'); ?></h2>
                     <ol>
-                        <li><a target="_blank" href="https://seocherry.ru/plagin-cherrylink-pro-arenda/">🔗 Тарифы и получение ключа</a></li>
-                        <li><a target="_blank" href="https://seocherry.ru/instruktsiya-po-nastroike-plagina-cherrylink/">🔗 Настройки плагина</a></li>
-                        <li><a target="_blank" href="https://seocherry.ru/instruktsiya-po-rabote-s-plaginom-perelinkovki-v-redaktore-wordpress/">🔗 Работа в редакторе WP</a></li>
-                        <li><a target="_blank" href="https://seocherry.ru/instruktsii-plaginov-wordpress-v-video-formate-shorts/">🔗 Видео-инструкции</a></li>
-                        <li><a target="_blank" href="https://seocherry.ru/zapisi-o-rabote-v-internet-seti-seo-instrumenty-znacheniya-pravila/">🔗 Полезные материалы про перелинковку</a></li>
+                        <li><a target="_blank" href="https://seocherry.ru/plagin-cherrylink-pro-arenda/">🔗 <?php esc_html_e('Тарифы и получение ключа', 'cherrylink'); ?></a></li>
+                        <li><a target="_blank" href="https://seocherry.ru/instruktsiya-po-nastroike-plagina-cherrylink/">🔗 <?php esc_html_e('Настройки плагина', 'cherrylink'); ?></a></li>
+                        <li><a target="_blank" href="https://seocherry.ru/instruktsiya-po-rabote-s-plaginom-perelinkovki-v-redaktore-wordpress/">🔗 <?php esc_html_e('Работа в редакторе WP', 'cherrylink'); ?></a></li>
+                        <li><a target="_blank" href="https://seocherry.ru/instruktsii-plaginov-wordpress-v-video-formate-shorts/">🔗 <?php esc_html_e('Видео-инструкции', 'cherrylink'); ?></a></li>
+                        <li><a target="_blank" href="https://seocherry.ru/zapisi-o-rabote-v-internet-seti-seo-instrumenty-znacheniya-pravila/">🔗 <?php esc_html_e('Полезные материалы про перелинковку', 'cherrylink'); ?></a></li>
                     </ol>
                 </div>
             </div>
@@ -33,18 +33,18 @@ defined('ABSPATH') || exit;
                 <div class="<?= CL_TWC::$CARD ?> cherry-settings-export-container">
 
                     <div>
-                        <h2 class="<?= CL_TWC::$H2 ?>">Экспорт и импорт настроек</h2>
-                        <p>Для переноса настроек между сайтами, скачайте файл настроек <strong>export_options.txt</strong> и импортируйте его на другом сайте. </p>
-                        <a class="inline-block <?= CL_TWC::$BTN_NORMAL ?> " href="<?php echo $export_url; ?>" download>Скачать файл настроек</a>
+                        <h2 class="<?= CL_TWC::$H2 ?>"><?php esc_html_e('Экспорт и импорт настроек', 'cherrylink'); ?></h2>
+                        <p><?php esc_html_e('Для переноса настроек между сайтами, скачайте файл настроек', 'cherrylink'); ?> <strong>export_options.txt</strong> <?php esc_html_e('и импортируйте его на другом сайте.', 'cherrylink'); ?> </p>
+                        <a class="inline-block <?= CL_TWC::$BTN_NORMAL ?> " href="<?php echo $export_url; ?>" download><?php esc_html_e('Скачать файл настроек', 'cherrylink'); ?></a>
                     </div>
 
                     <div class="mt-6">
-                        <p>Для импорта настроек плагина загрузите текстовый файл <strong>export_options.txt</strong>, полученный при экспорте настроек.</p>
+                        <p><?php esc_html_e('Для импорта настроек плагина загрузите текстовый файл', 'cherrylink'); ?> <strong>export_options.txt</strong><?php esc_html_e(', полученный при экспорте настроек.', 'cherrylink'); ?></p>
                         <form method="post" action="" enctype="multipart/form-data">
                             <div class="p-0 my-3">
                                 <!-- <p><strong>Поле для импорта:</strong></p> -->
                                 <input type="file" name="upload_options" required class="block w-full text-sm text-stone-500 border p-0 file:rounded-l-lg file:mr-5 file:py-2 file:px-3 rounded-lg  file:text-xs    file:bg-slate-600 file:border-0 file:text-white   hover:file:cursor-pointer hover:file:bg-blue-50   hover:file:text-blue-700" style="padding:0">
-                                <input type="submit" class="<?= CL_TWC::$BTN_NORMAL ?> " name="import_settings" value="<?php _e('Импортировать настройки', CHERRYLINK_TEXT_DOMAIN) ?>" />
+                                <input type="submit" class="<?= CL_TWC::$BTN_NORMAL ?> " name="import_settings" value="<?php _e('Импортировать настройки', 'cherrylink') ?>" />
                             </div>
                             <?php if (function_exists('wp_nonce_field')) wp_nonce_field('linkate-posts-update-options'); ?>
                         </form>

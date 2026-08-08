@@ -14,7 +14,7 @@
 error_reporting(E_ALL & ~E_DEPRECATED);
 define('ABSPATH', '/tmp/');
 define('CHERRYLINK_DIR_URL', 'http://site/wp-content/plugins/cherrylink-pro-ai/');
-if (!defined('CHERRYLINK_TEXT_DOMAIN')) define('CHERRYLINK_TEXT_DOMAIN', 'cherrylink-td');
+if (!defined('CHERRYLINK_TEXT_DOMAIN')) define('CHERRYLINK_TEXT_DOMAIN', 'cherrylink');
 
 // ---- minimal WordPress stubs (values are dummy; both paths use them equally) ----
 $GLOBALS['OPTS'] = array(

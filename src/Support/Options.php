@@ -157,7 +157,7 @@ final class Options
             unset($options['show_static']);
         }
         if (! isset($options['none_text'])) {
-            $options['none_text'] = \__('Ничего не найдено...', CHERRYLINK_TEXT_DOMAIN);
+            $options['none_text'] = \__('Ничего не найдено...', 'cherrylink');
         }
         if (! isset($options['excluded_cats'])) {
             $options['excluded_cats'] = '';

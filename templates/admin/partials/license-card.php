@@ -14,14 +14,14 @@ defined('ABSPATH') || exit;
     <div class="p-6 rounded-lg shadow-xl <?php echo $license_class; ?>">
         <?php echo $license_header; ?>
         <?php if ($info) : ?>
-            <p>Действует лицензия на текущий домен, ключ скрыт в целях безопасности.</p>
+            <p><?php esc_html_e('Действует лицензия на текущий домен, ключ скрыт в целях безопасности.', 'cherrylink'); ?></p>
             <form method="post" action="">
-                <input type="submit" class="<?= CL_TWC::$BTN_NORMAL ?> " name="remove_license" value="<?php _e('Сбросить лицензию', CHERRYLINK_TEXT_DOMAIN) ?>" />
+                <input type="submit" class="<?= CL_TWC::$BTN_NORMAL ?> " name="remove_license" value="<?php _e('Сбросить лицензию', 'cherrylink') ?>" />
                 <?php if (function_exists('wp_nonce_field')) wp_nonce_field('linkate-posts-update-options'); ?>
             </form>
         <?php else : ?>
             <form method="post" action="">
-                <label class="font-bold" for="hash_field"><?php _e('Ваш ключ:', CHERRYLINK_TEXT_DOMAIN) ?></label>
+                <label class="font-bold" for="hash_field"><?php _e('Ваш ключ:', 'cherrylink') ?></label>
                 <br>
                 <input type="text" name="hash_field" id="hash_field" required class=" mt-2 <?= CL_TWC::$INP_BASE ?>" value="<?php echo htmlspecialchars(stripslashes($options['hash_field'])); ?>">
                 <?php
@@ -32,7 +32,7 @@ defined('ABSPATH') || exit;
                 }
                 ?>
                 <br>
-                <input type="submit" class="<?= CL_TWC::$BTN_SAVE ?> " name="update_license" value="<?php _e('Сохранить', CHERRYLINK_TEXT_DOMAIN) ?>" />
+                <input type="submit" class="<?= CL_TWC::$BTN_SAVE ?> " name="update_license" value="<?php _e('Сохранить', 'cherrylink') ?>" />
                 <?php if (function_exists('wp_nonce_field')) wp_nonce_field('linkate-posts-update-options'); ?>
             </form>
         <?php endif; ?>

@@ -232,7 +232,7 @@ final class ClassicPanel implements Registerable
     {
         $cats = TermsService::allCategories();
 
-        $items = "<option value=\"0\" class=\"quick_item_all\" selected>Все рубрики</option>";
+        $items = '<option value="0" class="quick_item_all" selected>' . \esc_html__('Все рубрики', 'cherrylink') . '</option>';
         foreach ($cats as $v) {
             $k      = \key($v);
             $margin = '';

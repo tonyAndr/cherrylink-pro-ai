@@ -8,7 +8,7 @@
 
 declare(strict_types=1);
 
-defined('CHERRYLINK_TEXT_DOMAIN') || define('CHERRYLINK_TEXT_DOMAIN', 'cherrylink-td');
+defined('CHERRYLINK_TEXT_DOMAIN') || define('CHERRYLINK_TEXT_DOMAIN', 'cherrylink');
 
 // Plugin path/URL constants — defined at runtime by cherrylink_main.php via
 // plugin_dir_path()/plugin_dir_url(); mirror them so analysis of the services

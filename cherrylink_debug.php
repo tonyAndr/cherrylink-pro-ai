@@ -67,7 +67,7 @@ class CHERRYLINK_DEBUGGER
 
         $post_id = isset($_POST['post_id']) ? trim((string) $_POST['post_id']) : '';
         if ($post_id === '') {
-            wp_send_json(array('links' => '(ID записи не указан)', 'count' => 0));
+            wp_send_json(array('links' => __('(ID записи не указан)', 'cherrylink'), 'count' => 0));
         }
 
         $is_term = 0;

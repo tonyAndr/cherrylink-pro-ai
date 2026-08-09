@@ -13,7 +13,7 @@ defined('ABSPATH') || exit;
     <div class="linkateposts-tab-content pt-3">
         <div class="grid grid-cols-2 gap-4 content-start items-start">
             <div class="grid grid-col-1 gap-4">
-                <?php linkate_posts_index_status_display('main'); ?>
+                <?php \CherryLink\Admin\SettingsPage::indexStatusDisplay('main'); ?>
 
                 <div class="<?= CL_TWC::$CARD ?>">
                     <h2 class="<?= CL_TWC::$H2 ?>"><?php esc_html_e('Справочные материалы', 'cherrylink'); ?></h2>
@@ -27,8 +27,8 @@ defined('ABSPATH') || exit;
                 </div>
             </div>
             <div class="grid grid-col-1 gap-4">
-                <?php linkate_posts_license_field(); ?>
-                <?php linkate_posts_vector_api_field(); ?>
+                <?php \CherryLink\Admin\SettingsPage::licenseField(); ?>
+                <?php \CherryLink\Admin\SettingsPage::vectorApiField(); ?>
 
                 <div class="<?= CL_TWC::$CARD ?> cherry-settings-export-container">
 

@@ -42,6 +42,20 @@ if (! function_exists('cl_clear_index_dirty')) {
     {
     }
 }
+if (! function_exists('cl_index_status_data')) {
+    /** @return array<string,mixed> */
+    function cl_index_status_data(bool $refresh = false): array
+    {
+        return [];
+    }
+}
+if (! function_exists('linkate_posts_install')) {
+    /** @return mixed */
+    function linkate_posts_install()
+    {
+        return true;
+    }
+}
 
 // ── Legacy globals used by Debug\Debugger (defined in cherrylink_main.php +
 //    env-info/W18T.class.php at runtime) ──────────────────────────────────────

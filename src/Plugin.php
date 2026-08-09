@@ -83,6 +83,7 @@ final class Plugin
             new \CherryLink\Editor\ClassicPanel($this->options),
             new \CherryLink\Debug\Debugger(),
             new \CherryLink\Support\License($this->options),
+            new \CherryLink\Admin\SettingsPage(),
         ];
 
         foreach ($this->services as $service) {

@@ -10,10 +10,10 @@ defined('ABSPATH') || exit;
     <div class=" linkateposts-tab-content pt-6 ">
         <div class="grid grid-rows-1 grid-cols-2 grid-flow-col gap-4 justify-items-stretch justify-stretch items-center">
             <div class="">
-                <?php linkate_posts_index_status_display('scan'); ?>
+                <?php \CherryLink\Admin\SettingsPage::indexStatusDisplay('scan'); ?>
             </div>
             <div class="">
-                <?= linkate_posts_index_progress() ?>
+                <?php \CherryLink\Admin\SettingsPage::indexProgress(); ?>
             </div>
         </div>
 

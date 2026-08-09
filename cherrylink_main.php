@@ -77,12 +77,6 @@ if (!defined('LP_ADMIN_SUBPAGES_LIBRARY')) require(CHERRYLINK_DIR . '/cherrylink
 if (!defined('LINKATE_TERMS_LIBRARY')) require(CHERRYLINK_DIR . '/cherrylink_terms.php');
 if (!defined('CHERRY_VECTOR_API_CLIENT')) { define('CHERRY_VECTOR_API_CLIENT', true); require(CHERRYLINK_DIR . '/cherrylink_vector_api.php'); }
 if (!defined('LINKATE_INDEX_LIBRARY')) require(CHERRYLINK_DIR . '/cherrylink_index.php');
-if (!defined('LINKATE_SYNC_LIBRARY')) require(CHERRYLINK_DIR . '/cherrylink_sync.php');
-if (!defined('LINKATE_STATISTICS_LIBRARY')) require(CHERRYLINK_DIR . '/cherrylink_statistics.php');
-
-if (!defined('LINKATE_STATS_COLUMN_LIBRARY')) require(CHERRYLINK_DIR . '/cherrylink_stats_column.php');
-
-if (!defined('LINKATE_GUTENBERG_ASSETS')) require(CHERRYLINK_DIR . '/cherrylink_gutenberg.php');
 if (!defined('LINKATE_TAILWIND_CONSTANTS')) require(CHERRYLINK_DIR . '/cherrylink_tailwind_constants.php');
 if (!defined('LINKATE_INDEX_HELPERS')) require(CHERRYLINK_DIR . "/cherrylink_index_helpers.php");
 

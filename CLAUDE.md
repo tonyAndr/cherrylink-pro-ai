@@ -25,19 +25,27 @@ without changing runtime behavior. See the staged plan in
   registers services implementing `Contracts\Registerable` (each hooks itself in
   `register()`): `Admin\StatsColumn`, `Editor\GutenbergAssets`,
   `Indexing\IndexHooks`, `Indexing\SyncService`, `Terms\TermsService`,
-  `Statistics\StatisticsService`, `Csv\CsvService`, `Editor\ClassicPanel`.
+  `Statistics\StatisticsService`, `Csv\CsvService`, `Editor\ClassicPanel`,
+  `Debug\Debugger`, `Support\License`, `Admin\SettingsPage`.
 - **Views:** HTML lives in `templates/` rendered via `Support\View` (escaped).
-- **Legacy shims still required by `cherrylink_main.php`** (thin delegators /
-  class aliases with real callers — do not delete without grep-proving no
-  callers): `cherrylink_index.php` (`cl_index_status_data()`),
+- **Legacy shims still required by `cherrylink_main.php`** — all real logic now
+  lives in `src/`; these are thin global-function delegators / class aliases kept
+  only so back-compat callers keep resolving (do not delete without grep-proving
+  no callers): `cherrylink_index.php` (`cl_index_status_data()`),
   `cherrylink_terms.php`, `cherrylink_editor_ui.php`,
   `cherrylink_vector_api.php` (`class_alias CherryVectorAPI` + the
   `http_api_curl` alt-server relay hook), `cherrylink_index_helpers.php`
-  (`class_alias CL_Index_Helpers`), `cherrylink_tailwind_constants.php`.
-- **Not yet migrated (still fat root files):** `cherrylink_admin_options.php`
-  (settings page), `cherrylink_admin_subpages.php`, `cherrylink_acf.php` +
-  `cherrylink_cf.php` (custom-fields index), `cherrylink_debug.php`,
-  `cherrylink_output_tags.php`, `cherrylink_install.php` (`fill_options()`).
+  (`class_alias CL_Index_Helpers`), `cherrylink_tailwind_constants.php`,
+  `cherrylink_cf.php` (→`CustomFields\Cf`), `cherrylink_output_tags.php`
+  (→`Editor\LinkFields`), `cherrylink_install.php` (`linkate_posts_install()` /
+  `fill_options()` / `cl_is_licensed()` etc. → `Support\License` + `Support\Options`).
+- **Fully migrated & deleted** (were fat root files): `cherrylink_admin_options.php`
+  + `cherrylink_admin_subpages.php` → `Admin\SettingsPage` + `Admin\Subpages`;
+  `cherrylink_acf.php` → parsing in `CustomFields\Acf`, form emitters inlined into
+  the expert/statistics subpage templates; `cherrylink_debug.php` → `Debug\Debugger`;
+  the license lifecycle out of `cherrylink_install.php` → `Support\License`.
+  The only non-shim root files left are `cherrylink_main.php` (entry + the legacy
+  `LinkatePosts` class) and `uninstall.php`.
 
 ## Key Files / where things live now
 
@@ -53,6 +61,9 @@ without changing runtime behavior. See the staged plan in
 | Suggestions pipeline (query→filter→render) | `src/Editor/SuggestionsResults.php`, `Editor/LinkFields.php` |
 | Gutenberg sidebar enqueue | `src/Editor/GutenbergAssets.php` |
 | Stats / CSV / Terms services | `src/Statistics/`, `src/Csv/`, `src/Terms/` |
+| Settings page (menu, subpages, save handlers) | `src/Admin/SettingsPage.php`, `src/Admin/Subpages.php` |
+| License validation / cron / activation | `src/Support/License.php` |
+| Debug panel AJAX probes | `src/Debug/Debugger.php` |
 | AJAX nonce+capability guard | `src/Ajax/Security.php` |
 | Templates (escaped HTML) | `templates/**` |
 | Classic editor JS | `js/cherry-front.js` |

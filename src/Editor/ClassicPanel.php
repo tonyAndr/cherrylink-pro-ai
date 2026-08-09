@@ -177,7 +177,13 @@ final class ClassicPanel implements Registerable
             'no_selection_action' => (string) ($options['no_selection_action'] ?? ''),
             'get_data_limit'      => (string) ($options['limit_ajax'] ?? ''),
             'post_id'             => (string) $current_id,
-            'scheme_flag'         => isset($options['linkate_scheme_exists']) && $options['linkate_scheme_exists'] ? '1' : '',
+            // The classic editor gates its incoming/outgoing stat fetches on this flag.
+            // Legacy semantics: it was `isset($options['linkate_scheme_exists'])` — true
+            // whenever the key is present, which Options::main() always guarantees. The
+            // stored VALUE is a vestigial default that nothing ever flips to true, so a
+            // truthy value-check silently disabled all classic-editor stats. Mirror the
+            // original presence-check: for a licensed/configured site, stats load.
+            'scheme_flag'         => isset($options['linkate_scheme_exists']) ? '1' : '',
             'multilink'           => (string) ($options['multilink'] ?? ''),
             'show_cat_filter'     => (string) ($options['show_cat_filter'] ?? 'false'),
         ]);

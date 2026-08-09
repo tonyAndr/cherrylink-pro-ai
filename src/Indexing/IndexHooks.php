@@ -175,7 +175,12 @@ final class IndexHooks implements Registerable
             if (\is_array($cached)) {
                 $stale = empty($cached['checked_gmt'])
                     || (\time() - \strtotime($cached['checked_gmt'] . ' UTC')) > self::STATUS_STALE_S;
-                return \array_merge($cached, $local, ['stale' => $stale]);
+                // Re-format the status lines from the cached COUNTS for the current locale;
+                // never return the transient's frozen text (it was built in whatever
+                // language was active at scan time — see statusTexts()).
+                $cidx = isset($cached['index_rows'])  && $cached['index_rows']  !== null ? (int) $cached['index_rows']  : null;
+                $csch = isset($cached['scheme_rows']) && $cached['scheme_rows'] !== null ? (int) $cached['scheme_rows'] : null;
+                return \array_merge($cached, $local, self::statusTexts($cidx, $csch), ['stale' => $stale]);
             }
             // No snapshot yet — placeholder, no API call; the JS refresh will fill it in.
             return \array_merge($local, [
@@ -203,6 +208,30 @@ final class IndexHooks implements Registerable
             $scheme_rows = \is_array($prev) ? ($prev['scheme_rows'] ?? null) : null;
         }
 
+        $data = \array_merge($local, self::statusTexts(
+            $index_rows === null ? null : (int) $index_rows,
+            $scheme_rows === null ? null : (int) $scheme_rows
+        ), [
+            'index_rows'         => $index_rows === null ? null : (int) $index_rows,
+            'scheme_rows'        => $scheme_rows === null ? null : (int) $scheme_rows,
+            'reachable'          => $reachable,
+            'checked_gmt'        => \gmdate('Y-m-d H:i:s'),
+            'stale'              => false,
+        ]);
+        \set_transient(self::STATUS_CACHE_KEY, $data, HOUR_IN_SECONDS);
+        return $data;
+    }
+
+    /**
+     * Format the readiness-card status lines for the CURRENT locale from raw counts.
+     * Kept separate from the cached snapshot so switching site language re-localizes
+     * the text — translated strings must never be frozen in a transient. A null count
+     * means the API was unreachable.
+     *
+     * @return array{index_status_text:string,scheme_status_text:string}
+     */
+    private static function statusTexts(?int $index_rows, ?int $scheme_rows): array
+    {
         if ($index_rows === null) {
             $index_status_text = \esc_html__(' не удалось получить данные (нет связи с сервером).', 'cherrylink');
         } else {
@@ -219,17 +248,6 @@ final class IndexHooks implements Registerable
                 ? \sprintf(\esc_html__(' найдено %d ссылок в записях и страницах.', 'cherrylink'), $scheme_rows)
                 : \esc_html__(' ссылки не найдены.', 'cherrylink');
         }
-
-        $data = \array_merge($local, [
-            'index_rows'         => $index_rows === null ? null : (int) $index_rows,
-            'scheme_rows'        => $scheme_rows === null ? null : (int) $scheme_rows,
-            'index_status_text'  => $index_status_text,
-            'scheme_status_text' => $scheme_status_text,
-            'reachable'          => $reachable,
-            'checked_gmt'        => \gmdate('Y-m-d H:i:s'),
-            'stale'              => false,
-        ]);
-        \set_transient(self::STATUS_CACHE_KEY, $data, HOUR_IN_SECONDS);
-        return $data;
+        return ['index_status_text' => $index_status_text, 'scheme_status_text' => $scheme_status_text];
     }
 }

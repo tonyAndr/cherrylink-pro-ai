@@ -11,20 +11,73 @@ WordPress plugin for AI-powered internal linking. Connects to Cherry Vector API 
 
 ---
 
-## Key Files
+## Architecture (post-refactor)
 
-| File | Purpose |
+The plugin was modernized from ~19 flat global-function root files into a
+namespaced, autoloaded, DI-wired layout under `src/` (PSR-4 `CherryLink\`),
+without changing runtime behavior. See the staged plan in
+`.claude/plans/humming-hopping-parasol.md`.
+
+- **Entry:** `cherrylink_main.php` — plugin header, requires `vendor/autoload.php`,
+  then calls `\CherryLink\Plugin::boot(__FILE__)`. Still hosts the legacy
+  `LinkatePosts` class + a few activation/update globals.
+- **Bootstrap:** `src/Plugin.php` — constructs shared singletons (`Options`) and
+  registers services implementing `Contracts\Registerable` (each hooks itself in
+  `register()`): `Admin\StatsColumn`, `Editor\GutenbergAssets`,
+  `Indexing\IndexHooks`, `Indexing\SyncService`, `Terms\TermsService`,
+  `Statistics\StatisticsService`, `Csv\CsvService`, `Editor\ClassicPanel`.
+- **Views:** HTML lives in `templates/` rendered via `Support\View` (escaped).
+- **Legacy shims still required by `cherrylink_main.php`** (thin delegators /
+  class aliases with real callers — do not delete without grep-proving no
+  callers): `cherrylink_index.php` (`cl_index_status_data()`),
+  `cherrylink_terms.php`, `cherrylink_editor_ui.php`,
+  `cherrylink_vector_api.php` (`class_alias CherryVectorAPI` + the
+  `http_api_curl` alt-server relay hook), `cherrylink_index_helpers.php`
+  (`class_alias CL_Index_Helpers`), `cherrylink_tailwind_constants.php`.
+- **Not yet migrated (still fat root files):** `cherrylink_admin_options.php`
+  (settings page), `cherrylink_admin_subpages.php`, `cherrylink_acf.php` +
+  `cherrylink_cf.php` (custom-fields index), `cherrylink_debug.php`,
+  `cherrylink_output_tags.php`, `cherrylink_install.php` (`fill_options()`).
+
+## Key Files / where things live now
+
+| Concern | Location |
 |---|---|
-| `cherrylink_main.php` | Plugin header, requires all modules |
-| `cherrylink_vector_api.php` | `CherryVectorAPI` class — all HTTP calls to API |
-| `cherrylink_index.php` | Post save/delete hooks + readiness-status payload; background sync lives in `cherrylink_sync.php` |
-| `cherrylink_editor_ui.php` | Classic editor panel HTML (tabs: articles / taxonomy / stats) |
-| `cherrylink_gutenberg.php` | Gutenberg sidebar enqueue + script registration |
-| `cherrylink_admin_options.php` | WP admin settings page + "Прочие настройки" actions |
-| `cherrylink_install.php` | Activation, `fill_options()` defaults |
-| `js/cherry-front.js` | Classic editor panel JS (suggestions, stats, link insertion) |
-| `js/cherry-gutenberg.js` | **Built artifact** from `gutenberg-src/` — do not hand-edit |
-| `css/cherry-main.css` | All plugin styles |
+| Bootstrap / service registry | `src/Plugin.php`, `src/Contracts/Registerable.php` |
+| Settings repository (defaults, keys) | `src/Support/Options.php` |
+| API HTTP client (ex-`CherryVectorAPI`) | `src/Api/Client.php` (+ `Support/Logger.php`) |
+| Post save/delete hooks + readiness payload | `src/Indexing/IndexHooks.php` |
+| Background scan (Action Scheduler worker) | `src/Indexing/SyncService.php` |
+| Incremental-sync diff (pure, tested) | `src/Indexing/IndexHelpers.php` (ex-`CL_Index_Helpers`) |
+| Classic editor panel + suggestion AJAX | `src/Editor/ClassicPanel.php` |
+| Suggestions pipeline (query→filter→render) | `src/Editor/SuggestionsResults.php`, `Editor/LinkFields.php` |
+| Gutenberg sidebar enqueue | `src/Editor/GutenbergAssets.php` |
+| Stats / CSV / Terms services | `src/Statistics/`, `src/Csv/`, `src/Terms/` |
+| AJAX nonce+capability guard | `src/Ajax/Security.php` |
+| Templates (escaped HTML) | `templates/**` |
+| Classic editor JS | `js/cherry-front.js` |
+| Gutenberg JS | `js/cherry-gutenberg.js` (**built** from `gutenberg-src/` — do not hand-edit) |
+| Styles | `css/cherry-main.css` |
+| Translations | `languages/` (`.pot` master, `cherrylink-en_US.{po,mo}`, JS `.json`) |
+
+## Dev tooling & tests
+
+Docker-only QA (no local PHP needed) via `dev/qa.sh {install|test|lint|fix|analyze|all}`:
+PHPUnit + Brain Monkey (unit, no WP runtime), PHPCS (PSR-12 + WP security/i18n
+sniffs, PHP 7.4 floor; errors block, warnings advisory), PHPStan level 6.
+CI mirror in `.github/workflows/ci.yml` (PHP 7.4 + 8.2). Gutenberg unit tests:
+`cd gutenberg-src && npm test -- --watchAll=false`.
+
+## i18n
+
+Text domain `cherrylink`, `Domain Path: /languages`. PHP strings wrapped in
+`__()/esc_html__()/…`; hand-written JS uses `wp.i18n` with
+`wp_set_script_translations()`; Gutenberg src uses `@wordpress/i18n`. Regenerate
+the catalog after adding strings: `wp i18n make-pot . languages/cherrylink.pot
+--domain=cherrylink --exclude=vendor,node_modules,gutenberg-src,tests,dev,build,.github`
+(scans PHP + the built `js/` bundle), then `wp i18n make-json <po> --no-purge`.
+Never cache locale-formatted text (e.g. status snapshots store raw counts and
+format per-request — see `IndexHooks::statusTexts()`).
 
 ---
 
@@ -87,19 +140,22 @@ Source layout notes (`gutenberg-src/src/sidebar/`):
 
 ---
 
-## PHP: CherryVectorAPI
+## PHP: API client
 
-All API calls go through `CherryVectorAPI` in `cherrylink_vector_api.php`.
+All API calls go through `\CherryLink\Api\Client` (`src/Api/Client.php`); the old
+`CherryVectorAPI` name is a `class_alias` kept in `cherrylink_vector_api.php` for
+back-compat callers.
 - API URL: `CHERRY_VECTOR_API_URL` constant in wp-config → admin settings → `https://seocherry.apov.dev`
-- Auth key priority: `CHERRY_VECTOR_API_KEY` constant → `vector_api_key` setting → the license key (`hash_field`). A valid license key is normally the only key needed.
+- Auth key priority: `CHERRY_VECTOR_API_KEY` constant → `vector_api_key` setting → the license key (`hash_field`). A valid license key is normally the only key needed. **Never ship the server ADMIN_KEY in plugin code.**
 - Headers sent: `X-License-Key`, `X-Site-Domain`
-- Errors: logged via `cherry_write_log()`
+- Errors: logged via `\CherryLink\Support\Logger` (`cherry_write_log()` remains as a shim)
+- Alt-server relay: the `http_api_curl` hook in `cherrylink_vector_api.php` reroutes requests to `CL_ALT_API_*` when the "Для экспертов" toggle is on (blocked-provider workaround).
 
 ---
 
 ## Classic Editor UI (HTML)
 
-`cherrylink_editor_ui.php` renders the panel. Tab structure:
+`src/Editor/ClassicPanel.php` renders the panel from `templates/editor/classic-panel.php`. Tab structure:
 ```html
 <div class="linkate-tabs">
   <div class="tab tab-articles linkate-tab-selected">  <!-- PNG icon from assets/gutenberg/tab-links.png -->
@@ -154,7 +210,7 @@ docker compose up -d
 - **`linkate_scheme_exists` option**: repurposed flag — means "Cherry Vector API is configured and accessible", NOT that a MySQL table exists (that table was migrated to Postgres on the API)
 - **`linkate_posts` MySQL table**: still used by `cherrylink_cf.php` for custom fields index — do not drop
 - **Scan is incremental**: diffs current published posts against `GET /v1/documents/manifest` by `post_modified_gmt`, re-embeds only changed posts, builds their links via `POST /v1/links/parse-batch`, and prunes orphans via `POST /v1/documents/delete-batch`. The diff is a pure, unit-tested helper: `CL_Index_Helpers::compute_sync_plan()` (see `tests/test_sync_plan.php`).
-- **Scan runs in the background via Action Scheduler** (`cherrylink_sync.php`, bundled `vendor/woocommerce/action-scheduler`). Start it and leave the page — a self-rescheduling `cherrylink_sync_worker` action processes one batch (upsert→links→prune) and enqueues the next. AJAX: `linkate_sync_start` / `linkate_sync_cancel` / `linkate_sync_status`; JS (`cherry-admin-index.js`) starts it, polls status, and has a Stop button. Progress/worklists live in options `cherrylink_sync_state` / `cherrylink_sync_plan`. Cancel flags the state AND cancels pending actions by ID (`as_unschedule_all_actions([])` only matches arg-less actions). Needs WP-Cron enabled (or a server cron / `wp action-scheduler run`) to advance without traffic.
+- **Scan runs in the background via Action Scheduler** (`src/Indexing/SyncService.php`, bundled `vendor/woocommerce/action-scheduler`). Start it and leave the page — a self-rescheduling `cherrylink_sync_worker` action processes one batch (upsert→links→prune) and enqueues the next. AJAX: `linkate_sync_start` / `linkate_sync_cancel` / `linkate_sync_status`; JS (`cherry-admin-index.js`) starts it, polls status, and has a Stop button. Progress/worklists live in options `cherrylink_sync_state` / `cherrylink_sync_plan`. Cancel flags the state AND cancels pending actions by ID (`as_unschedule_all_actions([])` only matches arg-less actions). Needs WP-Cron enabled (or a server cron / `wp action-scheduler run`) to advance without traffic.
 - **Anchor suggestions are lazy/on-demand**: `linkate_posts()` calls `/v1/search` with an empty `source_html` (no eager anchors, no top-5 cap). When the editor opens a hit's suggestion panel (loupe), it calls the `get_linkate_suggestions` AJAX action → `CherryVectorAPI::suggest_anchors()` → `POST /v1/suggest-anchors` for that one target. Wired in both editors: Gutenberg `SugestionsPanel.componentDidMount` fetches; classic `fcl_render_api_suggestions` fetches (both show a loading state, cache per target). `linkate_build_source_html()` wraps plain-text content in `<p>` for the extractor.
 - **Updates**: no CI; clients auto-update via the bundled Plugin Update Checker (v4.9), wired in `cherrylink_main.php` to this GitHub repo. Ship a new version by publishing a GitHub Release whose tag matches the `Version:` header, with the packaged plugin zip attached as a release asset.
 - **`cherry_write_log()`**: writes to PHP error log; in wp-dev: `docker compose logs wordpress`

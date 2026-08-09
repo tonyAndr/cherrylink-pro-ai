@@ -81,6 +81,7 @@ final class Plugin
             new \CherryLink\Statistics\StatisticsService(),
             new \CherryLink\Csv\CsvService(),
             new \CherryLink\Editor\ClassicPanel($this->options),
+            new \CherryLink\Debug\Debugger(),
         ];
 
         foreach ($this->services as $service) {

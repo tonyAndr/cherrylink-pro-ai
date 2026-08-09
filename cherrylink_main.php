@@ -66,8 +66,6 @@ if (file_exists(CHERRYLINK_DIR . '/updater/plugin-update-checker.php')) {
     $cl_update_checker->getVcsApi()->enableReleaseAssets();
 }
 
-if (!defined('LINKATE_DEBUG')) require(CHERRYLINK_DIR . '/cherrylink_debug.php');
-
 if (!defined('LINKATE_INSTALL_LIBRARY')) require(CHERRYLINK_DIR . '/cherrylink_install.php');
 
 if (!defined('LINKATE_CF_LIBRARY')) require(CHERRYLINK_DIR . '/cherrylink_cf.php');

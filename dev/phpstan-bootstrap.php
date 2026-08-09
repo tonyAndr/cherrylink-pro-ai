@@ -43,6 +43,35 @@ if (! function_exists('cl_clear_index_dirty')) {
     }
 }
 
+// ── Legacy globals used by Debug\Debugger (defined in cherrylink_main.php +
+//    env-info/W18T.class.php at runtime) ──────────────────────────────────────
+if (! function_exists('linkate_posts')) {
+    /** @return mixed */
+    function linkate_posts(string $args = '')
+    {
+        return '';
+    }
+}
+if (! class_exists('W18T')) {
+    class W18T
+    {
+        /** @var mixed */
+        public $operating_system;
+
+        /** @var mixed */
+        public $interpreter;
+
+        /** @var mixed */
+        public $web_server;
+
+        /** @var mixed */
+        public $database_server;
+
+        /** @var mixed */
+        public $platform;
+    }
+}
+
 // ── Action Scheduler stubs (bundled vendor lib, not covered by WP stubs) ─────
 if (! function_exists('as_enqueue_async_action')) {
     function as_enqueue_async_action(string $hook, array $args = [], string $group = ''): int

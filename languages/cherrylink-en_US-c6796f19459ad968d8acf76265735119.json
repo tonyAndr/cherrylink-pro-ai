@@ -1,0 +1,81 @@
+{
+    "translation-revision-date": "2026-08-09 16:40+0000",
+    "generator": "WP-CLI\/2.7.1",
+    "source": "js\/cherry-front.js",
+    "domain": "messages",
+    "locale_data": {
+        "messages": {
+            "": {
+                "domain": "messages",
+                "lang": "en_US",
+                "plural-forms": "nplurals=2; plural=(n != 1);"
+            },
+            "\u0412\u0445\u043e\u0434\u044f\u0449\u0438\u0435": [
+                "Incoming"
+            ],
+            "\u041d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0438": [
+                "Settings"
+            ],
+            "\u0412\u0441\u0442\u0430\u0432\u0438\u0442\u044c \u0432\u043e\u043a\u0440\u0443\u0433 \u0432\u044b\u0434\u0435\u043b\u0435\u043d\u0438\u044f": [
+                "Insert around selection"
+            ],
+            "\u041f\u043e\u0434\u0431\u0438\u0440\u0430\u0435\u043c \u0430\u043d\u043a\u043e\u0440\u043d\u044b\u0435 \u043f\u043e\u0434\u0441\u043a\u0430\u0437\u043a\u0438\u2026": [
+                "Selecting anchor suggestions\u2026"
+            ],
+            "\u041f\u043e\u0434\u0441\u043a\u0430\u0437\u043a\u0438 \u0434\u043b\u044f: <strong>%s<\/strong>": [
+                "Suggestions for: <strong>%s<\/strong>"
+            ],
+            "\u041f\u043e\u0434\u0441\u043a\u0430\u0437\u043a\u0438 \u043d\u0435 \u043d\u0430\u0439\u0434\u0435\u043d\u044b.": [
+                "No suggestions found."
+            ],
+            "\u0423\u0431\u0435\u0434\u0438\u0442\u0435\u0441\u044c, \u0447\u0442\u043e \u0441\u0442\u0430\u0442\u044c\u044f \u043f\u0440\u043e\u0438\u043d\u0434\u0435\u043a\u0441\u0438\u0440\u043e\u0432\u0430\u043d\u0430 \u0447\u0435\u0440\u0435\u0437 Cherry Vector API. %s.": [
+                "Make sure the article is indexed via the Cherry Vector API. %s."
+            ],
+            "\u041d\u0430\u0439\u0442\u0438 \u0432 \u0442\u0435\u043a\u0441\u0442\u0435": [
+                "Find in text"
+            ],
+            "\u0412\u0441\u0442\u0430\u0432\u0438\u0442\u044c \u0441\u0441\u044b\u043b\u043a\u0443": [
+                "Insert link"
+            ],
+            "\u0412\u0441\u0442\u0430\u0432\u0438\u0442\u044c": [
+                "Insert"
+            ],
+            "\u0422\u0415\u041a\u0421\u0422_\u0421\u0421\u042b\u041b\u041a\u0418": [
+                "LINK_TEXT"
+            ],
+            "_\u0411\u0435\u0437 \u0430\u043d\u043a\u043e\u0440\u0430_": [
+                "_No anchor_"
+            ],
+            "\u0421\u0441\u044b\u043b\u043a\u0438 \u0432 \u0442\u0435\u043a\u0441\u0442\u0435 [\u0430\u043d\u043a\u043e\u0440:url]": [
+                "Links in text [anchor:url]"
+            ],
+            "\u041f\u0440\u043e\u0438\u0437\u043e\u0448\u043b\u0430 \u043e\u0448\u0438\u0431\u043a\u0430 \u043f\u0440\u0438 \u0437\u0430\u0433\u0440\u0443\u0437\u043a\u0435 \u0441\u0441\u044b\u043b\u043e\u043a, \u043f\u043e\u0434\u0440\u043e\u0431\u043d\u043e\u0441\u0442\u0438 \u0434\u043b\u044f \u0440\u0430\u0437\u0440\u0430\u0431\u043e\u0442\u0447\u0438\u043a\u0430 \u043f\u043b\u0430\u0433\u0438\u043d\u0430 \u043d\u0438\u0436\u0435:": [
+                "An error occurred while loading links; details for the plugin developer are below:"
+            ],
+            "\u0412\u0445\u043e\u0434\u044f\u0449\u0438\u0435 \u0441\u0441\u044b\u043b\u043a\u0438 [\u0430\u043d\u043a\u043e\u0440:url]": [
+                "Incoming links [anchor:url]"
+            ],
+            "\u041d\u0435\u0442 \u0434\u0430\u043d\u043d\u044b\u0445, \u043f\u0435\u0440\u0435\u0439\u0434\u0438\u0442\u0435 \u043f\u043e \u0441\u0441\u044b\u043b\u043a\u0438 \u0434\u043b\u044f \u043d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0438": [
+                "No data; follow the link to configure"
+            ],
+            "\u0418\u0441\u0445\u043e\u0434\u044f\u0449\u0438\u0435 (%d)": [
+                "Outgoing (%d)"
+            ],
+            "\u041f\u0435\u0440\u0435\u0439\u0442\u0438 \u043a \u0444\u0440\u0430\u0437\u0435 \u0432 \u0440\u0435\u0434\u0430\u043a\u0442\u043e\u0440\u0435": [
+                "Go to the phrase in the editor"
+            ],
+            "\u0414\u0430\u043d\u043d\u044b\u0435 \u043d\u0435\u0434\u043e\u0441\u0442\u0443\u043f\u043d\u044b.": [
+                "Data unavailable."
+            ],
+            "\u0412\u0445\u043e\u0434\u044f\u0449\u0438\u0435 (%d)": [
+                "Incoming (%d)"
+            ],
+            "\u0418\u0437 \u0441\u0442\u0430\u0442\u044c\u0438:": [
+                "From article:"
+            ],
+            "\u0412\u0445\u043e\u0434\u044f\u0449\u0438\u0445 \u0441\u0441\u044b\u043b\u043e\u043a \u043d\u0435 \u043d\u0430\u0439\u0434\u0435\u043d\u043e.": [
+                "No incoming links found."
+            ]
+        }
+    }
+}

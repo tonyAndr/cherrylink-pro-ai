@@ -18,3 +18,8 @@ dev               export-ignore
 phpunit.xml.dist  export-ignore
 phpcs.xml.dist    export-ignore
 phpstan.neon.dist export-ignore
+
+# Translation sources — only the compiled .mo/.json ship to clients; the
+# editable .pot/.po catalogs are dev/translator-only.
+languages/*.pot   export-ignore
+languages/*.po    export-ignore

@@ -1,0 +1,111 @@
+{
+    "translation-revision-date": "2026-08-09 16:40+0000",
+    "generator": "WP-CLI\/2.7.1",
+    "source": "js\/cherry-admin-csv.js",
+    "domain": "messages",
+    "locale_data": {
+        "messages": {
+            "": {
+                "domain": "messages",
+                "lang": "en_US",
+                "plural-forms": "nplurals=2; plural=(n != 1);"
+            },
+            "\u0410\u043d\u043a\u043e\u0440": [
+                "Anchor"
+            ],
+            "\u0417\u0430\u0433\u0440\u0443\u0437\u043a\u0430...": [
+                "Loading..."
+            ],
+            "\u041d\u0430\u0439\u0442\u0438 \u0434\u043e\u043d\u043e\u0440\u043e\u0432": [
+                "Find donors"
+            ],
+            "\u0421\u043a\u0440\u044b\u0442\u044c \u0434\u043e\u043d\u043e\u0440\u043e\u0432": [
+                "Hide donors"
+            ],
+            "\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u043f\u043e\u043b\u0443\u0447\u0438\u0442\u044c \u0440\u0435\u043a\u043e\u043c\u0435\u043d\u0434\u0430\u0446\u0438\u0438.": [
+                "Failed to get recommendations."
+            ],
+            "\u041f\u0440\u043e\u0432\u0435\u0440\u0435\u043d\u043e \u0437\u0430\u043f\u0438\u0441\u0435\u0439": [
+                "Posts checked"
+            ],
+            "\u0412\u0441\u0435\u0433\u043e \u0441\u0441\u044b\u043b\u043e\u043a": [
+                "Total links"
+            ],
+            "\u0411\u0435\u0437 \u0432\u0445\u043e\u0434\u044f\u0449\u0438\u0445": [
+                "No incoming"
+            ],
+            "\u0411\u0435\u0437 \u0438\u0441\u0445\u043e\u0434\u044f\u0449\u0438\u0445": [
+                "No outgoing"
+            ],
+            "\u041f\u043e\u0432\u0442\u043e\u0440\u044b \u0441\u0441\u044b\u043b\u043e\u043a": [
+                "Duplicate links"
+            ],
+            "\u0411\u0438\u0442\u044b\u0435 \u0441\u0441\u044b\u043b\u043a\u0438": [
+                "Broken links"
+            ],
+            "\u0421\u0441\u044b\u043b\u043a\u0438 \u043d\u0430 \u0441\u0435\u0431\u044f": [
+                "Self-links"
+            ],
+            "\u041f\u0435\u0440\u0435\u043b\u0438\u043d\u043a\u043e\u0432\u043a\u0430 \u043d\u0435 \u043e\u0431\u043d\u0430\u0440\u0443\u0436\u0435\u043d\u0430.": [
+                "No internal linking detected."
+            ],
+            "\u041f\u0440\u043e\u0431\u043b\u0435\u043c \u0441 \u0442\u0435\u043a\u0443\u0449\u0435\u0439 \u043f\u0435\u0440\u0435\u043b\u0438\u043d\u043a\u043e\u0432\u043a\u043e\u0439 \u043d\u0435 \u043d\u0430\u0439\u0434\u0435\u043d\u043e.": [
+                "No problems found with the current internal linking."
+            ],
+            "\u0412 \u0440\u0435\u0434\u0430\u043a\u0442\u043e\u0440": [
+                "To editor"
+            ],
+            "\u041f\u043e\u0434\u0445\u043e\u0434\u044f\u0449\u0438\u0445 \u0434\u043e\u043d\u043e\u0440\u043e\u0432 \u043d\u0435 \u043d\u0430\u0439\u0434\u0435\u043d\u043e.": [
+                "No suitable donors found."
+            ],
+            "\u044f\u043a\u043e\u0440\u044c: \u00ab<strong>%s<\/strong>\u00bb": [
+                "anchor: \u00ab<strong>%s<\/strong>\u00bb"
+            ],
+            "\u043f\u043e\u0434\u0445\u043e\u0434\u044f\u0449\u0438\u0439 \u0430\u043d\u043a\u043e\u0440 \u043d\u0435 \u043d\u0430\u0439\u0434\u0435\u043d": [
+                "no suitable anchor found"
+            ],
+            "\u041e\u0442\u043a\u0440\u044b\u0442\u044c \u0434\u043e\u043d\u043e\u0440": [
+                "Open donor"
+            ],
+            "\u041e\u0442\u043a\u0443\u0434\u0430 \u043c\u043e\u0436\u043d\u043e \u0441\u043e\u0441\u043b\u0430\u0442\u044c\u0441\u044f \u043d\u0430 \u044d\u0442\u0443 \u0441\u0442\u0430\u0442\u044c\u044e:": [
+                "Where you can link to this article from:"
+            ],
+            "\u041d\u0430\u0439\u0434\u0435\u043d\u044b \u043f\u043e\u0432\u0442\u043e\u0440\u044b (%d)": [
+                "Duplicates found (%d)"
+            ],
+            "\u0417\u0430\u043f\u0438\u0441\u044c": [
+                "Post"
+            ],
+            "\u0421\u0441\u044b\u043b\u0430\u0435\u0442\u0441\u044f \u043d\u0430 (\u043a\u043e\u043b\u0438\u0447\u0435\u0441\u0442\u0432\u043e)": [
+                "Links to (count)"
+            ],
+            "\u0414\u0435\u0439\u0441\u0442\u0432\u0438\u044f": [
+                "Actions"
+            ],
+            "\u0421\u0442\u0430\u0442\u044c\u0438 \u0431\u0435\u0437 \u0432\u0445\u043e\u0434\u044f\u0449\u0438\u0445 \u0441\u0441\u044b\u043b\u043e\u043a (%d)": [
+                "Articles with no incoming links (%d)"
+            ],
+            "\u041f\u043e\u043a\u0430\u0437\u0430\u043d\u043e \u0442\u043e\u043b\u044c\u043a\u043e 50 \u043f\u0435\u0440\u0432\u044b\u0445 \u0440\u0435\u0437\u0443\u043b\u044c\u0442\u0430\u0442\u043e\u0432.": [
+                "Only the first 50 results are shown."
+            ],
+            "\u041f\u043e\u0432\u0442\u043e\u0440\u044b \u0441\u0441\u044b\u043b\u043e\u043a \u043d\u0435 \u043e\u0431\u043d\u0430\u0440\u0443\u0436\u0435\u043d\u044b": [
+                "No duplicate links detected"
+            ],
+            "\u0421\u0442\u0430\u0442\u044c\u0438, \u043a\u043e\u0442\u043e\u0440\u044b\u0435 \u043d\u0438\u043a\u0443\u0434\u0430 \u043d\u0435 \u0441\u0441\u044b\u043b\u0430\u044e\u0442\u0441\u044f (%d)": [
+                "Articles that don't link anywhere (%d)"
+            ],
+            "\u0421\u0442\u0430\u0442\u044c\u0438 c\u043e \u0441\u043b\u043e\u043c\u0430\u043d\u043d\u044b\u043c\u0438 \u0441\u0441\u044b\u043b\u043a\u0430\u043c\u0438 (%d)": [
+                "Articles with broken links (%d)"
+            ],
+            "\u041d\u0435\u0440\u0430\u0431\u043e\u0447\u0438\u0435 \u0441\u0441\u044b\u043b\u043a\u0438 (\u0430\u043d\u043a\u043e\u0440)": [
+                "Broken links (anchor)"
+            ],
+            "\u0421\u0442\u0430\u0442\u044c\u0438, \u043a\u043e\u0442\u043e\u0440\u044b\u0435 \u0441\u0441\u044b\u043b\u0430\u044e\u0442\u0441\u044f \u043d\u0430 \u0441\u0435\u0431\u044f (%d)": [
+                "Articles that link to themselves (%d)"
+            ],
+            "\u0427\u0442\u043e-\u0442\u043e \u043f\u043e\u0448\u043b\u043e \u043d\u0435 \u0442\u0430\u043a, \u0432\u043e\u0437\u043d\u0438\u043a\u043b\u0430 \u043e\u0448\u0438\u0431\u043a\u0430 \u043f\u0440\u0438 \u043e\u0431\u0440\u0430\u0431\u043e\u0442\u043a\u0435 \u0437\u0430\u043f\u0440\u043e\u0441\u0430: <strong>%s<\/strong>.": [
+                "Something went wrong; an error occurred while processing the request: <strong>%s<\/strong>."
+            ]
+        }
+    }
+}

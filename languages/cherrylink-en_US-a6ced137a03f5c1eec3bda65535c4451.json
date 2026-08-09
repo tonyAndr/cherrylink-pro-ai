@@ -1,0 +1,105 @@
+{
+    "translation-revision-date": "2026-08-09 16:40+0000",
+    "generator": "WP-CLI\/2.7.1",
+    "source": "js\/cherry-admin-index.js",
+    "domain": "messages",
+    "locale_data": {
+        "messages": {
+            "": {
+                "domain": "messages",
+                "lang": "en_US",
+                "plural-forms": "nplurals=2; plural=(n != 1);"
+            },
+            "\u043f\u0440\u043e\u0432\u0435\u0440\u043a\u0430\u2026": [
+                "checking\u2026"
+            ],
+            "\u041f\u0440\u043e\u0432\u0435\u0440\u0438\u0442\u044c \u0441\u0432\u044f\u0437\u044c": [
+                "Test connection"
+            ],
+            "\u0417\u0430\u043f\u0443\u0441\u043a \u0444\u043e\u043d\u043e\u0432\u043e\u0433\u043e \u0441\u043a\u0430\u043d\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u044f\u2026": [
+                "Starting background scan\u2026"
+            ],
+            "\u041e\u0441\u0442\u0430\u043d\u043e\u0432\u043a\u0430\u2026": [
+                "Stopping\u2026"
+            ],
+            "\u0418\u043d\u0434\u0435\u043a\u0441\u0430\u0446\u0438\u044f": [
+                "Indexing"
+            ],
+            "\u0418\u043d\u0434\u0435\u043a\u0441\u0430\u0446\u0438\u044f \u0438\u0437\u043c\u0435\u043d\u0451\u043d\u043d\u044b\u0445": [
+                "Indexing changed items"
+            ],
+            "\u041f\u043e\u0441\u0442\u0440\u043e\u0435\u043d\u0438\u0435 \u043a\u0430\u0440\u0442\u044b \u0441\u0441\u044b\u043b\u043e\u043a": [
+                "Building the link map"
+            ],
+            "\u0423\u0434\u0430\u043b\u0435\u043d\u0438\u0435 \u0443\u0441\u0442\u0430\u0440\u0435\u0432\u0448\u0438\u0445": [
+                "Removing outdated items"
+            ],
+            "%1$s: %2$d \u0438\u0437 %3$d\u2026 (\u043c\u043e\u0436\u043d\u043e \u0437\u0430\u043a\u0440\u044b\u0442\u044c \u0441\u0442\u0440\u0430\u043d\u0438\u0446\u0443)": [
+                "%1$s: %2$d of %3$d\u2026 (you can close the page)"
+            ],
+            "%s\u2026 (\u043c\u043e\u0436\u043d\u043e \u0437\u0430\u043a\u0440\u044b\u0442\u044c \u0441\u0442\u0440\u0430\u043d\u0438\u0446\u0443)": [
+                "%s\u2026 (you can close the page)"
+            ],
+            "\u0421\u043a\u0430\u043d\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u0435 \u0437\u0430\u0432\u0435\u0440\u0448\u0435\u043d\u043e! \u041e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u043e: %1$d, \u0443\u0434\u0430\u043b\u0435\u043d\u043e: %2$d.": [
+                "Scan complete! Updated: %1$d, removed: %2$d."
+            ],
+            "\u0421\u043a\u0430\u043d\u0438\u0440\u043e\u0432\u0430\u0442\u044c \u0441\u043d\u043e\u0432\u0430": [
+                "Scan again"
+            ],
+            "\u041e\u0441\u0442\u0430\u043d\u043e\u0432\u043b\u0435\u043d\u043e. \u0427\u0430\u0441\u0442\u0438\u0447\u043d\u043e \u043f\u0440\u043e\u0438\u043d\u0434\u0435\u043a\u0441\u0438\u0440\u043e\u0432\u0430\u043d\u043e: %d.": [
+                "Stopped. Partially indexed: %d."
+            ],
+            "\u041e\u0448\u0438\u0431\u043a\u0430: %s.": [
+                "Error: %s."
+            ],
+            "\u043d\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u043d\u043e": [
+                "unknown"
+            ],
+            "\u043c\u0441": [
+                "ms"
+            ],
+            "\u041e\u0428\u0418\u0411\u041a\u0410 (%s)": [
+                "ERROR (%s)"
+            ],
+            "\u0437\u043d\u0430\u0447\u0435\u043d\u0438\u0435:": [
+                "value:"
+            ],
+            "\u043d\u0435\u0442 \u043e\u0442\u0432\u0435\u0442\u0430": [
+                "no response"
+            ],
+            "\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u043f\u043e\u043b\u0443\u0447\u0438\u0442\u044c \u0434\u0430\u043d\u043d\u044b\u0435 \u043e \u0441\u043e\u0441\u0442\u043e\u044f\u043d\u0438\u0438 \u0441\u0435\u0440\u0432\u0435\u0440\u0430.": [
+                "Failed to retrieve server status data."
+            ],
+            "\u043d\u0435\u0442 \u0441\u0432\u044f\u0437\u0438 \u0441 \u0441\u0435\u0440\u0432\u0435\u0440\u043e\u043c": [
+                "no connection to the server"
+            ],
+            "\u0441\u0432\u044f\u0437\u044c \u043c\u0435\u0434\u043b\u0435\u043d\u043d\u0430\u044f": [
+                "connection is slow"
+            ],
+            "\u0441\u0432\u044f\u0437\u044c \u0432 \u043d\u043e\u0440\u043c\u0435": [
+                "connection is fine"
+            ],
+            "\u0414\u043e\u0441\u0442\u0443\u043f\u043d\u043e\u0441\u0442\u044c \u0441\u0435\u0440\u0432\u0435\u0440\u0430": [
+                "Server availability"
+            ],
+            "\u0427\u0442\u0435\u043d\u0438\u0435 \u0438\u043d\u0434\u0435\u043a\u0441\u0430 \u0441\u0442\u0430\u0442\u0435\u0439": [
+                "Reading the article index"
+            ],
+            "\u0427\u0442\u0435\u043d\u0438\u0435 \u043a\u0430\u0440\u0442\u044b \u0441\u0441\u044b\u043b\u043e\u043a": [
+                "Reading the link map"
+            ],
+            "\u0412\u043d\u0438\u043c\u0430\u043d\u0438\u0435:": [
+                "Note:"
+            ],
+            "\u043e\u0442\u0432\u0435\u0442\u044b \u043f\u0440\u0438\u0445\u043e\u0434\u044f\u0442 \u0434\u043e\u043b\u044c\u0448\u0435 3 \u0441\u0435\u043a\u0443\u043d\u0434. \u041d\u0430 \u043c\u0435\u0434\u043b\u0435\u043d\u043d\u043e\u043c \u043a\u0430\u043d\u0430\u043b\u0435 \u043f\u043b\u0430\u0433\u0438\u043d \u043c\u043e\u0436\u0435\u0442 \u043f\u043e\u043a\u0430\u0437\u044b\u0432\u0430\u0442\u044c \u00ab0\u00bb \u0438 \u043f\u043e\u0434\u0441\u043a\u0430\u0437\u043a\u0438 \u043c\u043e\u0433\u0443\u0442 \u043d\u0435 \u0433\u0440\u0443\u0437\u0438\u0442\u044c\u0441\u044f (\u0442\u0430\u0439\u043c\u0430\u0443\u0442 \u0447\u0442\u0435\u043d\u0438\u044f \u2014 %s \u0441).": [
+                "responses take longer than 3 seconds. On a slow connection the plugin may show \"0\" and suggestions may fail to load (read timeout \u2014 %s s)."
+            ],
+            "\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u043c\u2026": [
+                "Checking\u2026"
+            ],
+            "\u0427\u0442\u043e-\u0442\u043e \u043f\u043e\u0448\u043b\u043e \u043d\u0435 \u0442\u0430\u043a \u043f\u0440\u0438 \u0441\u043a\u0430\u043d\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u0438. \u041f\u0440\u043e\u0432\u0435\u0440\u044c\u0442\u0435 \u043a\u043e\u043d\u0441\u043e\u043b\u044c \u0431\u0440\u0430\u0443\u0437\u0435\u0440\u0430 (F12), \u0447\u0442\u043e\u0431\u044b \u0443\u0437\u043d\u0430\u0442\u044c \u0431\u043e\u043b\u044c\u0448\u0435.": [
+                "Something went wrong during the scan. Check the browser console (F12) for more details."
+            ]
+        }
+    }
+}

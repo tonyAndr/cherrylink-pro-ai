@@ -82,6 +82,7 @@ final class Plugin
             new \CherryLink\Csv\CsvService(),
             new \CherryLink\Editor\ClassicPanel($this->options),
             new \CherryLink\Debug\Debugger(),
+            new \CherryLink\Support\License($this->options),
         ];
 
         foreach ($this->services as $service) {

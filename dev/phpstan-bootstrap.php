@@ -125,6 +125,11 @@ if (! class_exists('LinkatePosts')) {
         {
             return '';
         }
+
+        public static function linkate_is_plugin_admin_page(string $page = 'settings'): bool
+        {
+            return false;
+        }
     }
 }
 

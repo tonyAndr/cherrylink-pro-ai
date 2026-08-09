@@ -63,7 +63,8 @@ final class Debugger implements Registerable
     {
         Security::verify('manage_options');
 
-        $post_id = isset($_POST['post_id']) ? \trim((string) \wp_unslash($_POST['post_id'])) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- trimmed id, echoed as text only
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput -- gated by Security::verify(); trimmed id used as text only
+        $post_id = isset($_POST['post_id']) ? \trim((string) \wp_unslash($_POST['post_id'])) : '';
         if ($post_id === '') {
             \wp_send_json(['links' => \__('(ID записи не указан)', 'cherrylink'), 'count' => 0]);
         }

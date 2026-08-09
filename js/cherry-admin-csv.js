@@ -1,5 +1,7 @@
 jQuery(document).ready(function ($) {
 
+    const { __, sprintf } = wp.i18n;
+
 	/*
 	--- === STATS === ---
 	*/
@@ -62,23 +64,23 @@ jQuery(document).ready(function ($) {
         const $existing = $row.next('.cl-donor-row');
         if ($existing.length) {
             $existing.remove();
-            $btn.text('Найти доноров');
+            $btn.text(__('Найти доноров', 'cherrylink'));
             return;
         }
 
-        $btn.text('Загрузка...').prop('disabled', true);
+        $btn.text(__('Загрузка...', 'cherrylink')).prop('disabled', true);
         $.ajax({
             type: "POST",
             url: ajaxurl,
             dataType: 'json',
             data: { action: 'linkate_orphan_donors', _ajax_nonce: cherry_ajax.nonce, post_id: postId },
             success: function (resp) {
-                $btn.text('Скрыть доноров').prop('disabled', false);
+                $btn.text(__('Скрыть доноров', 'cherrylink')).prop('disabled', false);
                 $row.after(render_donor_row(resp && resp.donors));
             },
             error: function () {
-                $btn.text('Найти доноров').prop('disabled', false);
-                $row.after('<tr class="cl-donor-row"><td colspan="3"><div class="cl-donors cl-donors-error">Не удалось получить рекомендации.</div></td></tr>');
+                $btn.text(__('Найти доноров', 'cherrylink')).prop('disabled', false);
+                $row.after('<tr class="cl-donor-row"><td colspan="3"><div class="cl-donors cl-donors-error">' + __('Не удалось получить рекомендации.', 'cherrylink') + '</div></td></tr>');
             }
         });
     });
@@ -217,19 +219,19 @@ jQuery(document).ready(function ($) {
         const links_count = parseInt($("#cherry_preview_stats_summary").attr('data-linkscount')) || 0;
 
         let cards = '';
-        cards += stat_card('Проверено записей', stats_posts_count, 'neutral', null);
-        cards += stat_card('Всего ссылок',      links_count,       'neutral', null);
-        cards += stat_card('Без входящих',  no_inc,  no_inc  > 0 ? 'danger' : 'ok', no_inc  > 0 ? 'spoiler_no_incoming'   : null);
-        cards += stat_card('Без исходящих', no_out,  no_out  > 0 ? 'warn'   : 'ok', no_out  > 0 ? 'spoiler_no_outgoing'   : null);
-        cards += stat_card('Повторы ссылок', has_rep, has_rep > 0 ? 'warn'  : 'ok', has_rep > 0 ? 'spoiler_has_repeats'    : null);
-        cards += stat_card('Битые ссылки',  has_404, has_404 > 0 ? 'danger' : 'ok', has_404 > 0 ? 'spoiler_has_404'       : null);
-        cards += stat_card('Ссылки на себя', has_rec, has_rec > 0 ? 'warn'  : 'ok', has_rec > 0 ? 'spoiler_has_recursion'  : null);
+        cards += stat_card(__('Проверено записей', 'cherrylink'), stats_posts_count, 'neutral', null);
+        cards += stat_card(__('Всего ссылок', 'cherrylink'),      links_count,       'neutral', null);
+        cards += stat_card(__('Без входящих', 'cherrylink'),  no_inc,  no_inc  > 0 ? 'danger' : 'ok', no_inc  > 0 ? 'spoiler_no_incoming'   : null);
+        cards += stat_card(__('Без исходящих', 'cherrylink'), no_out,  no_out  > 0 ? 'warn'   : 'ok', no_out  > 0 ? 'spoiler_no_outgoing'   : null);
+        cards += stat_card(__('Повторы ссылок', 'cherrylink'), has_rep, has_rep > 0 ? 'warn'  : 'ok', has_rep > 0 ? 'spoiler_has_repeats'    : null);
+        cards += stat_card(__('Битые ссылки', 'cherrylink'),  has_404, has_404 > 0 ? 'danger' : 'ok', has_404 > 0 ? 'spoiler_has_404'       : null);
+        cards += stat_card(__('Ссылки на себя', 'cherrylink'), has_rec, has_rec > 0 ? 'warn'  : 'ok', has_rec > 0 ? 'spoiler_has_recursion'  : null);
 
         let output = '<div class="cl-stat-cards">' + cards + '</div>';
         if (!(no_inc || no_out || has_rep || has_404 || has_rec)) {
             output += (links_count === 0)
-                ? '<p class="mt-3">Перелинковка не обнаружена.</p>'
-                : '<p class="mt-3">Проблем с текущей перелинковкой не найдено.</p>';
+                ? '<p class="mt-3">' + __('Перелинковка не обнаружена.', 'cherrylink') + '</p>'
+                : '<p class="mt-3">' + __('Проблем с текущей перелинковкой не найдено.', 'cherrylink') + '</p>';
         }
         $("#cherry_preview_stats_summary").html(output);
     }
@@ -243,29 +245,29 @@ jQuery(document).ready(function ($) {
             + '<div class="cl-row-url">' + v.url + '</div></td>';
     }
     function cl_edit_link (v) {
-        return '<a href="/wp-admin/post.php?post=' + v.post_id + '&action=edit" target="_blank" class="button button-small">В редактор</a>';
+        return '<a href="/wp-admin/post.php?post=' + v.post_id + '&action=edit" target="_blank" class="button button-small">' + __('В редактор', 'cherrylink') + '</a>';
     }
 
     // Orphan-fix: render the donor suggestions returned for one orphan into a sub-row.
     function render_donor_row (donors) {
         if (!donors || !donors.length) {
-            return '<tr class="cl-donor-row"><td colspan="3"><div class="cl-donors">Подходящих доноров не найдено.</div></td></tr>';
+            return '<tr class="cl-donor-row"><td colspan="3"><div class="cl-donors">' + __('Подходящих доноров не найдено.', 'cherrylink') + '</div></td></tr>';
         }
         const items = donors.map(function (d) {
             const anchor = d.anchor
-                ? 'якорь: «<strong>' + d.anchor + '</strong>»'
-                : '<em>подходящий анкор не найден</em>';
+                ? sprintf(__('якорь: «<strong>%s</strong>»', 'cherrylink'), d.anchor)
+                : '<em>' + __('подходящий анкор не найден', 'cherrylink') + '</em>';
             return '<li class="cl-donor-item">'
                 + '<div class="cl-donor-main">'
                 +   '<a href="' + d.source_url + '" target="_blank" class="cl-donor-title">' + d.source_title + '</a>'
                 +   '<div class="cl-donor-anchor">' + anchor + '</div>'
                 + '</div>'
-                + '<a href="' + d.edit_url + '" target="_blank" class="button button-small">Открыть донор</a>'
+                + '<a href="' + d.edit_url + '" target="_blank" class="button button-small">' + __('Открыть донор', 'cherrylink') + '</a>'
                 + '</li>';
         }).join('');
         return '<tr class="cl-donor-row"><td colspan="3">'
             + '<div class="cl-donors">'
-            +   '<div class="cl-donors-title">Откуда можно сослаться на эту статью:</div>'
+            +   '<div class="cl-donors-title">' + __('Откуда можно сослаться на эту статью:', 'cherrylink') + '</div>'
             +   '<ul class="cl-donor-list">' + items + '</ul>'
             + '</div></td></tr>';
     }
@@ -318,8 +320,9 @@ jQuery(document).ready(function ($) {
                 repeats = "<ol>" + repeats + "</ol>";
                 return `<tr>${cl_id_cell(v)}${cl_title_cell(v)}<td>${repeats}</td><td>${cl_edit_link(v)}</td></tr>`;
             }).join('\n');
-            $("#label_spoiler_has_repeats").html("Найдены повторы ("+posts.has_repeats.length+")");
-            $("div.spoiler_has_repeats").html("<table class='cherry-stats-preview-table'><thead><tr><th>ID</th><th>Запись</th><th>Ссылается на (количество)</th><th>Действия</th></tr></thead><tbody>" + out_repeats + "</tbody></table>")
+            /* translators: %d: number of posts with repeated links */
+            $("#label_spoiler_has_repeats").html(sprintf(__('Найдены повторы (%d)', 'cherrylink'), posts.has_repeats.length));
+            $("div.spoiler_has_repeats").html("<table class='cherry-stats-preview-table'><thead><tr><th>ID</th><th>" + __('Запись', 'cherrylink') + "</th><th>" + __('Ссылается на (количество)', 'cherrylink') + "</th><th>" + __('Действия', 'cherrylink') + "</th></tr></thead><tbody>" + out_repeats + "</tbody></table>")
             if (!open_spoiler_id) open_spoiler_id = "#label_spoiler_has_repeats";
         } else {
             $("#label_spoiler_has_repeats").hide();
@@ -329,28 +332,30 @@ jQuery(document).ready(function ($) {
         let out_incoming = '';
         if (posts.no_incoming.length > 0) {
             out_incoming = posts.no_incoming.slice(0,table_limit).map((v, k) => {
-                return `<tr class="cl-orphan-row">${cl_id_cell(v)}${cl_title_cell(v)}<td class="cl-orphan-actions"><button type="button" class="cl-find-donors button button-small" data-postid="${v.post_id}">Найти доноров</button>${cl_edit_link(v)}</td></tr>`;
+                return `<tr class="cl-orphan-row">${cl_id_cell(v)}${cl_title_cell(v)}<td class="cl-orphan-actions"><button type="button" class="cl-find-donors button button-small" data-postid="${v.post_id}">${__('Найти доноров', 'cherrylink')}</button>${cl_edit_link(v)}</td></tr>`;
             }).join('\n');
-            $("#label_spoiler_no_incoming").html("Статьи без входящих ссылок ("+posts.no_incoming.length+")");
-            out_incoming = "<table class='cherry-stats-preview-table'><thead><tr><th>ID</th><th>Запись</th><th>Действия</th></tr></thead><tbody>" + out_incoming + "</tbody></table>";
+            /* translators: %d: number of posts without incoming links */
+            $("#label_spoiler_no_incoming").html(sprintf(__('Статьи без входящих ссылок (%d)', 'cherrylink'), posts.no_incoming.length));
+            out_incoming = "<table class='cherry-stats-preview-table'><thead><tr><th>ID</th><th>" + __('Запись', 'cherrylink') + "</th><th>" + __('Действия', 'cherrylink') + "</th></tr></thead><tbody>" + out_incoming + "</tbody></table>";
             if (posts.no_incoming.length > table_limit) {
-                out_incoming += "<p>Показано только 50 первых результатов.</p>";
+                out_incoming += "<p>" + __('Показано только 50 первых результатов.', 'cherrylink') + "</p>";
             }
             $("div.spoiler_no_incoming").html(out_incoming);
             open_spoiler_id = "#label_spoiler_no_incoming";
         } else {
             $("#label_spoiler_no_incoming").hide();
-            $("div.spoiler_no_incoming").html("Повторы ссылок не обнаружены")
+            $("div.spoiler_no_incoming").html(__('Повторы ссылок не обнаружены', 'cherrylink'))
         }
         let out_outgoing = '';
         if (posts.no_outgoing.length > 0) {
             out_outgoing = posts.no_outgoing.slice(0,table_limit).map((v, k) => {
                 return `<tr>${cl_id_cell(v)}${cl_title_cell(v)}<td>${cl_edit_link(v)}</td></tr>`;
             }).join('\n');
-            $("#label_spoiler_no_outgoing").html("Статьи, которые никуда не ссылаются ("+posts.no_outgoing.length+")");
-            out_outgoing = "<table class='cherry-stats-preview-table'><thead><tr><th>ID</th><th>Запись</th><th>Действия</th></tr></thead><tbody>" + out_outgoing + "</tbody></table>";
+            /* translators: %d: number of posts with no outgoing links */
+            $("#label_spoiler_no_outgoing").html(sprintf(__('Статьи, которые никуда не ссылаются (%d)', 'cherrylink'), posts.no_outgoing.length));
+            out_outgoing = "<table class='cherry-stats-preview-table'><thead><tr><th>ID</th><th>" + __('Запись', 'cherrylink') + "</th><th>" + __('Действия', 'cherrylink') + "</th></tr></thead><tbody>" + out_outgoing + "</tbody></table>";
             if (posts.no_outgoing.length > table_limit) {
-                out_outgoing += "<p>Показано только 50 первых результатов.</p>";
+                out_outgoing += "<p>" + __('Показано только 50 первых результатов.', 'cherrylink') + "</p>";
             }
             $("div.spoiler_no_outgoing").html(out_outgoing);
             if (!open_spoiler_id) open_spoiler_id = "#label_spoiler_no_outgoing";
@@ -371,10 +376,11 @@ jQuery(document).ready(function ($) {
                 bad_urls = "<ol>" + bad_urls + "</ol>";
                 return `<tr>${cl_id_cell(v)}${cl_title_cell(v)}<td>${bad_urls}</td><td>${cl_edit_link(v)}</td></tr>`;
             }).join('\n');
-            $("#label_spoiler_has_404").html("Статьи cо сломанными ссылками ("+posts.has_404.length+")");
-            out_404 = "<table class='cherry-stats-preview-table'><thead><tr><th>ID</th><th>Запись</th><th>Нерабочие ссылки (анкор)</th><th>Действия</th></tr></thead><tbody>" + out_404 + "</tbody></table>";
+            /* translators: %d: number of posts with broken links */
+            $("#label_spoiler_has_404").html(sprintf(__('Статьи cо сломанными ссылками (%d)', 'cherrylink'), posts.has_404.length));
+            out_404 = "<table class='cherry-stats-preview-table'><thead><tr><th>ID</th><th>" + __('Запись', 'cherrylink') + "</th><th>" + __('Нерабочие ссылки (анкор)', 'cherrylink') + "</th><th>" + __('Действия', 'cherrylink') + "</th></tr></thead><tbody>" + out_404 + "</tbody></table>";
             if (posts.has_404.length > table_limit) {
-                out_404 += "<p>Показано только 50 первых результатов.</p>";
+                out_404 += "<p>" + __('Показано только 50 первых результатов.', 'cherrylink') + "</p>";
             }
             $("div.spoiler_has_404").html(out_404);
             if (!open_spoiler_id) open_spoiler_id = "#label_spoiler_has_404";
@@ -393,10 +399,11 @@ jQuery(document).ready(function ($) {
                 bad_urls = "<ol>" + bad_urls + "</ol>";
                 return `<tr>${cl_id_cell(v)}${cl_title_cell(v)}<td>${bad_urls}</td><td>${cl_edit_link(v)}</td></tr>`;
             }).join('\n');
-            $("#label_spoiler_has_recursion").html("Статьи, которые ссылаются на себя ("+posts.has_recursion.length+")");
-            out_recursion = "<table class='cherry-stats-preview-table'><thead><tr><th>ID</th><th>Запись</th><th>Анкор</th><th>Действия</th></tr></thead><tbody>" + out_recursion + "</tbody></table>";
+            /* translators: %d: number of posts that link to themselves */
+            $("#label_spoiler_has_recursion").html(sprintf(__('Статьи, которые ссылаются на себя (%d)', 'cherrylink'), posts.has_recursion.length));
+            out_recursion = "<table class='cherry-stats-preview-table'><thead><tr><th>ID</th><th>" + __('Запись', 'cherrylink') + "</th><th>" + __('Анкор', 'cherrylink') + "</th><th>" + __('Действия', 'cherrylink') + "</th></tr></thead><tbody>" + out_recursion + "</tbody></table>";
             if (posts.has_recursion.length > table_limit) {
-                out_recursion += "<p>Показано только 50 первых результатов.</p>";
+                out_recursion += "<p>" + __('Показано только 50 первых результатов.', 'cherrylink') + "</p>";
             }
             $("div.spoiler_has_recursion").html(out_recursion);
             if (!open_spoiler_id) open_spoiler_id = "#label_spoiler_has_recursion";
@@ -416,9 +423,9 @@ jQuery(document).ready(function ($) {
         $('#link_check_progress').hide();
         $("input").prop('disabled', false);
         if (process_type === 'preview') {
-            $('#link_check_progress').parent().append("<p>Что-то пошло не так, возникла ошибка при обработке запроса: <strong>" + error_msg +"</strong>.</p>" + error_details);
+            $('#link_check_progress').parent().append("<p>" + sprintf(__('Что-то пошло не так, возникла ошибка при обработке запроса: <strong>%s</strong>.', 'cherrylink'), error_msg) + "</p>" + error_details);
         } else {
-            $('#csv_progress').parent().append("<p>Что-то пошло не так, возникла ошибка при обработке запроса: <strong>" + error_msg +"</strong>.</p>" + error_details);
+            $('#csv_progress').parent().append("<p>" + sprintf(__('Что-то пошло не так, возникла ошибка при обработке запроса: <strong>%s</strong>.', 'cherrylink'), error_msg) + "</p>" + error_details);
         }
     }
 });

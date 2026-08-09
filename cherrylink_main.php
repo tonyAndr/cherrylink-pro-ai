@@ -244,10 +244,15 @@ function linkate_posts_wp_admin_style()
         wp_enqueue_style('cherrylink-css-admin');
 
         wp_register_script('cherrylink-js-tailwind', plugins_url('/js/tailwind.js', __FILE__), array(), LinkatePosts::asset_ver('js/tailwind.js'));
-        wp_register_script('cherrylink-js-admin', plugins_url('/js/cherry-admin.js', __FILE__), array('jquery'), LinkatePosts::asset_ver('js/cherry-admin.js'));
-        wp_register_script('cherrylink-js-admin-csv', plugins_url('/js/cherry-admin-csv.js', __FILE__), array('jquery'), LinkatePosts::asset_ver('js/cherry-admin-csv.js'));
+        wp_register_script('cherrylink-js-admin', plugins_url('/js/cherry-admin.js', __FILE__), array('jquery', 'wp-i18n'), LinkatePosts::asset_ver('js/cherry-admin.js'));
+        wp_register_script('cherrylink-js-admin-csv', plugins_url('/js/cherry-admin-csv.js', __FILE__), array('jquery', 'wp-i18n'), LinkatePosts::asset_ver('js/cherry-admin-csv.js'));
 
-        wp_register_script('cherrylink-js-admin-index', plugins_url('/js/cherry-admin-index.js', __FILE__), array('jquery'), LinkatePosts::asset_ver('js/cherry-admin-index.js'));
+        wp_register_script('cherrylink-js-admin-index', plugins_url('/js/cherry-admin-index.js', __FILE__), array('jquery', 'wp-i18n'), LinkatePosts::asset_ver('js/cherry-admin-index.js'));
+
+        // Load JS translations (languages/cherrylink-<locale>-<handle>.json) for the admin scripts.
+        wp_set_script_translations('cherrylink-js-admin', 'cherrylink', CHERRYLINK_DIR . 'languages');
+        wp_set_script_translations('cherrylink-js-admin-csv', 'cherrylink', CHERRYLINK_DIR . 'languages');
+        wp_set_script_translations('cherrylink-js-admin-index', 'cherrylink', CHERRYLINK_DIR . 'languages');
 
         $options = (array) get_option('linkate-posts', []);
         $scheme_exists = array("state" => isset($options['linkate_scheme_exists']) ? true : false);

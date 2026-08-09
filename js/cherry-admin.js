@@ -1,5 +1,7 @@
 jQuery(document).ready(function($){
 
+	const { __, sprintf } = wp.i18n;
+
 	/*
 	--- === General Admin Hooks === ---
 	*/
@@ -21,7 +23,7 @@ jQuery(document).ready(function($){
 		$("#link_temp_alt").val(link_alt_temp);
 		$("#term_temp_alt").val(term_alt_temp);
 
-		alert("Шаблоны восстановлены, не забудьте сохранить настройки")
+		alert(__("Шаблоны восстановлены, не забудьте сохранить настройки", "cherrylink"))
     });
 
 	/*
@@ -48,7 +50,7 @@ jQuery(document).ready(function($){
 
     function update_collations() {
         $("#update_collation_btn").hide();
-        $("#update_collation_btn").after("Обновляем, подождите...")
+        $("#update_collation_btn").after(__("Обновляем, подождите...", "cherrylink"))
         $.ajax({
             type: "GET",
             url: ajaxurl + "?action=update_collation",
@@ -56,9 +58,9 @@ jQuery(document).ready(function($){
             success: function (response) {
                 console.log(response)
                 if (!response["result"]) {
-                    $(".plugin-update-warning").html("<p>Произошла ошибка при обновлении: " + response["error"] + "</p>");
+                    $(".plugin-update-warning").html("<p>" + sprintf(__("Произошла ошибка при обновлении: %s", "cherrylink"), response["error"]) + "</p>");
                 } else {
-                    $(".plugin-update-warning").html("<p>Обновление прошло успешно.</p>")
+                    $(".plugin-update-warning").html("<p>" + __("Обновление прошло успешно.", "cherrylink") + "</p>")
                 }
             }
         });
@@ -89,7 +91,7 @@ jQuery(document).ready(function($){
 
     $("#admin_debug_btn").on('click', function (e) {
         e.preventDefault()
-        $("#admin_debug_output_field").html("Идет загрузка...")
+        $("#admin_debug_output_field").html(__("Идет загрузка...", "cherrylink"))
         let post_id = $("#admin_debug_post_id").val();   // optional — check runs without it
         show_debugger_env(post_id);
     })
@@ -110,7 +112,7 @@ jQuery(document).ready(function($){
     function show_debugger_links(post_id)
     {
         if (!post_id) {
-            $("#admin_debug_output_field").append("\n(ID записи не указан — проверка подбора ссылок пропущена)\n");
+            $("#admin_debug_output_field").append("\n" + __("(ID записи не указан — проверка подбора ссылок пропущена)", "cherrylink") + "\n");
             show_debugger_connectivity();
             return;
         }
@@ -161,7 +163,7 @@ jQuery(document).ready(function($){
             url: ajaxurl + "?action=output_admin_debug_connectivity&_ajax_nonce=" + cherry_ajax.nonce,
             datatype: 'json',
             success: function (response) { $("#admin_debug_output_field").append(response) },
-            error:   function (jqXHR) { $("#admin_debug_output_field").append("\n(проверка связи не выполнена)\n") },
+            error:   function (jqXHR) { $("#admin_debug_output_field").append("\n" + __("(проверка связи не выполнена)", "cherrylink") + "\n") },
             complete: function () { show_debugger_wpdb() }
         });
     }

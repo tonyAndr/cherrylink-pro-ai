@@ -1,4 +1,5 @@
 jQuery(document).ready(function ($) {
+    const { __, sprintf } = wp.i18n;
     // cl_ prefix for variables
     // fcl_ prefix for functions
     const T_WAIT_EDITOR_INPUT = 200; // look timeOutChecker() 
@@ -205,14 +206,16 @@ jQuery(document).ready(function ($) {
 
         function fcl_build_suggestions_html(item, suggestions, loading) {
             let reindex_link = window.location.href.replace(window.location.href.slice(window.location.href.indexOf('/wp-admin/') + 10), 'options-general.php?page=cherrylink-pro&subpage=other');
-            let insert_button = '<div class="suggestion-insert-anywhere" data-url="' + item.url + '" title="Вставить вокруг выделения">&#9088; Вставить вокруг выделения</div>';
+            let insert_button = '<div class="suggestion-insert-anywhere" data-url="' + item.url + '" title="' + __('Вставить вокруг выделения', 'cherrylink') + '">&#9088; ' + __('Вставить вокруг выделения', 'cherrylink') + '</div>';
             let header;
             if (loading) {
-                header = '<strong>Подбираем анкорные подсказки…</strong>';
+                header = '<strong>' + __('Подбираем анкорные подсказки…', 'cherrylink') + '</strong>';
             } else if (suggestions.length > 0) {
-                header = 'Подсказки для: <strong>' + (item.title || '') + '</strong>' + insert_button;
+                /* translators: %s: article title */
+                header = sprintf(__('Подсказки для: <strong>%s</strong>', 'cherrylink'), (item.title || '')) + insert_button;
             } else {
-                header = '<strong>Подсказки не найдены.<br>Убедитесь, что статья проиндексирована через Cherry Vector API. <a target="_blank" href="' + reindex_link + '">Настройки</a>.</strong>';
+                /* translators: %s: link to the settings page */
+                header = '<strong>' + __('Подсказки не найдены.', 'cherrylink') + '<br>' + sprintf(__('Убедитесь, что статья проиндексирована через Cherry Vector API. %s.', 'cherrylink'), '<a target="_blank" href="' + reindex_link + '">' + __('Настройки', 'cherrylink') + '</a>') + '</strong>';
             }
 
             let panel = '<div class="suggestions-panel"><div class="suggestions-panel-content">'
@@ -229,10 +232,10 @@ jQuery(document).ready(function ($) {
                                        .replace(/\[([^\]]+)\]/g, '<strong>$1</strong>')
                             + '</div>';
                     }
-                    panel += '<li class="cl-api-suggestion-item" data-phrase="' + phraseEsc + '" title="Найти в тексте">'
+                    panel += '<li class="cl-api-suggestion-item" data-phrase="' + phraseEsc + '" title="' + __('Найти в тексте', 'cherrylink') + '">'
                         + '<div class="cl-api-suggestion-phrase">'
                         + '<span class="cl-api-suggestion-text">' + phraseEsc + '</span>'
-                        + '<a class="cl-api-suggestion-insert suggestion-insert" title="Вставить ссылку">&#9088; Вставить</a>'
+                        + '<a class="cl-api-suggestion-insert suggestion-insert" title="' + __('Вставить ссылку', 'cherrylink') + '">&#9088; ' + __('Вставить', 'cherrylink') + '</a>'
                         + '</div>' + contextHtml + '</li>';
                 });
                 panel += '</ul>';
@@ -553,7 +556,7 @@ jQuery(document).ready(function ($) {
                 switch (cherrylink_options['no_selection_action']) {
                     case 'title': between = item.title; break;
                     case 'h1': between = item.title; break;
-                    case 'placeholder': between = 'ТЕКСТ_ССЫЛКИ'; break;
+                    case 'placeholder': between = __('ТЕКСТ_ССЫЛКИ', 'cherrylink'); break;
                     case 'empty': between = '&nbsp;'; break;
                 }
             }
@@ -587,7 +590,7 @@ jQuery(document).ready(function ($) {
                     switch (cherrylink_options['no_selection_action']) {
                         case 'title': between = item.title; break;
                         case 'h1': between = item.title; break;
-                        case 'placeholder': between = 'ТЕКСТ_ССЫЛКИ'; break;
+                        case 'placeholder': between = __('ТЕКСТ_ССЫЛКИ', 'cherrylink'); break;
                         case 'empty': between = '&nbsp;'; break;
                     }
                 }
@@ -874,7 +877,7 @@ jQuery(document).ready(function ($) {
                     let url = fcl_convertRelativeUrl($(el).attr("href"));
                     let ankor = $(el).text();
                     if (ankor.trim().length === 0) {
-                        ankor = "_Без анкора_";
+                        ankor = __("_Без анкора_", "cherrylink");
                     }
                     ankors.push({ ankor, url });
                 }
@@ -1132,7 +1135,7 @@ jQuery(document).ready(function ($) {
         }
         cl_timerTotalLinks = setTimeout(function () {
             let ankors = fcl_getAllAnkorsInUse(content);
-            let links_title = 'Ссылки в тексте [анкор:url]<ul>';
+            let links_title = __('Ссылки в тексте [анкор:url]', 'cherrylink') + '<ul>';
 
             for (var i = 0; i <= ankors.length - 1; i++) {
                 links_title += '<li><span class=\'tooltip-ankor-text\'>' + ankors[i].ankor + '</span>: <span class=\'tooltip-url\'><a target="_blank" href="' + ankors[i].url + '">' + ankors[i].url + '</a></span></li>';
@@ -1205,7 +1208,7 @@ jQuery(document).ready(function ($) {
             // reload listeners and stuff
             reLoad_when_data_received();
         }).fail(function (errorObject, textStatus, errorThrown) {
-            $('#linkate-links-list').append("<p>Произошла ошибка при загрузке ссылок, подробности для разработчика плагина ниже: </p><hr>")
+            $('#linkate-links-list').append("<p>" + __('Произошла ошибка при загрузке ссылок, подробности для разработчика плагина ниже:', 'cherrylink') + " </p><hr>")
             $('#linkate-links-list').append(errorObject.responseText)
             console.log(errorObject);
             
@@ -1240,7 +1243,7 @@ jQuery(document).ready(function ($) {
             fcl_fetch_incoming(function(resp) {
                 if (!resp) return;
                 incoming_links_array = resp['links'];
-                let links_title = 'Входящие ссылки [анкор:url]<ul>';
+                let links_title = __('Входящие ссылки [анкор:url]', 'cherrylink') + '<ul>';
                 for (var i = resp['links'].length - 1; i >= 0; i--) {
                     links_title += '<li><span class=\'tooltip-ankor-text\'>' + resp['links'][i]['ankor'] + '</span>: <span class=\'tooltip-url\'><a target="_blank" href="' + resp['links'][i]['source_url'] + '">' + resp['links'][i]['source_url'] + '</a></span></li>';
                 }
@@ -1250,7 +1253,7 @@ jQuery(document).ready(function ($) {
             });
         } else {
             let host = window.location.href.replace(window.location.href.slice(window.location.href.indexOf('/wp-admin/') + 10), 'options-general.php?page=cherrylink-pro');
-            $('#links-count-targets').html('<a style="font-weight:bold;color:white;" href="' + host + '" title="Нет данных, перейдите по ссылки для настройки">??</a>');
+            $('#links-count-targets').html('<a style="font-weight:bold;color:white;" href="' + host + '" title="' + __('Нет данных, перейдите по ссылки для настройки', 'cherrylink') + '">??</a>');
         }
     }
 
@@ -1271,10 +1274,11 @@ jQuery(document).ready(function ($) {
             outLinks.push({ url: url, anchor: anchor });
         }
         if (outLinks.length > 0) {
-            outHtml = '<div class="cl-stats-section"><div class="cl-stats-section-title">Исходящие (' + outLinks.length + ')</div><ol class="cl-incoming-links-list">';
+            /* translators: %d: number of outgoing links */
+            outHtml = '<div class="cl-stats-section"><div class="cl-stats-section-title">' + sprintf(__('Исходящие (%d)', 'cherrylink'), outLinks.length) + '</div><ol class="cl-incoming-links-list">';
             outLinks.forEach(function(link) {
                 outHtml += '<li class="cl-incoming-link-item cl-stats-outgoing">'
-                    + '<span class="cl-incoming-anchor" title="Перейти к фразе в редакторе" style="cursor:pointer">' + link.anchor.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</span>'
+                    + '<span class="cl-incoming-anchor" title="' + __('Перейти к фразе в редакторе', 'cherrylink') + '" style="cursor:pointer">' + link.anchor.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</span>'
                     + '<span class="cl-incoming-source"><a href="' + link.url + '" target="_blank">' + link.url + '</a></span>'
                     + '</li>';
             });
@@ -1283,7 +1287,7 @@ jQuery(document).ready(function ($) {
 
         // Incoming section
         if (!cherrylink_options['linkate_scheme_exists']) {
-            $list.html(outHtml + '<div class="cl-stats-section"><div class="cl-stats-section-title">Входящие</div><p>Данные недоступны.</p></div>');
+            $list.html(outHtml + '<div class="cl-stats-section"><div class="cl-stats-section-title">' + __('Входящие', 'cherrylink') + '</div><p>' + __('Данные недоступны.', 'cherrylink') + '</p></div>');
             return;
         }
         fcl_fetch_incoming(function(resp) {
@@ -1291,18 +1295,19 @@ jQuery(document).ready(function ($) {
             if (resp && resp['links'] && resp['links'].length > 0) {
                 incoming_links_array = resp['links'];
                 fcl_markIncomingLinks();
-                inHtml += '<div class="cl-stats-section-title">Входящие (' + resp['links'].length + ')</div>';
+                /* translators: %d: number of incoming links */
+                inHtml += '<div class="cl-stats-section-title">' + sprintf(__('Входящие (%d)', 'cherrylink'), resp['links'].length) + '</div>';
                 inHtml += '<ol class="cl-incoming-links-list">';
                 resp['links'].forEach(function(link) {
                     let ankor = link['ankor'] || 'Без анкора';
                     inHtml += '<li class="cl-incoming-link-item">'
                         + '<span class="cl-incoming-anchor">' + ankor + '</span>'
-                        + '<span class="cl-incoming-source">Из статьи: <a href="' + link['source_url'] + '" target="_blank">' + link['source_url'] + '</a></span>'
+                        + '<span class="cl-incoming-source">' + __('Из статьи:', 'cherrylink') + ' <a href="' + link['source_url'] + '" target="_blank">' + link['source_url'] + '</a></span>'
                         + '</li>';
                 });
                 inHtml += '</ol>';
             } else {
-                inHtml += '<div class="cl-stats-section-title">Входящие</div><p style="padding:8px 10px;color:#888;">Входящих ссылок не найдено.</p>';
+                inHtml += '<div class="cl-stats-section-title">' + __('Входящие', 'cherrylink') + '</div><p style="padding:8px 10px;color:#888;">' + __('Входящих ссылок не найдено.', 'cherrylink') + '</p>';
             }
             inHtml += '</div>';
             $list.html(outHtml + inHtml);

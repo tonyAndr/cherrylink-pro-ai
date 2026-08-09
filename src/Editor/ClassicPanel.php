@@ -147,11 +147,12 @@ final class ClassicPanel implements Registerable
     public function enqueuePanelTinymce(): void
     {
         $classic_js = 'cherry-front.js';
-        \wp_register_script('cherrylink-js-main', CHERRYLINK_DIR_URL . 'js/' . $classic_js, ['jquery'], \LinkatePosts::asset_ver('js/' . $classic_js));
+        \wp_register_script('cherrylink-js-main', CHERRYLINK_DIR_URL . 'js/' . $classic_js, ['jquery', 'wp-i18n'], \LinkatePosts::asset_ver('js/' . $classic_js));
         \wp_localize_script('cherrylink-js-main', 'ajax_obj', [
             'ajaxurl' => \admin_url('admin-ajax.php'),
             'nonce'   => Security::nonce(),
         ]);
+        \wp_set_script_translations('cherrylink-js-main', 'cherrylink', CHERRYLINK_DIR . 'languages');
         \wp_enqueue_script('cherrylink-js-main');
     }
 

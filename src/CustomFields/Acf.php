@@ -9,9 +9,9 @@ namespace CherryLink\CustomFields;
  * options array, with the field-specific handling the CherryLink options need
  * (category-subtree expansion, status checkboxes, base64 template fields, import).
  *
- * Ported verbatim from cherrylink_acf.php (now a shim that keeps the link_cf_*
- * globals + the link_cf_display_* form-view emitters). The only caller of
- * optionsFromPost() is the settings page, which runs check_admin_referer() first;
+ * Ported verbatim from the legacy cherrylink_acf.php (deleted; its link_cf_display_*
+ * form-view emitters were inlined into the expert/statistics subpage templates). The
+ * only caller of optionsFromPost() is the settings page, which runs check_admin_referer() first;
  * the values are configuration stored as submitted (base64/HTML template fields
  * must NOT be sanitized), so the request-data reads carry a scoped sniff disable.
  */

@@ -20,6 +20,13 @@ use CherryLink\Csv\CsvService;
  */
 final class StatisticsService implements Registerable
 {
+    /**
+     * Upper bound on rows pulled for the live editor-badge counts. The link-stats
+     * endpoint isn't filterable by id, so we fetch the graph once and map by post id;
+     * targets beyond this cap (very large sites) fall back to cached meta.
+     */
+    private const EDITOR_BADGE_LIMIT = 5000;
+
     public function register(): void
     {
         \add_action('wp_ajax_linkate_generate_json', [$this, 'ajaxIncomingLinks']);
@@ -126,13 +133,30 @@ final class StatisticsService implements Registerable
             : ($gutenberg_data['post_ids'] ?? '');
         // phpcs:enable WordPress.Security.NonceVerification
 
-        // Editor badge request: read counts directly from post meta — fast and
-        // independent of whether the link-graph scan has been run.
+        // Editor badge request: return LIVE per-target counts so the panel reflects
+        // links added since the last full scan. One API call for the whole forward
+        // link graph (keyed by source post id → [outgoing, incoming]); targets not in
+        // the graph — a post with no outgoing links, or an unreachable API — fall back
+        // to the cached cherry_outgoing/cherry_income post meta so the badge is never
+        // wrong-to-zero. (Trade-off: +1 API call + latency per panel open.)
         if ($from_editor) {
             $requested_ids = \array_filter(\array_map('intval', \explode(',', (string) $post_ids_raw)));
+
+            $api   = new Client();
+            $stats = $api->get_links_stats('forward', 0, self::EDITOR_BADGE_LIMIT);
+            $live  = [];
+            foreach (($stats['results'] ?? []) as $row) {
+                if (isset($row['source_id'])) {
+                    $live[(int) $row['source_id']] = [
+                        (int) ($row['count_targets'] ?? 0), // outgoing
+                        (int) ($row['count_sources'] ?? 0), // incoming
+                    ];
+                }
+            }
+
             $output = [];
             foreach ($requested_ids as $pid) {
-                $output['"id_' . $pid . '"'] = [
+                $output['"id_' . $pid . '"'] = $live[$pid] ?? [
                     (int) \get_post_meta($pid, 'cherry_outgoing', true),
                     (int) \get_post_meta($pid, 'cherry_income', true),
                 ];

@@ -134,7 +134,7 @@ final class Options
         if ($options == null) { // phpcs:ignore -- [] == null is true; preserves legacy reset branch
             // saving license on options reset
             $options               = (array) \get_option(self::MAIN, []);
-            $hash_field            = $options['hash_field'];
+            $hash_field            = $options['hash_field'] ?? ''; // fresh install has no saved license yet
             $options               = [];
             $options['hash_field'] = $hash_field;
         }

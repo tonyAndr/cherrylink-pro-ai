@@ -10,6 +10,12 @@
     <arg name="colors"/>
     <arg value="sp"/><!-- show sniff codes + progress -->
 
+    <!-- Make PHPCS a hard CI gate on ERRORS only: any error fails the build, while
+         the pre-existing advisory warnings (mostly long minified-CSS constant lines
+         in Support/Tailwind.php) stay visible without breaking it. Without this,
+         phpcs exits non-zero on warnings alone and the gate can never be green. -->
+    <config name="ignore_warnings_on_exit" value="1"/>
+
     <!-- Modern OOP style for our own code. We keep PSR-12 structure (bracing,
          spacing, imports, visibility, StudlyCase classes, short arrays) but allow
          snake_case method names: this is a WordPress plugin whose methods mirror

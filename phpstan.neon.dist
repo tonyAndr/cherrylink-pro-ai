@@ -2,7 +2,12 @@ includes:
     - dev/vendor/szepeviktor/phpstan-wordpress/extension.neon
 
 parameters:
-    level: 5
+    level: 6
+    # Level 6 enforces missing return/param typehints (caught real gaps). We opt out
+    # of the iterable-value-type requirement: most arrays here are loosely-shaped
+    # JSON decoded from the Cherry Vector API, and annotating every one as
+    # array<string,mixed> would be noise, not safety.
+    checkMissingIterableValueType: false
     phpVersion: 70400
     bootstrapFiles:
         - dev/phpstan-bootstrap.php

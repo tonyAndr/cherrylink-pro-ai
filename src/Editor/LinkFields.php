@@ -37,9 +37,9 @@ final class LinkFields
     }
 
     /** @param \stdClass $result */
-    public static function postId(string $option_key, $result)
+    public static function postId(string $option_key, $result): int
     {
-        return $result->ID;
+        return (int) $result->ID;
     }
 
     /** @param \stdClass $result */

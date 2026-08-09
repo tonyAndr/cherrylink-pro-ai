@@ -1,4 +1,5 @@
 import React from 'react';
+import { __ } from '@wordpress/i18n';
 import { showNotice } from '../Notices';
 
 export class GetData extends React.Component {
@@ -54,7 +55,7 @@ export class GetData extends React.Component {
                     newData.dataOffset = newData.dataOffset + data.count;
                 }
             } else {
-                showNotice('Ничего не нашлось');
+                showNotice(__('Ничего не нашлось', 'cherrylink'));
                 newData.data = [];
                 newData.dataOffset = 0;
                 newData.inProgress = false;
@@ -77,7 +78,7 @@ export class GetData extends React.Component {
             handleDataUpdate(newData);
         } catch (error) {
             console.error(error);
-            showNotice('Произошла ошибка при загрузке (подробности в консоли)');
+            showNotice(__('Произошла ошибка при загрузке (подробности в консоли)', 'cherrylink'));
             newData.inProgress = false;
             handleDataUpdate(newData);
         }
@@ -113,7 +114,7 @@ export class GetData extends React.Component {
         } catch (error) {
             console.error(error);
             currentData.inProgress = false;
-            showNotice('Произошла ошибка при загрузке (подробности в консоли)');
+            showNotice(__('Произошла ошибка при загрузке (подробности в консоли)', 'cherrylink'));
         }
     }
 

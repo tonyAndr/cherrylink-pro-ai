@@ -1,4 +1,5 @@
 import React from 'react';
+import { __ } from '@wordpress/i18n';
 import LinkWithInsertAction from '../HOC/withLinkInsert';
 import { showNotice } from '../Notices';
 import { Tooltip } from '@wordpress/components';
@@ -65,7 +66,7 @@ class LinkItem extends React.Component {
                 <div className='link-toolbar-overlay  insert-allowed'>
                     <div className='toolbar-actions'>
                         <div onMouseDown={clickHandler} className="insert-allowed main-action">
-                            <Tooltip text="Вставить ссылку">
+                            <Tooltip text={__('Вставить ссылку', 'cherrylink')}>
                                 <img className="insert-allowed" src="/wp-content/plugins/cherrylink-pro-ai/assets/gutenberg/insert_link.png" alt="" />
                             </Tooltip>
                         </div>
@@ -73,24 +74,24 @@ class LinkItem extends React.Component {
                             e.stopPropagation();
                             this.findSuggestions(sugg)
                         }}>
-                            <Tooltip text="Подсказки анкоров">
-                                <img src="/wp-content/plugins/cherrylink-pro-ai/assets/gutenberg/find_suggestions.png" alt="Подсказки" />
+                            <Tooltip text={__('Подсказки анкоров', 'cherrylink')}>
+                                <img src="/wp-content/plugins/cherrylink-pro-ai/assets/gutenberg/find_suggestions.png" alt={__('Подсказки', 'cherrylink')} />
                             </Tooltip>
                         </div>
                     </div>
                     <div className='toolbar-article'>
                         <div onMouseDown={() => copyLink(url)}>
-                            <Tooltip text="Копировать ссылку">
+                            <Tooltip text={__('Копировать ссылку', 'cherrylink')}>
                                 <img src="/wp-content/plugins/cherrylink-pro-ai/assets/gutenberg/copy_link.png" alt="" />
                             </Tooltip>
                         </div>
                         <div>
-                        <Tooltip text="Просмотр статьи">
+                        <Tooltip text={__('Просмотр статьи', 'cherrylink')}>
                             <a target='_blank' href={url}><img src="/wp-content/plugins/cherrylink-pro-ai/assets/gutenberg/look_page.png" alt="" /></a>
                         </Tooltip>
                         </div>
                         <div>
-                            <Tooltip text="Редактировать статью">
+                            <Tooltip text={__('Редактировать статью', 'cherrylink')}>
                             <a target='_blank' href={`${editUrl}?post=${postId}&action=edit`}>
                             <img src="/wp-content/plugins/cherrylink-pro-ai/assets/gutenberg/edit_page.png" alt="" /></a>
                             </Tooltip>
@@ -98,7 +99,7 @@ class LinkItem extends React.Component {
                     </div>
                     <div className='toolbar-stats'>
                         <div>
-                            <div><Tooltip text="Исходящие ссылки"><span>↑ {outgoing}</span></Tooltip></div><div><Tooltip text="Входящие ссылки"><span>↓ {incoming}</span></Tooltip></div>
+                            <div><Tooltip text={__('Исходящие ссылки', 'cherrylink')}><span>↑ {outgoing}</span></Tooltip></div><div><Tooltip text={__('Входящие ссылки', 'cherrylink')}><span>↓ {incoming}</span></Tooltip></div>
                         </div>
                     </div>
                 </div>

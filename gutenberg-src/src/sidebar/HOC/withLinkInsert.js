@@ -1,4 +1,5 @@
 import React from 'react';
+import { __ } from '@wordpress/i18n';
 import { select, dispatch } from '@wordpress/data';
 import { showNotice } from "../Notices";
 import { applyLinkAtSelection } from './cherryRichText';
@@ -24,7 +25,7 @@ const LinkWithInsertAction = OriginalComponent => {
         }
 
         afterInsert() {
-            showNotice('Ссылка вставлена');
+            showNotice(__('Ссылка вставлена', 'cherrylink'));
             if (OriginalComponent.fullName === "SuggestionInsert") {
                 document.querySelector("#cherry_suggestions_close")?.click();
             }
@@ -38,7 +39,7 @@ const LinkWithInsertAction = OriginalComponent => {
             if (!e.target.classList.contains("insert-allowed")) return;
 
             if (this.props.inArticle && cherrylink_options['multilink'] !== 'checked') {
-                showNotice('Ссылка уже присутствует в тексте');
+                showNotice(__('Ссылка уже присутствует в тексте', 'cherrylink'));
                 return;
             }
 
@@ -46,7 +47,7 @@ const LinkWithInsertAction = OriginalComponent => {
             if (applyLinkAtSelection(url, title)) {
                 this.afterInsert();
             } else {
-                showNotice('Выделите текст для вставки ссылки');
+                showNotice(__('Выделите текст для вставки ссылки', 'cherrylink'));
             }
         }
 
@@ -57,7 +58,7 @@ const LinkWithInsertAction = OriginalComponent => {
             if (!phrase) return;
 
             if (this.props.inArticle && cherrylink_options['multilink'] !== 'checked') {
-                showNotice('Ссылка уже присутствует в тексте');
+                showNotice(__('Ссылка уже присутствует в тексте', 'cherrylink'));
                 return;
             }
 
@@ -124,7 +125,7 @@ const LinkWithInsertAction = OriginalComponent => {
                 }
             }
 
-            showNotice('Фраза не найдена в тексте статьи');
+            showNotice(__('Фраза не найдена в тексте статьи', 'cherrylink'));
         }
 
         // ── Copy link to clipboard ───────────────────────────────────────────
@@ -132,7 +133,7 @@ const LinkWithInsertAction = OriginalComponent => {
         copyLink(url) {
             const fullUrl = this.fcl_convertRelativeUrl(url);
             if (navigator.clipboard) {
-                navigator.clipboard.writeText(fullUrl).then(() => showNotice('Ссылка скопирована в буфер обмена'));
+                navigator.clipboard.writeText(fullUrl).then(() => showNotice(__('Ссылка скопирована в буфер обмена', 'cherrylink')));
                 return;
             }
             const textarea = document.createElement("textarea");
@@ -142,7 +143,7 @@ const LinkWithInsertAction = OriginalComponent => {
             textarea.select();
             try {
                 document.execCommand("copy");
-                showNotice('Ссылка скопирована в буфер обмена');
+                showNotice(__('Ссылка скопирована в буфер обмена', 'cherrylink'));
             } catch (ex) {
                 console.warn("Copy to clipboard failed.", ex);
             } finally {

@@ -1,4 +1,5 @@
 import React from 'react';
+import { __ } from '@wordpress/i18n';
 import { SuggestionList } from './SuggestionList';
 import { Button, Tooltip } from '@wordpress/components';
 
@@ -56,9 +57,9 @@ export class SuggestionsPanel extends React.Component {
     render() {
         return (
             <div className="suggestion-panel">
-                <Tooltip text="Выйти к списку ссылок">
+                <Tooltip text={__('Выйти к списку ссылок', 'cherrylink')}>
                     <Button id="cherry_suggestions_close" className="is-tertiary" onClick={this.closePanel}>
-                        ← Назад
+                        ← {__('Назад', 'cherrylink')}
                     </Button>
                 </Tooltip>
                 <SuggestionList {...this.state} />

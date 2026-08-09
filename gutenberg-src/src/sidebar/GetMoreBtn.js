@@ -1,4 +1,5 @@
 import React, { Component } from 'react'
+import { __ } from '@wordpress/i18n'
 import { Spinner } from '@wordpress/components'
 
 export class GetMoreBtn extends Component {
@@ -20,7 +21,7 @@ export class GetMoreBtn extends Component {
         } else if (dataStatus !== undefined && dataStatus <= 1) {
             return (
                 <div className="get-data-button">
-                    <button onClick={this.requestUpdate}>Загрузить еще</button>
+                    <button onClick={this.requestUpdate}>{__('Загрузить еще', 'cherrylink')}</button>
                 </div>
             )
         }

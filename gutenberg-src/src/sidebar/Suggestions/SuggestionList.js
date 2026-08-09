@@ -1,4 +1,5 @@
 import React from 'react';
+import { __ } from '@wordpress/i18n';
 import './Suggestions.css';
 import SuggestionInsert from './SuggestionInsert';
 import SuggestionCopy from './SuggestionCopy';
@@ -58,15 +59,14 @@ export class SuggestionList extends React.Component {
         if (!linkItem) return null;
 
         if (loading) {
-            return <p className="suggestion-hint">Подбираем анкорные подсказки…</p>;
+            return <p className="suggestion-hint">{__('Подбираем анкорные подсказки…', 'cherrylink')}</p>;
         }
 
         if (!suggestions || suggestions.length === 0) {
             return (
                 <>
                     <p className="suggestion-hint">
-                        Для данной ссылки анкорных подсказок не найдено.
-                        Убедитесь, что статья проиндексирована через Cherry Vector API.
+                        {__('Для данной ссылки анкорных подсказок не найдено. Убедитесь, что статья проиндексирована через Cherry Vector API.', 'cherrylink')}
                     </p>
                 </>
             );
@@ -74,17 +74,17 @@ export class SuggestionList extends React.Component {
 
         return (
             <>
-                <p className="suggestion-hint">Подсказки для статьи:</p>
+                <p className="suggestion-hint">{__('Подсказки для статьи:', 'cherrylink')}</p>
                 <p className="suggestion-hint"><strong>{linkItem['data-title']}</strong></p>
                 <hr />
                 <div className="suggestion-action-buttons">
                     <SuggestionCopy url={linkItem['data-url']} />
                 </div>
                 <p className="suggestion-hint">
-                    Нажмите <strong>Вставить</strong> рядом с нужным анкором, чтобы добавить ссылку в соответствующее место текста.
+                    {__('Нажмите', 'cherrylink')} <strong>{__('Вставить', 'cherrylink')}</strong> {__('рядом с нужным анкором, чтобы добавить ссылку в соответствующее место текста.', 'cherrylink')}
                 </p>
                 <div className="suggestion-block">
-                    <div className="block-name">Найденные анкоры</div>
+                    <div className="block-name">{__('Найденные анкоры', 'cherrylink')}</div>
                     <ol className="suggestion-list suggestion-list--ai">
                         {suggestions.map((s, i) => (
                             <li key={i} className="suggestion-item" onClick={(e) => this.handleSuggestionClick(s.phrase, i, e)}>

@@ -1,4 +1,5 @@
 import React from 'react';
+import { __ } from '@wordpress/i18n';
 import './Terms.css';
 import TermItem from './TermItem';
 import { Spinner } from '@wordpress/components';
@@ -30,7 +31,7 @@ class TermsList extends React.Component {
                 const inArticle = this.isInArticle(termsList[i]);
                 listToRender.push(this.convertToJSX(termsList[i], false, inArticle));
             } else {
-                listToRender.push(<div key={'divider_'+i} className="term-divider">{termsList[i].name} на сайте</div>);
+                listToRender.push(<div key={'divider_'+i} className="term-divider">{termsList[i].name} {__('на сайте', 'cherrylink')}</div>);
             }
         }
 
@@ -59,9 +60,9 @@ class TermsList extends React.Component {
         if (terms.inProgress) {
             output = <div className='terms-tab-spinner'><Spinner /></div>;
         } else if (terms.isError) {
-            output = <p>Произошла ошибка во время загрузки...</p>;
+            output = <p>{__('Произошла ошибка во время загрузки...', 'cherrylink')}</p>;
         } else if (terms.length === 0 && jsxTerms.length === 0) {
-            output = <p className='error-text'>Рубрики не найдены</p>;
+            output = <p className='error-text'>{__('Рубрики не найдены', 'cherrylink')}</p>;
         } else {
             output = jsxTerms;
         }

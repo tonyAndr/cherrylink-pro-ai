@@ -1,4 +1,5 @@
 import React from 'react';
+import { __ } from '@wordpress/i18n';
 import { TextFilter } from './TextFilter';
 import { FilterTermsList } from './FilterTermsList';
 import { ToggleControl } from '@wordpress/components';
@@ -86,7 +87,7 @@ export class FiltersPanel extends React.Component {
             {(cherrylink_options['show_cat_filter'] === 'true' || cherrylink_options['show_cat_filter'] === true) && (
 
                 <Panel className='cherry-filter-panel'>
-                    <PanelBody title="По рубрике"  initialOpen={ false }>
+                    <PanelBody title={__('По рубрике', 'cherrylink')}  initialOpen={ false }>
                         <PanelRow>
                                 <div>
                                     {/* <div className="subheader">Наличие в тексте</div>

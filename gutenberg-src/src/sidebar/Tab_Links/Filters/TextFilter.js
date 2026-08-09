@@ -69,6 +69,7 @@
 
 
 import React, {useState, useEffect, useRef} from "react";
+import { __ } from '@wordpress/i18n';
 import { TextControl } from '@wordpress/components';
 export const TextFilter = (props) => {
     const filterRef = useRef(); // use ref to call the API call all time except first time
@@ -95,7 +96,7 @@ export const TextFilter = (props) => {
             __next40pxDefaultSize
             className="cherry-text-filter"
             value={ serpQuery === false ? props.restoredText : serpQuery }
-            placeholder='Поиск по сайту'
+            placeholder={__('Поиск по сайту', 'cherrylink')}
             onChange={ setSerpQuery }
         />
     );

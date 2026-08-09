@@ -1,4 +1,5 @@
 import React from 'react';
+import { __ } from '@wordpress/i18n';
 import './LinksToolbar.css';
 import LinkItem from './LinkItem';
 
@@ -48,7 +49,7 @@ class LinksList extends React.Component {
 
         if (dataStatus === 3) {
             return (
-                <p className='links-not-found'>Ничего не удалось найти. Попробуйте изменить настройки <a target="_blank" href={window.location.origin + "/wp-admin/options-general.php?page=cherrylink-pro"}>фильтрации или релевантности</a>.</p>
+                <p className='links-not-found'>{__('Ничего не удалось найти. Попробуйте изменить настройки', 'cherrylink')} <a target="_blank" href={window.location.origin + "/wp-admin/options-general.php?page=cherrylink-pro"}>{__('фильтрации или релевантности', 'cherrylink')}</a>.</p>
             );
         }
 

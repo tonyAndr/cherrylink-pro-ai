@@ -18,34 +18,34 @@ namespaced, autoloaded, DI-wired layout under `src/` (PSR-4 `CherryLink\`),
 without changing runtime behavior. See the staged plan in
 `.claude/plans/humming-hopping-parasol.md`.
 
-- **Entry:** `cherrylink_main.php` — plugin header, requires `vendor/autoload.php`,
-  then calls `\CherryLink\Plugin::boot(__FILE__)`. Still hosts the legacy
-  `LinkatePosts` class + a few activation/update globals.
-- **Bootstrap:** `src/Plugin.php` — constructs shared singletons (`Options`) and
-  registers services implementing `Contracts\Registerable` (each hooks itself in
-  `register()`): `Admin\StatsColumn`, `Editor\GutenbergAssets`,
-  `Indexing\IndexHooks`, `Indexing\SyncService`, `Terms\TermsService`,
-  `Statistics\StatisticsService`, `Csv\CsvService`, `Editor\ClassicPanel`,
-  `Debug\Debugger`, `Support\License`, `Admin\SettingsPage`.
+- **Entry:** `cherrylink_main.php` (~70 lines) — plugin header, the public
+  `linkate_posts()` template tag (delegates to `Editor\SuggestionsResults`),
+  requires `vendor/autoload.php`, then calls `\CherryLink\Plugin::boot(__FILE__)`.
+  It also loads Action Scheduler + the GitHub update checker. No plugin logic.
+- **Bootstrap:** `src/Plugin.php` — defines the API runtime constants
+  (`Api\Relay::defineConstants()`), constructs the shared `Options` + `License`,
+  and registers services implementing `Contracts\Registerable` (each hooks itself
+  in `register()`): `Api\Relay`, `Admin\StatsColumn`, `Admin\AdminAssets`,
+  `Admin\Notices`, `Editor\GutenbergAssets`, `Indexing\IndexHooks`,
+  `Indexing\SyncService`, `Terms\TermsService`, `Statistics\StatisticsService`,
+  `Csv\CsvService`, `Editor\ClassicPanel`, `Debug\Debugger`, `Support\License`,
+  `Support\Lifecycle`, `Admin\SettingsPage`.
 - **Views:** HTML lives in `templates/` rendered via `Support\View` (escaped).
-- **Legacy shims still required by `cherrylink_main.php`** — all real logic now
-  lives in `src/`; these are thin global-function delegators / class aliases kept
-  only so back-compat callers keep resolving (do not delete without grep-proving
-  no callers): `cherrylink_index.php` (`cl_index_status_data()`),
-  `cherrylink_terms.php`, `cherrylink_editor_ui.php`,
-  `cherrylink_vector_api.php` (`class_alias CherryVectorAPI` + the
-  `http_api_curl` alt-server relay hook), `cherrylink_index_helpers.php`
-  (`class_alias CL_Index_Helpers`), `cherrylink_tailwind_constants.php`,
-  `cherrylink_cf.php` (→`CustomFields\Cf`), `cherrylink_output_tags.php`
-  (→`Editor\LinkFields`), `cherrylink_install.php` (`linkate_posts_install()` /
-  `fill_options()` / `cl_is_licensed()` etc. → `Support\License` + `Support\Options`).
-- **Fully migrated & deleted** (were fat root files): `cherrylink_admin_options.php`
-  + `cherrylink_admin_subpages.php` → `Admin\SettingsPage` + `Admin\Subpages`;
-  `cherrylink_acf.php` → parsing in `CustomFields\Acf`, form emitters inlined into
-  the expert/statistics subpage templates; `cherrylink_debug.php` → `Debug\Debugger`;
-  the license lifecycle out of `cherrylink_install.php` → `Support\License`.
-  The only non-shim root files left are `cherrylink_main.php` (entry + the legacy
-  `LinkatePosts` class) and `uninstall.php`.
+  Templates reference namespaced classes by FQN (e.g. `\CherryLink\Support\Tailwind::$CARD`).
+- **No shims left.** The migration is complete — the plugin root contains exactly
+  two PHP files: `cherrylink_main.php` and `uninstall.php`. Every other concern
+  lives in a namespaced, autoloaded, DI-wired service under `src/`. All former
+  global-function / class-alias shim files were deleted once grep proved no
+  callers (their behavior was ported to the services above and callers re-pointed;
+  the historical `linkate_otf_*` {tag}-dispatch used by the render golden-master
+  now lives in `tests/fixtures/legacy-output-tags.php`).
+  - Notable moves: `LinkatePosts` god-class → `Support\PluginMeta` (version /
+    assetVer / isSettingsPage) + `Support\Lifecycle` (activation/update) +
+    `Admin\AdminAssets` (settings-page enqueue) + `Admin\Notices` (scan prompts)
+    + `Admin\SettingsPage::actionLinks`; `CherryVectorAPI` → `Api\Client`;
+    the API constants + `http_api_curl` alt-server relay hook → `Api\Relay`;
+    `CL_Index_Helpers` → `Indexing\IndexHelpers`; `CL_TWC` → `Support\Tailwind`;
+    `cherry_write_log()` → `Support\Logger`.
 
 ## Key Files / where things live now
 
@@ -54,6 +54,10 @@ without changing runtime behavior. See the staged plan in
 | Bootstrap / service registry | `src/Plugin.php`, `src/Contracts/Registerable.php` |
 | Settings repository (defaults, keys) | `src/Support/Options.php` |
 | API HTTP client (ex-`CherryVectorAPI`) | `src/Api/Client.php` (+ `Support/Logger.php`) |
+| API constants + alt-server relay hook | `src/Api/Relay.php` |
+| Plugin metadata (version, assetVer, screen check) | `src/Support/PluginMeta.php` |
+| Activation / update / textdomain lifecycle | `src/Support/Lifecycle.php` |
+| Settings-page asset enqueue + scan notices | `src/Admin/AdminAssets.php`, `src/Admin/Notices.php` |
 | Post save/delete hooks + readiness payload | `src/Indexing/IndexHooks.php` |
 | Background scan (Action Scheduler worker) | `src/Indexing/SyncService.php` |
 | Incremental-sync diff (pure, tested) | `src/Indexing/IndexHelpers.php` (ex-`CL_Index_Helpers`) |
@@ -62,7 +66,7 @@ without changing runtime behavior. See the staged plan in
 | Gutenberg sidebar enqueue | `src/Editor/GutenbergAssets.php` |
 | Stats / CSV / Terms services | `src/Statistics/`, `src/Csv/`, `src/Terms/` |
 | Settings page (menu, subpages, save handlers) | `src/Admin/SettingsPage.php`, `src/Admin/Subpages.php` |
-| License validation / cron / activation | `src/Support/License.php` |
+| License validation / cron / capability | `src/Support/License.php` |
 | Debug panel AJAX probes | `src/Debug/Debugger.php` |
 | AJAX nonce+capability guard | `src/Ajax/Security.php` |
 | Templates (escaped HTML) | `templates/**` |
@@ -153,14 +157,13 @@ Source layout notes (`gutenberg-src/src/sidebar/`):
 
 ## PHP: API client
 
-All API calls go through `\CherryLink\Api\Client` (`src/Api/Client.php`); the old
-`CherryVectorAPI` name is a `class_alias` kept in `cherrylink_vector_api.php` for
-back-compat callers.
-- API URL: `CHERRY_VECTOR_API_URL` constant in wp-config → admin settings → `https://seocherry.apov.dev`
+All API calls go through `\CherryLink\Api\Client` (`src/Api/Client.php`, ex-`CherryVectorAPI`).
+The API runtime constants + the alt-server hook live in `\CherryLink\Api\Relay`.
+- API URL: `CHERRY_VECTOR_API_URL` constant in wp-config → admin settings → `https://seocherry.apov.dev` (defined by `Api\Relay::defineConstants()`)
 - Auth key priority: `CHERRY_VECTOR_API_KEY` constant → `vector_api_key` setting → the license key (`hash_field`). A valid license key is normally the only key needed. **Never ship the server ADMIN_KEY in plugin code.**
 - Headers sent: `X-License-Key`, `X-Site-Domain`
-- Errors: logged via `\CherryLink\Support\Logger` (`cherry_write_log()` remains as a shim)
-- Alt-server relay: the `http_api_curl` hook in `cherrylink_vector_api.php` reroutes requests to `CL_ALT_API_*` when the "Для экспертов" toggle is on (blocked-provider workaround).
+- Errors: logged via `\CherryLink\Support\Logger`
+- Alt-server relay: `Api\Relay::resolveAltRoute()` (the `http_api_curl` hook) reroutes requests to `CL_ALT_API_*` when the "Для экспертов" toggle is on (blocked-provider workaround).
 
 ---
 
@@ -216,12 +219,12 @@ docker compose up -d
 
 ## Non-obvious Things
 
-- **`data-suggestions` escaping**: classic editor uses `htmlspecialchars(ENT_COMPAT)` (HTML attribute safe); Gutenberg JSON-in-JSON uses `str_replace('"', '\\"', ...)` — these are different code paths in `cherrylink_main.php`
+- **`data-suggestions` escaping**: classic editor uses `htmlspecialchars(ENT_COMPAT)` (HTML attribute safe); Gutenberg JSON-in-JSON uses `str_replace('"', '\\"', ...)` — these are different code paths in `src/Editor/SuggestionsResults.php`
 - **Tab PNG icons**: `assets/gutenberg/tab-links.png`, `tab-taxonomies.png`, `tab-stats.png`
 - **`linkate_scheme_exists` option**: repurposed flag — means "Cherry Vector API is configured and accessible", NOT that a MySQL table exists (that table was migrated to Postgres on the API)
-- **`linkate_posts` MySQL table**: still used by `cherrylink_cf.php` for custom fields index — do not drop
-- **Scan is incremental**: diffs current published posts against `GET /v1/documents/manifest` by `post_modified_gmt`, re-embeds only changed posts, builds their links via `POST /v1/links/parse-batch`, and prunes orphans via `POST /v1/documents/delete-batch`. The diff is a pure, unit-tested helper: `CL_Index_Helpers::compute_sync_plan()` (see `tests/test_sync_plan.php`).
+- **`linkate_posts` MySQL table**: still used by `CustomFields\Cf` for the custom-fields index — do not drop
+- **Scan is incremental**: diffs current published posts against `GET /v1/documents/manifest` by `post_modified_gmt`, re-embeds only changed posts, builds their links via `POST /v1/links/parse-batch`, and prunes orphans via `POST /v1/documents/delete-batch`. The diff is a pure, unit-tested helper: `Indexing\IndexHelpers::compute_sync_plan()` (see `tests/Unit/SyncPlanTest.php`).
 - **Scan runs in the background via Action Scheduler** (`src/Indexing/SyncService.php`, bundled `vendor/woocommerce/action-scheduler`). Start it and leave the page — a self-rescheduling `cherrylink_sync_worker` action processes one batch (upsert→links→prune) and enqueues the next. AJAX: `linkate_sync_start` / `linkate_sync_cancel` / `linkate_sync_status`; JS (`cherry-admin-index.js`) starts it, polls status, and has a Stop button. Progress/worklists live in options `cherrylink_sync_state` / `cherrylink_sync_plan`. Cancel flags the state AND cancels pending actions by ID (`as_unschedule_all_actions([])` only matches arg-less actions). Needs WP-Cron enabled (or a server cron / `wp action-scheduler run`) to advance without traffic.
-- **Anchor suggestions are lazy/on-demand**: `linkate_posts()` calls `/v1/search` with an empty `source_html` (no eager anchors, no top-5 cap). When the editor opens a hit's suggestion panel (loupe), it calls the `get_linkate_suggestions` AJAX action → `CherryVectorAPI::suggest_anchors()` → `POST /v1/suggest-anchors` for that one target. Wired in both editors: Gutenberg `SugestionsPanel.componentDidMount` fetches; classic `fcl_render_api_suggestions` fetches (both show a loading state, cache per target). `linkate_build_source_html()` wraps plain-text content in `<p>` for the extractor.
+- **Anchor suggestions are lazy/on-demand**: `Editor\SuggestionsResults::execute()` calls `/v1/search` with an empty `source_html` (no eager anchors, no top-5 cap). When the editor opens a hit's suggestion panel (loupe), it calls the `get_linkate_suggestions` AJAX action → `Api\Client::suggest_anchors()` → `POST /v1/suggest-anchors` for that one target. Wired in both editors: Gutenberg `SugestionsPanel.componentDidMount` fetches; classic `fcl_render_api_suggestions` fetches (both show a loading state, cache per target). `Editor\ClassicPanel::buildSourceHtml()` wraps plain-text content in `<p>` for the extractor.
 - **Updates**: no CI; clients auto-update via the bundled Plugin Update Checker (v4.9), wired in `cherrylink_main.php` to this GitHub repo. Ship a new version by publishing a GitHub Release whose tag matches the `Version:` header, with the packaged plugin zip attached as a release asset.
-- **`cherry_write_log()`**: writes to PHP error log; in wp-dev: `docker compose logs wordpress`
+- **Logging** (`\CherryLink\Support\Logger`): writes to PHP error log; in wp-dev: `docker compose logs wordpress`

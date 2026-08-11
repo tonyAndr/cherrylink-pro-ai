@@ -14,19 +14,6 @@ Domain Path: /languages
 
 defined('ABSPATH') || exit;
 
-/**
- * Legacy public template tag: return the suggestions payload for the current context.
- * Kept for back-compat with any theme that calls linkate_posts() directly; the pipeline
- * lives in \CherryLink\Editor\SuggestionsResults.
- *
- * @param string $args query-string style arguments (see SuggestionsResults::execute)
- * @return array<string,mixed>
- */
-function linkate_posts($args = '')
-{
-    return \CherryLink\Editor\SuggestionsResults::execute((string) $args);
-}
-
 // ========================================================================================= //
 // ============================== Defines and Bootstrap ============================== //
 // ========================================================================================= //

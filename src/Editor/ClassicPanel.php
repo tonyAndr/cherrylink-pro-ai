@@ -218,11 +218,12 @@ final class ClassicPanel implements Registerable
         return false;
     }
 
-    // ── Helpers (kept reachable via back-compat global shims) ──────────────────
+    // ── Helpers (called directly: buildSourceHtml by the stats service,
+    //    createQuickCatSelect by the classic-panel template) ──────────────────
 
     /**
      * Wrap plain-text content in <p> so the API's block-based NP extractor can find
-     * blocks. Mirrors the prep linkate_posts() used to do before search.
+     * blocks. Mirrors the prep the suggestions pipeline does before search.
      */
     public static function buildSourceHtml(string $content): string
     {

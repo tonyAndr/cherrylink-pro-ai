@@ -1,11 +1,11 @@
 <?php
 /*
- * CherryLink — legacy shim.
+ * CherryLink — API runtime bootstrap.
  * The API client moved to \CherryLink\Api\Client (src/Api/Client.php).
  *
- * This file stays as the runtime home for the API constants (which are derived from
- * saved options at include time) and the alternative-route connect hook, and aliases
- * the old CherryVectorAPI name to the new class so existing callers keep working.
+ * This file stays as the runtime home for the API constants (derived from saved
+ * options at include time) and the alternative-route connect hook. (Slated to move
+ * into the Api\Client bootstrap in a later refactor step.)
  */
 
 defined('ABSPATH') || exit;
@@ -24,13 +24,11 @@ if (!defined('CHERRY_VECTOR_API_URL')) {
 if (!defined('CL_ALT_API_PORT')) define('CL_ALT_API_PORT', 9443);
 if (!defined('CL_ALT_API_IP'))   define('CL_ALT_API_IP', '31.129.48.202');
 
-class_alias(\CherryLink\Api\Client::class, 'CherryVectorAPI');
-
 // Single choke point for the alternative route: for our relay-port requests only, override the
 // connect address to the relay IP while keeping the real hostname (SNI/Host/cert unchanged).
 // Other requests (license → seocherry.ru, GitHub updater, etc.) are never touched.
 add_action('http_api_curl', function ($handle, $args, $url) {
-    if (!CherryVectorAPI::alt_enabled()) {
+    if (!\CherryLink\Api\Client::alt_enabled()) {
         return;
     }
     $parts = wp_parse_url($url);

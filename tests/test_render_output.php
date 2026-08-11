@@ -38,7 +38,6 @@ function __($s, $d = null)                  { return $s; }
 function strip_shortcodes($c)               { return $c; }
 
 $PLUGIN = dirname(__DIR__);
-require $PLUGIN . '/cherrylink_cf.php';          // linkate_unparse_url deps
 require $PLUGIN . '/cherrylink_output_tags.php'; // otf getters + linkate_link_fields + linkate_unparse_url
 
 // ---- OLD machinery, reproduced verbatim as the oracle ----

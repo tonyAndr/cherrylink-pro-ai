@@ -67,11 +67,6 @@ function linkate_link_fields($option_key, $result)
     return LinkFields::forResult($option_key, $result);
 }
 
-function linkate_oth_format_date($date, $fmt, $id)
-{
-    return LinkFields::formatDate($date, $fmt, $id);
-}
-
 function linkate_unparse_url($url, $opt)
 {
     return LinkFields::unparseUrl((string) $url, (string) $opt);

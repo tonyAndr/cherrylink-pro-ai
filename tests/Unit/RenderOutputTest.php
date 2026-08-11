@@ -59,7 +59,6 @@ final class RenderOutputTest extends TestCase
         Functions\when('strip_shortcodes')->returnArg(1);
 
         // linkate_link_fields + the linkate_otf_* getters + linkate_unparse_url.
-        require_once CHERRYLINK_PLUGIN_DIR . '/cherrylink_cf.php';
         require_once CHERRYLINK_PLUGIN_DIR . '/cherrylink_output_tags.php';
 
         // Pull the REAL templates out of the plugin so the test tracks production.

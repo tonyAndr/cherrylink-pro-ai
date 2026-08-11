@@ -26,16 +26,6 @@ function fill_options($options)
     return Options::fill($options);
 }
 
-function linkate_handle_license_response()
-{
-    return (new License(new Options()))->validate();
-}
-
-function linkate_checkNeededOption()
-{
-    return (new License(new Options()))->isValid();
-}
-
 function cl_is_licensed(): bool
 {
     return (new License(new Options()))->isLicensed();
@@ -52,9 +42,4 @@ function cl_mark_index_dirty(): void
 function cl_clear_index_dirty(): void
 {
     (new Options())->clearIndexDirty();
-}
-
-function cl_index_is_dirty(): bool
-{
-    return (new Options())->indexIsDirty();
 }

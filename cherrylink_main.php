@@ -17,13 +17,6 @@ function linkate_posts($args = '')
     return LinkatePosts::execute($args);
 }
 
-function linkate_posts_mark_current()
-{
-    global $post, $linkate_posts_current_ID;
-    $linkate_posts_current_ID = $post->ID;
-}
-
-
 // ========================================================================================= //
 // ============================== Defines and Imports ============================== //
 // ========================================================================================= //
@@ -68,7 +61,6 @@ if (file_exists(CHERRYLINK_DIR . '/updater/plugin-update-checker.php')) {
 
 if (!defined('LINKATE_INSTALL_LIBRARY')) require(CHERRYLINK_DIR . '/cherrylink_install.php');
 
-if (!defined('LINKATE_CF_LIBRARY')) require(CHERRYLINK_DIR . '/cherrylink_cf.php');
 if (!defined('LP_OT_LIBRARY')) require(CHERRYLINK_DIR . '/cherrylink_output_tags.php');
 if (!defined('LINKATE_TERMS_LIBRARY')) require(CHERRYLINK_DIR . '/cherrylink_terms.php');
 if (!defined('CHERRY_VECTOR_API_CLIENT')) { define('CHERRY_VECTOR_API_CLIENT', true); require(CHERRYLINK_DIR . '/cherrylink_vector_api.php'); }

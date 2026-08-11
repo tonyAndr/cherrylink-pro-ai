@@ -45,7 +45,7 @@ defined('ABSPATH') || exit;
             <span id="term_template" data-before="<?php echo esc_attr($options['term_before']); ?>" data-after="<?php echo esc_attr($options['term_after']); ?>" data-term-temp-alt="<?php echo esc_attr($options['term_temp_alt']); ?>" hidden></span>
             <?php
             if (isset($options['show_cat_filter']) && ($options['show_cat_filter'] === 'true' || $options['show_cat_filter'] === true)) {
-                echo create_quick_cat_select();
+                echo \CherryLink\Editor\ClassicPanel::createQuickCatSelect();
             }
             ?>
             <div class="linkate-box-container container-articles">
@@ -66,7 +66,7 @@ defined('ABSPATH') || exit;
                 // suppress useless notices temporarely
                 $error_level = error_reporting();
                 error_reporting(E_ALL & ~E_NOTICE);
-                echo hierarchical_term_tree();
+                echo \CherryLink\Terms\TermsService::classicTree();
                 // revert it back
                 error_reporting($error_level);
                 ?>

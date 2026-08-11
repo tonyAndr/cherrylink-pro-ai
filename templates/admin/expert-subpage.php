@@ -26,13 +26,13 @@ $tooltip = static function (string $anchor): void {
                         </div>
                         <div class="justify-self-end">
 
-                            <input type="submit" class="<?= CL_TWC::$BTN_SAVE ?>" name="update_options_filter" value="<?php _e('Сохранить настройки', 'cherrylink') ?>" />
+                            <input type="submit" class="<?= \CherryLink\Support\Tailwind::$BTN_SAVE ?>" name="update_options_filter" value="<?php _e('Сохранить настройки', 'cherrylink') ?>" />
                             <?php if (function_exists('wp_nonce_field')) wp_nonce_field('linkate-posts-update-options'); ?>
                         </div>
                     </div>
                 </div>
-                <div class="<?= CL_TWC::$CARD ?>">
-                    <h2 id="anchor-editor" class="<?= CL_TWC::$H2 ?>"><?php esc_html_e('Настройки работы в редакторе WP', 'cherrylink'); ?></h2>
+                <div class="<?= \CherryLink\Support\Tailwind::$CARD ?>">
+                    <h2 id="anchor-editor" class="<?= \CherryLink\Support\Tailwind::$H2 ?>"><?php esc_html_e('Настройки работы в редакторе WP', 'cherrylink'); ?></h2>
                     <table class="optiontable form-table">
                         <?php // ── Количество ссылок (limit_ajax) ── ?>
                         <tr valign="top">
@@ -262,11 +262,11 @@ $tooltip = static function (string $anchor): void {
                             </tr>
                         </table>
                     </div>
-                    <input type="submit" class="<?= CL_TWC::$BTN_SAVE ?> mt-6" name="update_options_filter" value="<?php _e('Сохранить настройки', 'cherrylink') ?>" />
+                    <input type="submit" class="<?= \CherryLink\Support\Tailwind::$BTN_SAVE ?> mt-6" name="update_options_filter" value="<?php _e('Сохранить настройки', 'cherrylink') ?>" />
                     <?php if (function_exists('wp_nonce_field')) wp_nonce_field('linkate-posts-update-options'); ?>
                 </div>
-                <div class="<?= CL_TWC::$CARD ?>">
-                    <h2 id="anchor-template" class="<?= CL_TWC::$H2 ?>"><?php esc_html_e('Настройки ссылок', 'cherrylink'); ?></h2>
+                <div class="<?= \CherryLink\Support\Tailwind::$CARD ?>">
+                    <h2 id="anchor-template" class="<?= \CherryLink\Support\Tailwind::$H2 ?>"><?php esc_html_e('Настройки ссылок', 'cherrylink'); ?></h2>
                     <table class="optiontable form-table">
                         <?php // ── Относительные ссылки (relative_links) ──
                         $relative_links = $options['relative_links'];
@@ -283,22 +283,22 @@ $tooltip = static function (string $anchor): void {
                             <td><?php $tooltip('expert_template_relative_links'); ?></td>
                         </tr>
                     </table>
-                    <input type="submit" class="<?= CL_TWC::$BTN_SAVE ?> mt-6" name="update_options_output" value="<?php _e('Сохранить настройки', 'cherrylink') ?>" />
+                    <input type="submit" class="<?= \CherryLink\Support\Tailwind::$BTN_SAVE ?> mt-6" name="update_options_output" value="<?php _e('Сохранить настройки', 'cherrylink') ?>" />
                     <?php if (function_exists('wp_nonce_field')) wp_nonce_field('linkate-posts-update-options'); ?>
                 </div>
-<div class="<?= CL_TWC::$CARD ?>">
-                    <h2 class="<?= CL_TWC::$H2 ?>"><?php esc_html_e('Соединение с сервером', 'cherrylink'); ?></h2>
+<div class="<?= \CherryLink\Support\Tailwind::$CARD ?>">
+                    <h2 class="<?= \CherryLink\Support\Tailwind::$H2 ?>"><?php esc_html_e('Соединение с сервером', 'cherrylink'); ?></h2>
                     <p><?php esc_html_e('Если основной сервер недоступен (например, из-за блокировки провайдером), включите альтернативный маршрут подключения и сохраните настройки.', 'cherrylink'); ?></p>
                     <div style="margin-top:1em">
                         <label class="font-bold" for="use_alt_server"><?php esc_html_e('Альтернативный сервер:', 'cherrylink'); ?>&nbsp;</label>
-                        <select id="use_alt_server" name="use_alt_server" class="<?= CL_TWC::$INP_BASE ?>" style="display:inline-block;width:auto">
+                        <select id="use_alt_server" name="use_alt_server" class="<?= \CherryLink\Support\Tailwind::$INP_BASE ?>" style="display:inline-block;width:auto">
                             <option value="false" <?php selected(($options['use_alt_server'] ?? 'false'), 'false'); ?>><?php esc_html_e('Выключен', 'cherrylink'); ?></option>
                             <option value="true" <?php selected(($options['use_alt_server'] ?? 'false'), 'true'); ?>><?php esc_html_e('Включён', 'cherrylink'); ?></option>
                         </select>
-                        <input type="submit" class="<?= CL_TWC::$BTN_SAVE ?> ml-2" name="update_options_output" value="<?php _e('Сохранить', 'cherrylink') ?>" />
+                        <input type="submit" class="<?= \CherryLink\Support\Tailwind::$BTN_SAVE ?> ml-2" name="update_options_output" value="<?php _e('Сохранить', 'cherrylink') ?>" />
                     </div>
                 </div>
-                <div class="<?= CL_TWC::$CARD ?>">
+                <div class="<?= \CherryLink\Support\Tailwind::$CARD ?>">
                     <input type="checkbox" id="spoiler_debug" />
                     <label for="spoiler_debug" id="label_spoiler_debug" class="hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100 hover:cursor-pointer">⚙ <?php esc_html_e('Отладка', 'cherrylink'); ?></label>
 
@@ -308,7 +308,7 @@ $tooltip = static function (string $anchor): void {
                         <div style="display:flex;flex-flow: column; width: 100%;">
                             <div style="display:flex;flex-flow: row; width: 100%; gap: 1em; margin-top:2em; margin-bottom:2em">
                                 <input type="text" id="admin_debug_post_id" placeholder="<?php esc_attr_e('ID записи', 'cherrylink'); ?>" />
-                                <button id="admin_debug_btn" class="<?= CL_TWC::$BTN_NORMAL ?>"><?php esc_html_e('Проверить', 'cherrylink'); ?></button>
+                                <button id="admin_debug_btn" class="<?= \CherryLink\Support\Tailwind::$BTN_NORMAL ?>"><?php esc_html_e('Проверить', 'cherrylink'); ?></button>
                             </div>
 
                             <h3><?php esc_html_e('Информация для разработчиков', 'cherrylink'); ?></h3>
@@ -319,11 +319,11 @@ $tooltip = static function (string $anchor): void {
 
             </div>
         </form>
-        <div class="mt-4 <?= CL_TWC::$CARD_SPECIAL ?>">
-            <h2 id="recovery" class="<?= CL_TWC::$H2 ?>"><?php esc_html_e('Прочие настройки', 'cherrylink'); ?></h2>
+        <div class="mt-4 <?= \CherryLink\Support\Tailwind::$CARD_SPECIAL ?>">
+            <h2 id="recovery" class="<?= \CherryLink\Support\Tailwind::$H2 ?>"><?php esc_html_e('Прочие настройки', 'cherrylink'); ?></h2>
             <form method="post" action="">
-                <input class="<?= CL_TWC::$BTN_DANGER ?> mt-2" name="truncate_all" type="submit" value="<?php esc_attr_e('Очистить данные сайта в API (потребуется переиндексация)', 'cherrylink'); ?>" onclick="return confirm('<?php echo esc_js(__('Удалить все векторы и граф ссылок для этого сайта из API?', 'cherrylink')); ?>')" />
-                <input type="submit" class="<?= CL_TWC::$BTN_DANGER ?> mt-2" name="reset_options" value="<?php _e('Вернуть настройки по умолчанию', 'cherrylink') ?>" />
+                <input class="<?= \CherryLink\Support\Tailwind::$BTN_DANGER ?> mt-2" name="truncate_all" type="submit" value="<?php esc_attr_e('Очистить данные сайта в API (потребуется переиндексация)', 'cherrylink'); ?>" onclick="return confirm('<?php echo esc_js(__('Удалить все векторы и граф ссылок для этого сайта из API?', 'cherrylink')); ?>')" />
+                <input type="submit" class="<?= \CherryLink\Support\Tailwind::$BTN_DANGER ?> mt-2" name="reset_options" value="<?php _e('Вернуть настройки по умолчанию', 'cherrylink') ?>" />
                 <?php if (function_exists('wp_nonce_field')) wp_nonce_field('linkate-posts-update-options'); ?>
             </form>
         </div>

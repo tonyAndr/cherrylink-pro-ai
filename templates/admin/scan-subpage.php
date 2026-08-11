@@ -17,9 +17,9 @@ defined('ABSPATH') || exit;
             </div>
         </div>
 
-        <div class="<?= CL_TWC::$CARD ?> mt-6">
+        <div class="<?= \CherryLink\Support\Tailwind::$CARD ?> mt-6">
 
-            <!-- <h2 class="<?= CL_TWC::$H2 ?>">Настройка сканирования</h2> -->
+            <!-- <h2 class="<?= \CherryLink\Support\Tailwind::$H2 ?>">Настройка сканирования</h2> -->
 
             <input type="checkbox" id="spoiler_scan" />
             <label for="spoiler_scan" id="label_spoiler_scan" class="hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100 hover:cursor-pointer"><?php esc_html_e('Настройка сканирования', 'cherrylink'); ?></label>
@@ -35,7 +35,7 @@ defined('ABSPATH') || exit;
                         class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm font-mono"
                         placeholder="my_acf_field&#10;another_field"><?= esc_textarea($options['vector_custom_fields'] ?? '') ?></textarea>
                     <br>
-                    <input type="submit" class="<?= CL_TWC::$BTN_SAVE ?> mt-2" name="update_custom_fields" value="<?php esc_attr_e('Сохранить поля', 'cherrylink'); ?>">
+                    <input type="submit" class="<?= \CherryLink\Support\Tailwind::$BTN_SAVE ?> mt-2" name="update_custom_fields" value="<?php esc_attr_e('Сохранить поля', 'cherrylink'); ?>">
                     <?php if (function_exists('wp_nonce_field')) wp_nonce_field('linkate-posts-update-options'); ?>
                 </form>
             </div>

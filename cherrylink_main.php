@@ -67,13 +67,3 @@ if (file_exists(CHERRYLINK_DIR . '/updater/plugin-update-checker.php')) {
     // (keeps dev files like gutenberg-src/ and node_modules out of client installs).
     $cl_update_checker->getVcsApi()->enableReleaseAssets();
 }
-
-// Remaining legacy modules: template-helper globals + the CL_TWC class alias (thin
-// delegators the admin/editor templates still call). The API runtime constants +
-// alternative-route hook live in \CherryLink\Api\Relay, wired by the container above.
-if (!defined('LINKATE_TERMS_LIBRARY')) require(CHERRYLINK_DIR . '/cherrylink_terms.php');
-if (!defined('LINKATE_TAILWIND_CONSTANTS')) require(CHERRYLINK_DIR . '/cherrylink_tailwind_constants.php');
-
-if (is_admin()) {
-    require(CHERRYLINK_DIR . '/cherrylink_editor_ui.php');
-}

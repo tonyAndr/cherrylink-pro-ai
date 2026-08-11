@@ -16,14 +16,14 @@ defined('ABSPATH') || exit;
         <?php if ($info) : ?>
             <p><?php esc_html_e('Действует лицензия на текущий домен, ключ скрыт в целях безопасности.', 'cherrylink'); ?></p>
             <form method="post" action="">
-                <input type="submit" class="<?= CL_TWC::$BTN_NORMAL ?> " name="remove_license" value="<?php _e('Сбросить лицензию', 'cherrylink') ?>" />
+                <input type="submit" class="<?= \CherryLink\Support\Tailwind::$BTN_NORMAL ?> " name="remove_license" value="<?php _e('Сбросить лицензию', 'cherrylink') ?>" />
                 <?php if (function_exists('wp_nonce_field')) wp_nonce_field('linkate-posts-update-options'); ?>
             </form>
         <?php else : ?>
             <form method="post" action="">
                 <label class="font-bold" for="hash_field"><?php _e('Ваш ключ:', 'cherrylink') ?></label>
                 <br>
-                <input type="text" name="hash_field" id="hash_field" required class=" mt-2 <?= CL_TWC::$INP_BASE ?>" value="<?php echo htmlspecialchars(stripslashes($options['hash_field'])); ?>">
+                <input type="text" name="hash_field" id="hash_field" required class=" mt-2 <?= \CherryLink\Support\Tailwind::$INP_BASE ?>" value="<?php echo htmlspecialchars(stripslashes($options['hash_field'])); ?>">
                 <?php
                 if ($key_error) {
                 ?>
@@ -32,7 +32,7 @@ defined('ABSPATH') || exit;
                 }
                 ?>
                 <br>
-                <input type="submit" class="<?= CL_TWC::$BTN_SAVE ?> " name="update_license" value="<?php _e('Сохранить', 'cherrylink') ?>" />
+                <input type="submit" class="<?= \CherryLink\Support\Tailwind::$BTN_SAVE ?> " name="update_license" value="<?php _e('Сохранить', 'cherrylink') ?>" />
                 <?php if (function_exists('wp_nonce_field')) wp_nonce_field('linkate-posts-update-options'); ?>
             </form>
         <?php endif; ?>

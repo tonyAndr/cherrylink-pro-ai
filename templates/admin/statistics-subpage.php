@@ -9,8 +9,8 @@
 defined('ABSPATH') || exit;
 ?>
     <div class=" linkateposts-tab-content pt-3">
-        <div class="<?= CL_TWC::$CARD ?>">
-            <h2 class="<?= CL_TWC::$H2 ?>"><?php esc_html_e('Поиск проблем с перелинковкой', 'cherrylink'); ?></h2>
+        <div class="<?= \CherryLink\Support\Tailwind::$CARD ?>">
+            <h2 class="<?= \CherryLink\Support\Tailwind::$H2 ?>"><?php esc_html_e('Поиск проблем с перелинковкой', 'cherrylink'); ?></h2>
             <p><?php esc_html_e('Нажмите на кнопку "Проверить перелинковку", чтобы найти записи, в которых:', 'cherrylink'); ?></p>
             <ol class="list-inside list-decimal">
                 <li><?php esc_html_e('Есть повторяющиеся ссылки;', 'cherrylink'); ?></li>
@@ -62,14 +62,14 @@ defined('ABSPATH') || exit;
                     </div>
                 </div>
                 <progress id="link_check_progress"></progress>
-                <input id="generate_preview" type="submit" class="<?= CL_TWC::$BTN_NORMAL ?>" name="generate_preview" value="<?php _e('Проверить перелинковку', 'cherrylink') ?>" />
+                <input id="generate_preview" type="submit" class="<?= \CherryLink\Support\Tailwind::$BTN_NORMAL ?>" name="generate_preview" value="<?php _e('Проверить перелинковку', 'cherrylink') ?>" />
             </form>
             <br>
         </div>
 
         <div id="cherry_preview_stats_container" style="display:none">
-            <div class="<?= CL_TWC::$CARD ?> mt-3">
-                <h2 class="<?= CL_TWC::$H2 ?>">
+            <div class="<?= \CherryLink\Support\Tailwind::$CARD ?> mt-3">
+                <h2 class="<?= \CherryLink\Support\Tailwind::$H2 ?>">
                     <?php esc_html_e('Найдены проблемы с перелинковкой', 'cherrylink'); ?>
                 </h2>
                 <div class="mb-3" id="cherry_preview_stats_summary" data-linkscount="<?= $scheme_rows ?>"></div>
@@ -99,7 +99,7 @@ defined('ABSPATH') || exit;
                 </div>
             </div>
         </div>
-        <div class="<?= CL_TWC::$CARD ?> mt-6" style="display: <?php echo $show_options; ?>">
+        <div class="<?= \CherryLink\Support\Tailwind::$CARD ?> mt-6" style="display: <?php echo $show_options; ?>">
 
             <input type="checkbox" id="spoiler_scheme" />
             <label for="spoiler_scheme" class="hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100 hover:cursor-pointer"><?php esc_html_e('Экспорт перелинковки в .CSV', 'cherrylink'); ?></label>
@@ -156,7 +156,7 @@ defined('ABSPATH') || exit;
                         </div>
                     </div>
                     <progress id="csv_progress"></progress>
-                    <input id="generate_csv" type="submit" class="<?= CL_TWC::$BTN_NORMAL ?>" name="generate_csv" value="<?php _e('Скачать схему в .CSV', 'cherrylink') ?>" />
+                    <input id="generate_csv" type="submit" class="<?= \CherryLink\Support\Tailwind::$BTN_NORMAL ?>" name="generate_csv" value="<?php _e('Скачать схему в .CSV', 'cherrylink') ?>" />
 
                 </form>
             </div>

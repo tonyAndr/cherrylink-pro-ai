@@ -11,7 +11,7 @@ defined('ABSPATH') || exit;
     <div class="wrap">
         <div class="cherry-admin-logo">
             <h1></h1>
-            <div class="<?= CL_TWC::$H1 ?>">CherryLink Pro 🍒</div>
+            <div class="<?= \CherryLink\Support\Tailwind::$H1 ?>">CherryLink Pro 🍒</div>
         </div>
 
         <?php $menu->display(); ?>

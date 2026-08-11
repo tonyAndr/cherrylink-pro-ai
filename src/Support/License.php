@@ -169,7 +169,7 @@ final class License implements Registerable
             return;
         }
         // Only on the CherryLink settings page — not every admin screen.
-        if (! \class_exists('LinkatePosts') || ! \LinkatePosts::linkate_is_plugin_admin_page('settings')) {
+        if (! PluginMeta::isSettingsPage()) {
             return;
         }
 

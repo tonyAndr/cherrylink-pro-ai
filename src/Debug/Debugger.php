@@ -7,6 +7,7 @@ namespace CherryLink\Debug;
 use CherryLink\Ajax\Security;
 use CherryLink\Contracts\Registerable;
 use CherryLink\Editor\SuggestionsResults;
+use CherryLink\Support\PluginMeta;
 
 /**
  * Developer-facing diagnostics behind the settings-page "Отладка" panel.
@@ -53,7 +54,7 @@ final class Debugger implements Registerable
         $output .= $dmt . '> Plugins' . PHP_EOL;
         $output .= $plugins_output . PHP_EOL;
         $output .= $dmt . '> CherryLink' . PHP_EOL;
-        $output .= 'Version: ' . \LinkatePosts::get_linkate_version() . PHP_EOL;
+        $output .= 'Version: ' . PluginMeta::version() . PHP_EOL;
         $output .= $dmt . '> Links output ' . PHP_EOL;
 
         echo $output; // phpcs:ignore WordPress.Security.EscapeOutput -- developer diagnostics, plain text

@@ -8,6 +8,7 @@ use CherryLink\Ajax\Security;
 use CherryLink\Api\Client;
 use CherryLink\Contracts\Registerable;
 use CherryLink\Support\Options;
+use CherryLink\Support\PluginMeta;
 use CherryLink\Support\View;
 use CherryLink\Terms\TermsService;
 
@@ -140,14 +141,14 @@ final class ClassicPanel implements Registerable
 
     public function enqueuePanelCss(): void
     {
-        \wp_register_style('cherrylink-css-main', CHERRYLINK_DIR_URL . 'css/cherry-main.css', [], \LinkatePosts::asset_ver('css/cherry-main.css'));
+        \wp_register_style('cherrylink-css-main', CHERRYLINK_DIR_URL . 'css/cherry-main.css', [], PluginMeta::assetVer('css/cherry-main.css'));
         \wp_enqueue_style('cherrylink-css-main');
     }
 
     public function enqueuePanelTinymce(): void
     {
         $classic_js = 'cherry-front.js';
-        \wp_register_script('cherrylink-js-main', CHERRYLINK_DIR_URL . 'js/' . $classic_js, ['jquery', 'wp-i18n'], \LinkatePosts::asset_ver('js/' . $classic_js));
+        \wp_register_script('cherrylink-js-main', CHERRYLINK_DIR_URL . 'js/' . $classic_js, ['jquery', 'wp-i18n'], PluginMeta::assetVer('js/' . $classic_js));
         \wp_localize_script('cherrylink-js-main', 'ajax_obj', [
             'ajaxurl' => \admin_url('admin-ajax.php'),
             'nonce'   => Security::nonce(),

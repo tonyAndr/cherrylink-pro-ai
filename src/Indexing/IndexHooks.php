@@ -7,19 +7,18 @@ namespace CherryLink\Indexing;
 use CherryLink\Ajax\Security;
 use CherryLink\Api\Client;
 use CherryLink\Contracts\Registerable;
+use CherryLink\Support\License;
+use CherryLink\Support\Options;
 use WP_Post;
 
 /**
  * Keeps the vector index in step with content changes, and owns the readiness-status
  * payload the settings UI renders.
  *
- * Ported verbatim from the legacy cherrylink_index.php (now a thin shim that keeps
- * cl_index_status_data()/cl_index_status_local() as back-compat delegators, since the
- * readiness card and statistics subpage still call them).
- *
- * All API/DB work runs inside the hook callbacks at request time, so the global
- * license shims (cl_is_licensed / cl_mark_index_dirty / cl_clear_index_dirty) are
- * loaded by the time they are called.
+ * Ported from the legacy cherrylink_index.php (now deleted). The readiness payload lives
+ * on the static statusData(), read directly by the settings page; the license gate and
+ * out-of-sync flag go through the injected License / Options services (the old cl_*
+ * globals are gone).
  */
 final class IndexHooks implements Registerable
 {
@@ -28,6 +27,18 @@ final class IndexHooks implements Registerable
 
     /** Counts older than this (seconds) get a background refresh. */
     public const STATUS_STALE_S = 300;
+
+    /** @var Options */
+    private $options;
+
+    /** @var License */
+    private $license;
+
+    public function __construct(Options $options, License $license)
+    {
+        $this->options = $options;
+        $this->license = $license;
+    }
 
     public function register(): void
     {
@@ -55,8 +66,8 @@ final class IndexHooks implements Registerable
         }
 
         // No valid license → do no API work; record that the index is now out of sync.
-        if (! \cl_is_licensed()) {
-            \cl_mark_index_dirty();
+        if (! $this->license->isLicensed()) {
+            $this->options->markIndexDirty();
             return;
         }
 
@@ -84,8 +95,8 @@ final class IndexHooks implements Registerable
 
     public function onDelete(int $post_id): void
     {
-        if (! \cl_is_licensed()) {
-            \cl_mark_index_dirty();
+        if (! $this->license->isLicensed()) {
+            $this->options->markIndexDirty();
             return;
         }
         $api = new Client();

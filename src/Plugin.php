@@ -72,17 +72,21 @@ final class Plugin
         // screen exactly as the old file-scope code did). Construction is cheap and
         // side-effect-free; the actual API/DB work happens inside the hook callbacks
         // at request time, so boot order relative to the legacy require chain is safe.
+        // Shared license service — injected into the indexing services (which gate
+        // API work on a valid license) and registered in its own right below.
+        $license = new \CherryLink\Support\License($this->options);
+
         $this->services = [
             new \CherryLink\Admin\StatsColumn(),
             new \CherryLink\Editor\GutenbergAssets($this->options),
-            new \CherryLink\Indexing\IndexHooks(),
-            new \CherryLink\Indexing\SyncService(),
+            new \CherryLink\Indexing\IndexHooks($this->options, $license),
+            new \CherryLink\Indexing\SyncService($this->options, $license),
             new \CherryLink\Terms\TermsService(),
             new \CherryLink\Statistics\StatisticsService(),
             new \CherryLink\Csv\CsvService(),
             new \CherryLink\Editor\ClassicPanel($this->options),
             new \CherryLink\Debug\Debugger(),
-            new \CherryLink\Support\License($this->options),
+            $license,
             new \CherryLink\Admin\SettingsPage(),
         ];
 

@@ -64,7 +64,6 @@ if (!defined('LINKATE_INSTALL_LIBRARY')) require(CHERRYLINK_DIR . '/cherrylink_i
 if (!defined('LP_OT_LIBRARY')) require(CHERRYLINK_DIR . '/cherrylink_output_tags.php');
 if (!defined('LINKATE_TERMS_LIBRARY')) require(CHERRYLINK_DIR . '/cherrylink_terms.php');
 if (!defined('CHERRY_VECTOR_API_CLIENT')) { define('CHERRY_VECTOR_API_CLIENT', true); require(CHERRYLINK_DIR . '/cherrylink_vector_api.php'); }
-if (!defined('LINKATE_INDEX_LIBRARY')) require(CHERRYLINK_DIR . '/cherrylink_index.php');
 if (!defined('LINKATE_TAILWIND_CONSTANTS')) require(CHERRYLINK_DIR . '/cherrylink_tailwind_constants.php');
 if (!defined('LINKATE_INDEX_HELPERS')) require(CHERRYLINK_DIR . "/cherrylink_index_helpers.php");
 

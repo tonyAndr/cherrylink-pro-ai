@@ -6,19 +6,13 @@
  * \CherryLink\Editor\ClassicPanel (src/Editor/ClassicPanel.php), registered from the
  * Plugin bootstrap behind the same admin + valid-license gate.
  *
- * These two globals stay as thin delegators: linkate_build_source_html() is called
- * by the orphan-donor stats (via function_exists), and create_quick_cat_select() by
- * the classic-panel template.
+ * create_quick_cat_select() stays as a thin delegator because the classic-panel
+ * template calls it directly during render.
  */
 
 defined('ABSPATH') || exit;
 
 use CherryLink\Editor\ClassicPanel;
-
-function linkate_build_source_html(string $content): string
-{
-    return ClassicPanel::buildSourceHtml($content);
-}
 
 function create_quick_cat_select()
 {

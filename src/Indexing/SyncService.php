@@ -9,6 +9,8 @@ use ActionScheduler_Store;
 use CherryLink\Ajax\Security;
 use CherryLink\Api\Client;
 use CherryLink\Contracts\Registerable;
+use CherryLink\Support\License;
+use CherryLink\Support\Options;
 
 /**
  * Background incremental sync via Action Scheduler.
@@ -41,6 +43,18 @@ final class SyncService implements Registerable
 
     public const UPSERT_BATCH = 20;
     public const LINK_BATCH    = 25;
+
+    /** @var Options */
+    private $options;
+
+    /** @var License */
+    private $license;
+
+    public function __construct(Options $options, License $license)
+    {
+        $this->options = $options;
+        $this->license = $license;
+    }
 
     public function register(): void
     {
@@ -105,7 +119,7 @@ final class SyncService implements Registerable
      */
     public function start(bool $force_full = false): array
     {
-        if (! \cl_is_licensed()) {
+        if (! $this->license->isLicensed()) {
             return $this->setState([
                 'status'  => 'error',
                 'message' => \__('Лицензия неактивна — синхронизация недоступна. Введите ключ лицензии.', 'cherrylink'),
@@ -149,7 +163,7 @@ final class SyncService implements Registerable
             $meta['last_deleted']     = 0;
             \update_option('linkate_posts_meta', $meta);
             \delete_option(self::PLAN);
-            \cl_clear_index_dirty();   // index reconciled — clear any out-of-sync flag
+            $this->options->clearIndexDirty();   // index reconciled — clear any out-of-sync flag
             return $this->setState([
                 'status'       => 'done',
                 'phase'        => 'done',
@@ -302,7 +316,7 @@ final class SyncService implements Registerable
             $meta['last_deleted']     = (int) $state['delete_total'];
             \update_option('linkate_posts_meta', $meta);
             \delete_option(self::PLAN);
-            \cl_clear_index_dirty();   // index reconciled — clear any out-of-sync flag
+            $this->options->clearIndexDirty();   // index reconciled — clear any out-of-sync flag
             $this->setState(\array_merge($state, ['status' => 'done', 'phase' => 'done', 'offset' => 0]));
             return;
         }

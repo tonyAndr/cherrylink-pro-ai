@@ -8,6 +8,7 @@ use CherryLink\Ajax\Security;
 use CherryLink\Api\Client;
 use CherryLink\Contracts\Registerable;
 use CherryLink\Csv\CsvService;
+use CherryLink\Editor\ClassicPanel;
 
 /**
  * The in-editor link statistics + the admin link-scheme reports (forward/backward
@@ -435,9 +436,7 @@ final class StatisticsService implements Registerable
                 continue;
             }
 
-            $source_html = \function_exists('linkate_build_source_html')
-                ? \linkate_build_source_html($src->post_content)
-                : $src->post_content;
+            $source_html = ClassicPanel::buildSourceHtml($src->post_content);
 
             // Best single anchor phrase inside this donor that points at the orphan.
             $suggestions = $api->suggest_anchors($source_html, $orphan_title, 1);

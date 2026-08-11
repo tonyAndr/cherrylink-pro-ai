@@ -7,6 +7,7 @@ namespace CherryLink\Admin;
 use CherryLink\Api\Client;
 use CherryLink\Contracts\Registerable;
 use CherryLink\CustomFields\Acf;
+use CherryLink\Indexing\IndexHooks;
 use CherryLink\Support\License;
 use CherryLink\Support\Options;
 use CherryLink\Support\Tailwind;
@@ -172,7 +173,7 @@ final class SettingsPage implements Registerable
     public static function indexStatusDisplay(string $page = 'main'): void
     {
         self::render('admin/partials/readiness-card', [
-            'data'                 => \cl_index_status_data(),
+            'data'                 => IndexHooks::statusData(),
             'index_process_status' => \get_option('linkate_posts_meta', [])['indexing_process'] ?? 'VALUE_NOT_EXIST',
             'page'                 => $page,
         ]);
@@ -260,7 +261,7 @@ final class SettingsPage implements Registerable
         if (isset($_POST['recreate_db'])) {
             \check_admin_referer('linkate-posts-update-options');
             \delete_option('linkate_posts_meta');
-            $result = \linkate_posts_install();
+            $result = (new License(new Options()))->install();
             if ($result) {
                 self::notice('notice-success', \esc_html__('Настройки плагина сброшены.', 'cherrylink'));
             } else {
@@ -313,7 +314,7 @@ final class SettingsPage implements Registerable
         $options = (array) \get_option('linkate-posts', []);
 
         // Use the cached readiness snapshot — no blocking API call on page render.
-        $scheme_rows = (int) (\cl_index_status_data()['scheme_rows'] ?? 0);
+        $scheme_rows = (int) (IndexHooks::statusData()['scheme_rows'] ?? 0);
 
         self::render('admin/statistics-subpage', [
             'scheme_rows'  => $scheme_rows,

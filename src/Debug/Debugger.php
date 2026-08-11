@@ -6,6 +6,7 @@ namespace CherryLink\Debug;
 
 use CherryLink\Ajax\Security;
 use CherryLink\Contracts\Registerable;
+use CherryLink\Editor\SuggestionsResults;
 
 /**
  * Developer-facing diagnostics behind the settings-page "Отладка" panel.
@@ -69,7 +70,7 @@ final class Debugger implements Registerable
             \wp_send_json(['links' => \__('(ID записи не указан)', 'cherrylink'), 'count' => 0]);
         }
 
-        $data = \linkate_posts('manual_ID=' . $post_id . '&is_term=0&offset=0&mode=gutenberg&custom_text=&');
+        $data = SuggestionsResults::execute('manual_ID=' . $post_id . '&is_term=0&offset=0&mode=gutenberg&custom_text=&');
 
         \wp_send_json($data);
     }

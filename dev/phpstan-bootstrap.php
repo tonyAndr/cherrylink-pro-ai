@@ -125,28 +125,6 @@ if (! class_exists('ActionScheduler_Runner')) {
         }
     }
 }
-// ── LinkatePosts lifecycle/asset helpers (global class in cherrylink_main.php) ──
-if (! class_exists('LinkatePosts')) {
-    class LinkatePosts
-    {
-        /** @param string $rel */
-        public static function asset_ver($rel): string
-        {
-            return '';
-        }
-
-        public static function get_linkate_version(): string
-        {
-            return '';
-        }
-
-        public static function linkate_is_plugin_admin_page(string $page = 'settings'): bool
-        {
-            return false;
-        }
-    }
-}
-
 if (! class_exists('ActionScheduler')) {
     class ActionScheduler
     {

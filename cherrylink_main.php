@@ -12,17 +12,25 @@ Text Domain: cherrylink
 Domain Path: /languages
 */
 
+defined('ABSPATH') || exit;
+
+/**
+ * Legacy public template tag: return the suggestions payload for the current context.
+ * Kept for back-compat with any theme that calls linkate_posts() directly; the pipeline
+ * lives in \CherryLink\Editor\SuggestionsResults.
+ *
+ * @param string $args query-string style arguments (see SuggestionsResults::execute)
+ * @return array<string,mixed>
+ */
 function linkate_posts($args = '')
 {
-    return LinkatePosts::execute($args);
+    return \CherryLink\Editor\SuggestionsResults::execute((string) $args);
 }
 
 // ========================================================================================= //
-// ============================== Defines and Imports ============================== //
+// ============================== Defines and Bootstrap ============================== //
 // ========================================================================================= //
 
-define('CHERRYLINK_INITIAL_LIMIT', 100);
-define('CHERRYLINK_TEXT_DOMAIN', 'cherrylink');
 define('CHERRYLINK_DIR', plugin_dir_path(__FILE__));
 define('CHERRYLINK_DIR_URL', plugin_dir_url(__FILE__));
 
@@ -32,8 +40,9 @@ define('CHERRYLINK_DIR_URL', plugin_dir_url(__FILE__));
 // double-load guards.
 require_once(CHERRYLINK_DIR . 'vendor/autoload.php');
 
-// Bootstrap the plugin container. Legacy procedural modules still register their
-// own hooks for now; services migrate into the container across the refactor stages.
+// Bootstrap the plugin container: it wires and registers every namespaced service
+// (admin, editor, indexing, API, lifecycle, ...). The remaining root files below only
+// provide template-helper globals, class aliases, and the API runtime constants/hook.
 \CherryLink\Plugin::boot(__FILE__);
 
 require(CHERRYLINK_DIR . '/env-info/W18T.class.php');
@@ -59,8 +68,8 @@ if (file_exists(CHERRYLINK_DIR . '/updater/plugin-update-checker.php')) {
     $cl_update_checker->getVcsApi()->enableReleaseAssets();
 }
 
-if (!defined('LINKATE_INSTALL_LIBRARY')) require(CHERRYLINK_DIR . '/cherrylink_install.php');
-
+// Remaining legacy modules: template-helper globals + class aliases (thin delegators to
+// the namespaced services) and the API runtime constants + alternative-route hook.
 if (!defined('LP_OT_LIBRARY')) require(CHERRYLINK_DIR . '/cherrylink_output_tags.php');
 if (!defined('LINKATE_TERMS_LIBRARY')) require(CHERRYLINK_DIR . '/cherrylink_terms.php');
 if (!defined('CHERRY_VECTOR_API_CLIENT')) { define('CHERRY_VECTOR_API_CLIENT', true); require(CHERRYLINK_DIR . '/cherrylink_vector_api.php'); }
@@ -69,215 +78,4 @@ if (!defined('LINKATE_INDEX_HELPERS')) require(CHERRYLINK_DIR . "/cherrylink_ind
 
 if (is_admin()) {
     require(CHERRYLINK_DIR . '/cherrylink_editor_ui.php');
-}
-
-
-// ========================================================================================= //
-// ============================== Main Class ============================== //
-// ========================================================================================= //
-
-class LinkatePosts
-{
-    static $version = 0;
-
-    static function get_linkate_version()
-    {
-        $plugin_data = get_file_data(__FILE__, array('version' => 'Version'), 'plugin');
-        LinkatePosts::$version = $plugin_data['version'];
-
-        return $plugin_data['version'];
-    } // get_linkate_version
-
-    /**
-     * Cache-busting version for an enqueued asset, keyed on its file mtime so every edit
-     * invalidates the browser cache. The plugin header Version is static (0.1.0), which meant
-     * hand-written JS/CSS (e.g. cherry-front.js) stayed cached across updates. Falls back to
-     * the plugin version if the file can't be stat'd.
-     *
-     * @param string $rel path relative to the plugin dir, e.g. 'js/cherry-front.js'
-     */
-    static function asset_ver($rel)
-    {
-        $mtime = @filemtime(CHERRYLINK_DIR . $rel);
-        return $mtime ? (string) $mtime : self::get_linkate_version();
-    } // asset_ver
-
-    // check if plugin's admin page is shown
-    static function linkate_is_plugin_admin_page($page = 'settings')
-    {
-        $current_screen = get_current_screen();
-
-        if ($page == 'settings' && $current_screen->id == 'settings_page_cherrylink-pro') {
-            return true;
-        }
-
-        return false;
-    } // linkate_is_plugin_admin_page
-
-    // add settings link to plugins page
-    static function linkate_plugin_action_links($links)
-    {
-        $settings_link = '<a href="' . admin_url('options-general.php?page=cherrylink-pro') . '" title="' . esc_attr__('Настройки CherryLink', 'cherrylink') . '">' . esc_html__('Настройки', 'cherrylink') . '</a>';
-
-        array_unshift($links, $settings_link);
-
-        return $links;
-    } // linkate_plugin_action_links
-
-    // ========================================================================================= //
-    // ============================== Main function [Get Posts] ============================== //
-    // ========================================================================================= //
-
-    // The suggestions pipeline (query → filter → render) now lives in
-    // \CherryLink\Editor\SuggestionsResults; this stays as a thin back-compat entry point.
-    static function execute($args = '', $option_key = 'linkate-posts')
-    {
-        return \CherryLink\Editor\SuggestionsResults::execute((string) $args, $option_key);
-    }
-
-    // save some info
-    static function lp_activate()
-    {
-        global $wpdb;
-        $options = get_option('linkate_posts_meta', array());
-
-        if (empty($options['first_version'])) {
-            $options['first_version'] = LinkatePosts::get_linkate_version();
-            $options['first_install'] = current_time('timestamp');
-            update_option('linkate_posts_meta', $options);
-
-            $index_helper = new CL_Index_Helpers();
-            $amount_of_db_rows = $index_helper->get_indexable_posts_count();
-            if ($amount_of_db_rows > CHERRYLINK_INITIAL_LIMIT)
-                set_transient('cherry-manual-indexation-needed', true, 20);
-        }
-    } // lp_activate
-
-} // linkateposts class
-
-
-// call install func on activation
-add_action('activate_' . str_replace('-admin', '', plugin_basename(__FILE__)), 'linkate_posts_install');
-// call on update
-add_action('upgrader_process_complete', 'linkate_on_update', 10, 2);
-// call after update
-add_action('plugins_loaded', 'linkate_redirectToUpdatePlugin');
-
-// call this when plugin updates
-function linkate_on_update($upgrader_object, $options)
-{
-    $current_plugin_path_name = str_replace('-admin', '', plugin_basename(__FILE__));
-
-    if ($options['action'] == 'update' && $options['type'] == 'plugin') {
-        foreach ($options['plugins'] as $each_plugin) {
-            if ($each_plugin == $current_plugin_path_name) {
-                // set to 1 - we need it to run update script after plugin was updated by WP
-                set_transient('cherrylink_updated', 1);
-                break;
-            }
-        }
-    }
-}
-// call this after plugin updates
-function linkate_redirectToUpdatePlugin()
-{
-    if (get_transient('cherrylink_updated') && current_user_can('update_plugins')) {
-        linkate_posts_install();
-        set_transient('cherrylink_updated', 0);
-    } // endif;
-} // redirectToUpdatePlugin
-
-
-function cherrylink_activation_notice()
-{
-    $options_meta = get_option('linkate_posts_meta', []);
-    $index_process_status = (isset($options_meta['indexing_process']) && !empty($options_meta['indexing_process'])) ? $options_meta['indexing_process'] : 'VALUE_NOT_EXIST';
-
-
-    $scan_url = site_url() . '/wp-admin/options-general.php?page=cherrylink-pro&subpage=scan';
-    $view     = new \CherryLink\Support\View();
-
-    /* Check transient, if available display notice */
-    if (get_transient('cherry-manual-indexation-needed')) {
-        echo $view->render('notices/scan-prompt', [
-            'line1'    => '<strong>CherryLink Pro</strong> ' . esc_html__('установлен!', 'cherrylink'),
-            /* translators: %s: bold "you need to scan your site" phrase */
-            'line2'    => sprintf(esc_html__('Для начала работы с ним %s.', 'cherrylink'), '<strong>' . esc_html__('необходимо просканировать ваш сайт', 'cherrylink') . '</strong>'),
-            'scan_url' => $scan_url,
-        ]);
-        /* Delete transient, only display this notice once. */
-        delete_transient('cherry-manual-indexation-needed');
-    } else if ($index_process_status === 'VALUE_NOT_EXIST' || $index_process_status === 'IN_PROGRESS') {
-        echo $view->render('notices/scan-prompt', [
-            'line1'    => '<strong>CherryLink Pro</strong>: ' . esc_html__('сканирование не завершено!', 'cherrylink'),
-            /* translators: %s: bold "you need to finish scanning" phrase */
-            'line2'    => sprintf(esc_html__('Плагин может работать некорректно или не видеть все записи, %s.', 'cherrylink'), '<strong>' . esc_html__('необходимо завершить сканирование', 'cherrylink') . '</strong>'),
-            'scan_url' => $scan_url,
-        ]);
-    }
-}
-
-function linkate_posts_wp_admin_style()
-{
-    if (LinkatePosts::linkate_is_plugin_admin_page('settings')) {
-        wp_register_style('cherrylink-css-admin', plugins_url('', __FILE__) . '/css/cherry-admin.css', false, LinkatePosts::asset_ver('css/cherry-admin.css'));
-        wp_enqueue_style('cherrylink-css-admin');
-
-        wp_register_script('cherrylink-js-tailwind', plugins_url('/js/tailwind.js', __FILE__), array(), LinkatePosts::asset_ver('js/tailwind.js'));
-        wp_register_script('cherrylink-js-admin', plugins_url('/js/cherry-admin.js', __FILE__), array('jquery', 'wp-i18n'), LinkatePosts::asset_ver('js/cherry-admin.js'));
-        wp_register_script('cherrylink-js-admin-csv', plugins_url('/js/cherry-admin-csv.js', __FILE__), array('jquery', 'wp-i18n'), LinkatePosts::asset_ver('js/cherry-admin-csv.js'));
-
-        wp_register_script('cherrylink-js-admin-index', plugins_url('/js/cherry-admin-index.js', __FILE__), array('jquery', 'wp-i18n'), LinkatePosts::asset_ver('js/cherry-admin-index.js'));
-
-        // Load JS translations (languages/cherrylink-<locale>-<handle>.json) for the admin scripts.
-        wp_set_script_translations('cherrylink-js-admin', 'cherrylink', CHERRYLINK_DIR . 'languages');
-        wp_set_script_translations('cherrylink-js-admin-csv', 'cherrylink', CHERRYLINK_DIR . 'languages');
-        wp_set_script_translations('cherrylink-js-admin-index', 'cherrylink', CHERRYLINK_DIR . 'languages');
-
-        $options = (array) get_option('linkate-posts', []);
-        $scheme_exists = array("state" => isset($options['linkate_scheme_exists']) ? true : false);
-        wp_localize_script('cherrylink-js-admin', 'scheme', $scheme_exists);
-
-        // Shared AJAX nonce for the admin scripts (admin / index / csv). Localized to the
-        // first-enqueued admin handle so the cherry_ajax global is defined before the others run.
-        wp_localize_script('cherrylink-js-admin', 'cherry_ajax', array(
-            'nonce' => \CherryLink\Ajax\Security::nonce(),
-        ));
-
-        wp_enqueue_script('cherrylink-js-tailwind');
-        wp_enqueue_script('cherrylink-js-admin');
-        wp_enqueue_script('cherrylink-js-admin-index');
-        wp_enqueue_script('cherrylink-js-admin-csv');
-    }
-}
-
-function linkate_posts_init()
-{
-    global $wpdb;
-    load_plugin_textdomain('cherrylink', false, dirname(plugin_basename(__FILE__)) . '/languages');
-
-    LinkatePosts::get_linkate_version();
-
-    add_action('admin_notices', 'cherrylink_activation_notice');
-
-    // Hooks for vector API indexing are registered in cherrylink_index.php
-
-    add_action('admin_enqueue_scripts', 'linkate_posts_wp_admin_style', 1);
-
-    // additional links in plugin description
-    add_filter(
-        'plugin_action_links_' . basename(dirname(__FILE__)) . '/' . basename(__FILE__),
-        array('LinkatePosts', 'linkate_plugin_action_links')
-    );
-} // init
-
-add_action('init', 'linkate_posts_init', 1);
-register_activation_hook(__FILE__, array('LinkatePosts', 'lp_activate'));
-
-
-// Debug logging moved to \CherryLink\Support\Logger; this stays as a thin
-// back-compat shim for the legacy callers.
-function cherry_write_log($data)
-{
-    (new \CherryLink\Support\Logger())->log($data);
 }

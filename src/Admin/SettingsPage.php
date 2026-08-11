@@ -8,6 +8,7 @@ use CherryLink\Api\Client;
 use CherryLink\Contracts\Registerable;
 use CherryLink\CustomFields\Acf;
 use CherryLink\Indexing\IndexHooks;
+use CherryLink\Plugin;
 use CherryLink\Support\License;
 use CherryLink\Support\Options;
 use CherryLink\Support\Tailwind;
@@ -28,6 +29,26 @@ final class SettingsPage implements Registerable
     public function register(): void
     {
         \add_action('admin_menu', [$this, 'menu'], 1);
+        \add_filter(
+            'plugin_action_links_' . \plugin_basename(Plugin::instance()->file()),
+            [$this, 'actionLinks']
+        );
+    }
+
+    /**
+     * Prepend a "Settings" link to the plugin's row on the Plugins screen.
+     *
+     * @param array<int,string> $links
+     * @return array<int,string>
+     */
+    public function actionLinks($links): array
+    {
+        $settings = '<a href="' . \admin_url('options-general.php?page=cherrylink-pro') . '" title="'
+            . \esc_attr__('Настройки CherryLink', 'cherrylink') . '">'
+            . \esc_html__('Настройки', 'cherrylink') . '</a>';
+        \array_unshift($links, $settings);
+
+        return $links;
     }
 
     public function menu(): void

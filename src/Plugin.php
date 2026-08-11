@@ -78,6 +78,8 @@ final class Plugin
 
         $this->services = [
             new \CherryLink\Admin\StatsColumn(),
+            new \CherryLink\Admin\AdminAssets($this->options),
+            new \CherryLink\Admin\Notices(),
             new \CherryLink\Editor\GutenbergAssets($this->options),
             new \CherryLink\Indexing\IndexHooks($this->options, $license),
             new \CherryLink\Indexing\SyncService($this->options, $license),
@@ -87,6 +89,7 @@ final class Plugin
             new \CherryLink\Editor\ClassicPanel($this->options),
             new \CherryLink\Debug\Debugger(),
             $license,
+            new \CherryLink\Support\Lifecycle($license),
             new \CherryLink\Admin\SettingsPage(),
         ];
 

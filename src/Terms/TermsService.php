@@ -11,9 +11,8 @@ use WP_Term;
 /**
  * Builds the taxonomy term trees the editor panels link into — the classic panel's
  * nested HTML list and the Gutenberg sidebar's JSON tree — plus the quick category
- * filters. Ported verbatim from the legacy cherrylink_terms.php (now a shim that
- * keeps hierarchical_term_tree()/linkate_get_all_categories() as delegators, since
- * the classic-panel template and the editor UI call them directly).
+ * filters. Ported verbatim from the legacy cherrylink_terms.php (deleted). The
+ * classic-panel template calls classicTree() directly.
  */
 final class TermsService implements Registerable
 {

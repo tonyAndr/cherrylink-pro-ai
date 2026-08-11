@@ -6,7 +6,7 @@ namespace CherryLink\Support;
 
 /**
  * Tailwind utility-class strings shared by the admin views. Moved verbatim from
- * the legacy CL_TWC (now a class_alias shim in cherrylink_tailwind_constants.php).
+ * the legacy CL_TWC class (deleted); the admin templates reference it by FQN.
  */
 class Tailwind
 {

@@ -17,9 +17,9 @@ use CherryLink\Terms\TermsService;
  * its CSS/JS enqueues, the inline options bridge, and the two suggestion AJAX
  * endpoints (get_linkate_links / get_linkate_suggestions).
  *
- * Ported verbatim from the legacy cherrylink_editor_ui.php (now a shim that keeps
- * linkate_build_source_html()/create_quick_cat_select() as delegators — the former
- * is called by the orphan-donor stats, the latter by the classic-panel template).
+ * Ported verbatim from the legacy cherrylink_editor_ui.php (deleted). buildSourceHtml()
+ * is called by the orphan-donor stats; createQuickCatSelect() by the classic-panel
+ * template — both directly, as static methods.
  *
  * register() reproduces the old file-scope gate: the panel only wires up in the
  * admin for a licensed site.

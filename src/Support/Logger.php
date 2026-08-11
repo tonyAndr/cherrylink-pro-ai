@@ -6,7 +6,7 @@ namespace CherryLink\Support;
 
 /**
  * Debug logger. Writes to the PHP error log only when WP_DEBUG is on — a verbatim
- * port of the legacy cherry_write_log() (now a back-compat shim in cherrylink_main.php).
+ * port of the legacy cherry_write_log() (deleted).
  *
  * The one intentional hardening over the original: we guard on defined('WP_DEBUG')
  * so analysis/CLI contexts where the constant is absent don't fatal. In every real

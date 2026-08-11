@@ -6,16 +6,15 @@ namespace CherryLink\Tests\Unit;
 
 use Brain\Monkey;
 use Brain\Monkey\Functions;
+use CherryLink\Support\Options;
 use PHPUnit\Framework\TestCase;
-
-require_once CHERRYLINK_PLUGIN_DIR . '/cherrylink_install.php';
 
 /**
  * Characterization test pinning the default options written on a fresh install
- * (fill_options()). This is the contract the Stage 2 Options repository must
+ * (Options::fill()). This is the contract the Stage 2 Options repository must
  * reproduce exactly — get_option defaults must not silently drift.
  *
- * @covers ::fill_options
+ * @covers \CherryLink\Support\Options::fill
  */
 final class OptionDefaultsTest extends TestCase
 {
@@ -39,7 +38,7 @@ final class OptionDefaultsTest extends TestCase
 
     public function testFreshInstallScalarDefaults(): void
     {
-        $opts = \fill_options([]);
+        $opts = Options::fill([]);
 
         $expected = [
             'limit_ajax'                  => 50,
@@ -76,7 +75,7 @@ final class OptionDefaultsTest extends TestCase
 
     public function testFreshInstallStatusMatrix(): void
     {
-        $opts = \fill_options([]);
+        $opts = Options::fill([]);
 
         $this->assertSame(
             ['publish' => 'true', 'private' => 'false', 'draft' => 'false', 'future' => 'false'],
@@ -90,7 +89,7 @@ final class OptionDefaultsTest extends TestCase
      */
     public function testFreshInstallTemplateDefaultsDecode(): void
     {
-        $opts = \fill_options([]);
+        $opts = Options::fill([]);
 
         $decode = static function (string $stored): string {
             return urldecode(base64_decode($stored));
@@ -110,7 +109,7 @@ final class OptionDefaultsTest extends TestCase
      */
     public function testFreshInstallKeySet(): void
     {
-        $opts = \fill_options([]);
+        $opts = Options::fill([]);
         $keys = array_keys($opts);
         sort($keys);
 

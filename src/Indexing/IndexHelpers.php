@@ -7,7 +7,7 @@ namespace CherryLink\Indexing;
 /**
  * Post-type + count helpers for the vector-API indexer, plus the pure
  * incremental-sync diff. Moved verbatim from the legacy CL_Index_Helpers
- * (which is now a class_alias shim in cherrylink_index_helpers.php).
+ * class (deleted).
  */
 class IndexHelpers
 {

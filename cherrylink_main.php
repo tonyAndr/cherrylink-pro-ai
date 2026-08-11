@@ -68,13 +68,11 @@ if (file_exists(CHERRYLINK_DIR . '/updater/plugin-update-checker.php')) {
     $cl_update_checker->getVcsApi()->enableReleaseAssets();
 }
 
-// Remaining legacy modules: template-helper globals + class aliases (thin delegators to
-// the namespaced services). The API runtime constants + alternative-route hook now live
-// in \CherryLink\Api\Relay, wired by the container above.
-if (!defined('LP_OT_LIBRARY')) require(CHERRYLINK_DIR . '/cherrylink_output_tags.php');
+// Remaining legacy modules: template-helper globals + the CL_TWC class alias (thin
+// delegators the admin/editor templates still call). The API runtime constants +
+// alternative-route hook live in \CherryLink\Api\Relay, wired by the container above.
 if (!defined('LINKATE_TERMS_LIBRARY')) require(CHERRYLINK_DIR . '/cherrylink_terms.php');
 if (!defined('LINKATE_TAILWIND_CONSTANTS')) require(CHERRYLINK_DIR . '/cherrylink_tailwind_constants.php');
-if (!defined('LINKATE_INDEX_HELPERS')) require(CHERRYLINK_DIR . "/cherrylink_index_helpers.php");
 
 if (is_admin()) {
     require(CHERRYLINK_DIR . '/cherrylink_editor_ui.php');

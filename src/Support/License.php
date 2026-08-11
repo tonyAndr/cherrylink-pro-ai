@@ -12,8 +12,8 @@ use CherryLink\Contracts\Registerable;
  * Owns the "call home" check against seocherry.ru, the cached validity state in the
  * linkate_posts_meta option, the daily re-check cron, the settings-page "index out of
  * sync while unlicensed" notice, and the administrator capability grant. Ported from
- * the legacy cherrylink_install.php; that file now keeps only thin global shims for the
- * handful of callers (settings page, activation/update hooks, indexing gate).
+ * the legacy cherrylink_install.php (deleted); the activation/update lifecycle now lives
+ * in Support\Lifecycle, which calls install() on activation and after an update.
  *
  * All API indexing (save hook, deletes, scans) is gated on isLicensed(); while
  * unlicensed, post changes are not pushed to the API and the index drifts, which the

@@ -58,8 +58,10 @@ final class RenderOutputTest extends TestCase
         Functions\when('wp_get_attachment_image_url')->justReturn(false);
         Functions\when('strip_shortcodes')->returnArg(1);
 
-        // linkate_link_fields + the linkate_otf_* getters + linkate_unparse_url.
-        require_once CHERRYLINK_PLUGIN_DIR . '/cherrylink_output_tags.php';
+        // Legacy linkate_otf_* getters — used ONLY by the historical {tag}-dispatch
+        // oracle below (refPrepare/refExpand). The production "new" path calls
+        // \CherryLink\Editor\LinkFields directly.
+        require_once CHERRYLINK_PLUGIN_DIR . '/tests/fixtures/legacy-output-tags.php';
 
         // Pull the REAL templates out of the plugin so the test tracks production.
         // Stage 5 moved them from inline strings in cherrylink_main.php to
@@ -105,7 +107,7 @@ final class RenderOutputTest extends TestCase
     public function testNoUnresolvedPlaceholders(): void
     {
         $classicH1 = $this->classic;
-        $leftover  = strtr($classicH1, \linkate_link_fields(self::OPTION_KEY, $this->mk(1)));
+        $leftover  = strtr($classicH1, \CherryLink\Editor\LinkFields::forResult(self::OPTION_KEY, $this->mk(1)));
         $this->assertSame(0, preg_match('/\{[a-z_]+\}/', $leftover), "unresolved placeholder: $leftover");
     }
 
@@ -185,7 +187,7 @@ final class RenderOutputTest extends TestCase
         foreach ($ids as $id) {
             $r = $this->mk($id);
             $r->suggestions = str_replace('"', '\\"', $r->suggestions);
-            $items[] = '{' . strtr($tpl, \linkate_link_fields(self::OPTION_KEY, $r)) . '}';
+            $items[] = '{' . strtr($tpl, \CherryLink\Editor\LinkFields::forResult(self::OPTION_KEY, $r)) . '}';
         }
         return '[' . implode(',', $items) . ']';
     }
@@ -210,7 +212,7 @@ final class RenderOutputTest extends TestCase
         foreach ($ids as $id) {
             $r = $this->mk($id);
             $r->suggestions = htmlspecialchars($r->suggestions, ENT_COMPAT, 'UTF-8');
-            $items[] = strtr($outFinal, \linkate_link_fields(self::OPTION_KEY, $r)) . "\n";
+            $items[] = strtr($outFinal, \CherryLink\Editor\LinkFields::forResult(self::OPTION_KEY, $r)) . "\n";
         }
         return trim(implode($div ? $div : "\n", $items));
     }

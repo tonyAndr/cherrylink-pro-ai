@@ -4,21 +4,20 @@ declare(strict_types=1);
 
 namespace CherryLink\Tests\Unit;
 
+use CherryLink\Indexing\IndexHelpers;
 use PHPUnit\Framework\TestCase;
-
-require_once CHERRYLINK_PLUGIN_DIR . '/cherrylink_index_helpers.php';
 
 /**
  * Characterization test for the pure incremental-sync diff.
- * Ported from tests/test_sync_plan.php. No WordPress needed — the method is pure.
+ * No WordPress needed — the method is pure.
  *
- * @covers \CL_Index_Helpers::compute_sync_plan
+ * @covers \CherryLink\Indexing\IndexHelpers::compute_sync_plan
  */
 final class SyncPlanTest extends TestCase
 {
     public function testEmptyManifestUpsertsEverything(): void
     {
-        $plan = \CL_Index_Helpers::compute_sync_plan(
+        $plan = IndexHelpers::compute_sync_plan(
             [],
             [1 => '2026-01-01 00:00:00', 2 => '2026-01-02 00:00:00']
         );
@@ -31,7 +30,7 @@ final class SyncPlanTest extends TestCase
         $current  = [1 => '2026-01-01 00:00:00', 2 => '2026-01-02 00:00:00'];
         $this->assertSame(
             ['upsert' => [], 'delete' => []],
-            \CL_Index_Helpers::compute_sync_plan($manifest, $current)
+            IndexHelpers::compute_sync_plan($manifest, $current)
         );
     }
 
@@ -41,7 +40,7 @@ final class SyncPlanTest extends TestCase
         $current  = [1 => '2027-06-06 06:06:06', 2 => '2026-01-02 00:00:00'];
         $this->assertSame(
             ['upsert' => [1], 'delete' => []],
-            \CL_Index_Helpers::compute_sync_plan($manifest, $current)
+            IndexHelpers::compute_sync_plan($manifest, $current)
         );
     }
 
@@ -51,7 +50,7 @@ final class SyncPlanTest extends TestCase
         $current  = [1 => '2026-01-01 00:00:00', 2 => '2026-01-02 00:00:00', 3 => '2026-03-03 00:00:00'];
         $this->assertSame(
             ['upsert' => [3], 'delete' => []],
-            \CL_Index_Helpers::compute_sync_plan($manifest, $current)
+            IndexHelpers::compute_sync_plan($manifest, $current)
         );
     }
 
@@ -61,7 +60,7 @@ final class SyncPlanTest extends TestCase
         $current  = [1 => '2026-01-01 00:00:00'];
         $this->assertSame(
             ['upsert' => [], 'delete' => [2]],
-            \CL_Index_Helpers::compute_sync_plan($manifest, $current)
+            IndexHelpers::compute_sync_plan($manifest, $current)
         );
     }
 
@@ -71,7 +70,7 @@ final class SyncPlanTest extends TestCase
         $current  = [1 => 'a', 2 => 'CHANGED', 3 => 'new'];
         $this->assertSame(
             ['upsert' => [2, 3], 'delete' => [9]],
-            \CL_Index_Helpers::compute_sync_plan($manifest, $current)
+            IndexHelpers::compute_sync_plan($manifest, $current)
         );
     }
 
@@ -80,7 +79,7 @@ final class SyncPlanTest extends TestCase
         $manifest = [1 => ['modified' => null]];
         $this->assertSame(
             ['upsert' => [1], 'delete' => []],
-            \CL_Index_Helpers::compute_sync_plan($manifest, [1 => '2026-01-01 00:00:00'])
+            IndexHelpers::compute_sync_plan($manifest, [1 => '2026-01-01 00:00:00'])
         );
     }
 }

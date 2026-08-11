@@ -7,9 +7,9 @@ namespace CherryLink\Editor;
 /**
  * Builds the {tag} => value map for one search result — the data the two link-card
  * templates (templates/link-card/*.php) are filled with via strtr(). Ported verbatim
- * from the legacy cherrylink_output_tags.php (now a shim that keeps the global
- * linkate_otf_* getters + linkate_link_fields() as delegators, since the render
- * golden-master test dispatches through them).
+ * from the legacy cherrylink_output_tags.php (deleted). The render golden-master test
+ * reproduces the original linkate_otf_* {tag}-dispatch via a test fixture
+ * (tests/fixtures/legacy-output-tags.php) and asserts it matches forResult().
  *
  * @phpstan-type Result \stdClass
  */

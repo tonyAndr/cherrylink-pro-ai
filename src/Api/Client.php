@@ -12,11 +12,10 @@ use WP_Post;
  * Cherry Vector API client — all communication with the Cherry Vector API service
  * (semantic search, link graph, indexing).
  *
- * Moved verbatim from the legacy CherryVectorAPI (now a class_alias shim in
- * cherrylink_vector_api.php, which also owns the runtime CHERRY_VECTOR_API_URL /
- * CL_ALT_API_* constants and the http_api_curl connect hook). The only behavioral
- * change is that error logging now goes through an injected Support\Logger instead
- * of the global cherry_write_log().
+ * Moved from the legacy CherryVectorAPI. The runtime CHERRY_VECTOR_API_URL /
+ * CL_ALT_API_* constants and the http_api_curl alternative-route hook now live in
+ * Api\Relay. The only behavioral change from the original is that error logging goes
+ * through an injected Support\Logger instead of the global cherry_write_log().
  */
 class Client
 {

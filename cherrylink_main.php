@@ -69,10 +69,10 @@ if (file_exists(CHERRYLINK_DIR . '/updater/plugin-update-checker.php')) {
 }
 
 // Remaining legacy modules: template-helper globals + class aliases (thin delegators to
-// the namespaced services) and the API runtime constants + alternative-route hook.
+// the namespaced services). The API runtime constants + alternative-route hook now live
+// in \CherryLink\Api\Relay, wired by the container above.
 if (!defined('LP_OT_LIBRARY')) require(CHERRYLINK_DIR . '/cherrylink_output_tags.php');
 if (!defined('LINKATE_TERMS_LIBRARY')) require(CHERRYLINK_DIR . '/cherrylink_terms.php');
-if (!defined('CHERRY_VECTOR_API_CLIENT')) { define('CHERRY_VECTOR_API_CLIENT', true); require(CHERRYLINK_DIR . '/cherrylink_vector_api.php'); }
 if (!defined('LINKATE_TAILWIND_CONSTANTS')) require(CHERRYLINK_DIR . '/cherrylink_tailwind_constants.php');
 if (!defined('LINKATE_INDEX_HELPERS')) require(CHERRYLINK_DIR . "/cherrylink_index_helpers.php");
 

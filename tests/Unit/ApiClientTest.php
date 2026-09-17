@@ -59,9 +59,10 @@ final class ApiClientTest extends TestCase
      *
      * @param mixed $body    Response body (encoded to JSON for the client to decode).
      * @param int   $code    HTTP status code.
-     * @param bool  $isError Whether is_wp_error() should report a transport error.
+     * @param bool                 $isError Whether is_wp_error() should report a transport error.
+     * @param array<string,string> $headers Response headers.
      */
-    private function mockHttp($body, int $code = 200, bool $isError = false): void
+    private function mockHttp($body, int $code = 200, bool $isError = false, array $headers = []): void
     {
         $result = $isError
             ? new class {
@@ -77,6 +78,7 @@ final class ApiClientTest extends TestCase
         });
         Functions\when('is_wp_error')->justReturn($isError);
         Functions\when('wp_remote_retrieve_response_code')->justReturn($code);
+        Functions\when('wp_remote_retrieve_headers')->justReturn($headers);
         Functions\when('wp_remote_retrieve_body')->justReturn(is_string($body) ? $body : json_encode($body));
     }
 
@@ -185,5 +187,58 @@ final class ApiClientTest extends TestCase
         (new Client())->delete_all_documents(); // /v1/documents/all
 
         $this->assertSame(120, $this->captured['args']['timeout']);
+    }
+
+    public function testStructuredResultPreservesStatusHeadersRetryAfterAndExtraHeaders(): void
+    {
+        Functions\when('get_option')->justReturn(['hash_field' => 'LICENSE123']);
+        $this->mockHttp(
+            ['error' => 'busy'],
+            429,
+            false,
+            ['Retry-After' => '7', 'X-Request-Id' => 'req-123']
+        );
+
+        $result = (new Client())->request_result(
+            'POST',
+            '/v1/documents/batch',
+            ['documents' => []],
+            120,
+            ['Idempotency-Key' => 'batch-123']
+        );
+
+        $this->assertFalse($result['ok']);
+        $this->assertSame(429, $result['status']);
+        $this->assertSame(['error' => 'busy'], $result['body']);
+        $this->assertSame('7', $result['headers']['retry-after']);
+        $this->assertSame('req-123', $result['headers']['x-request-id']);
+        $this->assertSame(7, $result['retry_after']);
+        $this->assertSame('batch-123', $this->captured['args']['headers']['Idempotency-Key']);
+    }
+
+    public function testRetryAfterAcceptsHttpDateAndRejectsInvalidValues(): void
+    {
+        $this->assertSame(
+            60,
+            Client::parse_retry_after(
+                gmdate('D, d M Y H:i:s \\G\\M\\T', 1700000060),
+                1700000000
+            )
+        );
+        $this->assertNull(Client::parse_retry_after('not-a-delay'));
+        $this->assertNull(Client::parse_retry_after('-1'));
+    }
+
+    public function testStructuredResultRetainsTransportFailure(): void
+    {
+        Functions\when('get_option')->justReturn(['hash_field' => 'LICENSE123']);
+        $this->mockHttp('', 0, true);
+
+        $result = (new Client())->request_result('GET', '/v1/documents/count');
+
+        $this->assertFalse($result['ok']);
+        $this->assertSame(0, $result['status']);
+        $this->assertSame('transport failure', $result['error']);
+        $this->assertNull($result['retry_after']);
     }
 }

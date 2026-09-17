@@ -543,31 +543,60 @@ class Client
     // ── HTTP ────────────────────────────────────────────────────────────────
 
     /**
-     * @param array $body
-     * @return array|null
+     * Execute an authenticated API request and retain transport metadata.
+     *
+     * The compatibility methods above intentionally continue to expose the old
+     * array|null contract. New background work can use this result to distinguish
+     * a transport failure from an HTTP response and to honor Retry-After without
+     * parsing WordPress' response object a second time.
+     *
+     * @param array<string,mixed>  $body
+     * @param array<string,string> $extra_headers
+     * @return array{ok:bool,status:int,headers:array<string,string>,body:array|string|null,error:string,retry_after:int|null}
      */
-    private function request(string $method, string $path, array $body = [], int $timeout = 0): ?array
-    {
+    public function request_result(
+        string $method,
+        string $path,
+        array $body = [],
+        int $timeout = 0,
+        array $extra_headers = []
+    ): array {
         if (empty($this->license_key)) {
             $this->logger->log('CherryVectorAPI: no license key configured');
-            return null;
+            return [
+                'ok'          => false,
+                'status'      => 0,
+                'headers'     => [],
+                'body'        => null,
+                'error'       => 'no license key configured',
+                'retry_after' => null,
+            ];
         }
 
         if ($timeout === 0) {
             // Plain substr/strpos (not str_ends_with/str_contains) — those are PHP 8.0+
             // and the plugin supports PHP 7.4.
-            $is_batch  = \substr($path, -6) === '/batch' || \substr($path, -4) === '/all' || \strpos($path, '/parse') !== false;
-            $is_search = \substr($path, -7) === '/search' || \substr($path, -9) === '/problems' || \substr($path, -6) === '/stats';
+            $is_batch  = \substr($path, -6) === '/batch'
+                || \substr($path, -4) === '/all'
+                || \strpos($path, '/parse') !== false;
+            $is_search = \substr($path, -7) === '/search'
+                || \substr($path, -9) === '/problems'
+                || \substr($path, -6) === '/stats';
             $timeout   = $is_batch ? 120 : ($is_search ? 60 : 15);
         }
+        $headers = [
+            'Content-Type'  => 'application/json',
+            'X-License-Key' => $this->license_key,
+            'X-Site-Domain' => $this->domain,
+        ];
+        foreach ($extra_headers as $name => $value) {
+            $headers[$name] = $value;
+        }
+
         $args = [
             'method'  => $method,
             'timeout' => $timeout,
-            'headers' => [
-                'Content-Type'   => 'application/json',
-                'X-License-Key'  => $this->license_key,
-                'X-Site-Domain'  => $this->domain,
-            ],
+            'headers' => $headers,
         ];
 
         if (!empty($body)) {
@@ -577,17 +606,87 @@ class Client
         $response = \wp_remote_request($this->base_url . $path, $args);
 
         if (\is_wp_error($response)) {
-            $this->logger->log('CherryVectorAPI error: ' . $response->get_error_message());
-            return null;
+            $error = $response->get_error_message();
+            $this->logger->log('CherryVectorAPI error: ' . $error);
+            return [
+                'ok'          => false,
+                'status'      => 0,
+                'headers'     => [],
+                'body'        => null,
+                'error'       => $error,
+                'retry_after' => null,
+            ];
         }
 
-        $code = \wp_remote_retrieve_response_code($response);
-        if ($code < 200 || $code >= 300) {
+        $code       = (int) \wp_remote_retrieve_response_code($response);
+        $raw_headers = \wp_remote_retrieve_headers($response);
+        $response_headers = [];
+        if (\is_object($raw_headers) && \method_exists($raw_headers, 'getAll')) {
+            $raw_headers = $raw_headers->getAll();
+        }
+        if (\is_iterable($raw_headers)) {
+            foreach ($raw_headers as $name => $value) {
+                $response_headers[\strtolower((string) $name)] = \is_scalar($value)
+                    ? (string) $value
+                    : \implode(', ', \array_map('strval', (array) $value));
+            }
+        }
+
+        $raw     = \wp_remote_retrieve_body($response);
+        $decoded = \json_decode($raw, true);
+        $body_response = \is_array($decoded) ? $decoded : ($raw === '' ? [] : $raw);
+        $ok = $code >= 200 && $code < 300;
+        if (!$ok) {
             $this->logger->log("CherryVectorAPI HTTP {$code} on {$method} {$path}");
+        }
+
+        return [
+            'ok'          => $ok,
+            'status'      => $code,
+            'headers'     => $response_headers,
+            'body'        => $body_response,
+            'error'       => $ok ? '' : ('HTTP ' . $code),
+            'retry_after' => self::parse_retry_after($response_headers['retry-after'] ?? null),
+        ];
+    }
+
+    /**
+     * Parse either the seconds or HTTP-date form of Retry-After.
+     *
+     * @param string|null $value
+     */
+    public static function parse_retry_after(?string $value, ?int $now = null): ?int
+    {
+        if ($value === null) {
+            return null;
+        }
+        $value = \trim($value);
+        if ($value === '' || \preg_match('/^-\d+$/', $value)) {
+            return null;
+        }
+        if (!\preg_match('/^\d+$/', $value)) {
+            $timestamp = \strtotime($value);
+            if ($timestamp === false) {
+                return null;
+            }
+            $now = $now ?? \time();
+            return \max(0, $timestamp - $now);
+        }
+
+        return (int) $value;
+    }
+
+    /**
+     * @param array<string,mixed> $body
+     * @return array|null
+     */
+    private function request(string $method, string $path, array $body = [], int $timeout = 0): ?array
+    {
+        $result = $this->request_result($method, $path, $body, $timeout);
+        if (!$result['ok']) {
             return null;
         }
 
-        $decoded = \json_decode(\wp_remote_retrieve_body($response), true);
-        return \is_array($decoded) ? $decoded : [];
+        return \is_array($result['body']) ? $result['body'] : [];
     }
 }

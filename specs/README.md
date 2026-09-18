@@ -10,6 +10,7 @@ Spec-driven development: write or update the spec before implementing. Each spec
 |---|---|---|
 | [editor-ui.md](editor-ui.md) | Classic editor panel UX | stable |
 | [gutenberg-sidebar.md](gutenberg-sidebar.md) | Gutenberg sidebar UX, build toolchain | stable |
+| [indexing.md](indexing.md) | Synchronous scan, retries, and planned async delivery | design / synchronous implementation |
 
 ## How to use specs
 

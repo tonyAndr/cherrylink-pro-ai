@@ -82,4 +82,15 @@ final class SyncPlanTest extends TestCase
             IndexHelpers::compute_sync_plan($manifest, [1 => '2026-01-01 00:00:00'])
         );
     }
+
+    public function testForceFullReindexesPublishedPostsButStillPrunesOrphans(): void
+    {
+        $manifest = [1 => ['modified' => 'same'], 9 => ['modified' => 'orphan']];
+        $current  = [1 => 'same', 2 => 'new'];
+
+        $this->assertSame(
+            ['upsert' => [1, 2], 'delete' => [9]],
+            IndexHelpers::compute_sync_plan($manifest, $current, true)
+        );
+    }
 }

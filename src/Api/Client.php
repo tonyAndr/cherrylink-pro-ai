@@ -220,8 +220,32 @@ class Client
      */
     public function upsert_batch(array $wp_posts): array
     {
+        $result = $this->upsert_batch_result($wp_posts);
+
+        return [
+            'indexed' => $result['indexed'],
+            'errors'  => $result['errors'],
+        ];
+    }
+
+    /**
+     * Batch-upsert with transport and partial-result metadata for background sync.
+     *
+     * @param WP_Post[] $wp_posts
+     * @return array{ok:bool,retryable:bool,status:int,retry_after:int|null,indexed:int,errors:int,error:string}
+     */
+    public function upsert_batch_result(array $wp_posts): array
+    {
         if (empty($wp_posts)) {
-            return ['indexed' => 0, 'errors' => 0];
+            return [
+                'ok'          => true,
+                'retryable'   => false,
+                'status'      => 200,
+                'retry_after' => null,
+                'indexed'     => 0,
+                'errors'      => 0,
+                'error'       => '',
+            ];
         }
 
         $documents = [];
@@ -237,15 +261,21 @@ class Client
             ];
         }
 
-        $response = $this->request('POST', '/v1/documents/batch', ['documents' => $documents]);
-
-        if ($response === null) {
-            return ['indexed' => 0, 'errors' => count($documents)];
-        }
+        $response = $this->request_result('POST', '/v1/documents/batch', ['documents' => $documents]);
+        $body     = \is_array($response['body']) ? $response['body'] : [];
+        $valid    = \array_key_exists('indexed', $body) && \array_key_exists('errors', $body);
+        $indexed  = $valid ? (int)$body['indexed'] : 0;
+        $errors   = $response['ok'] && $valid ? (int)$body['errors'] : count($documents);
+        $ok       = $response['ok'] && $valid && $errors === 0;
 
         return [
-            'indexed' => (int)($response['indexed'] ?? 0),
-            'errors'  => (int)($response['errors']  ?? 0),
+            'ok'          => $ok,
+            'retryable'   => !$valid || $errors > 0 || self::is_retryable_result($response),
+            'status'      => $response['status'],
+            'retry_after' => $response['retry_after'],
+            'indexed'     => $indexed,
+            'errors'      => $errors,
+            'error'       => $response['error'] ?: (!$valid ? 'invalid batch response' : ($errors > 0 ? 'batch contained errors' : '')),
         ];
     }
 
@@ -288,9 +318,22 @@ class Client
 
     /**
      * Fetch the full index manifest as [post_id => ['hash' => ?, 'modified' => ?]].
-     * Loops the paginated endpoint. This is the "known state" the scan diffs against.
+     * Loops the paginated endpoint. This compatibility wrapper returns an empty map on
+     * failure; SyncService uses fetch_manifest_result() so an outage fails closed.
      */
     public function fetch_manifest_map(): array
+    {
+        $result = $this->fetch_manifest_result();
+
+        return $result['ok'] ? $result['map'] : [];
+    }
+
+    /**
+     * Fetch the manifest while retaining failure metadata for a fail-closed sync.
+     *
+     * @return array{ok:bool,map:array<int,array{hash:mixed,modified:mixed}>,status:int,retry_after:int|null,retryable:bool,error:string}
+     */
+    public function fetch_manifest_result(): array
     {
         $map    = [];
         $cursor = null;
@@ -300,20 +343,66 @@ class Client
             if ($cursor) {
                 $path .= '&cursor=' . \rawurlencode($cursor);
             }
-            $resp = $this->request('GET', $path, [], 30);
-            if ($resp === null) {
-                break;  // API error — treat as empty so the scan can still upsert everything
+            $response = $this->request_result('GET', $path, [], 30);
+            if (!$response['ok']) {
+                return [
+                    'ok'          => false,
+                    'map'         => [],
+                    'status'      => $response['status'],
+                    'retry_after' => $response['retry_after'],
+                    'retryable'   => self::is_retryable_result($response),
+                    'error'       => $response['error'] ?: 'manifest request failed',
+                ];
             }
-            foreach (($resp['docs'] ?? []) as $d) {
+            $resp = \is_array($response['body']) ? $response['body'] : [];
+            if (!isset($resp['docs']) || !\is_array($resp['docs'])) {
+                return [
+                    'ok'          => false,
+                    'map'         => [],
+                    'status'      => $response['status'],
+                    'retry_after' => null,
+                    'retryable'   => false,
+                    'error'       => 'manifest response missing docs',
+                ];
+            }
+            foreach ($resp['docs'] as $d) {
+                if (!\is_array($d) || !isset($d['post_id'])) {
+                    return [
+                        'ok'          => false,
+                        'map'         => [],
+                        'status'      => $response['status'],
+                        'retry_after' => null,
+                        'retryable'   => false,
+                        'error'       => 'manifest response contains an invalid document',
+                    ];
+                }
                 $map[(int)$d['post_id']] = [
                     'hash'     => $d['content_hash'] ?? null,
                     'modified' => $d['modified_gmt'] ?? null,
                 ];
             }
             $cursor = $resp['next_cursor'] ?? null;
-        } while ($cursor && ++$guard < 1000);
+            ++$guard;
+            if ($cursor && $guard >= 1000) {
+                return [
+                    'ok'          => false,
+                    'map'         => [],
+                    'status'      => 0,
+                    'retry_after' => null,
+                    'retryable'   => false,
+                    'error'       => 'manifest pagination limit exceeded',
+                ];
+            }
+        } while ($cursor);
 
-        return $map;
+        return [
+            'ok'          => true,
+            'map'         => $map,
+            'status'      => 200,
+            'retry_after' => null,
+            'retryable'   => false,
+            'error'       => '',
+        ];
     }
 
     /**
@@ -323,8 +412,22 @@ class Client
      */
     public function upsert_posts_by_ids(array $post_ids): array
     {
+        $result = $this->upsert_posts_by_ids_result($post_ids);
+
+        return [
+            'indexed' => $result['indexed'],
+            'errors'  => $result['errors'],
+        ];
+    }
+
+    /**
+     * @param int[] $post_ids
+     * @return array{ok:bool,retryable:bool,status:int,retry_after:int|null,indexed:int,errors:int,error:string}
+     */
+    public function upsert_posts_by_ids_result(array $post_ids): array
+    {
         $wp_posts = \array_filter(\array_map('get_post', $post_ids));
-        return $this->upsert_batch(\array_values($wp_posts));
+        return $this->upsert_batch_result(\array_values($wp_posts));
     }
 
     /**
@@ -334,6 +437,15 @@ class Client
      * @param int[] $post_ids
      */
     public function parse_links_for_ids(array $post_ids): int
+    {
+        return $this->parse_links_for_ids_result($post_ids)['count'];
+    }
+
+    /**
+     * @param int[] $post_ids
+     * @return array{ok:bool,retryable:bool,status:int,retry_after:int|null,count:int,errors:int,error:string}
+     */
+    public function parse_links_for_ids_result(array $post_ids): array
     {
         $items = [];
         foreach ($post_ids as $pid) {
@@ -353,12 +465,31 @@ class Client
             ];
         }
         if (empty($items)) {
-            return 0;
+            return [
+                'ok'          => true,
+                'retryable'   => false,
+                'status'      => 200,
+                'retry_after' => null,
+                'count'       => 0,
+                'errors'      => 0,
+                'error'       => '',
+            ];
         }
-        $resp = $this->parse_links_batch($items);
-        return \array_sum(\array_map(static function ($r) {
+        $result = $this->parse_links_batch_result($items);
+        $body   = $result['body'];
+        $count  = \array_sum(\array_map(static function ($r) {
             return (int)($r['count'] ?? 0);
-        }, $resp['results'] ?? []));
+        }, $body['results']));
+
+        return [
+            'ok'          => $result['ok'],
+            'retryable'   => $result['retryable'],
+            'status'      => $result['status'],
+            'retry_after' => $result['retry_after'],
+            'count'       => $count,
+            'errors'      => $result['errors'],
+            'error'       => $result['error'],
+        ];
     }
 
     /**
@@ -366,11 +497,46 @@ class Client
      */
     public function parse_links_batch(array $items): array
     {
+        return $this->parse_links_batch_result($items)['body'];
+    }
+
+    /**
+     * @param array<int,array<string,mixed>> $items
+     * @return array{ok:bool,retryable:bool,status:int,retry_after:int|null,body:array{results:array<int,array<string,mixed>>,errors:int},errors:int,error:string}
+     */
+    public function parse_links_batch_result(array $items): array
+    {
         if (empty($items)) {
-            return ['results' => [], 'errors' => 0];
+            return [
+                'ok'          => true,
+                'retryable'   => false,
+                'status'      => 200,
+                'retry_after' => null,
+                'body'        => ['results' => [], 'errors' => 0],
+                'errors'      => 0,
+                'error'       => '',
+            ];
         }
-        $resp = $this->request('POST', '/v1/links/parse-batch', ['items' => $items], 120);
-        return $resp ?? ['results' => [], 'errors' => count($items)];
+        $response = $this->request_result('POST', '/v1/links/parse-batch', ['items' => $items], 120);
+        $body     = \is_array($response['body']) ? $response['body'] : [];
+        $valid    = \array_key_exists('results', $body)
+            && \array_key_exists('errors', $body)
+            && \is_array($body['results']);
+        $errors   = $response['ok'] && $valid ? (int)$body['errors'] : count($items);
+        $normalized = [
+            'results' => \is_array($body['results'] ?? null) ? $body['results'] : [],
+            'errors'  => $errors,
+        ];
+
+        return [
+            'ok'          => $response['ok'] && $valid && $errors === 0,
+            'retryable'   => !$valid || $errors > 0 || self::is_retryable_result($response),
+            'status'      => $response['status'],
+            'retry_after' => $response['retry_after'],
+            'body'        => $normalized,
+            'errors'      => $errors,
+            'error'       => $response['error'] ?: (!$valid ? 'invalid link batch response' : ($errors > 0 ? 'link batch contained errors' : '')),
+        ];
     }
 
     /**
@@ -380,11 +546,41 @@ class Client
      */
     public function delete_documents_batch(array $post_ids): int
     {
+        return $this->delete_documents_batch_result($post_ids)['deleted'];
+    }
+
+    /**
+     * @param int[] $post_ids
+     * @return array{ok:bool,retryable:bool,status:int,retry_after:int|null,deleted:int,error:string}
+     */
+    public function delete_documents_batch_result(array $post_ids): array
+    {
         if (empty($post_ids)) {
-            return 0;
+            return [
+                'ok'          => true,
+                'retryable'   => false,
+                'status'      => 200,
+                'retry_after' => null,
+                'deleted'     => 0,
+                'error'       => '',
+            ];
         }
-        $resp = $this->request('POST', '/v1/documents/delete-batch', ['post_ids' => \array_values($post_ids)]);
-        return (int)($resp['deleted'] ?? 0);
+        $response = $this->request_result(
+            'POST',
+            '/v1/documents/delete-batch',
+            ['post_ids' => \array_values($post_ids)]
+        );
+        $body = \is_array($response['body']) ? $response['body'] : [];
+        $valid = \array_key_exists('deleted', $body);
+
+        return [
+            'ok'          => $response['ok'] && $valid,
+            'retryable'   => !$valid || self::is_retryable_result($response),
+            'status'      => $response['status'],
+            'retry_after' => $response['retry_after'],
+            'deleted'     => (int)($body['deleted'] ?? 0),
+            'error'       => $response['error'] ?: ($valid ? '' : 'invalid delete response'),
+        ];
     }
 
     // ── Link graph API ──────────────────────────────────────────────────────
@@ -409,8 +605,26 @@ class Client
      */
     public function delete_links(int $source_id, int $source_type = 0): bool
     {
-        $response = $this->request('DELETE', "/v1/links/source/{$source_id}?source_type={$source_type}");
-        return $response !== null;
+        return $this->delete_links_result($source_id, $source_type)['ok'];
+    }
+
+    /**
+     * @return array{ok:bool,retryable:bool,status:int,retry_after:int|null,error:string}
+     */
+    public function delete_links_result(int $source_id, int $source_type = 0): array
+    {
+        $response = $this->request_result(
+            'DELETE',
+            "/v1/links/source/{$source_id}?source_type={$source_type}"
+        );
+
+        return [
+            'ok'          => $response['ok'],
+            'retryable'   => self::is_retryable_result($response),
+            'status'      => $response['status'],
+            'retry_after' => $response['retry_after'],
+            'error'       => $response['error'],
+        ];
     }
 
     /**
@@ -674,6 +888,21 @@ class Client
         }
 
         return (int) $value;
+    }
+
+    /**
+     * Transport/status failures that are safe for the current idempotent batch to retry.
+     *
+     * @param array{status?:int,error?:string} $result
+     */
+    public static function is_retryable_result(array $result): bool
+    {
+        $status = (int)($result['status'] ?? 0);
+        if ($status === 0) {
+            return ($result['error'] ?? '') !== 'no license key configured';
+        }
+
+        return $status === 408 || $status === 429 || $status >= 500;
     }
 
     /**

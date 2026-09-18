@@ -241,4 +241,28 @@ final class ApiClientTest extends TestCase
         $this->assertSame('transport failure', $result['error']);
         $this->assertNull($result['retry_after']);
     }
+
+    public function testManifestFailureIsFailClosedAndKeepsTransportMetadata(): void
+    {
+        Functions\when('get_option')->justReturn(['hash_field' => 'LICENSE123']);
+        $this->mockHttp(['error' => 'unavailable'], 503, false, ['Retry-After' => '4']);
+
+        $result = (new Client())->fetch_manifest_result();
+
+        $this->assertFalse($result['ok']);
+        $this->assertSame([], $result['map']);
+        $this->assertSame(503, $result['status']);
+        $this->assertSame(4, $result['retry_after']);
+        $this->assertTrue($result['retryable']);
+    }
+
+    public function testRetryClassificationKeepsPermanentClientErrorsOut(): void
+    {
+        $this->assertTrue(Client::is_retryable_result(['status' => 0, 'error' => 'transport failure']));
+        $this->assertTrue(Client::is_retryable_result(['status' => 408, 'error' => 'HTTP 408']));
+        $this->assertTrue(Client::is_retryable_result(['status' => 429, 'error' => 'HTTP 429']));
+        $this->assertTrue(Client::is_retryable_result(['status' => 503, 'error' => 'HTTP 503']));
+        $this->assertFalse(Client::is_retryable_result(['status' => 400, 'error' => 'HTTP 400']));
+        $this->assertFalse(Client::is_retryable_result(['status' => 0, 'error' => 'no license key configured']));
+    }
 }

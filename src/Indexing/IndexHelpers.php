@@ -61,16 +61,17 @@ class IndexHelpers
      *
      * @param array<int,array{modified?:string|null}> $manifest         API index state, keyed by post ID
      * @param array<int,string>                       $current_modified post_modified_gmt of published posts
+     * @param bool                                    $force_full       re-upsert every published post
      * @return array{upsert:int[],delete:int[]}
      *   upsert = posts new to the index or whose modified timestamp changed;
      *   delete = indexed posts no longer published (orphans)
      */
-    public static function compute_sync_plan(array $manifest, array $current_modified): array
+    public static function compute_sync_plan(array $manifest, array $current_modified, bool $force_full = false): array
     {
         $upsert = [];
         foreach ($current_modified as $id => $modified) {
             $id = (int) $id;
-            if (!isset($manifest[$id]) || (string) ($manifest[$id]['modified'] ?? '') !== (string) $modified) {
+            if ($force_full || !isset($manifest[$id]) || (string) ($manifest[$id]['modified'] ?? '') !== (string) $modified) {
                 $upsert[] = $id;
             }
         }

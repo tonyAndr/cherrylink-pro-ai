@@ -43,6 +43,11 @@ final class SyncService implements Registerable
 
     public const UPSERT_BATCH = 20;
     public const LINK_BATCH    = 25;
+    public const PRUNE_BATCH   = 1000;
+
+    private const MAX_RETRY_ATTEMPTS = 8;
+    private const MAX_RETRY_DELAY    = 300;
+    private const BASE_RETRY_DELAY   = 2;
 
     /** @var Options */
     private $options;
@@ -50,10 +55,19 @@ final class SyncService implements Registerable
     /** @var License */
     private $license;
 
-    public function __construct(Options $options, License $license)
+    /** @var callable */
+    private $client_factory;
+
+    /**
+     * @param callable|null $client_factory Factory returning a Client; test seam for workers.
+     */
+    public function __construct(Options $options, License $license, ?callable $client_factory = null)
     {
-        $this->options = $options;
-        $this->license = $license;
+        $this->options        = $options;
+        $this->license        = $license;
+        $this->client_factory = $client_factory ?? static function (): Client {
+            return new Client();
+        };
     }
 
     public function register(): void
@@ -71,7 +85,7 @@ final class SyncService implements Registerable
     /** @return array<string,mixed> */
     public function getState(): array
     {
-        return \get_option(self::STATE, [
+        $defaults = [
             'status'       => 'idle',
             'phase'        => null,
             'offset'       => 0,
@@ -83,7 +97,21 @@ final class SyncService implements Registerable
             'started_gmt'  => '',
             'updated_gmt'  => '',
             'message'      => '',
-        ]);
+            'retry_attempt' => 0,
+            'next_retry_gmt' => '',
+            'last_http_status' => 0,
+            'last_retry_after' => null,
+            'last_error' => '',
+            'failed_phase' => null,
+            'failed_offset' => null,
+        ];
+
+        return \array_merge($defaults, (array) \get_option(self::STATE, $defaults));
+    }
+
+    private function client(): Client
+    {
+        return \call_user_func($this->client_factory);
     }
 
     /**
@@ -132,8 +160,22 @@ final class SyncService implements Registerable
             return $this->getState();   // already running — don't double-start
         }
 
-        $api      = new Client();
-        $manifest = $force_full ? [] : $api->fetch_manifest_map();
+        $api      = $this->client();
+        $manifest_result = $api->fetch_manifest_result();
+        if (!$manifest_result['ok']) {
+            $message = 'Manifest unavailable: ' . $manifest_result['error'];
+            return $this->setState([
+                'status'           => 'error',
+                'phase'            => 'manifest',
+                'message'          => $message,
+                'last_error'       => $message,
+                'last_http_status' => $manifest_result['status'],
+                'last_retry_after' => $manifest_result['retry_after'],
+                'failed_phase'     => 'manifest',
+                'failed_offset'    => 0,
+            ]);
+        }
+        $manifest = $manifest_result['map'];
 
         global $wpdb;
         $allowed = IndexHelpers::get_allowed_types_list();
@@ -148,7 +190,7 @@ final class SyncService implements Registerable
             $current_modified[(int) $r->ID] = $r->post_modified_gmt;
         }
 
-        $plan = IndexHelpers::compute_sync_plan($manifest, $current_modified);
+        $plan = IndexHelpers::compute_sync_plan($manifest, $current_modified, $force_full);
         \update_option(self::PLAN, $plan, false);
 
         $first = $plan['upsert'] ? 'upsert' : ($plan['delete'] ? 'prune' : 'done');
@@ -192,9 +234,20 @@ final class SyncService implements Registerable
             'deleted'      => 0,
             'started_gmt'  => \gmdate('Y-m-d H:i:s'),
             'message'      => '',
+            'retry_attempt' => 0,
+            'next_retry_gmt' => '',
+            'last_http_status' => 0,
+            'last_retry_after' => null,
+            'last_error' => '',
+            'failed_phase' => null,
+            'failed_offset' => null,
         ]);
 
-        \as_enqueue_async_action(self::HOOK, ['phase' => $first, 'offset' => 0], self::GROUP);
+        \as_enqueue_async_action(
+            self::HOOK,
+            ['phase' => $first, 'offset' => 0, 'attempt' => 0],
+            self::GROUP
+        );
         return $state;
     }
 
@@ -235,24 +288,37 @@ final class SyncService implements Registerable
      *
      * @param string     $phase
      * @param int|string $offset
+     * @param int|string $attempt
      */
-    public function worker($phase = 'upsert', $offset = 0): void
+    public function worker($phase = 'upsert', $offset = 0, $attempt = 0): void
     {
         $state = $this->getState();
         if ($state['status'] !== 'running') {
             return;   // cancelled or finished between enqueue and execution — stop the chain
         }
 
+        $offset  = (int) $offset;
+        $attempt = (int) $attempt;
+        if ($state['phase'] !== $phase || (int) $state['offset'] !== $offset) {
+            return;   // stale callback from an older phase/cursor
+        }
+        if ((int) $state['retry_attempt'] !== $attempt) {
+            return;   // stale retry callback
+        }
+
         $plan   = \get_option(self::PLAN, ['upsert' => [], 'delete' => []]);
-        $api    = new Client();
-        $offset = (int) $offset;
+        $api    = $this->client();
 
         try {
             switch ($phase) {
                 case 'upsert':
                     $slice = \array_slice($plan['upsert'], $offset, self::UPSERT_BATCH);
                     if ($slice) {
-                        $res = $api->upsert_posts_by_ids($slice);
+                        $res = $api->upsert_posts_by_ids_result($slice);
+                        if (!$res['ok']) {
+                            $this->handleFailure($api, $phase, $offset, $state, $res);
+                            return;
+                        }
                         $state['indexed'] += (int) $res['indexed'];
                     }
                     $next = $offset + \count($slice);
@@ -268,7 +334,12 @@ final class SyncService implements Registerable
                 case 'links':
                     $slice = \array_slice($plan['upsert'], $offset, self::LINK_BATCH);
                     if ($slice) {
-                        $state['links'] += $api->parse_links_for_ids($slice);
+                        $res = $api->parse_links_for_ids_result($slice);
+                        if (!$res['ok']) {
+                            $this->handleFailure($api, $phase, $offset, $state, $res);
+                            return;
+                        }
+                        $state['links'] += (int) $res['count'];
                     }
                     $next = $offset + \count($slice);
                     if ($next >= \count($plan['upsert'])) {
@@ -281,14 +352,30 @@ final class SyncService implements Registerable
                     break;
 
                 case 'prune':
-                    if (! empty($plan['delete'])) {
-                        $state['deleted'] += $api->delete_documents_batch($plan['delete']);
-                        foreach ($plan['delete'] as $pid) {
-                            $api->delete_links((int) $pid, 0);
+                    $slice = \array_slice($plan['delete'], $offset, self::PRUNE_BATCH);
+                    if ($slice) {
+                        $res = $api->delete_documents_batch_result($slice);
+                        if (!$res['ok']) {
+                            $this->handleFailure($api, $phase, $offset, $state, $res);
+                            return;
                         }
+                        foreach ($slice as $pid) {
+                            $link_result = $api->delete_links_result((int) $pid, 0);
+                            if (!$link_result['ok']) {
+                                $this->handleFailure($api, $phase, $offset, $state, $link_result);
+                                return;
+                            }
+                        }
+                        $state['deleted'] += (int) $res['deleted'];
                     }
-                    $next_phase  = 'done';
-                    $next_offset = 0;
+                    $next = $offset + \count($slice);
+                    if ($next >= \count($plan['delete'])) {
+                        $next_phase  = 'done';
+                        $next_offset = 0;
+                    } else {
+                        $next_phase  = 'prune';
+                        $next_offset = $next;
+                    }
                     break;
 
                 case 'done':
@@ -302,6 +389,14 @@ final class SyncService implements Registerable
             $api->log_error('background sync phase ' . $phase . ' failed: ' . $e->getMessage(), 'php_index');
             return;   // stop the chain on error
         }
+
+        $state['retry_attempt']    = 0;
+        $state['next_retry_gmt']   = '';
+        $state['last_http_status'] = 0;
+        $state['last_retry_after'] = null;
+        $state['last_error']       = '';
+        $state['failed_phase']     = null;
+        $state['failed_offset']    = null;
 
         // Re-check cancellation before scheduling more work (user may have stopped mid-batch).
         if ($this->getState()['status'] !== 'running') {
@@ -322,7 +417,109 @@ final class SyncService implements Registerable
         }
 
         $this->setState(\array_merge($state, ['phase' => $next_phase, 'offset' => $next_offset]));
-        \as_enqueue_async_action(self::HOOK, ['phase' => $next_phase, 'offset' => $next_offset], self::GROUP);
+        \as_enqueue_async_action(
+            self::HOOK,
+            ['phase' => $next_phase, 'offset' => $next_offset, 'attempt' => 0],
+            self::GROUP
+        );
+    }
+
+    /**
+     * Persist a retry cursor and schedule exactly one delayed callback for it.
+     *
+     * @param array<string,mixed> $state
+     * @param array<string,mixed> $result
+     */
+    private function handleFailure(Client $api, string $phase, int $offset, array $state, array $result): void
+    {
+        $attempt  = (int)($state['retry_attempt'] ?? 0) + 1;
+        $error    = (string)($result['error'] ?? 'sync operation failed');
+        $retryable = (bool)($result['retryable'] ?? Client::is_retryable_result($result));
+
+        if (!$retryable || $attempt > self::MAX_RETRY_ATTEMPTS) {
+            $message = !$retryable
+                ? \sprintf('Sync %s failed permanently at offset %d: %s', $phase, $offset, $error)
+                : \sprintf('Sync %s retry budget exhausted at offset %d: %s', $phase, $offset, $error);
+            $this->setState(\array_merge($state, [
+                'status'           => 'error',
+                'phase'            => $phase,
+                'offset'           => $offset,
+                'message'          => $message,
+                'next_retry_gmt'   => '',
+                'last_http_status' => (int)($result['status'] ?? 0),
+                'last_retry_after' => $result['retry_after'] ?? null,
+                'last_error'       => $error,
+                'failed_phase'     => $phase,
+                'failed_offset'    => $offset,
+            ]));
+            return;
+        }
+
+        if (!\function_exists('as_schedule_single_action')) {
+            $this->setState(\array_merge($state, [
+                'status'        => 'error',
+                'phase'         => $phase,
+                'offset'        => $offset,
+                'message'       => 'Action Scheduler delayed retry unavailable',
+                'last_error'    => 'Action Scheduler delayed retry unavailable',
+                'failed_phase'  => $phase,
+                'failed_offset' => $offset,
+            ]));
+            return;
+        }
+
+        $retry_after = isset($result['retry_after']) && $result['retry_after'] !== null
+            ? (int)$result['retry_after']
+            : null;
+        $delay    = self::retry_delay($attempt, $retry_after);
+        $run_at   = \time() + $delay;
+        $next_gmt = \gmdate('Y-m-d H:i:s', $run_at);
+        $action_id = \as_schedule_single_action(
+            $run_at,
+            self::HOOK,
+            ['phase' => $phase, 'offset' => $offset, 'attempt' => $attempt],
+            self::GROUP
+        );
+
+        if (!$action_id) {
+            $this->setState(\array_merge($state, [
+                'status'        => 'error',
+                'phase'         => $phase,
+                'offset'        => $offset,
+                'message'       => 'Action Scheduler could not persist delayed retry',
+                'last_error'    => 'Action Scheduler could not persist delayed retry',
+                'failed_phase'  => $phase,
+                'failed_offset' => $offset,
+            ]));
+            return;
+        }
+
+        $this->setState(\array_merge($state, [
+            'status'           => 'running',
+            'phase'            => $phase,
+            'offset'           => $offset,
+            'retry_attempt'    => $attempt,
+            'next_retry_gmt'   => $next_gmt,
+            'last_http_status' => (int)($result['status'] ?? 0),
+            'last_retry_after' => $retry_after,
+            'last_error'       => $error,
+            'failed_phase'     => $phase,
+            'failed_offset'    => $offset,
+            'message'          => \sprintf('Retrying %s at %s (attempt %d/%d)', $phase, $next_gmt, $attempt, self::MAX_RETRY_ATTEMPTS),
+        ]));
+    }
+
+    public static function retry_delay(int $attempt, ?int $retry_after = null, ?int $jitter = null): int
+    {
+        if ($retry_after !== null) {
+            return \max(0, \min(self::MAX_RETRY_DELAY, $retry_after));
+        }
+
+        $exponent = \max(0, $attempt - 1);
+        $base     = \min(self::MAX_RETRY_DELAY, self::BASE_RETRY_DELAY * (2 ** $exponent));
+        $jitter   = $jitter ?? \mt_rand(0, \min(5, self::MAX_RETRY_DELAY - $base));
+
+        return \min(self::MAX_RETRY_DELAY, $base + \max(0, $jitter));
     }
 
     // ── AJAX endpoints (admin) ─────────────────────────────────────────────────

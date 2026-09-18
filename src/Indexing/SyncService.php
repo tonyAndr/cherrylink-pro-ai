@@ -359,6 +359,7 @@ final class SyncService implements Registerable
                             $this->handleFailure($api, $phase, $offset, $state, $res);
                             return;
                         }
+                        $state['deleted'] += (int) $res['deleted'];
                         foreach ($slice as $pid) {
                             $link_result = $api->delete_links_result((int) $pid, 0);
                             if (!$link_result['ok']) {
@@ -366,7 +367,6 @@ final class SyncService implements Registerable
                                 return;
                             }
                         }
-                        $state['deleted'] += (int) $res['deleted'];
                     }
                     $next = $offset + \count($slice);
                     if ($next >= \count($plan['delete'])) {

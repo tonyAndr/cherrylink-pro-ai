@@ -72,7 +72,7 @@ final class SyncService implements Registerable
 
     public function register(): void
     {
-        \add_action(self::HOOK, [$this, 'worker'], 10, 2);
+        \add_action(self::HOOK, [$this, 'worker'], 10, 4);
 
         \add_action('wp_ajax_linkate_sync_start', [$this, 'ajaxStart']);
         \add_action('wp_ajax_linkate_sync_cancel', [$this, 'ajaxCancel']);
@@ -104,6 +104,7 @@ final class SyncService implements Registerable
             'last_error' => '',
             'failed_phase' => null,
             'failed_offset' => null,
+            'force_full' => false,
         ];
 
         return \array_merge($defaults, (array) \get_option(self::STATE, $defaults));
@@ -160,79 +161,23 @@ final class SyncService implements Registerable
             return $this->getState();   // already running — don't double-start
         }
 
-        $api      = $this->client();
-        $manifest_result = $api->fetch_manifest_result();
-        if (!$manifest_result['ok']) {
-            $message = 'Manifest unavailable: ' . $manifest_result['error'];
-            return $this->setState([
-                'status'           => 'error',
-                'phase'            => 'manifest',
-                'message'          => $message,
-                'last_error'       => $message,
-                'last_http_status' => $manifest_result['status'],
-                'last_retry_after' => $manifest_result['retry_after'],
-                'failed_phase'     => 'manifest',
-                'failed_offset'    => 0,
-            ]);
-        }
-        $manifest = $manifest_result['map'];
-
-        global $wpdb;
-        $allowed = IndexHelpers::get_allowed_types_list();
-        $ph      = \implode(',', \array_fill(0, \count($allowed), '%s'));
-        $rows    = $wpdb->get_results($wpdb->prepare(
-            "SELECT ID, post_modified_gmt FROM {$wpdb->posts}
-             WHERE post_type IN ($ph) AND post_status = 'publish'",
-            $allowed
-        ));
-        $current_modified = [];
-        foreach ($rows as $r) {
-            $current_modified[(int) $r->ID] = $r->post_modified_gmt;
-        }
-
-        $plan = IndexHelpers::compute_sync_plan($manifest, $current_modified, $force_full);
-        \update_option(self::PLAN, $plan, false);
-
-        $first = $plan['upsert'] ? 'upsert' : ($plan['delete'] ? 'prune' : 'done');
-
+        // Mark the sync as running before the first network call. A manifest failure
+        // must retain any prior PLAN and use the same delayed retry path as later phases.
         $meta = \get_option('linkate_posts_meta', []);
-
-        // Nothing changed — finish immediately, no background round-trip.
-        if ($first === 'done') {
-            $meta['indexing_process'] = 'DONE';
-            $meta['last_scan_gmt']    = \gmdate('Y-m-d H:i:s');
-            $meta['last_upserted']    = 0;
-            $meta['last_deleted']     = 0;
-            \update_option('linkate_posts_meta', $meta);
-            \delete_option(self::PLAN);
-            $this->options->clearIndexDirty();   // index reconciled — clear any out-of-sync flag
-            return $this->setState([
-                'status'       => 'done',
-                'phase'        => 'done',
-                'offset'       => 0,
-                'upsert_total' => 0,
-                'delete_total' => 0,
-                'indexed'      => 0,
-                'links'        => 0,
-                'deleted'      => 0,
-                'started_gmt'  => \gmdate('Y-m-d H:i:s'),
-                'message'      => \__('Изменений не найдено', 'cherrylink'),
-            ]);
-        }
-
         $meta['indexing_process'] = 'IN_PROGRESS';
         \update_option('linkate_posts_meta', $meta);
 
         $state = $this->setState([
             'status'       => 'running',
-            'phase'        => $first,
+            'phase'        => 'manifest',
             'offset'       => 0,
-            'upsert_total' => \count($plan['upsert']),
-            'delete_total' => \count($plan['delete']),
+            'upsert_total' => 0,
+            'delete_total' => 0,
             'indexed'      => 0,
             'links'        => 0,
             'deleted'      => 0,
             'started_gmt'  => \gmdate('Y-m-d H:i:s'),
+            'force_full'   => $force_full,
             'message'      => '',
             'retry_attempt' => 0,
             'next_retry_gmt' => '',
@@ -243,12 +188,15 @@ final class SyncService implements Registerable
             'failed_offset' => null,
         ]);
 
-        \as_enqueue_async_action(
-            self::HOOK,
-            ['phase' => $first, 'offset' => 0, 'attempt' => 0],
-            self::GROUP
-        );
-        return $state;
+        $api = $this->client();
+        $manifest_result = $api->fetch_manifest_result();
+        if (!$manifest_result['ok']) {
+            $this->handleFailure($api, 'manifest', 0, $state, $manifest_result);
+            return $this->getState();
+        }
+
+        $this->startFromManifest($manifest_result['map'], $force_full);
+        return $this->getState();
     }
 
     /**
@@ -289,8 +237,9 @@ final class SyncService implements Registerable
      * @param string     $phase
      * @param int|string $offset
      * @param int|string $attempt
+     * @param bool|null  $force_full
      */
-    public function worker($phase = 'upsert', $offset = 0, $attempt = 0): void
+    public function worker($phase = 'upsert', $offset = 0, $attempt = 0, $force_full = null): void
     {
         $state = $this->getState();
         if ($state['status'] !== 'running') {
@@ -305,12 +254,24 @@ final class SyncService implements Registerable
         if ((int) $state['retry_attempt'] !== $attempt) {
             return;   // stale retry callback
         }
+        if ($force_full !== null && (bool) ($state['force_full'] ?? false) !== (bool) $force_full) {
+            return;   // stale callback from a different scan mode
+        }
 
         $plan   = \get_option(self::PLAN, ['upsert' => [], 'delete' => []]);
         $api    = $this->client();
 
         try {
             switch ($phase) {
+                case 'manifest':
+                    $res = $api->fetch_manifest_result();
+                    if (!$res['ok']) {
+                        $this->handleFailure($api, $phase, $offset, $state, $res);
+                        return;
+                    }
+                    $this->startFromManifest($res['map'], (bool) ($state['force_full'] ?? false));
+                    return;
+
                 case 'upsert':
                     $slice = \array_slice($plan['upsert'], $offset, self::UPSERT_BATCH);
                     if ($slice) {
@@ -419,7 +380,100 @@ final class SyncService implements Registerable
         $this->setState(\array_merge($state, ['phase' => $next_phase, 'offset' => $next_offset]));
         \as_enqueue_async_action(
             self::HOOK,
-            ['phase' => $next_phase, 'offset' => $next_offset, 'attempt' => 0],
+            [
+                'phase'      => $next_phase,
+                'offset'     => $next_offset,
+                'attempt'    => 0,
+                'force_full' => (bool) ($state['force_full'] ?? false),
+            ],
+            self::GROUP
+        );
+    }
+
+    /**
+     * Build a plan only after the complete manifest has been fetched, then enter the
+     * first work phase. Existing plans remain untouched while manifest retrieval retries.
+     *
+     * @param array<int,array{hash:mixed,modified:mixed}> $manifest
+     */
+    private function startFromManifest(array $manifest, bool $force_full): void
+    {
+        global $wpdb;
+        $allowed = IndexHelpers::get_allowed_types_list();
+        $ph      = \implode(',', \array_fill(0, \count($allowed), '%s'));
+        $rows    = $wpdb->get_results($wpdb->prepare(
+            "SELECT ID, post_modified_gmt FROM {$wpdb->posts}
+             WHERE post_type IN ($ph) AND post_status = 'publish'",
+            $allowed
+        ));
+        $current_modified = [];
+        foreach ($rows as $r) {
+            $current_modified[(int) $r->ID] = $r->post_modified_gmt;
+        }
+
+        $plan = IndexHelpers::compute_sync_plan($manifest, $current_modified, $force_full);
+        // This is the first point at which a fresh plan is safe to publish.
+        \update_option(self::PLAN, $plan, false);
+
+        $first = $plan['upsert'] ? 'upsert' : ($plan['delete'] ? 'prune' : 'done');
+        $state = $this->getState();
+
+        // Nothing changed — finish immediately, no background round-trip.
+        if ($first === 'done') {
+            $meta = \get_option('linkate_posts_meta', []);
+            $meta['indexing_process'] = 'DONE';
+            $meta['last_scan_gmt']    = \gmdate('Y-m-d H:i:s');
+            $meta['last_upserted']    = 0;
+            $meta['last_deleted']     = 0;
+            \update_option('linkate_posts_meta', $meta);
+            \delete_option(self::PLAN);
+            $this->options->clearIndexDirty();   // index reconciled — clear any out-of-sync flag
+            $this->setState(\array_merge($state, [
+                'status'       => 'done',
+                'phase'        => 'done',
+                'offset'       => 0,
+                'upsert_total' => 0,
+                'delete_total' => 0,
+                'indexed'      => 0,
+                'links'        => 0,
+                'deleted'      => 0,
+                'force_full'   => $force_full,
+                'message'      => \__('Изменений не найдено', 'cherrylink'),
+            ]));
+            return;
+        }
+
+        $meta = \get_option('linkate_posts_meta', []);
+        $meta['indexing_process'] = 'IN_PROGRESS';
+        \update_option('linkate_posts_meta', $meta);
+
+        $state = $this->setState(\array_merge($state, [
+            'status'           => 'running',
+            'phase'            => $first,
+            'offset'           => 0,
+            'upsert_total'     => \count($plan['upsert']),
+            'delete_total'     => \count($plan['delete']),
+            'indexed'          => 0,
+            'links'            => 0,
+            'deleted'          => 0,
+            'force_full'       => $force_full,
+            'retry_attempt'    => 0,
+            'next_retry_gmt'   => '',
+            'last_http_status' => 0,
+            'last_retry_after' => null,
+            'last_error'       => '',
+            'failed_phase'     => null,
+            'failed_offset'    => null,
+        ]));
+
+        \as_enqueue_async_action(
+            self::HOOK,
+            [
+                'phase'      => $first,
+                'offset'     => 0,
+                'attempt'    => 0,
+                'force_full' => (bool) ($state['force_full'] ?? false),
+            ],
             self::GROUP
         );
     }
@@ -477,7 +531,12 @@ final class SyncService implements Registerable
         $action_id = \as_schedule_single_action(
             $run_at,
             self::HOOK,
-            ['phase' => $phase, 'offset' => $offset, 'attempt' => $attempt],
+            [
+                'phase'      => $phase,
+                'offset'     => $offset,
+                'attempt'    => $attempt,
+                'force_full' => (bool) ($state['force_full'] ?? false),
+            ],
             self::GROUP
         );
 

@@ -29,6 +29,9 @@ final class SyncServiceTest extends TestCase
     /** @var array<string,mixed> */
     private $plan;
 
+    /** @var array<string,mixed> */
+    private $options = [];
+
     /** @var array<int,array<string,mixed>> */
     private $scheduled = [];
 
@@ -58,13 +61,18 @@ final class SyncServiceTest extends TestCase
                 return $this->state;
             }
             if ($key === SyncService::PLAN) {
-                return $this->plan;
+                return $this->options[$key] ?? $this->plan;
+            }
+            if (\array_key_exists($key, $this->options)) {
+                return $this->options[$key];
             }
             return $default;
         });
         Functions\when('update_option')->alias(function ($key, $value) {
             if ($key === SyncService::STATE) {
                 $this->state = $value;
+            } else {
+                $this->options[$key] = $value;
             }
             return true;
         });
@@ -181,6 +189,82 @@ final class SyncServiceTest extends TestCase
         $this->assertSame(0, $this->state['links']);
         $this->assertCount(1, $this->scheduled);
         $this->assertSame('links', $this->scheduled[0]['args']['phase']);
+    }
+
+    public function testManifestRetryKeepsExistingPlanAndHonorsRetryAfter(): void
+    {
+        $this->state['phase'] = 'manifest';
+        $this->plan = ['upsert' => [99], 'delete' => [100]];
+        $api = Mockery::mock(Client::class);
+        $api->shouldReceive('fetch_manifest_result')
+            ->once()
+            ->andReturn($this->result([
+                'status'      => 429,
+                'retry_after' => 11,
+                'error'       => 'manifest busy',
+            ]));
+
+        $this->service($api)->worker('manifest', 0, 0, false);
+
+        $this->assertSame('running', $this->state['status']);
+        $this->assertSame('manifest', $this->state['phase']);
+        $this->assertSame(0, $this->state['offset']);
+        $this->assertSame(1, $this->state['retry_attempt']);
+        $this->assertSame($this->plan, $this->options[SyncService::PLAN] ?? $this->plan);
+        $this->assertCount(1, $this->scheduled);
+        $this->assertSame('manifest', $this->scheduled[0]['args']['phase']);
+        $this->assertSame(11, $this->state['last_retry_after']);
+        $this->assertSame(11, $this->scheduled[0]['timestamp'] - \time());
+    }
+
+    public function testSuccessfulManifestRetryBuildsPlanAndPreservesForceFull(): void
+    {
+        $this->state['phase'] = 'manifest';
+        $this->state['retry_attempt'] = 1;
+        $this->state['force_full'] = true;
+        $this->plan = ['upsert' => [77], 'delete' => []];
+
+        Functions\when('get_post_types')->justReturn([]);
+        $GLOBALS['wpdb'] = new class {
+            public $posts = 'wp_posts';
+
+            public function prepare($query, ...$args)
+            {
+                return $query;
+            }
+
+            public function get_results($query)
+            {
+                return [
+                    (object) ['ID' => 1, 'post_modified_gmt' => '2026-01-01 00:00:00'],
+                    (object) ['ID' => 2, 'post_modified_gmt' => '2026-01-02 00:00:00'],
+                ];
+            }
+        };
+
+        $api = Mockery::mock(Client::class);
+        $api->shouldReceive('fetch_manifest_result')
+            ->once()
+            ->andReturn([
+                'ok'          => true,
+                'map'         => [3 => ['hash' => 'h3', 'modified' => '2026-01-03 00:00:00']],
+                'status'      => 200,
+                'retry_after' => null,
+                'retryable'   => false,
+                'error'       => '',
+            ]);
+
+        $this->service($api)->worker('manifest', 0, 1, true);
+
+        $this->assertSame('running', $this->state['status']);
+        $this->assertSame('upsert', $this->state['phase']);
+        $this->assertSame(2, $this->state['upsert_total']);
+        $this->assertSame(1, $this->state['delete_total']);
+        $this->assertSame(['upsert' => [1, 2], 'delete' => [3]], $this->options[SyncService::PLAN]);
+        $this->assertSame(0, $this->state['retry_attempt']);
+        $this->assertCount(1, $this->enqueued);
+        $this->assertSame('upsert', $this->enqueued[0]['args']['phase']);
+        $this->assertTrue($this->enqueued[0]['args']['force_full']);
     }
 
     public function testPruneProcessesAtMostOneThousandDocumentsPerAction(): void

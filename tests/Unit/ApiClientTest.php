@@ -154,39 +154,39 @@ final class ApiClientTest extends TestCase
     }
 
     /**
-     * The per-path timeout heuristic in request(): plain reads 15s, search-class 60s,
-     * batch/all/parse 120s. Pinning it guards the substr/strpos classification.
+     * Interactive callers cannot inherit background timeout heuristics.
      */
-    public function testPlainReadUses15sTimeout(): void
+    public function testInteractiveReadUsesFiveSecondTimeout(): void
     {
         Functions\when('get_option')->justReturn(['hash_field' => 'LICENSE123']);
         $this->mockHttp(['count' => 0]);
 
         (new Client())->get_count(); // /v1/documents/count
 
-        $this->assertSame(15, $this->captured['args']['timeout']);
+        $this->assertSame(5, $this->captured['args']['timeout']);
+        $this->assertSame(0, $this->captured['args']['redirection']);
     }
 
-    public function testSearchUses60sTimeoutAndJsonBody(): void
+    public function testInteractiveSearchUsesFiveSecondTimeoutAndJsonBody(): void
     {
         Functions\when('get_option')->justReturn(['hash_field' => 'LICENSE123']);
         $this->mockHttp(['results' => []]);
 
         (new Client())->search('hello world'); // /v1/search
 
-        $this->assertSame(60, $this->captured['args']['timeout']);
+        $this->assertSame(5, $this->captured['args']['timeout']);
         $this->assertSame('POST', $this->captured['args']['method']);
         $this->assertSame('{"query":"hello world","limit":20}', $this->captured['args']['body']);
     }
 
-    public function testBatchClassPathUses120sTimeout(): void
+    public function testInteractiveAllRouteCannotUseBackgroundTimeout(): void
     {
         Functions\when('get_option')->justReturn(['hash_field' => 'LICENSE123']);
         $this->mockHttp(['deleted' => 0]);
 
         (new Client())->delete_all_documents(); // /v1/documents/all
 
-        $this->assertSame(120, $this->captured['args']['timeout']);
+        $this->assertSame(5, $this->captured['args']['timeout']);
     }
 
     public function testStructuredResultPreservesStatusHeadersRetryAfterAndExtraHeaders(): void
@@ -264,5 +264,82 @@ final class ApiClientTest extends TestCase
         $this->assertTrue(Client::is_retryable_result(['status' => 503, 'error' => 'HTTP 503']));
         $this->assertFalse(Client::is_retryable_result(['status' => 400, 'error' => 'HTTP 400']));
         $this->assertFalse(Client::is_retryable_result(['status' => 0, 'error' => 'no license key configured']));
+    }
+    public function testBackgroundContextRetainsLongBatchBudget(): void
+    {
+        Functions\when('get_option')->justReturn(['hash_field' => 'LICENSE123']);
+        $this->mockHttp(['deleted' => 0]);
+        (new Client(null, Client::CONTEXT_BACKGROUND))->delete_all_documents();
+        $this->assertSame(120, $this->captured['args']['timeout']);
+    }
+
+    public function testInteractiveDeadlineCapsLaterCallsAndStopsWithoutMoreHttp(): void
+    {
+        Functions\when('get_option')->justReturn(['hash_field' => 'LICENSE123']);
+        $now = 100.0;
+        $calls = 0;
+        $this->mockHttp(['count' => 3]);
+        Functions\when('wp_remote_request')->alias(function ($url, $args) use (&$calls) {
+            ++$calls;
+            $this->captured = ['url' => $url, 'args' => $args];
+            return [];
+        });
+        $api = new Client(null, Client::CONTEXT_INTERACTIVE, static function () use (&$now): float {
+            return $now;
+        });
+        $api->get_count();
+        $now += 6.0;
+        $api->get_count();
+        $this->assertEquals(2.0, $this->captured['args']['timeout']);
+        $now += 2.0;
+        $result = $api->request_result('GET', '/v1/documents/count');
+        $this->assertFalse($result['ok']);
+        $this->assertSame('request budget exhausted', $result['error']);
+        $this->assertSame(2, $calls);
+    }
+
+    public function testStatusReadsHaveTwoSecondPerCallLimit(): void
+    {
+        Functions\when('get_option')->justReturn(['hash_field' => 'LICENSE123']);
+        $this->mockHttp(['count' => 3]);
+        (new Client(null, Client::CONTEXT_STATUS))->get_count();
+        $this->assertSame(2, $this->captured['args']['timeout']);
+    }
+
+    public function testUnavailableHealthSkipsAuthenticatedDiagnosticProbes(): void
+    {
+        Functions\when('get_option')->justReturn(['hash_field' => 'LICENSE123']);
+        $calls = 0;
+        $this->mockHttp('', 0, true);
+        Functions\when('wp_remote_request')->alias(function ($url, $args) use (&$calls) {
+            ++$calls;
+            $this->assertSame(2, $args['timeout']);
+            $this->assertSame(0, $args['redirection']);
+            return new class {
+                public function get_error_message(): string { return 'timeout'; }
+            };
+        });
+        $result = (new Client())->diagnostics();
+        $this->assertSame(1, $calls);
+        $this->assertFalse($result['probes']['health']['ok']);
+        $this->assertSame(0, $result['probes']['documents_count']['http_code']);
+    }
+
+    public function testDiagnosticsStopWhenSharedBudgetIsExhausted(): void
+    {
+        Functions\when('get_option')->justReturn(['hash_field' => 'LICENSE123']);
+        $now = 100.0;
+        $calls = 0;
+        $this->mockHttp(['count' => 1]);
+        Functions\when('wp_remote_request')->alias(function ($url, $args) use (&$calls, &$now) {
+            ++$calls;
+            $now += 6.0;
+            return [];
+        });
+        $result = (new Client(null, Client::CONTEXT_INTERACTIVE, static function () use (&$now): float {
+            return $now;
+        }))->diagnostics();
+        $this->assertSame(1, $calls);
+        $this->assertSame('request budget exhausted', $result['probes']['links_count']['error']);
     }
 }

@@ -30,9 +30,9 @@ defined('ABSPATH') || exit;
 
     <?php if ($page === 'main') { ?>
     <div class="<?= \CherryLink\Support\Tailwind::$CARD ?>" id="cl-server-status-card">
-        <h2 class="<?= \CherryLink\Support\Tailwind::$H2 ?>"><?php esc_html_e('Состояние сервера', 'cherrylink'); ?> <span id="cl-srv-badge"><code>[<?php esc_html_e('проверка…', 'cherrylink'); ?>]</code></span></h2>
+        <h2 class="<?= \CherryLink\Support\Tailwind::$H2 ?>"><?php esc_html_e('Состояние сервера', 'cherrylink'); ?> <span id="cl-srv-badge"><code>[<?php esc_html_e('не проверено', 'cherrylink'); ?>]</code></span></h2>
         <ul class="list-disc list-inside" id="cl-srv-lines">
-            <li><?php esc_html_e('Проверяем соединение с сервером CherryLink…', 'cherrylink'); ?></li>
+            <li><?php esc_html_e('Нажмите «Проверить связь», чтобы проверить соединение с сервером CherryLink.', 'cherrylink'); ?></li>
         </ul>
         <button type="button" id="cl-srv-recheck" class="<?= \CherryLink\Support\Tailwind::$BTN_ACTION ?> mt-2"><?php esc_html_e('Проверить связь', 'cherrylink'); ?></button>
     </div>

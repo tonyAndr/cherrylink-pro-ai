@@ -14,11 +14,25 @@ use WP_Post;
  *
  * Moved from the legacy CherryVectorAPI. The runtime CHERRY_VECTOR_API_URL /
  * CL_ALT_API_* constants and the http_api_curl alternative-route hook now live in
- * Api\Relay. The only behavioral change from the original is that error logging goes
- * through an injected Support\Logger instead of the global cherry_write_log().
+ * Api\Relay. Explicit interactive/status/background contexts bound UI requests while
+ * preserving long-running background scan transport and structured HTTP results.
  */
 class Client
 {
+    public const CONTEXT_INTERACTIVE = 'interactive';
+    public const CONTEXT_BACKGROUND = 'background';
+    public const CONTEXT_STATUS = 'status';
+
+    /** @var string */
+    private $context;
+
+    /** @var callable */
+    private $clock;
+
+    /** @var float|null Deadline starts on the first outbound call, not construction. */
+    private $deadline;
+
+
     /** @var string */
     private $base_url;
 
@@ -38,8 +52,19 @@ class Client
         return isset($options['use_alt_server']) && $options['use_alt_server'] === 'true';
     }
 
-    public function __construct(?Logger $logger = null)
-    {
+    public function __construct(
+        ?Logger $logger = null,
+        string $context = self::CONTEXT_INTERACTIVE,
+        ?callable $clock = null
+    ) {
+        if (!\in_array($context, [self::CONTEXT_INTERACTIVE, self::CONTEXT_BACKGROUND, self::CONTEXT_STATUS], true)) {
+            throw new \InvalidArgumentException('Unknown CherryLink request context');
+        }
+        $this->context = $context;
+        $this->clock = $clock ?? static function (): float {
+            return \hrtime(true) / 1e9;
+        };
+        $this->deadline = null;
         $this->logger   = $logger ?? new Logger();
         $this->base_url = \rtrim(CHERRY_VECTOR_API_URL, '/');
         // When the alternative route is on, hit the relay port on the SAME hostname (so TLS is
@@ -704,32 +729,40 @@ class Client
 
     // ── Connectivity diagnostics ──────────────────────────────────────────────
 
-    /**
-     * Timed connectivity check, run FROM the client server, so we can see the real
-     * round-trip latency to the API (the RU→VPS path we otherwise can't measure).
-     * Each probe reports ok/ms/http_code/error + the parsed body. Probes use a generous
-     * 30s timeout on purpose — we want to SEE a slow response, not just a generic timeout;
-     * the readiness card's real reads use 15s, so a probe of e.g. 18s explains a card of 0.
-     */
+    /** Explicit diagnostics: at most three two-second probes, no redirects. */
     public function diagnostics(): array
     {
+        $deadline = ($this->clock)() + 6.0;
+        $health = $this->probe('GET', '/health', false, 2, $deadline);
+        $skipped = ['ok' => false, 'ms' => 0, 'http_code' => 0,
+                    'error' => 'not checked: server unavailable', 'body' => null];
         return [
-            'generated_at'    => \gmdate('c'),
-            'api_url'         => $this->base_url,
-            'site_domain'     => $this->domain,
-            'has_key'         => $this->license_key !== '',
-            'read_timeout_s'  => 15,   // timeout the plugin's real reads use (request())
-            'probes'          => [
-                'health'          => $this->probe('GET', '/health', false, 30),
-                'documents_count' => $this->probe('GET', '/v1/documents/count', true, 30),
-                'links_count'     => $this->probe('GET', '/v1/links/count', true, 30),
+            'generated_at'   => \gmdate('c'),
+            'api_url'        => $this->base_url,
+            'site_domain'    => $this->domain,
+            'has_key'        => $this->license_key !== '',
+            'read_timeout_s' => 5,
+            'probe_timeout_s' => 2,
+            'budget_s'      => 6,
+            'probes'        => [
+                'health' => $health,
+                'documents_count' => $health['ok']
+                    ? $this->probe('GET', '/v1/documents/count', true, 2, $deadline) : $skipped,
+                'links_count' => $health['ok']
+                    ? $this->probe('GET', '/v1/links/count', true, 2, $deadline) : $skipped,
             ],
         ];
     }
 
-    private function probe(string $method, string $path, bool $auth, int $timeout): array
+    private function probe(string $method, string $path, bool $auth, int $timeout, float $deadline): array
     {
-        $args = ['method' => $method, 'timeout' => $timeout, 'headers' => ['Content-Type' => 'application/json']];
+        $remaining = $deadline - ($this->clock)();
+        if ($remaining <= 0 || ($auth && $this->license_key === '')) {
+            return ['ok' => false, 'ms' => 0, 'http_code' => 0,
+                    'error' => $remaining <= 0 ? 'request budget exhausted' : 'no license key configured', 'body' => null];
+        }
+        $timeout = \min($timeout, $remaining);
+        $args = ['method' => $method, 'timeout' => $timeout, 'redirection' => 0, 'headers' => ['Content-Type' => 'application/json']];
         if ($auth) {
             $args['headers']['X-License-Key'] = $this->license_key;
             $args['headers']['X-Site-Domain'] = $this->domain;
@@ -798,6 +831,18 @@ class Client
                 || \substr($path, -6) === '/stats';
             $timeout   = $is_batch ? 120 : ($is_search ? 60 : 15);
         }
+        if ($this->context !== self::CONTEXT_BACKGROUND) {
+            $now = ($this->clock)();
+            if ($this->deadline === null) {
+                $this->deadline = $now + ($this->context === self::CONTEXT_STATUS ? 4.0 : 8.0);
+            }
+            $remaining = $this->deadline - $now;
+            if ($remaining <= 0) {
+                return ['ok' => false, 'status' => 0, 'headers' => [], 'body' => null,
+                        'error' => 'request budget exhausted', 'retry_after' => null];
+            }
+            $timeout = \min($timeout, $this->context === self::CONTEXT_STATUS ? 2 : 5, $remaining);
+        }
         $headers = [
             'Content-Type'  => 'application/json',
             'X-License-Key' => $this->license_key,
@@ -810,6 +855,7 @@ class Client
         $args = [
             'method'  => $method,
             'timeout' => $timeout,
+            'redirection' => 0,
             'headers' => $headers,
         ];
 

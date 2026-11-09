@@ -36,3 +36,7 @@ What the user sees and does.
 ## Non-obvious constraints
 Edge cases, known limitations, deliberate tradeoffs.
 ```
+
+- [Admin responsiveness and request contexts](admin-responsiveness.md) — cached
+  rendering, queued license/scan work, bounded interactive transport and remaining
+  live-event outbox gates.

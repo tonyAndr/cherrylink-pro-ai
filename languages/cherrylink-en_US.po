@@ -2,7 +2,7 @@
 # This file is distributed under the same license as the CherryLink Pro AI plugin.
 msgid ""
 msgstr ""
-"Project-Id-Version: CherryLink Pro AI 1.1.1\n"
+"Project-Id-Version: CherryLink Pro AI 1.2.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/plugin\n"
 "Last-Translator: CherryLink <anton@learningheroes.com>\n"
 "Language-Team: English (United States)\n"
@@ -1383,3 +1383,25 @@ msgstr "Back to the link list"
 #: js/cherry-gutenberg.js:1
 msgid "Загрузить еще"
 msgstr "Load more"
+
+msgid "Проверка ключа запланирована. Статус обновится после фоновой проверки."
+msgstr "License verification is scheduled. The status will update after the background check."
+
+
+msgid "Проверка ключа выполняется в фоне. Обновите страницу через несколько секунд."
+msgstr "The license is being checked in the background. Refresh this page in a few seconds."
+
+msgid "Не удалось запланировать сканирование. Попробуйте снова."
+msgstr "Could not schedule the scan. Please try again."
+
+msgid "Проверить ключ повторно"
+msgstr "Check license again"
+
+msgid "не проверено"
+msgstr "not checked"
+
+msgid "Нажмите «Проверить связь», чтобы проверить соединение с сервером CherryLink."
+msgstr "Click “Check connection” to test the connection to the CherryLink server."
+
+msgid "Не удалось запланировать проверку ключа. Повторите попытку вручную."
+msgstr "Could not schedule license verification. Please retry manually."

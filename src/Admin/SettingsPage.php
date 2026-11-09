@@ -129,10 +129,26 @@ final class SettingsPage implements Registerable
 
         if (isset($_POST['update_license'])) {
             \check_admin_referer('linkate-posts-update-options');
+            $previous_key = (string) ($options['hash_field'] ?? '');
             $options = Acf::optionsFromPost($options, ['hash_field']);
             \update_option('linkate-posts', $options);
-            $license->validate();
-            self::notice('notice-success', \esc_html__('Обновление ключа', 'cherrylink'));
+            $scheduled = $license->scheduleValidation(true, $previous_key !== (string) ($options['hash_field'] ?? ''));
+            self::notice(
+                $scheduled ? 'notice-success' : 'notice-error',
+                $scheduled
+                    ? \esc_html__('Проверка ключа запланирована. Статус обновится после фоновой проверки.', 'cherrylink')
+                    : \esc_html__('Не удалось запланировать проверку ключа. Повторите попытку вручную.', 'cherrylink')
+            );
+        }
+        if (isset($_POST['retry_license'])) {
+            \check_admin_referer('linkate-posts-update-options');
+            $scheduled = $license->scheduleValidation();
+            self::notice(
+                $scheduled ? 'notice-success' : 'notice-error',
+                $scheduled
+                    ? \esc_html__('Проверка ключа запланирована. Статус обновится после фоновой проверки.', 'cherrylink')
+                    : \esc_html__('Не удалось запланировать проверку ключа. Повторите попытку вручную.', 'cherrylink')
+            );
         }
         if (isset($_POST['remove_license'])) {
             \check_admin_referer('linkate-posts-update-options');
@@ -140,15 +156,28 @@ final class SettingsPage implements Registerable
             $options_meta['expires_at'] = '';
             $options['hash_field']      = '';
             unset($options['activations_left']);
+            unset(
+                $options_meta['validation_key_hash'],
+                $options_meta['validation_status'],
+                $options_meta['validation_attempt'],
+                $options_meta['validation_next_gmt'],
+                $options_meta['key_error_reason']
+            );
 
             \update_option('linkate-posts', $options);
             \update_option('linkate_posts_meta', $options_meta);
+            if (\function_exists('wp_clear_scheduled_hook')) {
+                \wp_clear_scheduled_hook(License::VALIDATION_HOOK);
+            }
             self::notice('notice-error', \esc_html__('Ключ сброшен', 'cherrylink'));
         }
 
         $options_meta = (array) \get_option('linkate_posts_meta', []);
         $info         = $license->isValid();
-        $key_error    = self::licenseErrorText($options_meta['key_error_reason'] ?? '');
+        $validation_status = (string) ($options_meta['validation_status'] ?? '');
+        $key_error    = self::licenseErrorText(
+            $validation_status === 'pending' ? 'pending' : (string) ($options_meta['key_error_reason'] ?? '')
+        );
 
         $h2 = Tailwind::$H2;
         if ($info) {
@@ -171,7 +200,21 @@ final class SettingsPage implements Registerable
             'license_header' => $license_header,
             'options'        => $options,
             'key_error'      => $key_error,
+            'validation_status' => $validation_status,
         ]);
+
+        // The card's active-license branch hides the key field. Keep the manual retry
+        // available when cron could not persist a validation event for that active key.
+        if ($info && $validation_status === 'error') {
+            self::notice('notice-error', $key_error);
+            echo '<form method="post" action="">';
+            echo '<input type="submit" name="retry_license" value="'
+                . \esc_attr__('Проверить ключ повторно', 'cherrylink') . '" />';
+            if (\function_exists('wp_nonce_field')) {
+                \wp_nonce_field('linkate-posts-update-options');
+            }
+            echo '</form>';
+        }
     }
 
     /** Map a stored key_error_reason to a translated, escaped message. */
@@ -180,6 +223,12 @@ final class SettingsPage implements Registerable
         switch ($reason) {
             case 'no_connection':
                 return \esc_html__('Нет связи с сервером. Попробуйте позже или обратитесь в тех. поддержку.', 'cherrylink');
+            case 'pending':
+                return \esc_html__('Проверка ключа выполняется в фоне. Обновите страницу через несколько секунд.', 'cherrylink');
+            case 'missing_key':
+                return \esc_html__('Введите ключ лицензии для проверки.', 'cherrylink');
+            case 'validation_schedule_failed':
+                return \esc_html__('Не удалось запланировать проверку ключа. Повторите попытку вручную.', 'cherrylink');
             case 'bad_domain':
                 return \esc_html__('Ключ привязан к другому домену, активация невозможна.', 'cherrylink');
             case 'key_expired':

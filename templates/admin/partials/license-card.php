@@ -7,6 +7,7 @@
  * @var string $license_header  pre-built header HTML (echoed raw)
  * @var array  $options         linkate-posts options (for hash_field)
  * @var string $key_error       human-readable activation error, or ''
+ * @var string $validation_status pending / valid / error
  */
 
 defined('ABSPATH') || exit;
@@ -33,6 +34,16 @@ defined('ABSPATH') || exit;
                 ?>
                 <br>
                 <input type="submit" class="<?= \CherryLink\Support\Tailwind::$BTN_SAVE ?> " name="update_license" value="<?php _e('Сохранить', 'cherrylink') ?>" />
+                <?php if (function_exists('wp_nonce_field')) wp_nonce_field('linkate-posts-update-options'); ?>
+            </form>
+
+        <?php endif; ?>
+        <?php if ($info && $key_error && in_array($validation_status, ['pending', 'error'], true)) : ?>
+            <p><?= $key_error ?></p>
+        <?php endif; ?>
+        <?php if ($validation_status === 'pending' || $validation_status === 'error') : ?>
+            <form method="post" action="" class="mt-3">
+                <input type="submit" class="<?= \CherryLink\Support\Tailwind::$BTN_NORMAL ?>" name="retry_license" value="<?php esc_attr_e('Проверить ключ повторно', 'cherrylink'); ?>" />
                 <?php if (function_exists('wp_nonce_field')) wp_nonce_field('linkate-posts-update-options'); ?>
             </form>
         <?php endif; ?>

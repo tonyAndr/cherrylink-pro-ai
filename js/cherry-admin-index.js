@@ -51,9 +51,13 @@ jQuery(document).ready(function ($) {
     $(document).on('click', '#cl-rescan', function (e) { e.preventDefault(); sync_do_start(); });
 
     // Pull fresh readiness data after a scan and update the card in place (no page reload).
+    var cl_status_refresh_inflight = false;
     function sync_refresh_status() {
+        if (cl_status_refresh_inflight) return;
+        cl_status_refresh_inflight = true;
         $.ajax({
             type: "POST", url: ajaxurl, dataType: 'json', data: 'action=linkate_index_status_data&_ajax_nonce=' + cherry_ajax.nonce,
+            timeout: 6000,
             success: function (d) {
                 if (!d) return;
                 $('#cherry_index_status').html(d.index_status_text || '');
@@ -61,7 +65,8 @@ jQuery(document).ready(function ($) {
                 $('#cherry_process_badge').html(d.badge_html || '');
                 $('#cherry_lastscan_status').html(d.last_scan_text || '');
                 cl_localize_times('#cherry_lastscan_status');
-            }
+            },
+            complete: function () { cl_status_refresh_inflight = false; }
         });
     }
 
@@ -154,18 +159,26 @@ jQuery(document).ready(function ($) {
     /*
     --- === SERVER STATUS / CONNECTIVITY DIAGNOSTICS === ---
     Times a round-trip to the API from this server so we can see the real latency
-    (the RU→VPS path). Full payload is dumped to the console for copy/paste.
+    (the RU→VPS path). Checks run only when requested by the administrator.
     */
+    function cl_srv_escape(value) {
+        return $('<div>').text(String(value)).html();
+    }
+
     function cl_srv_fmt_probe(label, pr) {
         if (!pr) return '<li>' + label + ': —</li>';
-        var status = pr.ok ? ('OK · ' + pr.ms + ' ' + __('мс', 'cherrylink')) : (sprintf(__('ОШИБКА (%s)', 'cherrylink'), (pr.error || ('HTTP ' + pr.http_code))) + ' · ' + pr.ms + ' ' + __('мс', 'cherrylink'));
+        var status = pr.ok ? ('OK · ' + cl_srv_escape(pr.ms) + ' ' + __('мс', 'cherrylink')) : (sprintf(__('ОШИБКА (%s)', 'cherrylink'), cl_srv_escape(pr.error || ('HTTP ' + pr.http_code))) + ' · ' + cl_srv_escape(pr.ms) + ' ' + __('мс', 'cherrylink'));
         var extra = '';
-        if (pr.body && typeof pr.body === 'object' && typeof pr.body.count !== 'undefined') extra = ' · ' + __('значение:', 'cherrylink') + ' ' + pr.body.count;
+        if (pr.body && typeof pr.body === 'object' && typeof pr.body.count !== 'undefined') extra = ' · ' + __('значение:', 'cherrylink') + ' ' + cl_srv_escape(pr.body.count);
         return '<li>' + label + ': <strong>' + status + '</strong>' + extra + '</li>';
     }
 
     function cl_srv_render(d) {
         var $lines = $('#cl-srv-lines'), $badge = $('#cl-srv-badge');
+        if (d && d.pending) {
+            $badge.html('<code>[' + __('проверка…', 'cherrylink') + ']</code>');
+            return;
+        }
         if (!d || !d.probes) {
             $badge.html('<code class="bad-index">[' + __('нет ответа', 'cherrylink') + ']</code>');
             $lines.html('<li>' + __('Не удалось получить данные о состоянии сервера.', 'cherrylink') + '</li>');
@@ -192,21 +205,27 @@ jQuery(document).ready(function ($) {
         $lines.html(html);
     }
 
+    var cl_srv_check_inflight = false;
     function cl_srv_check() {
+        if (cl_srv_check_inflight) return;
+        cl_srv_check_inflight = true;
         $('#cl-srv-recheck').prop('disabled', true).text(__('Проверяем…', 'cherrylink'));
         $('#cl-srv-badge').html('<code>[' + __('проверка…', 'cherrylink') + ']</code>');
         $.ajax({
             type: 'POST', url: ajaxurl, dataType: 'json', data: 'action=cherrylink_server_status&_ajax_nonce=' + cherry_ajax.nonce,
+            timeout: 9000,
             success: function (d) { cl_srv_render(d); },
             error: function (x, t, err) {
-                console.log('[CherryLink] server status request failed:', err, x && x.responseText);
+                console.log('[CherryLink] server status request failed:', err);
                 cl_srv_render(null);
             },
-            complete: function () { $('#cl-srv-recheck').prop('disabled', false).text(__('Проверить связь', 'cherrylink')); }
+            complete: function () {
+                cl_srv_check_inflight = false;
+                $('#cl-srv-recheck').prop('disabled', false).text(__('Проверить связь', 'cherrylink'));
+            }
         });
     }
     $(document).on('click', '#cl-srv-recheck', function (e) { e.preventDefault(); cl_srv_check(); });
-    if ($('#cl-server-status-card').length) { cl_srv_check(); }
 
     // The readiness card renders from a cached snapshot (no API call on page load). Refresh it
     // in the background only when that snapshot is stale, so navigation stays instant and we

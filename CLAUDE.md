@@ -75,6 +75,16 @@ without changing runtime behavior. See the staged plan in
 | Styles | `css/cherry-main.css` |
 | Translations | `languages/` (`.pot` master, `cherrylink-en_US.{po,mo}`, JS `.json`) |
 
+## Request isolation checkpoint
+
+Read `specs/admin-responsiveness.md` before changing HTTP calls or admin flows.
+Default `Api\Client` instances are interactive (5-second per-call / 8-second
+shared budget); readiness has 2/4-second limits. Background scans must explicitly
+use `Client::CONTEXT_BACKGROUND`. Scan start queues manifest work and the UI tick
+only nudges the asynchronous scheduler, never runs jobs inline. License save
+schedules a bounded background check. Live save/delete still need the durable
+outbox before the full non-blocking contract or a release can be claimed.
+
 ## Dev tooling & tests
 
 Docker-only QA (no local PHP needed) via `dev/qa.sh {install|test|lint|fix|analyze|all}`:

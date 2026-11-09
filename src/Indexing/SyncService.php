@@ -66,7 +66,7 @@ final class SyncService implements Registerable
         $this->options        = $options;
         $this->license        = $license;
         $this->client_factory = $client_factory ?? static function (): Client {
-            return new Client();
+            return new Client(null, Client::CONTEXT_BACKGROUND);
         };
     }
 
@@ -142,7 +142,8 @@ final class SyncService implements Registerable
     // ── Public actions ──────────────────────────────────────────────────────
 
     /**
-     * Build the diff plan and kick off the background chain. Returns the initial state.
+     * Persist the manifest phase and kick off the background chain. Returns immediately;
+     * the worker fetches the manifest and builds the plan.
      *
      * @return array<string,mixed>
      */
@@ -161,9 +162,10 @@ final class SyncService implements Registerable
             return $this->getState();   // already running — don't double-start
         }
 
-        // Mark the sync as running before the first network call. A manifest failure
-        // must retain any prior PLAN and use the same delayed retry path as later phases.
+        // Mark the sync as running and queue manifest retrieval. The prior PLAN stays
+        // untouched until the worker has fetched a complete manifest.
         $meta = \get_option('linkate_posts_meta', []);
+        $previous_process = $meta['indexing_process'] ?? null;
         $meta['indexing_process'] = 'IN_PROGRESS';
         \update_option('linkate_posts_meta', $meta);
 
@@ -188,14 +190,28 @@ final class SyncService implements Registerable
             'failed_offset' => null,
         ]);
 
-        $api = $this->client();
-        $manifest_result = $api->fetch_manifest_result();
-        if (!$manifest_result['ok']) {
-            $this->handleFailure($api, 'manifest', 0, $state, $manifest_result);
-            return $this->getState();
+        try {
+            $action_id = \as_enqueue_async_action(
+                self::HOOK,
+                ['phase' => 'manifest', 'offset' => 0, 'attempt' => 0, 'force_full' => $force_full],
+                self::GROUP
+            );
+        } catch (\Throwable $error) {
+            $action_id = 0;
         }
-
-        $this->startFromManifest($manifest_result['map'], $force_full);
+        if (!$action_id) {
+            $meta = \get_option('linkate_posts_meta', []);
+            if ($previous_process === null) {
+                unset($meta['indexing_process']);
+            } else {
+                $meta['indexing_process'] = $previous_process;
+            }
+            \update_option('linkate_posts_meta', $meta);
+            return $this->setState([
+                'status' => 'error',
+                'message' => \__('Не удалось запланировать сканирование. Попробуйте снова.', 'cherrylink'),
+            ]);
+        }
         return $this->getState();
     }
 
@@ -615,6 +631,7 @@ final class SyncService implements Registerable
     {
         Security::verify('edit_posts');
         $ran = 0;
+        $dispatched = false;
         if (
             $this->getState()['status'] === 'running'
             && \class_exists('ActionScheduler')
@@ -622,11 +639,15 @@ final class SyncService implements Registerable
             && \as_has_scheduled_action(self::HOOK, null, self::GROUP)
         ) {
             try {
-                $ran = (int) ActionScheduler::runner()->run('CherryLink admin');
+                $runner = ActionScheduler::runner();
+                if (\is_object($runner) && \method_exists($runner, 'maybe_dispatch_async_request')) {
+                    $runner->maybe_dispatch_async_request();
+                    $dispatched = true;
+                }
             } catch (\Throwable $e) {
                 // ignore — WP-Cron will catch up
             }
         }
-        \wp_send_json(['ran' => $ran]);
+        \wp_send_json(['ran' => $ran, 'dispatch_requested' => $dispatched]);
     }
 }

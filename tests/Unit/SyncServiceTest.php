@@ -80,6 +80,10 @@ final class SyncServiceTest extends TestCase
             $this->enqueued[] = ['hook' => $hook, 'args' => $args, 'group' => $group];
             return 101;
         });
+        $GLOBALS['cl_sync_test_enqueue'] = function ($hook, $args, $group) {
+            $this->enqueued[] = ['hook' => $hook, 'args' => $args, 'group' => $group];
+            return 101;
+        };
         Functions\when('as_schedule_single_action')->alias(function ($timestamp, $hook, $args, $group) {
             $this->scheduled[] = [
                 'timestamp' => $timestamp,
@@ -144,6 +148,75 @@ final class SyncServiceTest extends TestCase
         $this->assertGreaterThanOrEqual($before + 7, $this->scheduled[0]['timestamp']);
         $this->assertLessThanOrEqual($after + 7, $this->scheduled[0]['timestamp']);
         $this->assertCount(0, $this->enqueued);
+    }
+
+    public function testStartQueuesManifestWithoutCreatingClientOrReplacingPriorPlan(): void
+    {
+        if (!\function_exists('as_enqueue_async_action')) {
+            eval('function as_enqueue_async_action($hook, $args, $group) { return call_user_func($GLOBALS["cl_sync_test_enqueue"], $hook, $args, $group); }');
+        }
+        $this->options['linkate_posts_meta'] = ['key_valid' => true, 'expires_at' => '2099-01-01'];
+        $this->options[SyncService::PLAN] = ['upsert' => [77], 'delete' => [88]];
+        $this->state['status'] = 'idle';
+        $factory_calls = 0;
+        $service = new SyncService(new Options(), new License(new Options()), static function () use (&$factory_calls) {
+            ++$factory_calls;
+            throw new \RuntimeException('start must not create an API client');
+        });
+
+        $state = $service->start(true);
+
+        $this->assertSame(0, $factory_calls);
+        $this->assertSame('running', $state['status']);
+        $this->assertSame('manifest', $state['phase']);
+        $this->assertTrue($state['force_full']);
+        $this->assertSame(['upsert' => [77], 'delete' => [88]], $this->options[SyncService::PLAN]);
+        $this->assertCount(1, $this->enqueued);
+        $this->assertSame('manifest', $this->enqueued[0]['args']['phase']);
+        $this->assertSame(0, $this->enqueued[0]['args']['attempt']);
+        $this->assertTrue($this->enqueued[0]['args']['force_full']);
+    }
+
+    public function testManifestSchedulingFailureIsVisibleAndKeepsPriorPlan(): void
+    {
+        $this->options['linkate_posts_meta'] = ['key_valid' => true, 'expires_at' => '2099-01-01'];
+        $this->state['status'] = 'idle';
+        Functions\when('as_enqueue_async_action')->justReturn(0);
+        $api = Mockery::mock(Client::class);
+        $api->shouldNotReceive('fetch_manifest_result');
+        $state = $this->service($api)->start();
+        $this->assertSame('error', $state['status']);
+        $this->assertArrayNotHasKey('indexing_process', $this->options['linkate_posts_meta']);
+        $this->assertSame(['upsert' => [1, 2], 'delete' => []], $this->plan);
+    }
+
+    public function testAjaxTickDispatchesAsyncRequestWithoutRunningQueueInline(): void
+    {
+        if (!\class_exists('ActionScheduler', false)) {
+            eval('class ActionScheduler { public static function runner() { return $GLOBALS["cl_sync_test_runner"]; } }');
+        }
+        if (!\function_exists('as_has_scheduled_action')) {
+            eval('function as_has_scheduled_action($hook, $args = null, $group = "") { return true; }');
+        }
+        $this->state['status'] = 'running';
+        Functions\when('check_ajax_referer')->justReturn(true);
+        Functions\when('current_user_can')->justReturn(true);
+        Functions\when('as_has_scheduled_action')->justReturn(true);
+        $runner = new class {
+            public $dispatches = 0;
+            public function maybe_dispatch_async_request(): void { ++$this->dispatches; }
+            public function run(): void { throw new \RuntimeException('queue must not run inline'); }
+        };
+        $GLOBALS['cl_sync_test_runner'] = $runner;
+        $response = null;
+        Functions\when('wp_send_json')->alias(static function ($data) use (&$response) {
+            $response = $data;
+        });
+
+        $this->service(Mockery::mock(Client::class))->ajaxTick();
+
+        $this->assertSame(['ran' => 0, 'dispatch_requested' => true], $response);
+        $this->assertSame(1, $runner->dispatches);
     }
 
     public function testPermanentUpsertFailureIsVisibleWithoutRetry(): void

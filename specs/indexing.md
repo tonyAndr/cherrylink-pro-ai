@@ -27,6 +27,10 @@ available.
 - The plugin sends plain embedding text and raw link HTML. It does not parse
   HTML in the browser or add a client-side parser.
 
+Scan start queues the manifest phase and returns without API I/O. A browser
+tick only requests non-blocking Action Scheduler dispatch; it never runs indexing
+jobs inline. Read [request isolation](admin-responsiveness.md) for timeout contexts.
+
 Persisted synchronous state is exposed through the existing admin AJAX actions
 and options `cherrylink_sync_state` / `cherrylink_sync_plan`. A terminal
 successful run clears the plan and the index-dirty marker; a failure retains

@@ -9,6 +9,7 @@ use CherryLink\Api\Client;
 use CherryLink\Contracts\Registerable;
 use CherryLink\Support\License;
 use CherryLink\Support\Options;
+use CherryLink\Support\RequestLock;
 use WP_Post;
 
 /**
@@ -71,7 +72,7 @@ final class IndexHooks implements Registerable
             return;
         }
 
-        $api = new Client();
+        $api = new Client(null, Client::CONTEXT_BACKGROUND);
 
         if ($post->post_status === 'publish') {
             $api->upsert_post($post);
@@ -99,7 +100,7 @@ final class IndexHooks implements Registerable
             $this->options->markIndexDirty();
             return;
         }
-        $api = new Client();
+        $api = new Client(null, Client::CONTEXT_BACKGROUND);
         $api->delete_post($post_id);
         $api->delete_links($post_id, 0);
     }
@@ -115,8 +116,26 @@ final class IndexHooks implements Registerable
     public function ajaxServerStatus(): void
     {
         Security::verify('edit_posts');
-        $api = new Client();
-        \wp_send_json($api->diagnostics());
+        $cached = \get_transient('cl_server_status_cache');
+        if (
+            \is_array($cached) && !empty($cached['generated_at'])
+            && \time() - (int) \strtotime($cached['generated_at']) < 30
+        ) {
+            $data = $cached;
+        } else {
+            $token = RequestLock::acquire('cl_server_probe_lock', 15);
+            if ($token === null) {
+                $data = \is_array($cached) ? $cached : ['pending' => true];
+            } else {
+                try {
+                    $data = (new Client())->diagnostics();
+                    \set_transient('cl_server_status_cache', $data, HOUR_IN_SECONDS);
+                } finally {
+                    RequestLock::release('cl_server_probe_lock', $token);
+                }
+            }
+        }
+        \wp_send_json($data);
     }
 
     // ── Readiness status payload (shared by settings render + AJAX refresh) ────
@@ -205,7 +224,29 @@ final class IndexHooks implements Registerable
             ]);
         }
 
-        $api         = new Client();
+        $previous = \get_transient(self::STATUS_CACHE_KEY);
+        if (
+            \is_array($previous) && ($previous['reachable'] ?? null) === false
+            && !empty($previous['checked_gmt'])
+            && \time() - (int) \strtotime($previous['checked_gmt'] . ' UTC') < 30
+        ) {
+            return self::statusData(false);
+        }
+        $token = RequestLock::acquire('cl_status_refresh_lock', 10);
+        if ($token === null) {
+            return \array_merge(self::statusData(false), ['refresh_pending' => true]);
+        }
+        try {
+            return self::refreshStatus($local);
+        } finally {
+            RequestLock::release('cl_status_refresh_lock', $token);
+        }
+    }
+
+    /** @param array<string,mixed> $local */
+    private static function refreshStatus(array $local): array
+    {
+        $api         = new Client(null, Client::CONTEXT_STATUS);
         $index_rows  = $api->get_count();        // ?int — null when unreachable
         $scheme_rows = $api->get_links_count();  // ?int
         $reachable   = ($index_rows !== null && $scheme_rows !== null);

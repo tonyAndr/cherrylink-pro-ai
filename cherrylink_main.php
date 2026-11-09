@@ -1,4 +1,5 @@
 <?php
+
 /*
 Plugin Name: CherryLink Pro AI
 Plugin URI: http://seocherry.ru/
@@ -50,6 +51,8 @@ if (file_exists(CHERRYLINK_DIR . '/updater/plugin-update-checker.php')) {
         __FILE__,
         'cherrylink-pro-ai'
     );
+    // Periodic checks belong in background cron/CLI, never dashboard navigation.
+    $cl_update_checker->addFilter('check_now', [\CherryLink\Support\UpdateChecks::class, 'allowScheduledCheck']);
     // Prefer the attached release-asset zip over GitHub's auto-generated source archive
     // (keeps dev files like gutenberg-src/ and node_modules out of client installs).
     $cl_update_checker->getVcsApi()->enableReleaseAssets();

@@ -2,14 +2,14 @@
 # This file is distributed under the same license as the CherryLink Pro AI plugin.
 msgid ""
 msgstr ""
-"Project-Id-Version: CherryLink Pro AI 1.1.1\n"
+"Project-Id-Version: CherryLink Pro AI 1.2.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/plugin\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-08-09T16:40:05+00:00\n"
+"POT-Creation-Date: 2026-11-09T21:53:07+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.7.1\n"
 "X-Domain: cherrylink\n"
@@ -31,375 +31,163 @@ msgstr ""
 msgid "Anton SeoCherry.ru"
 msgstr ""
 
-#: cherrylink_acf.php:40
-msgid "Относительные ссылки"
+#: src/Admin/Notices.php:33
+msgid "установлен!"
 msgstr ""
 
-#: cherrylink_acf.php:45
-msgid "Полный путь (http://domain.ru/page.html)"
+#: src/Admin/Notices.php:36
+msgid "Для начала работы с ним %s."
 msgstr ""
 
-#: cherrylink_acf.php:48
-msgid "Без протокола (//domain.ru/page.html)"
+#: src/Admin/Notices.php:37
+msgid "необходимо просканировать ваш сайт"
 msgstr ""
 
-#: cherrylink_acf.php:51
-msgid "Без домена (/page.html)"
+#: src/Admin/Notices.php:45
+msgid "сканирование не завершено!"
 msgstr ""
 
-#: cherrylink_acf.php:63
-msgid "Количество ссылок :"
+#: src/Admin/Notices.php:48
+msgid "Плагин может работать некорректно или не видеть все записи, %s."
 msgstr ""
 
-#: cherrylink_acf.php:75
-msgid "Показывать защищенные паролем?"
+#: src/Admin/Notices.php:49
+msgid "необходимо завершить сканирование"
 msgstr ""
 
-#: cherrylink_acf.php:80
-#: cherrylink_acf.php:183
-#: cherrylink_acf.php:202
-#: cherrylink_acf.php:226
-msgid "Нет"
+#: src/Admin/SettingsPage.php:47
+msgid "Настройки CherryLink"
 msgstr ""
 
-#: cherrylink_acf.php:83
-#: cherrylink_acf.php:186
-#: cherrylink_acf.php:205
-#: cherrylink_acf.php:229
-msgid "Да"
+#: src/Admin/SettingsPage.php:48
+#: js/cherry-front.js:218
+msgid "Настройки"
 msgstr ""
 
-#: cherrylink_acf.php:99
-msgid "Тип контента:"
-msgstr ""
-
-#: cherrylink_acf.php:104
-#: templates/editor/classic-panel.php:38
-msgid "Записи"
-msgstr ""
-
-#: cherrylink_acf.php:104
-msgid "Страницы"
-msgstr ""
-
-#: cherrylink_acf.php:160
-msgid "Включить в список произвольные типы записей?"
-msgstr ""
-
-#: cherrylink_acf.php:164
-msgid "Тип записи"
-msgstr ""
-
-#: cherrylink_acf.php:164
-msgid "Показать"
-msgstr ""
-
-#: cherrylink_acf.php:178
-msgid "Показать на панели фильтр ссылок по рубрике"
-msgstr ""
-
-#: cherrylink_acf.php:196
-msgid "Максимальное число входящих ссылок"
-msgstr ""
-
-#: cherrylink_acf.php:198
-msgid "Скрыть?"
-msgstr ""
-
-#: cherrylink_acf.php:207
-msgid "Количество ссылок"
-msgstr ""
-
-#: cherrylink_acf.php:221
-msgid "Только ссылки из той же рубрики?"
-msgstr ""
-
-#: cherrylink_acf.php:243
-msgid "Размер изображения для тега {imagesrc} для шаблонов"
-msgstr ""
-
-#: cherrylink_acf.php:248
-msgid "Оригинальный размер"
-msgstr ""
-
-#: cherrylink_acf.php:277
-msgid "Типы записей"
-msgstr ""
-
-#: cherrylink_acf.php:282
-#: cherrylink_acf.php:346
-msgid "Типы публикаций"
-msgstr ""
-
-#: cherrylink_acf.php:303
-#: cherrylink_acf.php:366
-msgid "Поля данных"
-msgstr ""
-
-#: cherrylink_acf.php:304
-msgid "Ориентация ссылок"
-msgstr ""
-
-#: cherrylink_acf.php:306
-msgid "Исходящие"
-msgstr ""
-
-#: cherrylink_acf.php:307
-#: js/cherry-front.js:1290
-#: js/cherry-front.js:1310
-msgid "Входящие"
-msgstr ""
-
-#: cherrylink_acf.php:310
-#: cherrylink_acf.php:367
-msgid "ID источника"
-msgstr ""
-
-#: cherrylink_acf.php:311
-#: cherrylink_acf.php:368
-msgid "Тип источника"
-msgstr ""
-
-#: cherrylink_acf.php:312
-#: cherrylink_acf.php:369
-msgid "Рубрики"
-msgstr ""
-
-#: cherrylink_acf.php:313
-#: cherrylink_acf.php:321
-#: cherrylink_acf.php:370
-msgid "URL источника"
-msgstr ""
-
-#: cherrylink_acf.php:314
-#: cherrylink_acf.php:320
-#: cherrylink_acf.php:371
-msgid "URL цели"
-msgstr ""
-
-#: cherrylink_acf.php:317
-msgid "ID цели"
-msgstr ""
-
-#: cherrylink_acf.php:318
-msgid "Тип цели"
-msgstr ""
-
-#: cherrylink_acf.php:319
-msgid "Рубрики цели"
-msgstr ""
-
-#: cherrylink_acf.php:323
-#: cherrylink_acf.php:372
-#: src/Csv/CsvService.php:73
-#: js/cherry-admin-csv.js:404
-msgid "Анкор"
-msgstr ""
-
-#: cherrylink_acf.php:324
-#: cherrylink_acf.php:373
-msgid "Кол-во исходящих ссылок"
-msgstr ""
-
-#: cherrylink_acf.php:325
-#: cherrylink_acf.php:374
-msgid "Кол-во входящих ссылок"
-msgstr ""
-
-#: cherrylink_acf.php:326
-#: cherrylink_acf.php:375
-msgid "Дублировать поля (id, тип, ...)"
-msgstr ""
-
-#: cherrylink_acf.php:340
-msgid "Опции поиска"
-msgstr ""
-
-#: cherrylink_acf.php:356
-msgid "Статус публикаций"
-msgstr ""
-
-#: cherrylink_acf.php:388
-msgid "Пояснение к фильтрам авторов и рубрик:"
-msgstr ""
-
-#: cherrylink_acf.php:389
-msgid "Ниже вы можете скрыть записи определенных авторов и рубрик. Чтобы видеть все записи, снимите все галочки."
-msgstr ""
-
-#: cherrylink_acf.php:392
-msgid "Скрыть записи по автору:"
-msgstr ""
-
-#: cherrylink_acf.php:399
-msgid "Имя юзера"
-msgstr ""
-
-#: cherrylink_acf.php:399
-#: cherrylink_acf.php:432
-msgid "Скрыть"
-msgstr ""
-
-#: cherrylink_acf.php:421
-msgid "Скрыть записи из рубрик:"
-msgstr ""
-
-#: cherrylink_acf.php:432
-msgid "Рубрика"
-msgstr ""
-
-#: cherrylink_acf.php:475
-msgid "Опубликованы"
-msgstr ""
-
-#: cherrylink_acf.php:476
-msgid "Личные"
-msgstr ""
-
-#: cherrylink_acf.php:477
-msgid "Черновик"
-msgstr ""
-
-#: cherrylink_acf.php:478
-msgid "Запланированные"
-msgstr ""
-
-#: cherrylink_acf.php:482
-msgid "Статус записей:"
-msgstr ""
-
-#: cherrylink_acf.php:523
-msgid "Перейти к справке"
-msgstr ""
-
-#: cherrylink_admin_options.php:15
+#: src/Admin/SettingsPage.php:57
 msgid "CherryLink Options"
 msgstr ""
 
-#: cherrylink_admin_options.php:15
+#: src/Admin/SettingsPage.php:58
 #: js/cherry-gutenberg.js:1
 #: js/cherry-gutenberg.js:2301
 #: js/cherry-gutenberg.js:2305
 msgid "CherryLink Pro"
 msgstr ""
 
-#: cherrylink_admin_options.php:34
+#: src/Admin/SettingsPage.php:68
+msgid "Основные"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:69
+msgid "Сканирование сайта"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:70
+msgid "Для экспертов"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:71
+#: templates/editor/classic-panel.php:40
+msgid "Статистика"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:109
 msgid "Настройки Vector API сохранены"
 msgstr ""
 
-#: cherrylink_admin_options.php:58
-msgid "Обновление ключа"
+#: src/Admin/SettingsPage.php:139
+#: src/Admin/SettingsPage.php:149
+msgid "Проверка ключа запланирована. Статус обновится после фоновой проверки."
 msgstr ""
 
-#: cherrylink_admin_options.php:71
+#: src/Admin/SettingsPage.php:140
+#: src/Admin/SettingsPage.php:150
+#: src/Admin/SettingsPage.php:231
+msgid "Не удалось запланировать проверку ключа. Повторите попытку вручную."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:172
 msgid "Ключ сброшен"
 msgstr ""
 
-#: cherrylink_admin_options.php:81
-msgid "Нет связи с сервером. Попробуйте позже или обратитесь в тех. поддержку."
-msgstr ""
-
-#: cherrylink_admin_options.php:84
-msgid "Ключ привязан к другому домену, активация невозможна."
-msgstr ""
-
-#: cherrylink_admin_options.php:87
-msgid "Срок действия ключа истек."
-msgstr ""
-
-#: cherrylink_admin_options.php:90
-msgid "Неверно указан ключ."
-msgstr ""
-
-#: cherrylink_admin_options.php:99
+#: src/Admin/SettingsPage.php:185
 msgid "Лицензия активирована"
 msgstr ""
 
-#: cherrylink_admin_options.php:102
+#: src/Admin/SettingsPage.php:188
 #: templates/notices/license-inactive.php:15
 msgid "Введите ключ лицензии"
 msgstr ""
 
 #. translators: %s: link to seocherry.ru
-#: cherrylink_admin_options.php:105
+#: src/Admin/SettingsPage.php:191
 msgid "Получите ключ у нас на сайте: [%s]."
 msgstr ""
 
-#: cherrylink_admin_options.php:166
+#: src/Admin/SettingsPage.php:212
+#: templates/admin/partials/license-card.php:46
+msgid "Проверить ключ повторно"
+msgstr ""
+
+#: src/Admin/SettingsPage.php:225
+msgid "Нет связи с сервером. Попробуйте позже или обратитесь в тех. поддержку."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:227
+msgid "Проверка ключа выполняется в фоне. Обновите страницу через несколько секунд."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:229
+msgid "Введите ключ лицензии для проверки."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:233
+msgid "Ключ привязан к другому домену, активация невозможна."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:235
+msgid "Срок действия ключа истек."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:237
+msgid "Неверно указан ключ."
+msgstr ""
+
+#: src/Admin/SettingsPage.php:283
 msgid "Настройки импортированы."
 msgstr ""
 
-#: cherrylink_admin_options.php:168
+#: src/Admin/SettingsPage.php:285
 msgid "Не удалось импортировать..."
 msgstr ""
 
-#: cherrylink_admin_options.php:215
+#: src/Admin/SettingsPage.php:328
 msgid "Настройки обновлены."
 msgstr ""
 
-#: cherrylink_admin_options.php:223
+#: src/Admin/SettingsPage.php:336
 msgid "Настройки плагина сброшены."
 msgstr ""
 
-#: cherrylink_admin_options.php:225
+#: src/Admin/SettingsPage.php:338
 msgid "Операция завершилась с ошибкой."
 msgstr ""
 
-#: cherrylink_admin_options.php:234
+#: src/Admin/SettingsPage.php:345
 msgid "Настройки сброшены."
 msgstr ""
 
-#: cherrylink_admin_options.php:249
+#: src/Admin/SettingsPage.php:359
 msgid "Данные сайта удалены из API. Выполните полную переиндексацию."
 msgstr ""
 
-#: cherrylink_admin_options.php:251
+#: src/Admin/SettingsPage.php:361
 msgid "Локальный индекс очищен, но API вернул ошибку. Проверьте подключение к Cherry Vector API."
 msgstr ""
 
-#: cherrylink_admin_options.php:268
+#: src/Admin/SettingsPage.php:376
 msgid "Дополнительные поля сохранены."
-msgstr ""
-
-#: cherrylink_debug.php:70
-msgid "(ID записи не указан)"
-msgstr ""
-
-#: cherrylink_main.php:140
-msgid "Настройки CherryLink"
-msgstr ""
-
-#: cherrylink_main.php:140
-#: js/cherry-front.js:218
-msgid "Настройки"
-msgstr ""
-
-#: cherrylink_main.php:223
-msgid "установлен!"
-msgstr ""
-
-#. translators: %s: bold "you need to scan your site" phrase
-#: cherrylink_main.php:225
-msgid "Для начала работы с ним %s."
-msgstr ""
-
-#. translators: %s: bold "you need to scan your site" phrase
-#: cherrylink_main.php:225
-msgid "необходимо просканировать ваш сайт"
-msgstr ""
-
-#: cherrylink_main.php:232
-msgid "сканирование не завершено!"
-msgstr ""
-
-#. translators: %s: bold "you need to finish scanning" phrase
-#: cherrylink_main.php:234
-msgid "Плагин может работать некорректно или не видеть все записи, %s."
-msgstr ""
-
-#. translators: %s: bold "you need to finish scanning" phrase
-#: cherrylink_main.php:234
-msgid "необходимо завершить сканирование"
 msgstr ""
 
 #: src/Admin/StatsColumn.php:47
@@ -432,6 +220,13 @@ msgstr ""
 msgid "URL_цели"
 msgstr ""
 
+#: src/Csv/CsvService.php:73
+#: templates/admin/statistics-subpage.php:58
+#: templates/admin/statistics-subpage.php:152
+#: js/cherry-admin-csv.js:404
+msgid "Анкор"
+msgstr ""
+
 #: src/Csv/CsvService.php:74
 msgid "Исходящих_ссылок"
 msgstr ""
@@ -440,166 +235,300 @@ msgstr ""
 msgid "Входящих_ссылок"
 msgstr ""
 
-#: src/Editor/ClassicPanel.php:236
+#: src/Debug/Debugger.php:71
+msgid "(ID записи не указан)"
+msgstr ""
+
+#: src/Editor/ClassicPanel.php:244
 msgid "Все рубрики"
 msgstr ""
 
 #. translators: 1: <time> element with the formatted scan date, 2: upserted count, 3: deleted count
-#: src/Indexing/IndexHooks.php:136
+#: src/Indexing/IndexHooks.php:166
 msgid "Последнее сканирование: %1$s (обновлено: %2$d, удалено: %3$d)."
 msgstr ""
 
-#: src/Indexing/IndexHooks.php:144
+#: src/Indexing/IndexHooks.php:174
 msgid "Сканирование не завершено"
 msgstr ""
 
-#: src/Indexing/IndexHooks.php:147
+#: src/Indexing/IndexHooks.php:177
 msgid "Все хорошо"
 msgstr ""
 
-#: src/Indexing/IndexHooks.php:150
+#: src/Indexing/IndexHooks.php:180
 msgid "Нужно просканировать сайт"
 msgstr ""
 
-#: src/Indexing/IndexHooks.php:184
-#: src/Indexing/IndexHooks.php:185
+#: src/Indexing/IndexHooks.php:219
+#: src/Indexing/IndexHooks.php:220
 msgid " загрузка данных…"
 msgstr ""
 
-#: src/Indexing/IndexHooks.php:207
-#: src/Indexing/IndexHooks.php:215
+#: src/Indexing/IndexHooks.php:288
+#: src/Indexing/IndexHooks.php:296
 msgid " не удалось получить данные (нет связи с сервером)."
 msgstr ""
 
 #. translators: %d: number of indexed articles
-#: src/Indexing/IndexHooks.php:211
+#: src/Indexing/IndexHooks.php:292
 msgid " проиндексировано %d статей в Vector API."
 msgstr ""
 
-#: src/Indexing/IndexHooks.php:212
+#: src/Indexing/IndexHooks.php:293
 msgid " статьи не проиндексированы, запустите сканирование."
 msgstr ""
 
 #. translators: %d: number of links found
-#: src/Indexing/IndexHooks.php:219
+#: src/Indexing/IndexHooks.php:300
 msgid " найдено %d ссылок в записях и страницах."
 msgstr ""
 
-#: src/Indexing/IndexHooks.php:220
+#: src/Indexing/IndexHooks.php:301
 msgid " ссылки не найдены."
 msgstr ""
 
-#: src/Indexing/SyncService.php:111
+#: src/Indexing/SyncService.php:155
 msgid "Лицензия неактивна — синхронизация недоступна. Введите ключ лицензии."
 msgstr ""
 
-#: src/Indexing/SyncService.php:163
-msgid "Изменений не найдено"
+#: src/Indexing/SyncService.php:212
+msgid "Не удалось запланировать сканирование. Попробуйте снова."
 msgstr ""
 
-#: src/Indexing/SyncService.php:195
+#: src/Indexing/SyncService.php:226
 msgid "Остановлено пользователем"
+msgstr ""
+
+#: src/Indexing/SyncService.php:457
+msgid "Изменений не найдено"
 msgstr ""
 
 #: src/Support/Options.php:160
 msgid "Ничего не найдено..."
 msgstr ""
 
-#: src/Terms/TermsService.php:51
+#: src/Terms/TermsService.php:50
 #: templates/link-card/classic.php:10
 msgid "Найдено в тексте / переход к ссылке"
 msgstr ""
 
-#: src/Terms/TermsService.php:51
+#: src/Terms/TermsService.php:50
 #: templates/link-card/classic.php:14
 msgid "Нажмите для вставки в текст"
 msgstr ""
 
-#: templates/admin/expert-subpage.php:18
+#: templates/admin/expert-subpage.php:24
 msgid "Опции редактора"
 msgstr ""
 
-#: templates/admin/expert-subpage.php:19
+#: templates/admin/expert-subpage.php:25
 msgid "Разметка ссылок"
 msgstr ""
 
-#: templates/admin/expert-subpage.php:23
-#: templates/admin/expert-subpage.php:54
-#: templates/admin/expert-subpage.php:62
+#: templates/admin/expert-subpage.php:29
+#: templates/admin/expert-subpage.php:265
+#: templates/admin/expert-subpage.php:286
 msgid "Сохранить настройки"
 msgstr ""
 
-#: templates/admin/expert-subpage.php:29
+#: templates/admin/expert-subpage.php:35
 msgid "Настройки работы в редакторе WP"
 msgstr ""
 
-#: templates/admin/expert-subpage.php:40
+#: templates/admin/expert-subpage.php:39
+msgid "Количество ссылок :"
+msgstr ""
+
+#: templates/admin/expert-subpage.php:51
+msgid "Тип контента:"
+msgstr ""
+
+#: templates/admin/expert-subpage.php:56
+#: templates/editor/classic-panel.php:38
+msgid "Записи"
+msgstr ""
+
+#: templates/admin/expert-subpage.php:56
+msgid "Страницы"
+msgstr ""
+
+#: templates/admin/expert-subpage.php:90
+msgid "Только ссылки из той же рубрики?"
+msgstr ""
+
+#: templates/admin/expert-subpage.php:93
+#: templates/admin/expert-subpage.php:148
+#: templates/admin/expert-subpage.php:189
+msgid "Нет"
+msgstr ""
+
+#: templates/admin/expert-subpage.php:94
+#: templates/admin/expert-subpage.php:149
+#: templates/admin/expert-subpage.php:190
+msgid "Да"
+msgstr ""
+
+#: templates/admin/expert-subpage.php:102
+msgid "Опубликованы"
+msgstr ""
+
+#: templates/admin/expert-subpage.php:103
+msgid "Личные"
+msgstr ""
+
+#: templates/admin/expert-subpage.php:104
+msgid "Черновик"
+msgstr ""
+
+#: templates/admin/expert-subpage.php:105
+msgid "Запланированные"
+msgstr ""
+
+#: templates/admin/expert-subpage.php:109
+msgid "Статус записей:"
+msgstr ""
+
+#: templates/admin/expert-subpage.php:136
 msgid "Показать еще..."
 msgstr ""
 
-#: templates/admin/expert-subpage.php:58
+#: templates/admin/expert-subpage.php:145
+msgid "Показать на панели фильтр ссылок по рубрике"
+msgstr ""
+
+#: templates/admin/expert-subpage.php:168
+msgid "Включить в список произвольные типы записей?"
+msgstr ""
+
+#: templates/admin/expert-subpage.php:172
+msgid "Тип записи"
+msgstr ""
+
+#: templates/admin/expert-subpage.php:172
+msgid "Показать"
+msgstr ""
+
+#: templates/admin/expert-subpage.php:185
+msgid "Максимальное число входящих ссылок"
+msgstr ""
+
+#: templates/admin/expert-subpage.php:187
+msgid "Скрыть?"
+msgstr ""
+
+#: templates/admin/expert-subpage.php:192
+msgid "Количество ссылок"
+msgstr ""
+
+#: templates/admin/expert-subpage.php:203
+msgid "Пояснение к фильтрам авторов и рубрик:"
+msgstr ""
+
+#: templates/admin/expert-subpage.php:204
+msgid "Ниже вы можете скрыть записи определенных авторов и рубрик. Чтобы видеть все записи, снимите все галочки."
+msgstr ""
+
+#: templates/admin/expert-subpage.php:207
+msgid "Скрыть записи по автору:"
+msgstr ""
+
+#: templates/admin/expert-subpage.php:214
+msgid "Имя юзера"
+msgstr ""
+
+#: templates/admin/expert-subpage.php:214
+#: templates/admin/expert-subpage.php:235
+msgid "Скрыть"
+msgstr ""
+
+#: templates/admin/expert-subpage.php:229
+msgid "Скрыть записи из рубрик:"
+msgstr ""
+
+#: templates/admin/expert-subpage.php:235
+msgid "Рубрика"
+msgstr ""
+
+#: templates/admin/expert-subpage.php:269
 msgid "Настройки ссылок"
 msgstr ""
 
-#: templates/admin/expert-subpage.php:66
+#: templates/admin/expert-subpage.php:275
+msgid "Относительные ссылки"
+msgstr ""
+
+#: templates/admin/expert-subpage.php:278
+msgid "Полный путь (http://domain.ru/page.html)"
+msgstr ""
+
+#: templates/admin/expert-subpage.php:279
+msgid "Без протокола (//domain.ru/page.html)"
+msgstr ""
+
+#: templates/admin/expert-subpage.php:280
+msgid "Без домена (/page.html)"
+msgstr ""
+
+#: templates/admin/expert-subpage.php:290
 msgid "Соединение с сервером"
 msgstr ""
 
-#: templates/admin/expert-subpage.php:67
+#: templates/admin/expert-subpage.php:291
 msgid "Если основной сервер недоступен (например, из-за блокировки провайдером), включите альтернативный маршрут подключения и сохраните настройки."
 msgstr ""
 
-#: templates/admin/expert-subpage.php:69
+#: templates/admin/expert-subpage.php:293
 msgid "Альтернативный сервер:"
 msgstr ""
 
-#: templates/admin/expert-subpage.php:71
+#: templates/admin/expert-subpage.php:295
 msgid "Выключен"
 msgstr ""
 
-#: templates/admin/expert-subpage.php:72
+#: templates/admin/expert-subpage.php:296
 msgid "Включён"
 msgstr ""
 
-#: templates/admin/expert-subpage.php:74
-#: templates/admin/partials/license-card.php:35
+#: templates/admin/expert-subpage.php:298
+#: templates/admin/partials/license-card.php:36
 #: templates/admin/partials/vector-api-card.php:29
 msgid "Сохранить"
 msgstr ""
 
-#: templates/admin/expert-subpage.php:79
+#: templates/admin/expert-subpage.php:303
 msgid "Отладка"
 msgstr ""
 
-#: templates/admin/expert-subpage.php:82
+#: templates/admin/expert-subpage.php:306
 msgid "Служебный блок для отладки ошибок."
 msgstr ""
 
-#: templates/admin/expert-subpage.php:86
+#: templates/admin/expert-subpage.php:310
 msgid "ID записи"
 msgstr ""
 
-#: templates/admin/expert-subpage.php:87
+#: templates/admin/expert-subpage.php:311
 msgid "Проверить"
 msgstr ""
 
-#: templates/admin/expert-subpage.php:90
+#: templates/admin/expert-subpage.php:314
 msgid "Информация для разработчиков"
 msgstr ""
 
-#: templates/admin/expert-subpage.php:99
+#: templates/admin/expert-subpage.php:323
 msgid "Прочие настройки"
 msgstr ""
 
-#: templates/admin/expert-subpage.php:101
+#: templates/admin/expert-subpage.php:325
 msgid "Очистить данные сайта в API (потребуется переиндексация)"
 msgstr ""
 
-#: templates/admin/expert-subpage.php:101
+#: templates/admin/expert-subpage.php:325
 msgid "Удалить все векторы и граф ссылок для этого сайта из API?"
 msgstr ""
 
-#: templates/admin/expert-subpage.php:102
+#: templates/admin/expert-subpage.php:326
 msgid "Вернуть настройки по умолчанию"
 msgstr ""
 
@@ -664,15 +593,15 @@ msgstr ""
 msgid "Остановить"
 msgstr ""
 
-#: templates/admin/partials/license-card.php:17
+#: templates/admin/partials/license-card.php:18
 msgid "Действует лицензия на текущий домен, ключ скрыт в целях безопасности."
 msgstr ""
 
-#: templates/admin/partials/license-card.php:19
+#: templates/admin/partials/license-card.php:20
 msgid "Сбросить лицензию"
 msgstr ""
 
-#: templates/admin/partials/license-card.php:24
+#: templates/admin/partials/license-card.php:25
 msgid "Ваш ключ:"
 msgstr ""
 
@@ -697,17 +626,20 @@ msgid "Состояние сервера"
 msgstr ""
 
 #: templates/admin/partials/readiness-card.php:33
-#: js/cherry-admin-index.js:197
-msgid "проверка…"
+msgid "не проверено"
 msgstr ""
 
 #: templates/admin/partials/readiness-card.php:35
-msgid "Проверяем соединение с сервером CherryLink…"
+msgid "Нажмите «Проверить связь», чтобы проверить соединение с сервером CherryLink."
 msgstr ""
 
 #: templates/admin/partials/readiness-card.php:37
-#: js/cherry-admin-index.js:205
+#: js/cherry-admin-index.js:220
 msgid "Проверить связь"
+msgstr ""
+
+#: templates/admin/partials/tooltip.php:10
+msgid "Перейти к справке"
 msgstr ""
 
 #: templates/admin/partials/vector-api-card.php:14
@@ -735,23 +667,6 @@ msgstr ""
 msgid "Сохранить поля"
 msgstr ""
 
-#: templates/admin/settings-page.php:17
-msgid "Основные"
-msgstr ""
-
-#: templates/admin/settings-page.php:18
-msgid "Сканирование сайта"
-msgstr ""
-
-#: templates/admin/settings-page.php:19
-msgid "Для экспертов"
-msgstr ""
-
-#: templates/admin/settings-page.php:20
-#: templates/editor/classic-panel.php:40
-msgid "Статистика"
-msgstr ""
-
 #: templates/admin/statistics-subpage.php:13
 msgid "Поиск проблем с перелинковкой"
 msgstr ""
@@ -773,18 +688,108 @@ msgid "Нет исходящих ссылок."
 msgstr ""
 
 #: templates/admin/statistics-subpage.php:26
+msgid "Опции поиска"
+msgstr ""
+
+#: templates/admin/statistics-subpage.php:32
+#: templates/admin/statistics-subpage.php:121
+msgid "Типы публикаций"
+msgstr ""
+
+#: templates/admin/statistics-subpage.php:42
+msgid "Статус публикаций"
+msgstr ""
+
+#: templates/admin/statistics-subpage.php:52
+#: templates/admin/statistics-subpage.php:132
+msgid "Поля данных"
+msgstr ""
+
+#: templates/admin/statistics-subpage.php:53
+#: templates/admin/statistics-subpage.php:139
+msgid "ID источника"
+msgstr ""
+
+#: templates/admin/statistics-subpage.php:54
+#: templates/admin/statistics-subpage.php:140
+msgid "Тип источника"
+msgstr ""
+
+#: templates/admin/statistics-subpage.php:55
+#: templates/admin/statistics-subpage.php:141
+msgid "Рубрики"
+msgstr ""
+
+#: templates/admin/statistics-subpage.php:56
+#: templates/admin/statistics-subpage.php:142
+#: templates/admin/statistics-subpage.php:150
+msgid "URL источника"
+msgstr ""
+
+#: templates/admin/statistics-subpage.php:57
+#: templates/admin/statistics-subpage.php:143
+#: templates/admin/statistics-subpage.php:149
+msgid "URL цели"
+msgstr ""
+
+#: templates/admin/statistics-subpage.php:59
+#: templates/admin/statistics-subpage.php:153
+msgid "Кол-во исходящих ссылок"
+msgstr ""
+
+#: templates/admin/statistics-subpage.php:60
+#: templates/admin/statistics-subpage.php:154
+msgid "Кол-во входящих ссылок"
+msgstr ""
+
+#: templates/admin/statistics-subpage.php:61
+#: templates/admin/statistics-subpage.php:155
+msgid "Дублировать поля (id, тип, ...)"
+msgstr ""
+
+#: templates/admin/statistics-subpage.php:65
 msgid "Проверить перелинковку"
 msgstr ""
 
-#: templates/admin/statistics-subpage.php:34
+#: templates/admin/statistics-subpage.php:73
 msgid "Найдены проблемы с перелинковкой"
 msgstr ""
 
-#: templates/admin/statistics-subpage.php:66
+#: templates/admin/statistics-subpage.php:105
 msgid "Экспорт перелинковки в .CSV"
 msgstr ""
 
-#: templates/admin/statistics-subpage.php:73
+#: templates/admin/statistics-subpage.php:116
+msgid "Типы записей"
+msgstr ""
+
+#: templates/admin/statistics-subpage.php:133
+msgid "Ориентация ссылок"
+msgstr ""
+
+#: templates/admin/statistics-subpage.php:135
+msgid "Исходящие"
+msgstr ""
+
+#: templates/admin/statistics-subpage.php:136
+#: js/cherry-front.js:1290
+#: js/cherry-front.js:1310
+msgid "Входящие"
+msgstr ""
+
+#: templates/admin/statistics-subpage.php:146
+msgid "ID цели"
+msgstr ""
+
+#: templates/admin/statistics-subpage.php:147
+msgid "Тип цели"
+msgstr ""
+
+#: templates/admin/statistics-subpage.php:148
+msgid "Рубрики цели"
+msgstr ""
+
+#: templates/admin/statistics-subpage.php:159
 msgid "Скачать схему в .CSV"
 msgstr ""
 
@@ -1002,117 +1007,121 @@ msgstr ""
 msgid "Запуск фонового сканирования…"
 msgstr ""
 
-#: js/cherry-admin-index.js:70
+#: js/cherry-admin-index.js:75
 msgid "Остановка…"
 msgstr ""
 
-#: js/cherry-admin-index.js:109
+#: js/cherry-admin-index.js:114
 msgid "Индексация"
 msgstr ""
 
-#: js/cherry-admin-index.js:110
+#: js/cherry-admin-index.js:115
 msgid "Индексация изменённых"
 msgstr ""
 
-#: js/cherry-admin-index.js:111
+#: js/cherry-admin-index.js:116
 msgid "Построение карты ссылок"
 msgstr ""
 
-#: js/cherry-admin-index.js:112
+#: js/cherry-admin-index.js:117
 msgid "Удаление устаревших"
 msgstr ""
 
 #. translators: 1: phase label, 2: done count, 3: total count
-#: js/cherry-admin-index.js:116
+#: js/cherry-admin-index.js:121
 msgid "%1$s: %2$d из %3$d… (можно закрыть страницу)"
 msgstr ""
 
 #. translators: %s: phase label
-#: js/cherry-admin-index.js:119
+#: js/cherry-admin-index.js:124
 msgid "%s… (можно закрыть страницу)"
 msgstr ""
 
 #. translators: 1: updated count, 2: deleted count
-#: js/cherry-admin-index.js:130
+#: js/cherry-admin-index.js:135
 msgid "Сканирование завершено! Обновлено: %1$d, удалено: %2$d."
 msgstr ""
 
-#: js/cherry-admin-index.js:130
+#: js/cherry-admin-index.js:135
 msgid "Сканировать снова"
 msgstr ""
 
 #. translators: %d: number of partially indexed items
-#: js/cherry-admin-index.js:135
+#: js/cherry-admin-index.js:140
 msgid "Остановлено. Частично проиндексировано: %d."
 msgstr ""
 
 #. translators: %s: error message
-#: js/cherry-admin-index.js:140
+#: js/cherry-admin-index.js:145
 msgid "Ошибка: %s."
 msgstr ""
 
-#: js/cherry-admin-index.js:140
+#: js/cherry-admin-index.js:145
 msgid "неизвестно"
 msgstr ""
 
-#: js/cherry-admin-index.js:161
+#: js/cherry-admin-index.js:170
 msgid "мс"
 msgstr ""
 
-#: js/cherry-admin-index.js:161
+#: js/cherry-admin-index.js:170
 msgid "ОШИБКА (%s)"
 msgstr ""
 
-#: js/cherry-admin-index.js:163
+#: js/cherry-admin-index.js:172
 msgid "значение:"
 msgstr ""
 
-#: js/cherry-admin-index.js:170
+#: js/cherry-admin-index.js:179
 msgid "нет ответа"
 msgstr ""
 
-#: js/cherry-admin-index.js:171
+#: js/cherry-admin-index.js:180
 msgid "Не удалось получить данные о состоянии сервера."
 msgstr ""
 
-#: js/cherry-admin-index.js:179
+#: js/cherry-admin-index.js:188
 msgid "нет связи с сервером"
 msgstr ""
 
-#: js/cherry-admin-index.js:180
+#: js/cherry-admin-index.js:189
 msgid "связь медленная"
 msgstr ""
 
-#: js/cherry-admin-index.js:181
+#: js/cherry-admin-index.js:190
 msgid "связь в норме"
 msgstr ""
 
-#: js/cherry-admin-index.js:184
+#: js/cherry-admin-index.js:193
 msgid "Доступность сервера"
 msgstr ""
 
-#: js/cherry-admin-index.js:185
+#: js/cherry-admin-index.js:194
 msgid "Чтение индекса статей"
 msgstr ""
 
-#: js/cherry-admin-index.js:186
+#: js/cherry-admin-index.js:195
 msgid "Чтение карты ссылок"
 msgstr ""
 
 #. translators: %s: read-timeout in seconds
-#: js/cherry-admin-index.js:189
+#: js/cherry-admin-index.js:198
 msgid "Внимание:"
 msgstr ""
 
-#: js/cherry-admin-index.js:190
+#: js/cherry-admin-index.js:199
 msgid "ответы приходят дольше 3 секунд. На медленном канале плагин может показывать «0» и подсказки могут не грузиться (таймаут чтения — %s с)."
 msgstr ""
 
-#: js/cherry-admin-index.js:196
+#: js/cherry-admin-index.js:208
 msgid "Проверяем…"
 msgstr ""
 
-#: js/cherry-admin-index.js:222
+#: js/cherry-admin-index.js:209
+msgid "проверка…"
+msgstr ""
+
+#: js/cherry-admin-index.js:237
 msgid "Что-то пошло не так при сканировании. Проверьте консоль браузера (F12), чтобы узнать больше."
 msgstr ""
 

@@ -34,6 +34,13 @@ if (!defined('CHERRYLINK_DIR_URL')) {
 if (!defined('CHERRYLINK_PLUGIN_DIR')) {
     define('CHERRYLINK_PLUGIN_DIR', dirname(__DIR__));
 }
+// wpdb result-shape constants referenced by $wpdb->get_row/get_results/get_var.
+if (!defined('ARRAY_A')) {
+    define('ARRAY_A', 'ARRAY_A');
+}
+if (!defined('ARRAY_N')) {
+    define('ARRAY_N', 'ARRAY_N');
+}
 
 // The plugin's own Composer autoloader registers the CherryLink\ namespace (src/),
 // so tests can resolve namespaced classes and the legacy class_alias shims.

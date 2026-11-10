@@ -6,6 +6,7 @@ namespace CherryLink\Support;
 
 use CherryLink\Contracts\Registerable;
 use CherryLink\Indexing\IndexHelpers;
+use CherryLink\Indexing\Outbox\Schema;
 use CherryLink\Plugin;
 
 /**
@@ -36,6 +37,7 @@ final class Lifecycle implements Registerable
         \register_activation_hook(Plugin::instance()->file(), [$this, 'activate']);
         \add_action('upgrader_process_complete', [$this, 'onUpdate'], 10, 2);
         \add_action('plugins_loaded', [$this, 'maybeFinishUpdate']);
+        \add_action('plugins_loaded', [$this, 'maybeInstallOutbox'], 20);
     }
 
     public function loadTextdomain(): void
@@ -51,6 +53,7 @@ final class Lifecycle implements Registerable
     public function activate(): void
     {
         $this->license->install();
+        Schema::install();
 
         $meta = \get_option('linkate_posts_meta', []);
         if (empty($meta['first_version'])) {
@@ -88,7 +91,18 @@ final class Lifecycle implements Registerable
     {
         if (\get_transient('cherrylink_updated') && \current_user_can('update_plugins')) {
             $this->license->install();
+            Schema::install();
             \set_transient('cherrylink_updated', 0);
         }
+    }
+
+    /**
+     * Defensive schema upgrade: run when the stored outbox version is stale (covers
+     * an activation/update that crashed before dbDelta completed). One option read
+     * per request; dbDelta only runs when the version is actually behind.
+     */
+    public function maybeInstallOutbox(): void
+    {
+        Schema::maybeInstall();
     }
 }

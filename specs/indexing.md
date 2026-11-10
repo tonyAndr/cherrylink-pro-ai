@@ -76,6 +76,33 @@ vectors.
 - The API's `Retry-After` is bounded before scheduling. Action Scheduler's
   normal one-off action completion is not treated as a failed-action retry.
 
+## Local outbox schema and lifecycle
+
+The plugin owns a prefix-aware outbox (`{$wpdb->prefix}cherrylink_outbox`) plus a
+singleton `cherrylink_outbox_state` row for the source epoch/sequence. It is
+created and upgraded with `dbDelta` on activation and after a plugin update,
+version-gated by the `cherrylink_db_version` option. A defensive `plugins_loaded`
+check re-runs the install when the version is stale, so an interrupted
+activation/update recovers on the next request instead of proceeding on a missing
+table. `dbDelta` is forward-only: columns are added but never dropped.
+
+- Outbox rows are immutable: `event_key`, `source_epoch`, `source_revision`,
+  `post_id`, `kind`, and `payload` are written only at insert time; delivery
+  transitions update metadata columns only and are fenced by `lease_owner`.
+- The canonical ordering pair is `(source_epoch, source_revision)`. Revisions
+  come from one atomic monotonic MySQL counter, and a replayed event key returns
+  the existing row without allocating a new revision.
+- The repository exposes claim/ack/release/reclaim/dead-letter mechanics and
+  enforces a maximum attempt budget. Retry policy (backoff, Action Scheduler
+  scheduling) is owned by the delivery service, not the repository.
+- Delivery rows record the last HTTP status, `Retry-After`, a sanitized error,
+  and the remote item/run id once a `202` is durably accepted.
+
+Privacy / data handling: the outbox holds only the site's own post data (title,
+plain embedding text, URL, content hash) required to deliver indexing work. Both
+tables and the version option are removed on uninstall. No queue data is stored
+in an autoloaded WordPress option.
+
 ## Acceptance criteria
 
 - [ ] Current synchronous scans preserve the API response compatibility and

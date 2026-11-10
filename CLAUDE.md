@@ -104,6 +104,12 @@ sniffs, PHP 7.4 floor; errors block, warnings advisory), PHPStan level 6.
 CI mirror in `.github/workflows/ci.yml` (PHP 7.4 + 8.2). Gutenberg unit tests:
 `cd gutenberg-src && npm test -- --watchAll=false`.
 
+Real-MySQL smoke (not part of `qa.sh`, needs Docker only):
+`./dev/outbox-smoke/run.sh` boots throwaway MySQL 8 + WordPress, activates the
+plugin with a custom table prefix, and asserts the outbox schema plus
+repository transactions. Use it after changing `src/Indexing/Outbox/` because
+the unit suite mocks `$wpdb`/`dbDelta`.
+
 ## i18n
 
 Text domain `cherrylink`, `Domain Path: /languages`. PHP strings wrapped in

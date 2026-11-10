@@ -117,11 +117,42 @@ class Client
     private function build_text(WP_Post $post): string
     {
         $options = \get_option('linkate-posts', []);
-        $text    = \wp_strip_all_tags($post->post_content);
+        $meta    = [];
+        foreach ($this->configured_meta_fields($options) as $field) {
+            $meta[$field] = \get_post_meta($post->ID, $field, true);
+        }
 
-        $custom_fields = \array_filter(\array_map('trim', \explode("\n", $options['vector_custom_fields'] ?? '')));
-        foreach ($custom_fields as $field) {
-            $flat = $this->flatten_meta_value(\get_post_meta($post->ID, $field, true));
+        return $this->build_text_from((string) $post->post_content, $meta);
+    }
+
+    /**
+     * Custom meta field names configured for embedding.
+     *
+     * @param array<string,mixed> $options
+     * @return string[]
+     */
+    public function configured_meta_fields(array $options): array
+    {
+        return \array_values(\array_filter(\array_map(
+            'trim',
+            \explode("\n", (string) ($options['vector_custom_fields'] ?? ''))
+        )));
+    }
+
+    /**
+     * Build the embedding text from already-resolved content and meta values.
+     *
+     * Kept separate from `build_text()` so the durable path can supply values read
+     * authoritatively from the database (the object cache may be stale while
+     * WordPress cache invalidation is suspended).
+     *
+     * @param array<string,mixed> $meta_values keyed by configured field name
+     */
+    public function build_text_from(string $content, array $meta_values = []): string
+    {
+        $text = \wp_strip_all_tags($content);
+        foreach ($meta_values as $value) {
+            $flat = $this->flatten_meta_value($value);
             if ($flat !== '') {
                 $text .= "\n" . $flat;
             }
@@ -199,15 +230,43 @@ class Client
      */
     public function capture_payload(WP_Post $post): array
     {
+        return $this->capture_payload_from_row([
+            'post_id'          => (int) $post->ID,
+            'post_title'       => (string) $post->post_title,
+            'post_content'     => (string) $post->post_content,
+            'post_modified_gmt' => (string) $post->post_modified_gmt,
+        ]);
+    }
+
+    /**
+     * Build the outbox payload from authoritative post values.
+     *
+     * `$row` carries what was read straight from the database (plus optional meta
+     * values read from `postmeta`), so the payload never depends on a cached object
+     * that a concurrent save may already have replaced. Two saves inside the same
+     * second therefore produce different payloads whenever the content differs,
+     * even though `post_modified_gmt` is identical.
+     *
+     * @param array{post_id:int,post_title:string,post_content:string,post_modified_gmt:string,url?:string} $row
+     * @param array<string,mixed> $meta_values keyed by configured field name
+     * @return array{post_id:int,title:string,text:string,url:string,lang:string,content_hash:string,modified_gmt:string,link_html:string}
+     */
+    public function capture_payload_from_row(array $row, array $meta_values = []): array
+    {
+        $title   = (string) $row['post_title'];
+        $content = (string) $row['post_content'];
+        $text    = $this->build_text_from($content, $meta_values);
+        $url     = $row['url'] ?? (\function_exists('get_permalink') ? \get_permalink($row['post_id']) : '');
+
         return [
-            'post_id'      => (int) $post->ID,
-            'title'        => (string) $post->post_title,
-            'text'         => $this->build_text($post),
-            'url'          => (string) (\get_permalink($post->ID) ?: ''),
+            'post_id'      => (int) $row['post_id'],
+            'title'        => $title,
+            'text'         => $text,
+            'url'          => (string) ($url ?: ''),
             'lang'         => 'ru',
-            'content_hash' => $this->content_hash($post),
-            'modified_gmt' => (string) $post->post_modified_gmt,
-            'link_html'    => (string) $post->post_content,
+            'content_hash' => \md5($text . '|' . $title),
+            'modified_gmt' => (string) $row['post_modified_gmt'],
+            'link_html'    => $content,
         ];
     }
 

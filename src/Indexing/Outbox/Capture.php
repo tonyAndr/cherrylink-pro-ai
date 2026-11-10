@@ -13,9 +13,17 @@ use WP_Post;
  *
  * The canonical ordering key is `(source_epoch, source_revision)`. The rule that
  * makes concurrent saves deterministic is: allocate the revision **immediately
- * before** reading the post, then persist an immutable payload. A save that
- * races the read therefore gets a later revision and wins; at worst both payloads
- * contain the same newest content, which is harmless.
+ * before** reading the post, then persist an immutable payload.
+ *
+ * The read itself is authoritative: post status, title, content and modified time
+ * come straight from `$wpdb`, and configured custom fields come straight from
+ * `postmeta`. The object cache cannot be trusted here — `clean_post_cache()` is a
+ * no-op while WordPress cache invalidation is suspended, and two saves inside the
+ * same second share `post_modified_gmt` while carrying different text.
+ *
+ * A failed read is NOT treated as a deletion: it raises {@see CaptureReadException}
+ * so the caller can keep its dirty marker instead of tombstoning a live article.
+ * Only an absent row (or a non-published status) produces a tombstone.
  *
  * Everything here runs inside the WordPress request that triggered it and makes
  * no network call — the save/delete hook must never wait on the API.
@@ -31,19 +39,30 @@ class Capture
     /** @var callable():string */
     private $keyFactory;
 
-    /** @var callable(int):array{status:string,modified:string}|null Authoritative DB reader. */
+    /** @var callable(int):(array<string,mixed>|null) Authoritative post row reader. */
     private $rowReader;
 
+    /** @var callable(int,string[]):array<string,mixed> Authoritative meta reader. */
+    private $metaReader;
+
+    /** @var callable():string[] Configured custom-field names. */
+    private $fieldReader;
+
     /**
-     * @param callable|null $keyFactory Builds a stable per-event idempotency key.
-     * @param callable|null $rowReader  Reads the authoritative post row; injectable
-     *                                  for tests and defaults to a direct $wpdb read.
+     * @param callable|null $keyFactory  Builds a stable per-event idempotency key.
+     * @param callable|null $rowReader   Returns the authoritative post row, or null
+     *                                   when the row does not exist. Must throw
+     *                                   {@see CaptureReadException} on a read error.
+     * @param callable|null $metaReader  Returns configured meta values for a post.
+     * @param callable|null $fieldReader Returns the configured custom-field names.
      */
     public function __construct(
         Repository $repository,
         Client $client,
         ?callable $keyFactory = null,
-        ?callable $rowReader = null
+        ?callable $rowReader = null,
+        ?callable $metaReader = null,
+        ?callable $fieldReader = null
     ) {
         $this->repository = $repository;
         $this->client     = $client;
@@ -51,6 +70,8 @@ class Capture
             return 'ev_' . \substr(\md5($epoch . ':' . $revision . ':' . $postId . ':' . $kind), 0, 32);
         };
         $this->rowReader  = $rowReader;
+        $this->metaReader = $metaReader;
+        $this->fieldReader = $fieldReader;
     }
 
     public function repository(): Repository
@@ -59,63 +80,67 @@ class Capture
     }
 
     /**
-     * Capture the current state of a post: allocate the revision, **re-read the
-     * post from the database**, then persist either an upsert or a tombstone.
-     *
-     * The `WP_Post` handed to `wp_insert_post` is already in memory and can belong
-     * to an older request that resumed after a newer save. Allocating the revision
-     * and then embedding that stale object would let the older request win with the
-     * higher revision. Re-reading after the allocation makes the revision reflect
-     * the moment the content was actually loaded.
-     *
-     * The operation is chosen from the **fresh** post, not from the caller's
-     * object, so a stale "unpublish" cannot tombstone content a newer save has
-     * already republished.
+     * Capture the current state of a post: allocate the revision, read the post
+     * authoritatively, then persist either an upsert or a tombstone.
      *
      * @return int Outbox row id.
+     *
+     * @throws CaptureReadException When the post row cannot be read.
      */
     public function capture(int $postId, ?string $runId = null): int
     {
-        $revision = $this->repository->allocateRevision();
-        $row      = $this->authoritativeRow($postId);
-        $fresh    = $this->reload($postId);
+        $captured = $this->build($postId);
 
-        // The authoritative row decides upsert vs tombstone. If it is gone or no
-        // longer published, the event is a tombstone regardless of the cached object.
-        if ($row === null || $row['status'] !== 'publish') {
-            return $this->enqueueDelete($postId, $revision, $runId);
-        }
-
-        // The payload must describe the same revision of the post we captured. When
-        // both status and modified time match, the object is current. When they do
-        // not (for example when cache invalidation is suspended, so clean_post_cache()
-        // and get_post() are served from a stale cache), refuse to enqueue stale
-        // content: the caller marks the index dirty and a later scan reconciles.
-        if (
-            $fresh === null
-            || $fresh->post_status !== $row['status']
-            || (string) $fresh->post_modified_gmt !== $row['modified']
-        ) {
-            throw new StaleCaptureException(
-                'Post ' . (int) $postId . ' changed during capture; refusing to enqueue stale content'
+        if ($captured['deleted']) {
+            return $this->repository->enqueue(
+                $this->key($postId, Repository::KIND_DELETE, $captured['revision']),
+                Repository::KIND_DELETE,
+                $postId,
+                ['post_id' => $postId, 'operation' => 'delete'],
+                $runId,
+                $captured['revision']
             );
         }
 
-        $payload = $this->client->capture_payload($fresh);
-
         return $this->repository->enqueue(
-            $this->key((int) $fresh->ID, Repository::KIND_UPSERT, $revision),
+            $this->key($postId, Repository::KIND_UPSERT, $captured['revision']),
             Repository::KIND_UPSERT,
-            (int) $fresh->ID,
-            $payload,
+            $postId,
+            $captured['payload'],
             $runId,
-            $revision
+            $captured['revision']
         );
     }
 
     /**
+     * Allocate a source revision and build the immutable payload (or tombstone)
+     * without enqueuing anything. Used by the bulk uploader, which attaches items
+     * to a run instead of delivering live mutations.
+     *
+     * @return array{revision:int,deleted:bool,payload:array<string,mixed>}
+     *
+     * @throws CaptureReadException When the post row cannot be read.
+     */
+    public function build(int $postId): array
+    {
+        // Revision first: a concurrent save that reads later must get a higher one.
+        $revision = $this->repository->allocateRevision();
+        $row      = $this->authoritativeRow($postId);
+
+        if ($row === null || (string) ($row['post_status'] ?? '') !== 'publish') {
+            return ['revision' => $revision, 'deleted' => true, 'payload' => []];
+        }
+
+        $row['post_id'] = $postId;
+        $meta           = $this->authoritativeMeta($postId);
+        $payload        = $this->client->capture_payload_from_row($row, $meta);
+
+        return ['revision' => $revision, 'deleted' => false, 'payload' => $payload];
+    }
+
+    /**
      * Convenience wrapper for the save hook. The passed object is used only for its
-     * id; content always comes from a fresh read inside `capture()`.
+     * id; content always comes from an authoritative read inside `build()`.
      *
      * @return int Outbox row id.
      */
@@ -172,18 +197,14 @@ class Capture
      */
     public function tryUpsert(WP_Post $post, ?string $runId = null): ?int
     {
-        try {
-            return $this->upsert($post, $runId);
-        } catch (\Throwable $error) {
-            (new Logger())->log('CherryLink outbox capture failed for post ' . $post->ID . ': ' . $error->getMessage());
-            return null;
-        }
+        return $this->tryCapture((int) $post->ID, $runId);
     }
 
     /**
      * Fail-closed capture for the save hook.
      *
-     * @return int|null Null when the event could not be persisted.
+     * @return int|null Null when the event could not be persisted (storage or read
+     *                  failure); the caller must keep the index-dirty marker.
      */
     public function tryCapture(int $postId, ?string $runId = null): ?int
     {
@@ -208,6 +229,133 @@ class Capture
         }
     }
 
+    /** @return array<string,mixed>|null */
+    private function readRow(int $postId): ?array
+    {
+        $row = \call_user_func($this->rowReader, $postId);
+        if ($row === null) {
+            return null;
+        }
+        if (! \is_array($row)) {
+            throw new CaptureReadException('Post row reader returned an invalid result');
+        }
+
+        return $row;
+    }
+
+    /** @return array<string,mixed>|null */
+    private function authoritativeRow(int $postId): ?array
+    {
+        if ($this->rowReader !== null) {
+            return $this->readRow($postId);
+        }
+
+        global $wpdb;
+        if (! \is_object($wpdb) || ! \is_callable([$wpdb, 'get_row'])) {
+            throw new CaptureReadException('WordPress database is unavailable');
+        }
+        /** @var \wpdb $db */
+        $db = $wpdb;
+        try {
+            $row = $db->get_row(
+                $db->prepare(
+                    "SELECT post_status, post_modified_gmt, post_title, post_content FROM {$db->posts} WHERE ID = %d",
+                    $postId
+                ),
+                ARRAY_A
+            );
+        } catch (\Throwable $readError) {
+            throw new CaptureReadException(
+                'Post row read failed: ' . \esc_html($readError->getMessage())
+            );
+        }
+
+        $lastError = (string) $db->last_error;
+        if (! \is_array($row)) {
+            // Distinguish "no such post" (deletion) from "the read failed".
+            if ($lastError !== '') {
+                throw new CaptureReadException('Post row read failed: ' . \esc_html($lastError));
+            }
+
+            return null;
+        }
+
+        return $row;
+    }
+
+    /**
+     * Configured meta values read straight from `postmeta`.
+     *
+     * @return array<string,mixed>
+     */
+    private function authoritativeMeta(int $postId): array
+    {
+        $fields = $this->customFields();
+        if ($fields === []) {
+            return [];
+        }
+
+        if ($this->metaReader !== null) {
+            return $this->readMeta($postId, $fields);
+        }
+
+        global $wpdb;
+        if (! \is_object($wpdb) || ! \is_callable([$wpdb, 'get_results'])) {
+            return [];
+        }
+        /** @var \wpdb $db */
+        $db      = $wpdb;
+        $values  = [];
+        $placeholders = \implode(', ', \array_fill(0, \count($fields), '%s'));
+        try {
+            $rows = $db->get_results($db->prepare(
+                "SELECT meta_key, meta_value FROM {$db->postmeta} WHERE post_id = %d AND meta_key IN ($placeholders)",
+                \array_merge([$postId], $fields)
+            ), ARRAY_A);
+        } catch (\Throwable $error) {
+            return [];
+        }
+
+        $byKey = [];
+        foreach ((array) $rows as $metaRow) {
+            $key            = (string) ($metaRow['meta_key'] ?? '');
+            $byKey[$key][] = \maybe_unserialize($metaRow['meta_value'] ?? '');
+        }
+        foreach ($fields as $field) {
+            if (isset($byKey[$field])) {
+                $values[$field] = \count($byKey[$field]) === 1 ? $byKey[$field][0] : $byKey[$field];
+            }
+        }
+
+        return $values;
+    }
+
+    /**
+     * @param string[] $fields
+     * @return array<string,mixed>
+     */
+    private function readMeta(int $postId, array $fields): array
+    {
+        $values = \call_user_func($this->metaReader, $postId, $fields);
+        if (! \is_array($values)) {
+            return [];
+        }
+
+        return $values;
+    }
+
+    /** @return string[] */
+    private function customFields(): array
+    {
+        if ($this->fieldReader !== null) {
+            return $this->readFields();
+        }
+
+        $options = (array) \get_option('linkate-posts', []);
+
+        return $this->client->configured_meta_fields($options);
+    }
+
     /** @return int Outbox row id. */
     private function enqueueDelete(int $postId, int $revision, ?string $runId): int
     {
@@ -221,75 +369,15 @@ class Capture
         );
     }
 
-    /**
-     * Authoritative post row, read straight from the database.
-     *
-     * The object cache can be unreliable here: `clean_post_cache()` is a no-op
-     * while WordPress cache invalidation is suspended, so `get_post()` is not
-     * guaranteed to see the newest row. This read does not depend on the cache and
-     * is what decides upsert vs tombstone and whether the captured object is current.
-     *
-     * @return array{status:string,modified:string}|null
-     */
-    private function authoritativeRow(int $postId): ?array
+    /** @return string[] */
+    private function readFields(): array
     {
-        if ($this->rowReader !== null) {
-            return $this->readRow($postId);
+        $fields = \call_user_func($this->fieldReader);
+        if (! \is_array($fields)) {
+            return [];
         }
 
-        global $wpdb;
-        if (! \is_object($wpdb) || ! \is_callable([$wpdb, 'get_row'])) {
-            return null;
-        }
-        /** @var \wpdb $db */
-        $db  = $wpdb;
-        $row = $db->get_row(
-            $db->prepare("SELECT post_status, post_modified_gmt FROM {$db->posts} WHERE ID = %d", $postId),
-            ARRAY_A
-        );
-
-        if (! \is_array($row)) {
-            return null;
-        }
-
-        return [
-            'status'   => (string) ($row['post_status'] ?? ''),
-            'modified' => (string) ($row['post_modified_gmt'] ?? ''),
-        ];
-    }
-
-    /** @return array{status:string,modified:string}|null */
-    private function readRow(int $postId): ?array
-    {
-        $row = \call_user_func($this->rowReader, $postId);
-        if (! \is_array($row)) {
-            return null;
-        }
-
-        return [
-            'status'   => (string) ($row['status'] ?? ''),
-            'modified' => (string) ($row['modified'] ?? ''),
-        ];
-    }
-
-    /**
-     * Re-read the post after the revision has been allocated.
-     *
-     * `clean_post_cache()` helps WordPress drop the just-saved object; the
-     * authoritative row above is what guarantees ordering when it cannot.
-     */
-    private function reload(int $postId): ?WP_Post
-    {
-        if (\function_exists('clean_post_cache')) {
-            \clean_post_cache($postId);
-        }
-        if (! \function_exists('get_post')) {
-            return null;
-        }
-
-        $fresh = \get_post($postId);
-
-        return $fresh instanceof WP_Post ? $fresh : null;
+        return \array_values(\array_map('strval', $fields));
     }
 
     private function key(int $postId, string $kind, int $revision): string

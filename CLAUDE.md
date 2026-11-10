@@ -104,6 +104,10 @@ WordPress -> API -> worker check.
 
 ## Dev tooling & tests
 
+Live plugin ↔ API flow (no TEI/worker): `./dev/async-e2e/run.sh` boots
+PostgreSQL + Qdrant + the API (async enabled) + MySQL + WordPress and drives
+capability negotiation, a snapshot run through seal, and mutation replay.
+
 Docker-only QA (no local PHP needed) via `dev/qa.sh {install|test|lint|fix|analyze|all}`:
 PHPUnit + Brain Monkey (unit, no WP runtime), PHPCS (PSR-12 + WP security/i18n
 sniffs, PHP 7.4 floor; errors block, warnings advisory), PHPStan level 6.

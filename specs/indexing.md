@@ -85,6 +85,29 @@ availability: an async tenant whose acceptance is temporarily disabled pauses
 with `waiting=true` and probes every 60 s, rather than falling back to
 synchronous writes the API rejects with `409 async_tenant_requires_queue`.
 
+## Enrollment and mode changes (plugin side)
+
+Enrollment is operator-initiated: the control plane binds the tenant's source
+epoch and switches it to `async`; the plugin never invents or rotates an epoch.
+The plugin's responsibilities are:
+
+- **Route by durable mode.** `asyncEnabled()` (tenant mode) decides whether the
+  outbox/bulk run is used. Availability only decides whether work can flow *now*.
+- **Do not queue unusable work during enrollment.** While the API reports
+  `mutations: false` (snapshot required / enrollment pending) or async acceptance
+  is disabled, a licensed save records the index-dirty marker and queues no live
+  mutation; the next snapshot run uploads the current state.
+- **Seed with a snapshot.** `AsyncBulkScan` forces `mode=snapshot` whenever
+  mutations are not accepted, so the first run enrolls instead of attempting an
+  incremental diff. A populated existing index still needs the operator's verified
+  inventory/bridge (`api/specs/source-lifecycle.md`); the plugin does not
+  reconcile it on its own.
+- **Defer, don't discard.** A `409` whose code describes a tenant-state problem
+  (`index_run_state_invalid`, `async_tenant_requires_queue`,
+  `async_indexing_disabled`, `source_revision_exhausted`) returns the outbox row to
+  pending with its attempt budget reset and a 300 s delay, so an operator mode
+  change does not destroy events. Payload errors still dead-letter.
+
 ## Planned capability-negotiated async flow
 
 When the API advertises protocol version 1 and the tenant is enabled:

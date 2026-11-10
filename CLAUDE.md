@@ -92,9 +92,15 @@ schedules a bounded background check.
 dead-letter), `Capture` (revision allocated before the post read), and `Delivery`
 (one Action Scheduler turn, stable `event_key` idempotency, bounded retry).
 `Indexing\IndexHooks` uses it only when `Support\Capabilities` reports an
-async-enabled tenant; otherwise it keeps the synchronous adapter, so production
-behavior is unchanged while the backend stays `sync` mode. Remaining work is the
-bulk run uploader/polling (`P3`) and the deferred durable-readiness UI.
+async-enabled tenant; otherwise it keeps the synchronous adapter.
+
+`Indexing\AsyncBulkScan` is the durable bulk workflow for async tenants
+(manifest -> create -> upload -> deletes -> seal -> poll) with persisted
+`run_id`/cursor in `cherrylink_async_run`. `SyncService` delegates
+start/cancel/status/tick to it when the tenant is async-capable and otherwise
+keeps the synchronous chain untouched. Remaining work: initial enrollment /
+existing-index reconciliation, the progress UI split, and one live
+WordPress -> API -> worker check.
 
 ## Dev tooling & tests
 

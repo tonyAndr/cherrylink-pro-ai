@@ -36,6 +36,40 @@ and options `cherrylink_sync_state` / `cherrylink_sync_plan`. A terminal
 successful run clears the plan and the index-dirty marker; a failure retains
 the cursor, plan, and failure metadata for operator recovery.
 
+## Bulk async run (implemented)
+
+`Indexing\AsyncBulkScan` owns the durable bulk workflow for async tenants:
+
+1. **manifest** — fetch the manifest, diff against published posts, persist the
+   plan, and allocate the run marker revision (older than every captured item).
+2. **create** — `POST /v1/index-runs` with the stored `client_run_key`, mode and
+   marker; persist `run_id`/`generation` before uploading. Snapshot/force-full
+   runs also send the published count and a sha256 membership digest.
+3. **upload** — batches of 20. Each item allocates its source revision **before**
+   the authoritative read (`Outbox\Capture::build()`), so a concurrent live save
+   is a newer outbox mutation and wins. Batch ids are
+   `client_run_key:u:<offset>`, so a replayed batch is idempotent. A post that
+   disappeared between plan and capture is demoted to a delete in the same run.
+4. **deletes** — batches of 50 via `/deletes` with `client_run_key:d:<offset>`.
+5. **seal** — `/seal` with `client_run_key:seal`; only then does the backend
+   prune absent snapshot memberships.
+6. **poll** — `GET /v1/index-runs/{id}` with delayed actions (10–60 s). Terminal
+   states end the scan.
+
+Everything the chain needs (run id, phase, cursor, counts, poll/retry timers,
+progress) is persisted in the non-autoloaded `cherrylink_async_run` option, so
+closing the browser, a PHP timeout, or a WordPress restart resumes the run at the
+same cursor. Pause stops new work; resume restarts from the persisted phase and
+cursor; cancel cancels an accepting remote run and otherwise just stops the
+local chain. Stale Action Scheduler callbacks (wrong phase/cursor/attempt/mode)
+are no-ops.
+
+Uploading and indexing are distinct states, and the admin status exposes both:
+`uploading`, `accepted`, `processing`, `vectors_applied`/`links_applied` and the
+error/retry fields. Upload completion is never reported as indexing completion.
+The existing AJAX actions are unchanged; `SyncService` delegates to the adapter
+when the tenant is async-capable and otherwise keeps the synchronous chain.
+
 ## Planned capability-negotiated async flow
 
 When the API advertises protocol version 1 and the tenant is enabled:

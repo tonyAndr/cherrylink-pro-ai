@@ -289,7 +289,10 @@ final class Capabilities
         return [
             'known'            => true,
             'async'            => $tenant_mode === 'async',
-            'available'        => $enabled && $tenant_mode === 'async' && $features_on,
+            // Acceptance of a *run* only needs `runs`. Live mutations are a
+            // separate decision (`mutations`) because enrollment and mode switches
+            // gate them while the seeding snapshot itself must still be accepted.
+            'available'        => $enabled && $tenant_mode === 'async' && ! empty($features['runs']),
             'protocol_version' => (int) ($capabilities['protocol_version'] ?? 0),
             'tenant_mode'      => $tenant_mode,
             'runs'             => ! empty($features['runs']),

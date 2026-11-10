@@ -249,6 +249,24 @@ final class AsyncClientTest extends TestCase
         $this->assertFalse($result['ok']);
     }
 
+    public function testFastApiErrorCodeIsReadFromDetail(): void
+    {
+        // The API raises HTTPException(detail={"code": ...}).
+        $this->next = [
+            'ok' => false, 'status' => 409, 'headers' => [], 'retry_after' => null,
+            'error' => 'HTTP 409',
+            'body' => ['detail' => ['code' => 'index_run_state_invalid']],
+        ];
+
+        $result = (new AsyncClient($this->client()))->mutations('ev_1', [
+            ['post_id' => 1, 'source_epoch' => 'e', 'source_revision' => 1],
+        ], null, 1);
+
+        $this->assertFalse($result['ok']);
+        $this->assertSame('index_run_state_invalid', $result['code']);
+        $this->assertSame('HTTP 409', $result['error'], 'the server error stays visible');
+    }
+
     public function testConflictIsNotRetryableButRateLimitAndServerErrorsAre(): void
     {
         $this->assertFalse(AsyncClient::isRetryable(['status' => 409, 'error' => 'HTTP 409']));

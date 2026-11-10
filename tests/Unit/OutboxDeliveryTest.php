@@ -290,6 +290,25 @@ final class OutboxDeliveryTest extends TestCase
         $this->assertSame([], $this->dead);
     }
 
+    public function testTenantStateConflictIsDeferredNotDeadLetteredFromTransportShape(): void
+    {
+        // The API reports the code inside detail.code; Delivery must still recognise it.
+        $this->mutationResult = [
+            'ok' => false, 'status' => 409, 'retry_after' => null,
+            'error' => 'HTTP 409', 'code' => 'async_tenant_requires_queue',
+        ];
+        $this->rows = [$this->row()];
+
+        $repo = $this->repositoryMock();
+        $repo->shouldReceive('defer')->once()->andReturn(true);
+        $repo->shouldReceive('deadLetter')->never();
+
+        $result = $this->delivery($repo)->run();
+
+        $this->assertSame(1, $result['deferred']);
+        $this->assertSame([], $this->dead);
+    }
+
     public function testNonTenantStateConflictStillDeadLetters(): void
     {
         $this->mutationResult = [

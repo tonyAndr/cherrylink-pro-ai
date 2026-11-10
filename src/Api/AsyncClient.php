@@ -289,7 +289,12 @@ class AsyncClient
     {
         $body  = \is_array($response['body']) ? $response['body'] : null;
         $valid = $body !== null;
-        $code  = \is_array($body) ? (string) ($body['code'] ?? '') : '';
+        // FastAPI wraps raised errors as {"detail": {"code": "..."}}.
+        $code = '';
+        if (\is_array($body)) {
+            $detail = \is_array($body['detail'] ?? null) ? $body['detail'] : [];
+            $code   = (string) ($body['code'] ?? $detail['code'] ?? '');
+        }
 
         $result = [
             'ok'          => $response['ok'] && $valid,
@@ -307,7 +312,10 @@ class AsyncClient
         // A 2xx alone is not durable acceptance: the backend must return the
         // documented receipt. Otherwise a truncated/empty body would be
         // acknowledged as delivered and the work would be silently lost.
-        if ($valid && ! self::receiptIsValid($kind, $body, $expectedAccepted)) {
+        // Only judge the receipt when the transport itself succeeded: a non-2xx body
+        // carries an error payload, not a receipt, and its server code is the useful
+        // diagnostic (e.g. `idempotency_key_reused`, `snapshot_membership_mismatch`).
+        if ($valid && $response['ok'] && ! self::receiptIsValid($kind, $body, $expectedAccepted)) {
             $result['ok']    = false;
             $result['error'] = 'invalid async receipt';
         }

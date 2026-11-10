@@ -1,6 +1,6 @@
 {
     "translation-revision-date": "2026-08-09 16:40+0000",
-    "generator": "WP-CLI\/2.7.1",
+    "generator": "WP-CLI/2.7.1",
     "source": "js\/cherry-front.js",
     "domain": "messages",
     "locale_data": {
@@ -10,26 +10,23 @@
                 "lang": "en_US",
                 "plural-forms": "nplurals=2; plural=(n != 1);"
             },
-            "\u0412\u0445\u043e\u0434\u044f\u0449\u0438\u0435": [
-                "Incoming"
-            ],
-            "\u041d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0438": [
-                "Settings"
-            ],
             "\u0412\u0441\u0442\u0430\u0432\u0438\u0442\u044c \u0432\u043e\u043a\u0440\u0443\u0433 \u0432\u044b\u0434\u0435\u043b\u0435\u043d\u0438\u044f": [
                 "Insert around selection"
             ],
             "\u041f\u043e\u0434\u0431\u0438\u0440\u0430\u0435\u043c \u0430\u043d\u043a\u043e\u0440\u043d\u044b\u0435 \u043f\u043e\u0434\u0441\u043a\u0430\u0437\u043a\u0438\u2026": [
                 "Selecting anchor suggestions\u2026"
             ],
-            "\u041f\u043e\u0434\u0441\u043a\u0430\u0437\u043a\u0438 \u0434\u043b\u044f: <strong>%s<\/strong>": [
-                "Suggestions for: <strong>%s<\/strong>"
+            "\u041f\u043e\u0434\u0441\u043a\u0430\u0437\u043a\u0438 \u0434\u043b\u044f: <strong>%s</strong>": [
+                "Suggestions for: <strong>%s</strong>"
             ],
             "\u041f\u043e\u0434\u0441\u043a\u0430\u0437\u043a\u0438 \u043d\u0435 \u043d\u0430\u0439\u0434\u0435\u043d\u044b.": [
                 "No suggestions found."
             ],
             "\u0423\u0431\u0435\u0434\u0438\u0442\u0435\u0441\u044c, \u0447\u0442\u043e \u0441\u0442\u0430\u0442\u044c\u044f \u043f\u0440\u043e\u0438\u043d\u0434\u0435\u043a\u0441\u0438\u0440\u043e\u0432\u0430\u043d\u0430 \u0447\u0435\u0440\u0435\u0437 Cherry Vector API. %s.": [
                 "Make sure the article is indexed via the Cherry Vector API. %s."
+            ],
+            "\u041d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0438": [
+                "Settings"
             ],
             "\u041d\u0430\u0439\u0442\u0438 \u0432 \u0442\u0435\u043a\u0441\u0442\u0435": [
                 "Find in text"
@@ -63,6 +60,9 @@
             ],
             "\u041f\u0435\u0440\u0435\u0439\u0442\u0438 \u043a \u0444\u0440\u0430\u0437\u0435 \u0432 \u0440\u0435\u0434\u0430\u043a\u0442\u043e\u0440\u0435": [
                 "Go to the phrase in the editor"
+            ],
+            "\u0412\u0445\u043e\u0434\u044f\u0449\u0438\u0435": [
+                "Incoming"
             ],
             "\u0414\u0430\u043d\u043d\u044b\u0435 \u043d\u0435\u0434\u043e\u0441\u0442\u0443\u043f\u043d\u044b.": [
                 "Data unavailable."

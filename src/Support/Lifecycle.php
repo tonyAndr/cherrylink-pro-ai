@@ -5,9 +5,13 @@ declare(strict_types=1);
 namespace CherryLink\Support;
 
 use CherryLink\Contracts\Registerable;
+use CherryLink\Indexing\AsyncBulkScan;
 use CherryLink\Indexing\IndexHelpers;
+use CherryLink\Indexing\Outbox\Delivery;
 use CherryLink\Indexing\Outbox\Schema;
+use CherryLink\Indexing\SyncService;
 use CherryLink\Plugin;
+use CherryLink\Support\Capabilities;
 
 /**
  * Plugin lifecycle wiring: load the text domain, run the install/defaults routine on
@@ -39,6 +43,7 @@ final class Lifecycle implements Registerable
     {
         \add_action('init', [$this, 'loadTextdomain'], 1);
         \register_activation_hook(Plugin::instance()->file(), [$this, 'activate']);
+        \register_deactivation_hook(Plugin::instance()->file(), [$this, 'deactivate']);
         \add_action('upgrader_process_complete', [$this, 'onUpdate'], 10, 2);
         \add_action('plugins_loaded', [$this, 'maybeFinishUpdate']);
         \add_action('plugins_loaded', [$this, 'maybeInstallOutbox'], 20);
@@ -70,6 +75,48 @@ final class Lifecycle implements Registerable
 
             if ((new IndexHelpers())->get_indexable_posts_count() > self::INITIAL_LIMIT) {
                 \set_transient('cherry-manual-indexation-needed', true, 20);
+            }
+        }
+    }
+
+    /**
+     * Deactivation: unschedule our cron events and cancel our queued background work.
+     *
+     * WordPress keeps scheduled events in the options table across deactivation, so
+     * without this the capability refresh, the two recovery sweeps and the licence
+     * check keep firing with no callbacks registered.
+     */
+    public function deactivate(): void
+    {
+        $hooks = [
+            Capabilities::REFRESH_HOOK,
+            Delivery::SWEEP_HOOK,
+            AsyncBulkScan::SWEEP_HOOK,
+            License::VALIDATION_HOOK,
+            'clpro_license_cron_hook',
+        ];
+        foreach ($hooks as $hook) {
+            if (\function_exists('wp_clear_scheduled_hook')) {
+                \wp_clear_scheduled_hook($hook);
+            }
+        }
+
+        // Drop ours from the Action Scheduler queue; other plugins keep theirs.
+        if (! \class_exists('ActionScheduler_Store') || ! \function_exists('as_get_scheduled_actions')) {
+            return;
+        }
+        foreach ([SyncService::GROUP, Delivery::GROUP, AsyncBulkScan::GROUP] as $group) {
+            $ids = \as_get_scheduled_actions([
+                'group'    => $group,
+                'status'   => \ActionScheduler_Store::STATUS_PENDING,
+                'per_page' => -1,
+            ], 'ids');
+            foreach ((array) $ids as $id) {
+                try {
+                    \ActionScheduler::store()->cancel_action($id);
+                } catch (\Throwable $error) {
+                    // best effort
+                }
             }
         }
     }

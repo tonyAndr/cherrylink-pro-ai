@@ -115,11 +115,18 @@ sniffs, PHP 7.4 floor; errors block, warnings advisory), PHPStan level 6.
 CI mirror in `.github/workflows/ci.yml` (PHP 7.4 + 8.2). Gutenberg unit tests:
 `cd gutenberg-src && npm test -- --watchAll=false`.
 
+Release pre-flight: follow `RELEASE-CHECKLIST.md` (quality gates, WordPress
+smokes, manual wp-dev pass, packaging and metadata checks).
+
 Real-MySQL smoke (not part of `qa.sh`, needs Docker only):
 `./dev/outbox-smoke/run.sh` boots throwaway MySQL 8 + WordPress, activates the
 plugin with a custom table prefix, and asserts the outbox schema plus
 repository transactions. Use it after changing `src/Indexing/Outbox/` because
 the unit suite mocks `$wpdb`/`dbDelta`.
+
+`./dev/wp-smoke/run.sh` exercises the editor AJAX path against real stored
+options (the strict_types/option-type and search-limit regressions are
+invisible to the mocked suite).
 
 ## i18n
 

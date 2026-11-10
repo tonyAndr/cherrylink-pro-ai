@@ -180,7 +180,7 @@ jQuery(document).ready(function ($) {
                     });
                 }
             } catch (err) {
-                console.log(err)
+                // Editor may already be torn down; not actionable.
             }
         }
 
@@ -455,9 +455,7 @@ jQuery(document).ready(function ($) {
         // Clean the text if we left any selection spans in it
         function fcl_cleanSuggentionSpans() {
             let txt = fcl_suggestions_getEditorContent();
-            //console.log(txt);
             txt = txt.replace(/<span id="sugg_\d*_\d*">([^>]+)<\/span>/gi, "\$1");
-            //console.log(txt);
             if (fcl_isTinyMCE()) {
                 tinymce.activeEditor.setContent(txt);
             } else {
@@ -754,7 +752,7 @@ jQuery(document).ready(function ($) {
                     content += cl_editor_textarea[i].value;
                 }
             } catch (err) {
-                console.log('Unable to get editors content by id: ', cl_editor_textarea[i].id);
+                // Editor instance gone (closed/switched); skip it.
             }
             i++;
         }
@@ -883,7 +881,6 @@ jQuery(document).ready(function ($) {
                 }
             })
         }
-        // console.log(ankors);
         return ankors;
     }
 
@@ -1348,7 +1345,7 @@ jQuery(document).ready(function ($) {
                 }
             });
         } else {
-            console.log("Таблица схемы не создана")
+            // API not configured yet: the per-link counters come from the server.
         }
     }
 

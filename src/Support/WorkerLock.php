@@ -26,7 +26,10 @@ final class WorkerLock
     /** @var callable():string */
     private $tokenFactory;
 
-    public function __construct(?callable $clock = null, ?callable $tokenFactory = null)
+    /** @var callable(string,string):bool|null */
+    private $conditionalDelete;
+
+    public function __construct(?callable $clock = null, ?callable $tokenFactory = null, ?callable $conditionalDelete = null)
     {
         $this->clock = $clock ?? static function (): int {
             return \time();
@@ -34,6 +37,7 @@ final class WorkerLock
         $this->tokenFactory = $tokenFactory ?? static function (): string {
             return \function_exists('wp_generate_uuid4') ? \wp_generate_uuid4() : \bin2hex(\random_bytes(8));
         };
+        $this->conditionalDelete = $conditionalDelete;
     }
 
     /**
@@ -48,19 +52,63 @@ final class WorkerLock
             if ($expiry > $this->now()) {
                 return null;
             }
-            \delete_option($option);   // stale owner; take over
+            if (! $this->deleteIfValueMatches($option, $current)) {
+                return null;
+            }
         }
 
         $token = ($this->now() + \max(1, $ttl)) . '|' . (string) \call_user_func($this->tokenFactory);
 
-        return \add_option($option, $token, '', false) ? $token : null;
+        if (! \add_option($option, $token, '', false)) {
+            return null;
+        }
+        $this->invalidateOptionCaches($option);
+        $this->invalidateOptionCaches('cherrylink_async_run');
+        $this->invalidateOptionCaches('cherrylink_sync_state');
+
+        return $token;
     }
 
     /** Release only if we still own it (another owner may have taken over). */
     public function release(string $option, string $token): void
     {
-        if (\get_option($option, '') === $token) {
-            \delete_option($option);
+        $this->deleteIfValueMatches($option, $token);
+    }
+
+    /** Delete only the row whose value was observed, without a read/delete race. */
+    private function deleteIfValueMatches(string $option, string $value): bool
+    {
+        if ($this->conditionalDelete !== null) {
+            $deleted = (bool) \call_user_func($this->conditionalDelete, $option, $value);
+        } else {
+            global $wpdb;
+            if (! \is_object($wpdb) || ! isset($wpdb->options) || ! \is_callable([$wpdb, 'prepare']) || ! \is_callable([$wpdb, 'query'])) {
+                return false;
+            }
+            $deleted = $wpdb->query($wpdb->prepare(
+                "DELETE FROM {$wpdb->options} WHERE option_name = %s AND option_value = %s",
+                $option,
+                $value
+            ));
+            // A database error is not a successful delete.
+            if ($deleted === false) {
+                return false;
+            }
+            $deleted = $deleted === 1;
+        }
+
+        if ($deleted) {
+            $this->invalidateOptionCaches($option);
+        }
+
+        return $deleted;
+    }
+
+    private function invalidateOptionCaches(string $option): void
+    {
+        if (\function_exists('wp_cache_delete')) {
+            \wp_cache_delete($option, 'options');
+            \wp_cache_delete('alloptions', 'options');
         }
     }
 

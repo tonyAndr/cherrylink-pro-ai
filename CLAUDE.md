@@ -283,3 +283,10 @@ docker compose up -d
 - **Anchor suggestions are lazy/on-demand**: `Editor\SuggestionsResults::execute()` calls `/v1/search` with an empty `source_html` (no eager anchors, no top-5 cap). When the editor opens a hit's suggestion panel (loupe), it calls the `get_linkate_suggestions` AJAX action → `Api\Client::suggest_anchors()` → `POST /v1/suggest-anchors` for that one target. Wired in both editors: Gutenberg `SugestionsPanel.componentDidMount` fetches; classic `fcl_render_api_suggestions` fetches (both show a loading state, cache per target). `Editor\ClassicPanel::buildSourceHtml()` wraps plain-text content in `<p>` for the extractor.
 - **Updates**: no CI; clients auto-update via the bundled Plugin Update Checker (v4.9), wired in `cherrylink_main.php` to this GitHub repo. Ship a new version by publishing a GitHub Release whose tag matches the `Version:` header, with the packaged plugin zip attached as a release asset.
 - **Logging** (`\CherryLink\Support\Logger`): writes to PHP error log; in wp-dev: `docker compose logs wordpress`
+
+
+Local review corrections (2026-11-10): async captures no longer depend
+on API availability; WorkerLock uses ownership-conditional SQL deletion; both
+workers validate state inside the mutex. Bulk cancel/restart is a persisted worker
+phase with retained run identity and retries, and resume retains its retry attempt.
+See specs/indexing.md. No API/control runtime or deployment changed.

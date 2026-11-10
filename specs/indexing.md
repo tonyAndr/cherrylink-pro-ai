@@ -104,10 +104,13 @@ The plugin's responsibilities are:
 
 - **Route by durable mode.** `asyncEnabled()` (tenant mode) decides whether the
   outbox/bulk run is used. Availability only decides whether work can flow *now*.
-- **Do not queue unusable work during enrollment.** While the API reports
-  `mutations: false` (snapshot required / enrollment pending) or async acceptance
-  is disabled, a licensed save records the index-dirty marker and queues no live
-  mutation; the next snapshot run uploads the current state.
+- **Persist every mutation for an established async tenant.** A licensed
+  save/unpublish/delete always captures an immutable outbox event, including
+  while enrollment is pending, mutations are unavailable, capability data is
+  stale/missing, or the API is down. Capture is local and performs no HTTP.
+  Delivery owns availability: tenant-state rejections remain pending for retry,
+  and the enrollment snapshot reconciles current state. Never drop a mutation
+  based on a request-path availability probe.
 - **Seed with a snapshot.** `AsyncBulkScan` forces `mode=snapshot` whenever
   mutations are not accepted, so the first run enrolls instead of attempting an
   incremental diff. A populated existing index still needs the operator's verified
@@ -262,3 +265,19 @@ the default and the fallback.
 - Do not add client-side HTML parsing; raw HTML is parsed by the backend.
 - Do not push or deploy capability/async changes until the API ADR, Qdrant CAS
   evidence, migration tests, and mixed-load benchmarks are complete.
+
+### Review corrections: outage capture and cancellation (2026-11-10)
+
+Async tenant mode always selects durable mutation capture, including capability
+cache expiry, emergency disable and initial snapshot enrollment. Availability
+controls delivery only; a false capability answer must not discard local events.
+
+Bulk cancellation is a persisted `cancel` worker phase. The interactive request
+only records intent and schedules work. A failed remote cancellation retains its
+run ID and retries; a replacement snapshot gets a new key only after cancellation
+is acknowledged. Exhausted/permanent failures keep the remote identity for recovery.
+Sealed runs are left to drain. Resume preserves the pending retry attempt.
+
+Worker locks use conditional SQL deletion for stale takeover and release. State
+and callback identity are revalidated after acquiring the mutex, and the synchronous
+worker retains its lock through cursor persistence and follow-up scheduling.

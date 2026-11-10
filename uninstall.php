@@ -24,6 +24,7 @@ if (defined('ABSPATH') && defined('WP_UNINSTALL_PLUGIN')) {
 		'cherrylink_async_run',
 		'cherrylink_async_plan',
 		'cherrylink_async_batch',
+		'cherrylink_async_cancel',
 		'cherrylink_async_worker_lock',
 		'cherrylink_async_tenant',
 		// Request locks.

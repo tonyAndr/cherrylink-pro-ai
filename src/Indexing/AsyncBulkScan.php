@@ -60,6 +60,8 @@ class AsyncBulkScan implements Registerable
     /** The single in-flight batch, persisted before it is sent (autoload off). */
     public const BATCH = 'cherrylink_async_batch';
 
+    public const CANCEL_INTENT = 'cherrylink_async_cancel';
+
     /** Worker lock: prevents overlapping turns for the same scan. */
     public const LOCK = 'cherrylink_async_worker_lock';
 
@@ -137,6 +139,11 @@ class AsyncBulkScan implements Registerable
     /** @return array<string,mixed> */
     public function getState(): array
     {
+        // Another PHP process may have paused/cancelled while this worker did I/O.
+        if (\function_exists('wp_cache_delete')) {
+            \wp_cache_delete(self::STATE, 'options');
+            \wp_cache_delete(self::CANCEL_INTENT, 'options');
+        }
         $defaults = [
             'status'           => 'idle',
             'phase'            => null,
@@ -168,14 +175,23 @@ class AsyncBulkScan implements Registerable
             'updated_gmt'      => '',
             'force_full'       => false,
             'waiting'          => false,
+            'restart_after_cancel' => false,
         ];
 
-        return \array_merge($defaults, (array) \get_option(self::STATE, $defaults));
+        $state = \array_merge($defaults, (array) \get_option(self::STATE, $defaults));
+        if (\get_option(self::CANCEL_INTENT, false) && $state['phase'] !== 'cancel') {
+            $state = \array_merge($state, ['status' => 'running', 'phase' => 'cancel', 'cursor' => 0, 'retry_attempt' => 0]);
+        }
+        return $state;
     }
 
     /** @param array<string,mixed> $patch @return array<string,mixed> */
     public function setState(array $patch): array
     {
+        // A concurrent worker response must never erase a user's cancellation.
+        if (\get_option(self::CANCEL_INTENT, false) && ($patch['phase'] ?? '') !== 'cancel') {
+            $patch = \array_merge($patch, ['status' => 'running', 'phase' => 'cancel', 'cursor' => 0]);
+        }
         $state = \array_merge($this->getState(), $patch, ['updated_gmt' => \gmdate('Y-m-d H:i:s')]);
         \update_option(self::STATE, $state, false);
 
@@ -269,8 +285,14 @@ class AsyncBulkScan implements Registerable
         if (! \function_exists('as_enqueue_async_action')) {
             return $this->setState(['status' => 'error', 'message' => 'Action Scheduler unavailable']);
         }
-        if (\in_array($this->getState()['status'], ['running', 'paused'], true) && $this->isRunning()) {
+        if (\in_array($this->getState()['status'], ['running', 'paused'], true)) {
             return $this->getState();
+        }
+
+        $previous = $this->getState();
+        if ($previous['run_id'] !== '' && ! $previous['sealed'] && $previous['status'] === 'error') {
+            $this->setState(['force_full' => $force_full]);
+            return $this->requestCancel(true);
         }
 
         $state = $this->setState([
@@ -302,6 +324,7 @@ class AsyncBulkScan implements Registerable
             'started_gmt'      => \gmdate('Y-m-d H:i:s'),
             'force_full'       => $force_full,
             'waiting'          => false,
+            'restart_after_cancel' => false,
         ]);
         \delete_option(self::PLAN);
         \delete_option(self::BATCH);
@@ -350,7 +373,7 @@ class AsyncBulkScan implements Registerable
         }
 
         $state = $this->setState(['status' => 'running', 'waiting' => false, 'message' => '']);
-        $this->enqueue((string) $state['phase'], (int) $state['cursor'], 0);
+        $this->enqueue((string) $state['phase'], (int) $state['cursor'], (int) $state['retry_attempt']);
 
         return $state;
     }
@@ -364,23 +387,51 @@ class AsyncBulkScan implements Registerable
             return $state;
         }
 
-        if (! empty($state['run_id']) && empty($state['sealed'])) {
-            $this->asyncClient()->cancelRun((string) $state['run_id']);
-        }
+        return $this->requestCancel(false);
+    }
 
+    /** Persist intent before any network I/O; the worker retries remote cancellation. */
+    private function requestCancel(bool $restart): array
+    {
+        \update_option(self::CANCEL_INTENT, true, false);
         $this->unschedule();
+        $state = $this->setState([
+            'status' => 'running', 'phase' => 'cancel', 'cursor' => 0,
+            'retry_attempt' => 0, 'waiting' => false,
+            'restart_after_cancel' => $restart,
+            'message' => \__('Остановка сканирования…', 'cherrylink'),
+        ]);
+        $this->enqueue('cancel', 0, 0);
+        return $state;
+    }
+
+    /** @param array<string,mixed> $state */
+    private function phaseCancel(array $state): void
+    {
+        if ($state['run_id'] !== '' && ! $state['sealed']) {
+            $result = $this->asyncClient()->cancelRun((string) $state['run_id']);
+            if (! $result['ok']) {
+                $this->retryOrFail($state, 'cancel', 0, $result);
+                return;
+            }
+        }
+        \delete_option(self::CANCEL_INTENT);
         \delete_option(self::PLAN);
         \delete_option(self::BATCH);
-
+        if ($state['restart_after_cancel']) {
+            $this->setState([
+                'status' => 'running', 'phase' => 'manifest', 'cursor' => 0,
+                'run_id' => '', 'client_run_key' => $this->newRunKey(),
+                'sealed' => false, 'uploaded' => 0, 'deleted' => 0,
+                'retry_attempt' => 0, 'restart_after_cancel' => false,
+            ]);
+            $this->enqueue('manifest', 0, 0);
+            return;
+        }
         $meta = $this->options->meta();
         $meta['indexing_process'] = 'CANCELLED';
         $this->options->saveMeta($meta);
-
-        return $this->setState([
-            'status'  => 'cancelled',
-            'waiting' => false,
-            'message' => \__('Остановлено пользователем', 'cherrylink'),
-        ]);
+        $this->setState(['status' => 'cancelled', 'message' => \__('Остановлено пользователем', 'cherrylink')]);
     }
 
     // ── Recovery ────────────────────────────────────────────────────────────
@@ -448,30 +499,6 @@ class AsyncBulkScan implements Registerable
         $state = $this->getState();
         $phase = (string) $phase;
 
-        // Fencing 1: callbacks must belong to the current run and be able to run.
-        if ($phase !== 'probe') {
-            if ($state['status'] !== 'running') {
-                return;
-            }
-            if ((string) $runKey !== (string) $state['client_run_key']) {
-                return;   // callback from a replaced run
-            }
-        } elseif (! \in_array($state['status'], ['running', 'paused'], true) || ! $state['waiting']) {
-            return;
-        }
-
-        $cursor  = (int) $cursor;
-        $attempt = (int) $attempt;
-        if ($phase !== 'probe' && ($state['phase'] !== $phase || (int) $state['cursor'] !== $cursor)) {
-            return;   // stale callback from an older cursor
-        }
-        if ($phase !== 'probe' && (int) $state['retry_attempt'] !== $attempt) {
-            return;
-        }
-        if ($force_full !== null && (bool) $state['force_full'] !== (bool) $force_full) {
-            return;
-        }
-
         // Fencing 2: only one turn may run for this scan at a time.
         $token = $this->lock->acquire(self::LOCK, self::WORKER_LOCK_TTL);
         if ($token === null) {
@@ -479,7 +506,39 @@ class AsyncBulkScan implements Registerable
         }
 
         try {
+            if (\function_exists('wp_cache_delete')) {
+                \wp_cache_delete(self::STATE, 'options');
+                \wp_cache_delete('alloptions', 'options');
+            }
+            $state = $this->getState();
+            // Fencing 1: callbacks must belong to the current run and be able to run.
+            if ($phase !== 'probe') {
+                if ($state['status'] !== 'running') {
+                    return;
+                }
+                if ((string) $runKey !== (string) $state['client_run_key']) {
+                    return;   // callback from a replaced run
+                }
+            } elseif (! \in_array($state['status'], ['running', 'paused'], true) || ! $state['waiting']) {
+                return;
+            }
+
+            $cursor  = (int) $cursor;
+            $attempt = (int) $attempt;
+            if ($phase !== 'probe' && ($state['phase'] !== $phase || (int) $state['cursor'] !== $cursor)) {
+                return;   // stale callback from an older cursor
+            }
+            if ($phase !== 'probe' && (int) $state['retry_attempt'] !== $attempt) {
+                return;
+            }
+            if ($force_full !== null && (bool) $state['force_full'] !== (bool) $force_full) {
+                return;
+            }
+
             switch ($phase) {
+                case 'cancel':
+                    $this->phaseCancel($state);
+                    return;
                 case 'probe':
                     $this->phaseProbe();
                     return;
@@ -684,6 +743,9 @@ class AsyncBulkScan implements Registerable
             return;
         }
 
+        if (! $this->currentTurn($state)) {
+            return; // Keep the immutable batch for resume/replay after a concurrent pause.
+        }
         $this->advancePastSlice($state, $plan, $offset, \count($slice), (int) $result['accepted_count']);
         $this->deleteBatch();
     }
@@ -744,6 +806,9 @@ class AsyncBulkScan implements Registerable
             return;
         }
 
+        if (! $this->currentTurn($state)) {
+            return;
+        }
         $this->advancePastDeletes($state, $plan, $offset, \count($slice), (int) $result['accepted_count'], 0);
         $this->deleteBatch();
     }
@@ -778,6 +843,9 @@ class AsyncBulkScan implements Registerable
             return;
         }
 
+        if (! $this->currentTurn($state)) {
+            return;
+        }
         $progress = $this->progressFrom($result['body']);
         $runState = (string) ($result['body']['state'] ?? '');
 
@@ -858,6 +926,16 @@ class AsyncBulkScan implements Registerable
     /** @param array<string,mixed> $state @param array<string,mixed> $extra */
     private function advance(array $state, string $phase, int $cursor, array $extra = []): void
     {
+        if (! $this->currentTurn($state)) {
+            $current = $this->getState();
+            if ($current['phase'] === 'cancel' && $current['client_run_key'] === $state['client_run_key'] && isset($extra['run_id'])) {
+                $this->setState(['run_id' => $extra['run_id']]);
+            }
+            if ($current['phase'] === 'cancel' && $current['client_run_key'] === $state['client_run_key'] && ! empty($extra['sealed'])) {
+                $this->setState(['sealed' => true]);
+            }
+            return;
+        }
         $this->setState(\array_merge($extra, [
             'phase'            => $phase,
             'cursor'           => $cursor,
@@ -889,33 +967,16 @@ class AsyncBulkScan implements Registerable
      */
     private function restartSnapshot(array $state, int $drifted): void
     {
-        if (! empty($state['run_id'])) {
-            $this->asyncClient()->cancelRun((string) $state['run_id']);
-        }
-        \delete_option(self::BATCH);
-
-        $this->setState([
-            'status'          => 'running',
-            'phase'           => 'manifest',
-            'cursor'          => 0,
-            'run_id'          => '',
-            'client_run_key'  => $this->newRunKey(),
-            'sealed'          => false,
-            'uploaded'        => 0,
-            'deleted'         => 0,
-            'skipped_deletes' => 0,
-            'message'         => $drifted > 0
-                ? \__('Содержимое изменилось во время сканирования — сканирование перезапущено.', 'cherrylink')
-                : \__('Состав сайта изменился — сканирование перезапущено.', 'cherrylink'),
-        ]);
-
-        \delete_option(self::PLAN);
-        $this->enqueue('manifest', 0, 0);
+        $this->requestCancel(true);
+        unset($drifted);
     }
 
     /** @param array<string,mixed> $state */
     private function finish(array $state, string $status, string $message): void
     {
+        if (! $this->currentTurn($state)) {
+            return;
+        }
         $meta = $this->options->meta();
         $meta['indexing_process'] = $status === 'done' ? 'DONE' : 'DONE_WITH_ERRORS';
         $meta['last_scan_gmt']    = \gmdate('Y-m-d H:i:s');
@@ -934,6 +995,9 @@ class AsyncBulkScan implements Registerable
     /** @param array<string,mixed> $state */
     private function fail(array $state, string $phase, int $cursor, string $error): void
     {
+        if (! $this->currentTurn($state)) {
+            return;
+        }
         $meta = $this->options->meta();
         $meta['indexing_process'] = 'ERROR';
         $this->options->saveMeta($meta);
@@ -953,6 +1017,9 @@ class AsyncBulkScan implements Registerable
     /** @param array<string,mixed> $state @param array<string,mixed> $result */
     private function retryOrFail(array $state, string $phase, int $cursor, array $result): void
     {
+        if (! $this->currentTurn($state)) {
+            return;
+        }
         $attempt   = (int) $state['retry_attempt'] + 1;
         $retryable = \array_key_exists('retryable', $result)
             ? (bool) $result['retryable']
@@ -1091,6 +1158,16 @@ class AsyncBulkScan implements Registerable
             'links_terminal'   => (int) ($body['links_terminal'] ?? 0),
             'run_state'        => (string) ($body['state'] ?? ''),
         ];
+    }
+
+    /** @param array<string,mixed> $state */
+    private function currentTurn(array $state): bool
+    {
+        $current = $this->getState();
+        return $current['status'] === 'running'
+            && $current['client_run_key'] === $state['client_run_key']
+            && $current['phase'] === $state['phase']
+            && (int) $current['cursor'] === (int) $state['cursor'];
     }
 
     private function newRunKey(): string

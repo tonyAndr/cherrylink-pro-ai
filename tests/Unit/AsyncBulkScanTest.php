@@ -72,6 +72,7 @@ final class AsyncBulkScanTest extends TestCase
     {
         parent::setUp();
         Monkey\setUp();
+        Functions\when('wp_cache_delete')->justReturn(true);
 
         $this->options   = [];
         $this->enqueued  = [];
@@ -156,7 +157,25 @@ final class AsyncBulkScanTest extends TestCase
         $wpdb->posts    = 'wp_posts';
         $wpdb->postmeta = 'wp_postmeta';
         $wpdb->last_error = '';
-        $wpdb->shouldReceive('prepare')->andReturn('SQL');
+        $wpdb->options = 'wp_options';
+        $wpdb->shouldReceive('prepare')->andReturnUsing(static function ($sql, ...$args) {
+            foreach ($args as $arg) {
+                $sql = \preg_replace('/%s/', "'" . \str_replace("'", "''", (string) $arg) . "'", $sql, 1);
+            }
+            return $sql;
+        });
+        $wpdb->shouldReceive('query')->andReturnUsing(static function ($sql) use ($test) {
+            if (\preg_match("/option_name = '((?:''|[^'])*)' AND option_value = '((?:''|[^'])*)'/", $sql, $matches)) {
+                $key = \str_replace("''", "'", $matches[1]);
+                $value = \str_replace("''", "'", $matches[2]);
+                if (($test->options[$key] ?? null) === $value) {
+                    unset($test->options[$key]);
+                    return 1;
+                }
+                return 0;
+            }
+            return 0;
+        })->byDefault();
         $wpdb->shouldReceive('get_results')->andReturnUsing(static function () use ($test) {
             return $test->inventory();
         })->byDefault();
@@ -783,8 +802,12 @@ final class AsyncBulkScanTest extends TestCase
         $service->worker('upload', 0, 0, true, 'scan-1');
 
         $state = $this->state();
-        $this->assertSame('manifest', $state['phase']);
-        $this->assertSame('', $state['run_id']);
+        $this->assertSame('cancel', $state['phase']);
+        $this->assertSame('run-1', $state['run_id']);
+        $this->assertNotContains('cancel', $this->calls);
+        $service->worker('cancel', 0, 0, true, 'scan-1');
+        $this->assertSame('manifest', $this->state()['phase']);
+        $this->assertSame('', $this->state()['run_id']);
         $this->assertContains('cancel', $this->calls);
     }
 
@@ -840,6 +863,8 @@ final class AsyncBulkScanTest extends TestCase
         $this->seedRun(['sealed' => false]);
 
         $service->cancel();
+        $this->assertNotContains('cancel', $this->calls);
+        $service->worker('cancel', 0, 0, false, 'scan-1');
 
         $this->assertContains('cancel', $this->calls);
         $this->assertSame('cancelled', $this->state()['status']);
@@ -851,9 +876,62 @@ final class AsyncBulkScanTest extends TestCase
         $this->seedRun(['phase' => 'poll', 'sealed' => true]);
 
         $service->cancel();
+        $service->worker('cancel', 0, 0, false, 'scan-1');
 
         $this->assertNotContains('cancel', $this->calls);
         $this->assertSame('cancelled', $this->state()['status']);
+    }
+
+    public function testCancelOutageRetainsRemoteIdentityUntilAcknowledged(): void
+    {
+        $service = $this->service();
+        $this->seedRun();
+        $this->responses['cancel'] = ['ok' => false, 'status' => 503, 'error' => 'outage'];
+        $service->cancel();
+        $this->assertSame([], $this->calls);
+        $service->worker('cancel', 0, 0, false, 'scan-1');
+        $this->assertSame('run-1', $this->state()['run_id']);
+        $this->assertSame('cancel', $this->state()['phase']);
+        $this->assertSame(1, $this->state()['retry_attempt']);
+        unset($this->responses['cancel']);
+        $service->worker('cancel', 0, 1, false, 'scan-1');
+        $this->assertSame('cancelled', $this->state()['status']);
+    }
+
+    public function testResumePreservesRetryAttempt(): void
+    {
+        $service = $this->service();
+        $this->seedRun(['status' => 'paused', 'retry_attempt' => 3]);
+        $this->options[AsyncBulkScan::PLAN] = ['upsert' => [1], 'delete' => []];
+        $service->resume();
+        $this->assertSame(3, $this->enqueued[0]['args']['attempt']);
+        $service->worker('upload', 0, 3, false, 'scan-1');
+        $this->assertContains('documents', $this->calls);
+    }
+
+    public function testCallbackRechecksStateAfterAcquiringLock(): void
+    {
+        $service = $this->service();
+        $this->seedRun();
+        Functions\when('add_option')->alias(function ($key, $value) {
+            $this->options[$key] = $value;
+            $this->options[AsyncBulkScan::STATE]['status'] = 'paused';
+            return true;
+        });
+        $service->worker('upload', 0, 0, false, 'scan-1');
+        $this->assertSame([], $this->calls);
+        $this->assertSame('paused', $this->state()['status']);
+    }
+
+    public function testLateWorkerStateWriteCannotEraseCancellationIntent(): void
+    {
+        $service = $this->service();
+        $this->seedRun();
+        $service->cancel();
+        $service->setState(['phase' => 'poll', 'status' => 'done']);
+        $this->assertSame('cancel', $this->state()['phase']);
+        $this->assertSame('running', $this->state()['status']);
+        $this->assertSame('run-1', $this->state()['run_id']);
     }
 
     public function testStatusPayloadSeparatesUploadFromIndexing(): void

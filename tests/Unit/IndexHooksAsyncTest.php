@@ -281,17 +281,14 @@ final class IndexHooksAsyncTest extends TestCase
         $this->assertNotEmpty($urls, 'cold cache must fall back to the synchronous adapter');
     }
 
-    public function testEnrollmentKeepsDirtyMarkerAndQueuesNoMutation(): void
+    public function testUnavailableAsyncSaveStillPersistsMutationWithoutHttp(): void
     {
-        // Tenant is async but the API reports mutations=false (enrollment /
-        // snapshot required). A live mutation would be rejected, so we must not
-        // queue one; the marker stays until the snapshot runs.
         Functions\expect('wp_remote_request')->never();
 
         $capture = Mockery::mock(Capture::class);
-        $capture->shouldReceive('tryCapture')->never();
+        $capture->shouldReceive('tryCapture')->once()->with(11)->andReturn(8);
         $delivery = Mockery::mock(Delivery::class);
-        $delivery->shouldReceive('schedule')->never();
+        $delivery->shouldReceive('schedule')->once()->andReturn(true);
 
         $hooks = $this->hooks(
             $this->asyncTrue(),
@@ -304,21 +301,37 @@ final class IndexHooksAsyncTest extends TestCase
 
         $hooks->onSave(11, $this->post('publish'), true);
 
-        $this->assertArrayHasKey(Options::INDEX_DIRTY, $this->updates);
+        $this->assertArrayNotHasKey(Options::INDEX_DIRTY, $this->updates);
     }
 
-    public function testEmergencyDisableAlsoDefersLiveMutations(): void
+    public function testUnavailableAsyncUnpublishStillPersistsTombstone(): void
     {
+        Functions\expect('wp_remote_request')->never();
         $capture = Mockery::mock(Capture::class);
-        $capture->shouldReceive('tryCapture')->never();
+        $capture->shouldReceive('tryCapture')->once()->with(11)->andReturn(9);
         $delivery = Mockery::mock(Delivery::class);
-        $delivery->shouldReceive('schedule')->never();
+        $delivery->shouldReceive('schedule')->once()->andReturn(true);
+
+        $this->hooks($this->asyncTrue(), $capture, $delivery, static function (): bool {
+            return false;
+        })->onSave(11, $this->post('draft'), true);
+
+        $this->assertArrayNotHasKey(Options::INDEX_DIRTY, $this->updates);
+    }
+
+    public function testUnavailableAsyncDeleteStillPersistsTombstone(): void
+    {
+        Functions\expect('wp_remote_request')->never();
+        $capture = Mockery::mock(Capture::class);
+        $capture->shouldReceive('tryDelete')->once()->with(11)->andReturn(10);
+        $delivery = Mockery::mock(Delivery::class);
+        $delivery->shouldReceive('schedule')->once()->andReturn(true);
 
         $this->hooks($this->asyncTrue(), $capture, $delivery, static function (): bool {
             return false;
         })->onDelete(11);
 
-        $this->assertArrayHasKey(Options::INDEX_DIRTY, $this->updates);
+        $this->assertArrayNotHasKey(Options::INDEX_DIRTY, $this->updates);
     }
 
     /** Stub the WP functions the synchronous path needs and count outbound calls. */

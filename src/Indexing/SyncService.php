@@ -305,6 +305,35 @@ final class SyncService implements Registerable
      */
     public function worker($phase = 'upsert', $offset = 0, $attempt = 0, $force_full = null): void
     {
+        $token = $this->lock->acquire(self::LOCK, self::LOCK_TTL);
+        if ($token === null) {
+            if (\function_exists('as_schedule_single_action')) {
+                \as_schedule_single_action(\time() + self::LOCK_RETRY_SECONDS, self::HOOK, [
+                    'phase' => $phase, 'offset' => $offset, 'attempt' => $attempt,
+                    'force_full' => $force_full,
+                ], self::GROUP);
+            }
+            return;
+        }
+        try {
+            if (\function_exists('wp_cache_delete')) {
+                \wp_cache_delete(self::STATE, 'options');
+                \wp_cache_delete('alloptions', 'options');
+            }
+            $this->workerLocked($phase, $offset, $attempt, $force_full);
+        } finally {
+            $this->lock->release(self::LOCK, $token);
+        }
+    }
+
+    /**
+     * @param string $phase
+     * @param int|string $offset
+     * @param int|string $attempt
+     * @param bool|null $force_full
+     */
+    private function workerLocked($phase, $offset, $attempt, $force_full): void
+    {
         $state = $this->getState();
         if ($state['status'] !== 'running') {
             return;   // cancelled or finished between enqueue and execution — stop the chain
@@ -320,23 +349,6 @@ final class SyncService implements Registerable
         }
         if ($force_full !== null && (bool) ($state['force_full'] ?? false) !== (bool) $force_full) {
             return;   // stale callback from a different scan mode
-        }
-
-        // Cross-process fence. WP-Cron, a server cron, the admin tick and WP-CLI can
-        // all dispatch this hook; without it two turns read the same state, both run
-        // the batch, and the later write discards the other's counters.
-        $token = $this->lock->acquire(self::LOCK, self::LOCK_TTL);
-        if ($token === null) {
-            // Another turn is running: re-queue instead of dropping this one.
-            if (\function_exists('as_schedule_single_action')) {
-                \as_schedule_single_action(\time() + self::LOCK_RETRY_SECONDS, self::HOOK, [
-                    'phase'      => $phase,
-                    'offset'     => $offset,
-                    'attempt'    => $attempt,
-                    'force_full' => (bool) ($state['force_full'] ?? false),
-                ], self::GROUP);
-            }
-            return;
         }
 
         $plan   = \get_option(self::PLAN, ['upsert' => [], 'delete' => []]);
@@ -430,8 +442,6 @@ final class SyncService implements Registerable
             $this->setState(['status' => 'error', 'message' => $e->getMessage()]);
             $api->log_error('background sync phase ' . $phase . ' failed: ' . $e->getMessage(), 'php_index');
             return;   // stop the chain on error
-        } finally {
-            $this->lock->release(self::LOCK, $token);
         }
 
         $state['retry_attempt']    = 0;

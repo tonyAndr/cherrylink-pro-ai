@@ -42,6 +42,7 @@ final class SyncServiceTest extends TestCase
     {
         parent::setUp();
         Monkey\setUp();
+        Functions\when('wp_cache_delete')->justReturn(true);
 
         $this->state = [
             'status'        => 'running',
@@ -97,6 +98,22 @@ final class SyncServiceTest extends TestCase
         // Cross-process worker fence.
         Functions\when('add_option')->justReturn(true);
         Functions\when('wp_generate_uuid4')->justReturn('lock-token');
+        $GLOBALS['wpdb'] = new class {
+            public $options = 'wp_options';
+
+            public function prepare($query, ...$args)
+            {
+                foreach ($args as $arg) {
+                    $query = \preg_replace('/%s/', "'" . \str_replace("'", "''", (string) $arg) . "'", $query, 1);
+                }
+                return $query;
+            }
+
+            public function query($query)
+            {
+                return 1;
+            }
+        };
         Functions\when('get_option')->alias(function ($key, $default = false) {
             if ($key === SyncService::STATE) {
                 return $this->state;

@@ -58,16 +58,41 @@ final class SyncService implements Registerable
     /** @var callable */
     private $client_factory;
 
+    /** @var AsyncBulkScan|null Durable run used when the tenant is async-capable. */
+    private $async;
+
     /**
-     * @param callable|null $client_factory Factory returning a Client; test seam for workers.
+     * @param callable|null     $client_factory Factory returning a Client; test seam for workers.
+     * @param AsyncBulkScan|null $async          Durable bulk run adapter (async tenants only).
      */
-    public function __construct(Options $options, License $license, ?callable $client_factory = null)
-    {
+    public function __construct(
+        Options $options,
+        License $license,
+        ?callable $client_factory = null,
+        ?AsyncBulkScan $async = null
+    ) {
         $this->options        = $options;
         $this->license        = $license;
         $this->client_factory = $client_factory ?? static function (): Client {
             return new Client(null, Client::CONTEXT_BACKGROUND);
         };
+        $this->async          = $async;
+    }
+
+    /** The durable bulk adapter, when this tenant uses it. */
+    public function asyncAdapter(): ?AsyncBulkScan
+    {
+        return $this->async;
+    }
+
+    /** True when the current scan is the durable run rather than the sync chain. */
+    private function asyncActive(): bool
+    {
+        if ($this->async === null) {
+            return false;
+        }
+
+        return \in_array($this->async->getState()['status'], ['running', 'paused'], true);
     }
 
     public function register(): void
@@ -149,6 +174,12 @@ final class SyncService implements Registerable
      */
     public function start(bool $force_full = false): array
     {
+        // Async tenants run the durable uploader; the synchronous chain below stays
+        // for old APIs and sync-mode tenants.
+        if ($this->async !== null && $this->async->isAvailable()) {
+            return $this->async->start($force_full);
+        }
+
         if (! $this->license->isLicensed()) {
             return $this->setState([
                 'status'  => 'error',
@@ -222,6 +253,10 @@ final class SyncService implements Registerable
      */
     public function cancel(): array
     {
+        if ($this->asyncActive()) {
+            return $this->async->cancel();
+        }
+
         // Flag first so any worker already mid-flight aborts and stops rescheduling.
         $state = $this->setState(['status' => 'cancelled', 'message' => \__('Остановлено пользователем', 'cherrylink')]);
 
@@ -619,6 +654,13 @@ final class SyncService implements Registerable
         $state['scheduled'] = \function_exists('as_has_scheduled_action')
             ? \as_has_scheduled_action(self::HOOK, null, self::GROUP)
             : null;
+
+        // Async runs report their own persisted state, mapped onto the same shape
+        // the admin UI already reads, plus the accepted/applied distinction.
+        if ($this->asyncActive() || ($this->async !== null && $this->async->getState()['status'] === 'done')) {
+            $state = \array_merge($state, $this->async->statusForUi());
+        }
+
         \wp_send_json($state);
     }
 
@@ -632,8 +674,11 @@ final class SyncService implements Registerable
         Security::verify('edit_posts');
         $ran = 0;
         $dispatched = false;
+        $active = $this->asyncActive()
+            ? $this->async->isRunning()
+            : $this->getState()['status'] === 'running';
         if (
-            $this->getState()['status'] === 'running'
+            $active
             && \class_exists('ActionScheduler')
             && \function_exists('as_has_scheduled_action')
             && \as_has_scheduled_action(self::HOOK, null, self::GROUP)

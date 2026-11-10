@@ -79,6 +79,9 @@ final class Plugin
         // API work on a valid license) and registered in its own right below.
         $license = new \CherryLink\Support\License($this->options);
 
+        $capabilities = new \CherryLink\Support\Capabilities();
+        $async_scan   = new \CherryLink\Indexing\AsyncBulkScan($this->options, $license, $capabilities);
+
         $this->services = [
             new \CherryLink\Api\Relay(),
             new \CherryLink\Admin\StatsColumn(),
@@ -86,16 +89,17 @@ final class Plugin
             new \CherryLink\Admin\Notices(),
             new \CherryLink\Editor\GutenbergAssets($this->options),
             new \CherryLink\Indexing\IndexHooks($this->options, $license),
-            new \CherryLink\Indexing\SyncService($this->options, $license),
+            new \CherryLink\Indexing\SyncService($this->options, $license, null, $async_scan),
+            $async_scan,
             new \CherryLink\Indexing\Outbox\Delivery(null, null, null, new \CherryLink\Support\Capabilities()),
-            new \CherryLink\Support\CapabilitiesRefresh($license),
+            new \CherryLink\Support\CapabilitiesRefresh($license, $capabilities),
             new \CherryLink\Terms\TermsService(),
             new \CherryLink\Statistics\StatisticsService(),
             new \CherryLink\Csv\CsvService(),
             new \CherryLink\Editor\ClassicPanel($this->options),
             new \CherryLink\Debug\Debugger(),
             $license,
-            new \CherryLink\Support\Lifecycle($license, new \CherryLink\Support\Capabilities()),
+            new \CherryLink\Support\Lifecycle($license, $capabilities),
             new \CherryLink\Admin\SettingsPage(),
         ];
 

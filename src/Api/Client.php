@@ -188,6 +188,30 @@ class Client
     }
 
     /**
+     * Payload snapshot for the durable async outbox (no source version).
+     *
+     * Captured AFTER the outbox allocates a source revision, so a concurrent save
+     * always wins by revision rather than by arrival order. Reuses the same text
+     * and content-hash construction as the synchronous upsert so both adapters
+     * embed identical input.
+     *
+     * @return array{post_id:int,title:string,text:string,url:string,lang:string,content_hash:string,modified_gmt:string,link_html:string}
+     */
+    public function capture_payload(WP_Post $post): array
+    {
+        return [
+            'post_id'      => (int) $post->ID,
+            'title'        => (string) $post->post_title,
+            'text'         => $this->build_text($post),
+            'url'          => (string) (\get_permalink($post->ID) ?: ''),
+            'lang'         => 'ru',
+            'content_hash' => $this->content_hash($post),
+            'modified_gmt' => (string) $post->post_modified_gmt,
+            'link_html'    => (string) $post->post_content,
+        ];
+    }
+
+    /**
      * Remove a post from the vector index.
      */
     public function delete_post(int $post_id): bool

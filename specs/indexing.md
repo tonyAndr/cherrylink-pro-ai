@@ -103,6 +103,33 @@ plain embedding text, URL, content hash) required to deliver indexing work. Both
 tables and the version option are removed on uninstall. No queue data is stored
 in an autoloaded WordPress option.
 
+## Implemented plugin async surface
+
+The async adapter is implemented and gated per tenant; the synchronous path remains
+the default and the fallback.
+
+- `Api\AsyncClient` speaks the exact shipped routes: `GET /v1/capabilities`,
+  `POST /v1/index-runs`, `/v1/index-runs/{id}/documents`, `/deletes`, `/seal`,
+  `GET /v1/index-runs/{id}`, `/cancel`, `/pause`, `/resume`,
+  `POST /v1/index-mutations`, and `GET /v1/index-items?item_id=…`. Every accepted
+  body carries `protocol_version: 1`. A `202` is treated as durable acceptance,
+  never execution, and a non-object body is a failure.
+- `Support\Capabilities` caches the decision (60 s positive / 300 s negative).
+  Async is used only when the API advertises the protocol **and** the tenant is
+  in `async` mode with both `runs` and `mutations` enabled.
+- `Indexing\Outbox\Capture` enforces the capture-order rule: allocate the source
+  revision immediately before reading the post, then persist an immutable
+  payload. Failed captures keep the index-dirty marker (fail closed).
+- `Indexing\Outbox\Delivery` is the single retry owner on the WordPress side: one
+  Action Scheduler turn reclaims expired leases, claims a bounded batch, and
+  delivers each row under its stable `event_key` as the idempotency key. It
+  retries transport/408/429/5xx with bounded backoff and valid `Retry-After`,
+  dead-letters permanent 4xx, and never sleeps inside a request.
+- `Indexing\IndexHooks` writes an outbox event for a licensed save/unpublish/delete
+  when the tenant is async-capable and performs no API call in that request;
+  otherwise it keeps the existing synchronous adapter. Probe failures fall back
+  to sync.
+
 ## Acceptance criteria
 
 - [ ] Current synchronous scans preserve the API response compatibility and

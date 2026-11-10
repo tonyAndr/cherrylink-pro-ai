@@ -50,3 +50,4 @@ if (is_file($pluginAutoload)) {
 }
 
 require __DIR__ . '/stubs/wp-functions.php';
+require __DIR__ . '/stubs/wp-classes.php';

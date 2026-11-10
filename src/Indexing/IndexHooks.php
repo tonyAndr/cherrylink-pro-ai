@@ -7,6 +7,10 @@ namespace CherryLink\Indexing;
 use CherryLink\Ajax\Security;
 use CherryLink\Api\Client;
 use CherryLink\Contracts\Registerable;
+use CherryLink\Indexing\Outbox\Capture;
+use CherryLink\Indexing\Outbox\Delivery;
+use CherryLink\Indexing\Outbox\Repository;
+use CherryLink\Support\Capabilities;
 use CherryLink\Support\License;
 use CherryLink\Support\Options;
 use CherryLink\Support\RequestLock;
@@ -35,10 +39,73 @@ final class IndexHooks implements Registerable
     /** @var License */
     private $license;
 
-    public function __construct(Options $options, License $license)
+    /** @var callable|null Lazily built; only touched when the tenant is async-capable. */
+    private $capture_factory;
+
+    /** @var callable|null */
+    private $delivery_factory;
+
+    /** @var callable|null Async-capability probe (returns bool). */
+    private $async_probe;
+
+    /**
+     * @param callable|null $capture_factory  Returns a Capture; built on demand.
+     * @param callable|null $delivery_factory Returns a Delivery; built on demand.
+     * @param callable|null $async_probe      Returns whether this tenant uses the async outbox.
+     */
+    public function __construct(
+        Options $options,
+        License $license,
+        ?callable $capture_factory = null,
+        ?callable $delivery_factory = null,
+        ?callable $async_probe = null
+    ) {
+        $this->options          = $options;
+        $this->license          = $license;
+        $this->capture_factory  = $capture_factory;
+        $this->delivery_factory = $delivery_factory;
+        $this->async_probe      = $async_probe;
+    }
+
+    /** Async outbox path is opt-in per tenant; default is the existing synchronous adapter. */
+    private function usesAsyncOutbox(): bool
     {
-        $this->options = $options;
-        $this->license = $license;
+        $probe = $this->async_probe;
+        if ($probe === null) {
+            $probe = static function (): bool {
+                return (new Capabilities())->asyncEnabled();
+            };
+        }
+
+        try {
+            return (bool) \call_user_func($probe);
+        } catch (\Throwable $error) {
+            return false;   // fail closed to the synchronous adapter
+        }
+    }
+
+    private function capture(): Capture
+    {
+        if ($this->capture_factory !== null) {
+            $capture = \call_user_func($this->capture_factory);
+            if ($capture instanceof Capture) {
+                return $capture;
+            }
+        }
+
+        return new Capture(new Repository(), new Client(null, Client::CONTEXT_BACKGROUND));
+    }
+
+    private function delivery(): Delivery
+    {
+        if ($this->delivery_factory !== null) {
+            $delivery = \call_user_func($this->delivery_factory);
+            if ($delivery instanceof Delivery) {
+                return $delivery;
+            }
+        }
+
+        return new Delivery();
     }
 
     public function register(): void
@@ -72,6 +139,14 @@ final class IndexHooks implements Registerable
             return;
         }
 
+        // Async tenants persist an immutable outbox event and schedule delivery. The
+        // save request performs no embedding/link/API call, and a failed capture keeps
+        // the dirty marker rather than silently dropping the change.
+        if ($this->usesAsyncOutbox()) {
+            $this->captureAsync($post);
+            return;
+        }
+
         $api = new Client(null, Client::CONTEXT_BACKGROUND);
 
         if ($post->post_status === 'publish') {
@@ -100,9 +175,41 @@ final class IndexHooks implements Registerable
             $this->options->markIndexDirty();
             return;
         }
+
+        if ($this->usesAsyncOutbox()) {
+            $row = $this->capture()->tryDelete($post_id);
+            if ($row === null) {
+                $this->options->markIndexDirty();
+                return;
+            }
+            $this->delivery()->schedule();
+            return;
+        }
+
         $api = new Client(null, Client::CONTEXT_BACKGROUND);
         $api->delete_post($post_id);
         $api->delete_links($post_id, 0);
+    }
+
+    /**
+     * Persist the async event for a save (upsert or tombstone) and queue delivery.
+     * Never performs an API call inside the WordPress request.
+     */
+    private function captureAsync(WP_Post $post): void
+    {
+        $captured = $this->capture();
+        if ($post->post_status === 'publish') {
+            $row = $captured->tryUpsert($post);
+        } else {
+            $row = $captured->tryDelete((int) $post->ID);
+        }
+
+        if ($row === null) {
+            $this->options->markIndexDirty();
+            return;
+        }
+
+        $this->delivery()->schedule();
     }
 
     // ── AJAX ─────────────────────────────────────────────────────────────────

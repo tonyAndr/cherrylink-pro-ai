@@ -23,7 +23,7 @@ namespace CherryLink\Indexing\Outbox;
  * Scheduler scheduling) belongs to the delivery service; `release()` accepts the
  * caller-computed next-attempt timestamp.
  */
-final class Repository
+class Repository
 {
     public const STATE_PENDING   = 'pending';
     public const STATE_LEASED    = 'leased';
@@ -135,13 +135,23 @@ final class Repository
      * Persist an immutable event payload and allocate its canonical source revision.
      * Idempotent per event key: a replayed key returns the existing row id.
      *
+     * `$revision` lets a caller that already allocated a revision *before* reading
+     * the post (the capture-order rule) persist that exact revision. Passing null
+     * allocates one here, immediately before insert.
+     *
      * @return int The outbox row id.
      *
      * @throws \InvalidArgumentException On an empty/over-long key or unknown kind.
      * @throws OutboxException           When the row cannot be inserted.
      */
-    public function enqueue(string $eventKey, string $kind, int $postId, array $payload, ?string $runId = null): int
-    {
+    public function enqueue(
+        string $eventKey,
+        string $kind,
+        int $postId,
+        array $payload,
+        ?string $runId = null,
+        ?int $revision = null
+    ): int {
         $this->assertEventKey($eventKey);
         $this->assertKind($kind);
 
@@ -151,7 +161,7 @@ final class Repository
         }
 
         $epoch    = $this->sourceEpoch();
-        $revision = $this->allocateRevision();
+        $revision = $revision ?? $this->allocateRevision();
         $now      = $this->gmtNow();
         $json     = \wp_json_encode($payload);
         if ($json === false) {

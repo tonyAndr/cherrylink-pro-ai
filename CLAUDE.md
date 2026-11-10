@@ -82,8 +82,19 @@ Default `Api\Client` instances are interactive (5-second per-call / 8-second
 shared budget); readiness has 2/4-second limits. Background scans must explicitly
 use `Client::CONTEXT_BACKGROUND`. Scan start queues manifest work and the UI tick
 only nudges the asynchronous scheduler, never runs jobs inline. License save
-schedules a bounded background check. Live save/delete still need the durable
-outbox before the full non-blocking contract or a release can be claimed.
+schedules a bounded background check.
+
+## Async outbox checkpoint
+
+`Indexing\Outbox\*` is the durable live-event path: `Schema` (prefix-aware
+`dbDelta` tables + versioned lifecycle), `Repository` (immutable enqueue, atomic
+`(source_epoch, source_revision)` sequence, lease-fenced claim/ack/release/
+dead-letter), `Capture` (revision allocated before the post read), and `Delivery`
+(one Action Scheduler turn, stable `event_key` idempotency, bounded retry).
+`Indexing\IndexHooks` uses it only when `Support\Capabilities` reports an
+async-enabled tenant; otherwise it keeps the synchronous adapter, so production
+behavior is unchanged while the backend stays `sync` mode. Remaining work is the
+bulk run uploader/polling (`P3`) and the deferred durable-readiness UI.
 
 ## Dev tooling & tests
 
@@ -235,7 +246,17 @@ docker compose up -d
 - **`linkate_posts` MySQL table**: still used by `CustomFields\Cf` for the custom-fields index — do not drop
 - **Scan is incremental**: diffs current published posts against `GET /v1/documents/manifest` by `post_modified_gmt`, re-embeds only changed posts, builds their links via `POST /v1/links/parse-batch`, and prunes orphans via `POST /v1/documents/delete-batch`. The diff is a pure, unit-tested helper: `Indexing\IndexHelpers::compute_sync_plan()` (see `tests/Unit/SyncPlanTest.php`).
 - **Scan runs in the background via Action Scheduler** (`src/Indexing/SyncService.php`, bundled `vendor/woocommerce/action-scheduler`). Start it and leave the page — a self-rescheduling `cherrylink_sync_worker` action processes one batch (upsert→links→prune) and enqueues the next. AJAX: `linkate_sync_start` / `linkate_sync_cancel` / `linkate_sync_status`; JS (`cherry-admin-index.js`) starts it, polls status, and has a Stop button. Progress/worklists live in options `cherrylink_sync_state` / `cherrylink_sync_plan`. Cancel flags the state AND cancels pending actions by ID (`as_unschedule_all_actions([])` only matches arg-less actions). Needs WP-Cron enabled (or a server cron / `wp action-scheduler run`) to advance without traffic.
-- **Async queue status**: the durable backend queue is design-only and disabled. Read `specs/indexing.md` and the workspace `ASYNC-INDEXING-PLAN.md` before adding an outbox, capability negotiation, or queue calls. The current synchronous scan already has structured retry metadata, fail-closed/retryable manifest planning, cursor fencing, and 1,000-ID prune chunks; do not duplicate retry ownership in the client or Action Scheduler.
+- **Async queue status**: the durable backend queue routes exist but async writes
+  are disabled in production, so tenants stay in `sync` mode and the plugin uses
+  the synchronous adapter. The plugin-side async surface is implemented:
+  `Api\AsyncClient` (exact shipped routes), `Support\Capabilities` (cached
+  negotiation), `Indexing\Outbox\{Schema,Repository,Capture,Delivery}` and the
+  gated async branch in `Indexing\IndexHooks`. Read `specs/indexing.md` and the
+  workspace `ASYNC-INDEXING-PLAN.md` before changing outbox ordering, delivery
+  retry ownership, or capability gating. The current synchronous scan already has
+  structured retry metadata, fail-closed/retryable manifest planning, cursor
+  fencing, and 1,000-ID prune chunks; do not duplicate retry ownership in the
+  client or Action Scheduler.
 - **Anchor suggestions are lazy/on-demand**: `Editor\SuggestionsResults::execute()` calls `/v1/search` with an empty `source_html` (no eager anchors, no top-5 cap). When the editor opens a hit's suggestion panel (loupe), it calls the `get_linkate_suggestions` AJAX action → `Api\Client::suggest_anchors()` → `POST /v1/suggest-anchors` for that one target. Wired in both editors: Gutenberg `SugestionsPanel.componentDidMount` fetches; classic `fcl_render_api_suggestions` fetches (both show a loading state, cache per target). `Editor\ClassicPanel::buildSourceHtml()` wraps plain-text content in `<p>` for the extractor.
 - **Updates**: no CI; clients auto-update via the bundled Plugin Update Checker (v4.9), wired in `cherrylink_main.php` to this GitHub repo. Ship a new version by publishing a GitHub Release whose tag matches the `Version:` header, with the packaged plugin zip attached as a release asset.
 - **Logging** (`\CherryLink\Support\Logger`): writes to PHP error log; in wp-dev: `docker compose logs wordpress`

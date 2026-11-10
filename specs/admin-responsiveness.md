@@ -80,3 +80,28 @@ async-only scheduler ticks, periodic updater isolation, key replacement/import,
 malformed responses, cron identity, outage preservation and failed validation
 scheduling. A full WordPress browser/outage drill remains a release gate after
 the live outbox is implemented; these are unit/static checks, not that drill.
+
+## Background queue must actually run
+
+A scan that is "running" but never advances is indistinguishable from a hung UI.
+`SyncService`/`AsyncBulkScan` schedule their next turn through Action Scheduler,
+which needs WP-Cron (or a server cron / `wp action-scheduler run`). When that is
+missing — WP-Cron disabled, the loopback blocked, or a container whose
+`home_url()` is not reachable from itself — the queue never drains.
+
+- The admin panel labels the `manifest` phase explicitly and, after 20 seconds
+  without any state change, appends a hint that the queue is not being processed
+  and to check cron.
+- Background workers are fenced by `Support\WorkerLock` (an expiring option), so
+  overlapping dispatchers cannot run the same turn; a turn that finds the lock
+  held is re-queued, not dropped.
+- `dev/wp-dev/docker-compose.yml` runs a cron sidecar for local testing, because
+  the published `localhost:8088` URL is not reachable from inside the container.
+
+## Settings export
+
+The settings file is downloaded through a nonce-protected `admin-post.php`
+handler (`cherrylink_export_options`) that checks `cherrylink_settings` and
+streams the payload with `no-store` headers. Never write an export file into the
+plugin directory: the plugin folder is world-readable, so it would expose the
+licence key, and it fails on read-only installs.

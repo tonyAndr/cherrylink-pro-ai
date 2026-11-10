@@ -239,6 +239,57 @@ final class OutboxDeliveryTest extends TestCase
         $this->assertNotEmpty($this->scheduled);
     }
 
+    public function testTransientFailurePassesTheExplicitRetryableFlagToTheRepository(): void
+    {
+        // Regression: Delivery used to omit `retryable`, so the repository
+        // dead-lettered every 503/429.
+        $this->mutationResult = ['ok' => false, 'status' => 503, 'retry_after' => null, 'error' => 'HTTP 503'];
+        $this->rows = [$this->row()];
+
+        $this->delivery($this->repositoryMock())->run();
+
+        $this->assertCount(1, $this->released);
+        $this->assertArrayHasKey('retryable', $this->released[0]['result']);
+        $this->assertTrue($this->released[0]['result']['retryable']);
+    }
+
+    public function testPermanentFailurePassesRetryableFalse(): void
+    {
+        $this->mutationResult = ['ok' => false, 'status' => 422, 'retry_after' => null, 'error' => 'HTTP 422'];
+        $this->rows = [$this->row()];
+
+        $this->delivery($this->repositoryMock())->run();
+
+        $this->assertCount(1, $this->dead);
+        $this->assertFalse($this->dead[0]['result']['retryable']);
+    }
+
+    public function testSweepReclaimsAndRestartsDeliveryWhenWorkExists(): void
+    {
+        $repo = Mockery::mock(Repository::class);
+        $repo->shouldReceive('reclaimExpired')->once()->andReturn(2);
+        $repo->shouldReceive('pendingCount')->andReturn(1);
+        $repo->shouldReceive('leasedCount')->andReturn(0);
+
+        $result = $this->delivery($repo)->sweep();
+
+        $this->assertSame(['reclaimed' => 2, 'pending' => 1], $result);
+        $this->assertNotEmpty($this->scheduled, 'sweep must restart delivery');
+    }
+
+    public function testSweepIsQuietWhenNothingIsQueued(): void
+    {
+        $repo = Mockery::mock(Repository::class);
+        $repo->shouldReceive('reclaimExpired')->once()->andReturn(0);
+        $repo->shouldReceive('pendingCount')->andReturn(0);
+        $repo->shouldReceive('leasedCount')->andReturn(0);
+
+        $result = $this->delivery($repo)->sweep();
+
+        $this->assertSame(['reclaimed' => 0, 'pending' => 0], $result);
+        $this->assertSame([], $this->scheduled);
+    }
+
     public function testRetryAfterIsHonoredForScheduling(): void
     {
         $this->mutationResult = ['ok' => false, 'status' => 429, 'retry_after' => 42, 'error' => 'HTTP 429'];

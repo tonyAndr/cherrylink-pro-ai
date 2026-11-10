@@ -61,6 +61,7 @@ final class OutboxDeliveryTest extends TestCase
             $this->scheduled[] = ['ts' => 0, 'args' => $args];
             return 1;
         });
+        Functions\when('as_has_scheduled_action')->justReturn(false);
     }
 
     protected function tearDown(): void

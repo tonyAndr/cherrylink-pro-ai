@@ -10,6 +10,7 @@ use CherryLink\Contracts\Registerable;
 use CherryLink\Indexing\Outbox\Capture;
 use CherryLink\Indexing\Outbox\Repository;
 use CherryLink\Support\Capabilities;
+use CherryLink\Support\CapabilitiesRefresh;
 use CherryLink\Support\License;
 use CherryLink\Support\Options;
 
@@ -21,23 +22,33 @@ use CherryLink\Support\Options;
  *
  *   manifest -> create run -> upload batches -> upload deletes -> seal -> poll
  *
- * Every identifier and cursor is persisted in a non-autoloaded option, so closing
- * the browser, a PHP timeout, or a WordPress restart resumes exactly where the run
- * stopped. Uploads use stable `batch_id`s, so replaying a batch after a crash is
- * idempotent (the API returns the original receipt).
+ * Guarantees this class is responsible for:
  *
- * The upload phase allocates each item's source revision **before** reading the
- * post (via `Outbox\Capture::build()`), which preserves the canonical
- * `(source_epoch, source_revision)` ordering against concurrent live saves — a
- * live save during the scan is a newer outbox mutation and wins.
- *
- * Uploading and indexing are separate states: a `202` only means the API accepted
- * the payload. `done` is reached only when the run reports a terminal state.
+ *  - **Persistence**: run id, phase, cursor, counts, timers and progress live in
+ *    the non-autoloaded `cherrylink_async_run` option. A recovery sweep restarts
+ *    the chain if a crash happens between persisting a cursor and scheduling the
+ *    next action, and scheduling failures are recovered rather than swallowed.
+ *  - **Run identity + fencing**: every callback carries the run key and the
+ *    attempt, and a worker lock prevents overlapping turns for one scan.
+ *  - **Idempotent retries**: the exact batch (ids, revisions, payloads) is
+ *    persisted *before* it is sent and reused on retry, so a lost response
+ *    replays byte-identically and cannot trip `idempotency_key_reused`.
+ *  - **Ordering**: uploads allocate their revision before the authoritative read
+ *    (`Outbox\Capture::build()`); a planned delete re-reads the post first, so a
+ *    republish during the scan is never overwritten by a stale tombstone.
+ *  - **Fail-closed inventory**: a failed post-list query never becomes an empty
+ *    inventory (which would declare an empty snapshot or delete everything).
+ *  - **Routing vs availability**: the tenant's durable mode decides whether the
+ *    bulk run is used; if async acceptance is unavailable the run pauses and
+ *    probes, instead of falling back to synchronous writes the API would reject.
  */
-final class AsyncBulkScan implements Registerable
+class AsyncBulkScan implements Registerable
 {
     public const HOOK  = 'cherrylink_async_bulk';
     public const GROUP = 'cherrylink_async';
+
+    /** Independent recovery sweep (WP-Cron). */
+    public const SWEEP_HOOK = 'cherrylink_async_bulk_sweep';
 
     /** Persisted run state (autoload off). */
     public const STATE = 'cherrylink_async_run';
@@ -45,12 +56,20 @@ final class AsyncBulkScan implements Registerable
     /** Persisted worklists (autoload off). */
     public const PLAN = 'cherrylink_async_plan';
 
+    /** The single in-flight batch, persisted before it is sent (autoload off). */
+    public const BATCH = 'cherrylink_async_batch';
+
+    /** Worker lock: prevents overlapping turns for the same scan. */
+    public const LOCK = 'cherrylink_async_worker_lock';
+
     public const UPLOAD_BATCH = 20;
     public const DELETE_BATCH = 50;
 
     private const MAX_ATTEMPTS     = 8;
     private const POLL_MIN_SECONDS = 10;
     private const POLL_MAX_SECONDS = 60;
+    private const PROBE_SECONDS    = 60;
+    private const WORKER_LOCK_TTL  = 180;
 
     /** Run states that end a scan. */
     private const TERMINAL_RUN_STATES = [
@@ -76,12 +95,16 @@ final class AsyncBulkScan implements Registerable
     /** @var callable */
     private $capture_factory;
 
+    /** @var callable():array Returns the Client::fetch_manifest_result() shape. */
+    private $manifest_factory;
+
     public function __construct(
         Options $options,
         License $license,
         ?Capabilities $capabilities = null,
         ?callable $client_factory = null,
-        ?callable $capture_factory = null
+        ?callable $capture_factory = null,
+        ?callable $manifest_factory = null
     ) {
         $this->options         = $options;
         $this->license         = $license;
@@ -92,11 +115,16 @@ final class AsyncBulkScan implements Registerable
         $this->capture_factory = $capture_factory ?? static function (): Capture {
             return new Capture(new Repository(), new Client(null, Client::CONTEXT_BACKGROUND));
         };
+        $this->manifest_factory = $manifest_factory ?? static function (): array {
+            return (new Client(null, Client::CONTEXT_BACKGROUND))->fetch_manifest_result();
+        };
     }
 
     public function register(): void
     {
-        \add_action(self::HOOK, [$this, 'worker'], 10, 4);
+        \add_action(self::HOOK, [$this, 'worker'], 10, 5);
+        \add_action(self::SWEEP_HOOK, [$this, 'sweepTurn'], 10, 0);
+        \add_action('wp_loaded', [$this, 'maybeScheduleSweep']);
     }
 
     // ── State ───────────────────────────────────────────────────────────────
@@ -118,6 +146,7 @@ final class AsyncBulkScan implements Registerable
             'delete_total'     => 0,
             'uploaded'         => 0,
             'deleted'          => 0,
+            'skipped_deletes'  => 0,
             'sealed'           => false,
             'poll_attempt'     => 0,
             'next_poll_gmt'    => '',
@@ -133,6 +162,7 @@ final class AsyncBulkScan implements Registerable
             'started_gmt'      => '',
             'updated_gmt'      => '',
             'force_full'       => false,
+            'waiting'          => false,
         ];
 
         return \array_merge($defaults, (array) \get_option(self::STATE, $defaults));
@@ -149,7 +179,8 @@ final class AsyncBulkScan implements Registerable
 
     public function isRunning(): bool
     {
-        if ($this->getState()['status'] !== 'running') {
+        $state = $this->getState();
+        if (! \in_array($state['status'], ['running', 'paused'], true)) {
             return false;
         }
         if (\function_exists('as_has_scheduled_action')) {
@@ -159,10 +190,13 @@ final class AsyncBulkScan implements Registerable
         return true;
     }
 
-    /**
-     * Whether this tenant should use the durable uploader: the API must accept
-     * async writes and a licence must be active.
-     */
+    /** Whether this tenant routes bulk indexing through the durable run. */
+    public function handlesTenant(): bool
+    {
+        return $this->capabilities->asyncEnabled();
+    }
+
+    /** Whether async acceptance is currently possible. */
     public function isAvailable(): bool
     {
         return $this->license->isLicensed() && $this->capabilities->asyncAvailable();
@@ -171,7 +205,7 @@ final class AsyncBulkScan implements Registerable
     /**
      * Map the persisted run onto the existing admin status shape.
      *
-     * `uploaded` (accepted by the API) is deliberately separate from
+     * `uploaded` (accepted by the API) stays separate from
      * `vectors_applied`/`links_applied` (actually indexed). Upload completion is
      * never reported as indexing completion.
      *
@@ -184,45 +218,38 @@ final class AsyncBulkScan implements Registerable
         $phase    = (string) ($state['phase'] ?? '');
 
         return [
-            'engine'            => 'async',
-            'status'            => $state['status'],
-            'phase'             => $phase,
-            'mode'              => $state['mode'],
-            'run_id'            => $state['run_id'],
-            'uploading'         => \in_array($phase, ['manifest', 'create', 'upload', 'deletes', 'seal'], true)
+            'engine'           => 'async',
+            'status'           => $state['status'],
+            'phase'            => $phase,
+            'mode'             => $state['mode'],
+            'run_id'           => $state['run_id'],
+            'uploading'        => \in_array($phase, ['manifest', 'create', 'upload', 'deletes', 'seal'], true)
                 && $state['status'] === 'running',
-            'accepted'          => (int) $state['uploaded'],
-            'accepted_deletes'  => (int) $state['deleted'],
-            'processing'        => $phase === 'poll' && $state['status'] === 'running',
-            'vectors_applied'   => (int) ($progress['vectors_applied'] ?? 0),
-            'vectors_pending'   => (int) ($progress['vectors_pending'] ?? 0),
-            'links_applied'     => (int) ($progress['links_applied'] ?? 0),
-            'links_pending'     => (int) ($progress['links_pending'] ?? 0),
-            'uploaded'          => (int) $state['uploaded'],
-            'deleted'           => (int) $state['deleted'],
-            'next_retry_gmt'    => $state['next_retry_gmt'],
-            'next_poll_gmt'     => $state['next_poll_gmt'],
-            'last_error'        => $state['last_error'],
-            'message'           => $state['message'],
-            'sealed'            => (bool) $state['sealed'],
+            'accepted'         => (int) $state['uploaded'],
+            'accepted_deletes' => (int) $state['deleted'],
+            'skipped_deletes'  => (int) $state['skipped_deletes'],
+            'processing'       => $phase === 'poll' && $state['status'] === 'running',
+            'vectors_applied'  => (int) ($progress['vectors_applied'] ?? 0),
+            'vectors_pending'  => (int) ($progress['vectors_pending'] ?? 0),
+            'links_applied'    => (int) ($progress['links_applied'] ?? 0),
+            'links_pending'    => (int) ($progress['links_pending'] ?? 0),
+            'uploaded'         => (int) $state['uploaded'],
+            'deleted'          => (int) $state['deleted'],
+            'next_retry_gmt'   => $state['next_retry_gmt'],
+            'next_poll_gmt'    => $state['next_poll_gmt'],
+            'last_error'       => $state['last_error'],
+            'message'          => $state['message'],
+            'sealed'           => (bool) $state['sealed'],
+            'waiting'          => (bool) $state['waiting'],
         ];
-    }
-
-    private function asyncClient(): AsyncClient
-    {
-        return \call_user_func($this->client_factory);
-    }
-
-    private function capture(): Capture
-    {
-        return \call_user_func($this->capture_factory);
     }
 
     // ── Public controls ─────────────────────────────────────────────────────
 
     /**
-     * Start (or resume) a durable run. Returns immediately; the first turn fetches
-     * the manifest. No API call happens in this request.
+     * Start (or resume) a durable run. Returns immediately; no API call happens
+     * in this request. When acceptance is unavailable the run waits instead of
+     * silently falling back to synchronous indexing.
      *
      * @return array<string,mixed>
      */
@@ -234,16 +261,10 @@ final class AsyncBulkScan implements Registerable
                 'message' => \__('Лицензия неактивна — синхронизация недоступна.', 'cherrylink'),
             ]);
         }
-        if (! $this->capabilities->asyncAvailable()) {
-            return $this->setState([
-                'status'  => 'error',
-                'message' => \__('Асинхронная индексация сейчас недоступна.', 'cherrylink'),
-            ]);
-        }
         if (! \function_exists('as_enqueue_async_action')) {
             return $this->setState(['status' => 'error', 'message' => 'Action Scheduler unavailable']);
         }
-        if ($this->isRunning()) {
+        if (\in_array($this->getState()['status'], ['running', 'paused'], true) && $this->isRunning()) {
             return $this->getState();
         }
 
@@ -260,6 +281,7 @@ final class AsyncBulkScan implements Registerable
             'delete_total'     => 0,
             'uploaded'         => 0,
             'deleted'          => 0,
+            'skipped_deletes'  => 0,
             'sealed'           => false,
             'poll_attempt'     => 0,
             'next_poll_gmt'    => '',
@@ -274,16 +296,30 @@ final class AsyncBulkScan implements Registerable
             'progress'         => [],
             'started_gmt'      => \gmdate('Y-m-d H:i:s'),
             'force_full'       => $force_full,
+            'waiting'          => false,
         ]);
+        \delete_option(self::PLAN);
+        \delete_option(self::BATCH);
 
         $meta = $this->options->meta();
         $meta['indexing_process'] = 'IN_PROGRESS';
         $this->options->saveMeta($meta);
 
+        if (! $this->isAvailable()) {
+            $this->setState([
+                'status'  => 'paused',
+                'waiting' => true,
+                'message' => \__('Асинхронная индексация недоступна. Загрузка возобновится автоматически.', 'cherrylink'),
+            ]);
+            $this->scheduleLater(self::PROBE_SECONDS, 'probe', 0, 0);
+
+            return $this->getState();
+        }
+
         if (! $this->enqueue('manifest', 0, 0)) {
+            // The recovery sweep will restart the chain; keep the run resumable.
             return $this->setState([
-                'status'  => 'error',
-                'message' => \__('Не удалось запланировать сканирование.', 'cherrylink'),
+                'message' => \__('Планирование задерживается, попробуем снова автоматически.', 'cherrylink'),
             ]);
         }
 
@@ -295,6 +331,7 @@ final class AsyncBulkScan implements Registerable
     {
         return $this->setState([
             'status'  => 'paused',
+            'waiting' => false,
             'message' => \__('Приостановлено. Загрузка продолжится после «Продолжить».', 'cherrylink'),
         ]);
     }
@@ -307,21 +344,16 @@ final class AsyncBulkScan implements Registerable
             return $state;
         }
 
-        $state = $this->setState(['status' => 'running', 'message' => '']);
+        $state = $this->setState(['status' => 'running', 'waiting' => false, 'message' => '']);
         $this->enqueue((string) $state['phase'], (int) $state['cursor'], 0);
 
         return $state;
     }
 
-    /**
-     * Cancel: an accepting run is cancelled on the backend (which restores heads),
-     * otherwise the local chain simply stops and the remote run drains on its own.
-     *
-     * @return array<string,mixed>
-     */
+    /** @return array<string,mixed> */
     public function cancel(): array
     {
-        $state = $this->getState();
+        $state  = $this->getState();
         $status = (string) ($state['status'] ?? 'idle');
         if (! \in_array($status, ['running', 'paused'], true)) {
             return $state;
@@ -333,6 +365,7 @@ final class AsyncBulkScan implements Registerable
 
         $this->unschedule();
         \delete_option(self::PLAN);
+        \delete_option(self::BATCH);
 
         $meta = $this->options->meta();
         $meta['indexing_process'] = 'CANCELLED';
@@ -340,8 +373,55 @@ final class AsyncBulkScan implements Registerable
 
         return $this->setState([
             'status'  => 'cancelled',
+            'waiting' => false,
             'message' => \__('Остановлено пользователем', 'cherrylink'),
         ]);
+    }
+
+    // ── Recovery ────────────────────────────────────────────────────────────
+
+    /** Schedule the independent recovery sweep (WP-Cron only). */
+    public function maybeScheduleSweep(): void
+    {
+        if (! \function_exists('wp_next_scheduled') || ! \function_exists('wp_schedule_event')) {
+            return;
+        }
+        if (\wp_next_scheduled(self::SWEEP_HOOK)) {
+            return;
+        }
+        \wp_schedule_event(\time() + 60, CapabilitiesRefresh::SCHEDULE, self::SWEEP_HOOK);
+    }
+
+    public function sweepTurn(): void
+    {
+        $this->sweep();
+    }
+
+    /**
+     * Restart a chain that died between persisting a cursor and scheduling the
+     * next action, and probe while waiting for async acceptance.
+     *
+     * @return bool True when a turn was (re)scheduled.
+     */
+    public function sweep(): bool
+    {
+        $state = $this->getState();
+        if (! \in_array($state['status'], ['running', 'paused'], true)) {
+            return false;
+        }
+
+        if (
+            \function_exists('as_has_scheduled_action')
+            && \as_has_scheduled_action(self::HOOK, null, self::GROUP)
+        ) {
+            return false;   // a turn is already queued
+        }
+
+        if ($state['waiting']) {
+            return $this->enqueue('probe', 0, 0);
+        }
+
+        return $this->enqueue((string) $state['phase'], (int) $state['cursor'], (int) $state['retry_attempt']);
     }
 
     // ── Worker ──────────────────────────────────────────────────────────────
@@ -353,28 +433,48 @@ final class AsyncBulkScan implements Registerable
      * @param int|string $cursor
      * @param int|string $attempt
      * @param bool|null  $force_full
+     * @param string     $runKey
      */
-    public function worker($phase = 'manifest', $cursor = 0, $attempt = 0, $force_full = null): void
+    public function worker($phase = 'manifest', $cursor = 0, $attempt = 0, $force_full = null, $runKey = ''): void
     {
         $state = $this->getState();
-        if ($state['status'] !== 'running') {
-            return;   // paused/cancelled/finished between enqueue and execution
+        $phase = (string) $phase;
+
+        // Fencing 1: callbacks must belong to the current run and be able to run.
+        if ($phase !== 'probe') {
+            if ($state['status'] !== 'running') {
+                return;
+            }
+            if ((string) $runKey !== (string) $state['client_run_key']) {
+                return;   // callback from a replaced run
+            }
+        } elseif (! \in_array($state['status'], ['running', 'paused'], true) || ! $state['waiting']) {
+            return;
         }
 
         $cursor  = (int) $cursor;
         $attempt = (int) $attempt;
-        if ($state['phase'] !== $phase || (int) $state['cursor'] !== $cursor) {
+        if ($phase !== 'probe' && ($state['phase'] !== $phase || (int) $state['cursor'] !== $cursor)) {
             return;   // stale callback from an older cursor
         }
-        if ((int) $state['retry_attempt'] !== $attempt) {
+        if ($phase !== 'probe' && (int) $state['retry_attempt'] !== $attempt) {
             return;
         }
         if ($force_full !== null && (bool) $state['force_full'] !== (bool) $force_full) {
             return;
         }
 
+        // Fencing 2: only one turn may run for this scan at a time.
+        $token = $this->acquireWorkerLock();
+        if ($token === null) {
+            return;
+        }
+
         try {
             switch ($phase) {
+                case 'probe':
+                    $this->phaseProbe();
+                    return;
                 case 'manifest':
                     $this->phaseManifest($state);
                     return;
@@ -397,56 +497,81 @@ final class AsyncBulkScan implements Registerable
                     $this->finish($state, 'done', \__('Сканирование завершено', 'cherrylink'));
                     return;
             }
+        } catch (InventoryUnavailableException $error) {
+            $this->retryOrFail($state, $phase, $cursor, [
+                'ok'        => false,
+                'status'    => 503,
+                'retryable' => true,
+                'error'     => $error->getMessage(),
+            ]);
         } catch (\Throwable $error) {
             $this->fail($state, $phase, $cursor, $error->getMessage());
+        } finally {
+            $this->releaseWorkerLock($token);
         }
     }
 
     // ── Phases ──────────────────────────────────────────────────────────────
 
+    private function phaseProbe(): void
+    {
+        $state = $this->getState();
+        if (! $this->isAvailable()) {
+            $this->scheduleLater(self::PROBE_SECONDS, 'probe', 0, 0);
+            return;
+        }
+
+        $this->setState([
+            'status'  => 'running',
+            'phase'   => 'manifest',
+            'cursor'  => 0,
+            'waiting' => false,
+            'message' => '',
+        ]);
+        $this->enqueue('manifest', 0, 0);
+        unset($state);
+    }
+
     /** @param array<string,mixed> $state */
     private function phaseManifest(array $state): void
     {
-        $client = new Client(null, Client::CONTEXT_BACKGROUND);
-        $result = $client->fetch_manifest_result();
+        $result = (array) \call_user_func($this->manifest_factory);
 
         if (! $result['ok']) {
             $this->retryOrFail($state, 'manifest', 0, $result);
             return;
         }
 
+        // Fail closed: a broken inventory query must never look like "no posts".
         $publishes = $this->publishedPosts();
         $current   = [];
         foreach ($publishes as $row) {
             $current[(int) $row['ID']] = (string) $row['post_modified_gmt'];
         }
 
-        $forceFull = (bool) $state['force_full'];
-        $plan      = IndexHelpers::compute_sync_plan($result['map'], $current, $forceFull);
+        $snapshot = (bool) $state['force_full'];
+        $plan     = IndexHelpers::compute_sync_plan($result['map'], $current, $snapshot);
+        if ($snapshot) {
+            // A snapshot prunes by absence at seal; explicit deletes are unnecessary
+            // and would consume the same ordering budget.
+            $plan['delete'] = [];
+        }
         \update_option(self::PLAN, $plan, false);
 
         $capture  = $this->capture();
-        $snapshot = $forceFull;
-        $revision = null;
-        if ($snapshot) {
-            $ids = \array_keys($current);
-            \sort($ids);
-            $marker = $capture->allocateRunMarker(
+        $marker   = $snapshot
+            ? $capture->allocateRunMarker(
                 (string) $state['client_run_key'],
                 'snapshot',
-                \count($current),
-                \hash('sha256', $ids === [] ? '' : \implode("\n", $ids) . "\n")
-            );
-            $revision = $this->markerRevision($marker);
-        } else {
-            $marker   = $capture->allocateRunMarker((string) $state['client_run_key'], 'incremental');
-            $revision = $this->markerRevision($marker);
-        }
+                \count($plan['upsert']),
+                $this->digestFor($plan['upsert'])
+            )
+            : $capture->allocateRunMarker((string) $state['client_run_key'], 'incremental');
 
         $this->advance($state, 'create', 0, [
             'mode'            => $snapshot ? 'snapshot' : 'incremental',
             'source_epoch'    => $capture->repository()->sourceEpoch(),
-            'source_revision' => $revision,
+            'source_revision' => $this->markerRevision($marker),
             'upsert_total'    => \count($plan['upsert']),
             'delete_total'    => \count($plan['delete']),
             'cursor'          => 0,
@@ -463,8 +588,9 @@ final class AsyncBulkScan implements Registerable
             'source_revision' => (int) $state['source_revision'],
         ];
         if ($state['mode'] === 'snapshot') {
-            $payload['expected_membership_count']  = (int) $state['upsert_total'];
-            $payload['expected_membership_digest'] = $this->membershipDigest();
+            $plan = $this->plan();
+            $payload['expected_membership_count']  = \count($plan['upsert']);
+            $payload['expected_membership_digest'] = $this->digestFor($plan['upsert']);
         }
 
         $result = $this->asyncClient()->createRun($payload);
@@ -488,48 +614,61 @@ final class AsyncBulkScan implements Registerable
         $plan    = $this->plan();
         $offset  = (int) $state['cursor'];
         $slice   = \array_slice($plan['upsert'], $offset, self::UPLOAD_BATCH);
-        $capture = $this->capture();
+        $batchId = $this->batchKey($state, 'u', $offset);
 
         if ($slice === []) {
             $this->advance($state, 'deletes', 0, ['cursor' => 0]);
             return;
         }
 
-        $documents = [];
-        $demoted   = [];
-        foreach ($slice as $postId) {
-            $built = $capture->build((int) $postId);
-            if ($built['deleted']) {
-                $demoted[] = (int) $postId;   // vanished between plan and capture
-                continue;
+        // Reuse the exact batch already persisted for this cursor. Rebuilding it on
+        // retry would change revisions/content and trip idempotency_key_reused.
+        $batch = $this->loadBatch($batchId);
+        if ($batch === null) {
+            $capture   = $this->capture();
+            $documents = [];
+            $demoted   = [];
+            foreach ($slice as $postId) {
+                $built = $capture->build((int) $postId);
+                if ($built['deleted']) {
+                    $demoted[] = (int) $postId;
+                    continue;
+                }
+                $documents[] = \array_merge($built['payload'], [
+                    'source_epoch'    => (string) $state['source_epoch'],
+                    'source_revision' => (int) $built['revision'],
+                    'operation'       => 'upsert',
+                ]);
             }
-            $documents[] = \array_merge($built['payload'], [
-                'source_epoch'    => (string) $state['source_epoch'],
-                'source_revision' => $built['revision'],
-                'operation'       => 'upsert',
-            ]);
+
+            if ($demoted !== [] && $state['mode'] === 'snapshot') {
+                // The declared membership no longer matches what we can upload, so
+                // the seal would fail. Restart the snapshot with a fresh run.
+                $this->restartSnapshot($state, \count($demoted));
+                return;
+            }
+
+            if ($demoted !== []) {
+                $plan['delete'] = \array_values(\array_unique(\array_merge($plan['delete'], $demoted)));
+                \update_option(self::PLAN, $plan, false);
+            }
+
+            if ($documents === []) {
+                $this->advancePastSlice($state, $plan, $offset, \count($slice));
+                return;
+            }
+
+            $batch = ['id' => $batchId, 'items' => $documents];
+            $this->saveBatch($batch);
         }
 
-        if ($demoted !== []) {
-            $plan['delete'] = \array_values(\array_unique(\array_merge($plan['delete'], $demoted)));
-            \update_option(self::PLAN, $plan, false);
-        }
-
-        if ($documents === []) {
-            $this->advance(
-                $state,
-                $offset + \count($slice) >= \count($plan['upsert']) ? 'deletes' : 'upload',
-                $offset + \count($slice) >= \count($plan['upsert']) ? 0 : $offset + \count($slice),
-                ['cursor' => $offset + \count($slice) >= \count($plan['upsert']) ? 0 : $offset + \count($slice)]
-            );
-            return;
-        }
-
+        /** @var array<int,array<string,mixed>> $items */
+        $items  = $batch['items'];
         $result = $this->asyncClient()->appendDocuments(
             (string) $state['run_id'],
-            $this->batchKey($state, 'u', $offset),
-            $documents,
-            \count($documents)
+            $batchId,
+            $items,
+            \count($items)
         );
 
         if (! $result['ok']) {
@@ -537,19 +676,8 @@ final class AsyncBulkScan implements Registerable
             return;
         }
 
-        $nextOffset  = $offset + \count($slice);
-        $nextDeleted = (int) $state['delete_total'];
-
-        $this->advance(
-            $state,
-            $nextOffset >= \count($plan['upsert']) ? 'deletes' : 'upload',
-            $nextOffset >= \count($plan['upsert']) ? 0 : $nextOffset,
-            [
-                'cursor'       => $nextOffset >= \count($plan['upsert']) ? 0 : $nextOffset,
-                'uploaded'     => (int) $state['uploaded'] + (int) $result['accepted_count'],
-                'delete_total' => $nextDeleted,
-            ]
-        );
+        $this->deleteBatch();
+        $this->advancePastSlice($state, $plan, $offset, \count($slice), (int) $result['accepted_count']);
     }
 
     /** @param array<string,mixed> $state */
@@ -558,28 +686,49 @@ final class AsyncBulkScan implements Registerable
         $plan   = $this->plan();
         $offset = (int) $state['cursor'];
         $slice  = \array_slice($plan['delete'], $offset, self::DELETE_BATCH);
+        $batchId = $this->batchKey($state, 'd', $offset);
 
         if ($slice === []) {
             $this->advance($state, 'seal', 0, ['cursor' => 0]);
             return;
         }
 
-        $capture = $this->capture();
-        $deletes = [];
-        foreach ($slice as $postId) {
-            $revision = $capture->repository()->allocateRevision();
-            $deletes[] = [
-                'post_id'         => (int) $postId,
-                'source_epoch'    => (string) $state['source_epoch'],
-                'source_revision' => $revision,
-            ];
+        $batch = $this->loadBatch($batchId);
+        if ($batch === null) {
+            $capture = $this->capture();
+            $deletes = [];
+            $skipped = 0;
+            foreach ($slice as $postId) {
+                // Re-read before tombstoning: a republish during the scan must not be
+                // overwritten by the bulk tombstone.
+                $built = $capture->build((int) $postId);
+                if (! $built['deleted']) {
+                    $skipped++;
+                    continue;
+                }
+                $deletes[] = [
+                    'post_id'         => (int) $postId,
+                    'source_epoch'    => (string) $state['source_epoch'],
+                    'source_revision' => (int) $built['revision'],
+                ];
+            }
+
+            if ($deletes === []) {
+                $this->advancePastDeletes($state, $plan, $offset, \count($slice), 0, $skipped);
+                return;
+            }
+
+            $batch = ['id' => $batchId, 'items' => $deletes];
+            $this->saveBatch($batch);
         }
 
+        /** @var array<int,array<string,mixed>> $items */
+        $items  = $batch['items'];
         $result = $this->asyncClient()->appendDeletes(
             (string) $state['run_id'],
-            $this->batchKey($state, 'd', $offset),
-            $deletes,
-            \count($deletes)
+            $batchId,
+            $items,
+            \count($items)
         );
 
         if (! $result['ok']) {
@@ -587,13 +736,8 @@ final class AsyncBulkScan implements Registerable
             return;
         }
 
-        $nextOffset = $offset + \count($slice);
-        $done       = $nextOffset >= \count($plan['delete']);
-
-        $this->advance($state, $done ? 'seal' : 'deletes', $done ? 0 : $nextOffset, [
-            'cursor'  => $done ? 0 : $nextOffset,
-            'deleted' => (int) $state['deleted'] + (int) $result['accepted_count'],
-        ]);
+        $this->deleteBatch();
+        $this->advancePastDeletes($state, $plan, $offset, \count($slice), (int) $result['accepted_count'], 0);
     }
 
     /** @param array<string,mixed> $state */
@@ -601,15 +745,19 @@ final class AsyncBulkScan implements Registerable
     {
         $result = $this->asyncClient()->sealRun((string) $state['run_id'], (string) $state['client_run_key'] . ':seal');
         if (! $result['ok']) {
+            if ((string) ($result['code'] ?? '') === 'snapshot_membership_mismatch' && $state['mode'] === 'snapshot') {
+                $this->restartSnapshot($state, 0);
+                return;
+            }
             $this->retryOrFail($state, 'seal', 0, $result);
             return;
         }
 
         $this->advance($state, 'poll', 0, [
-            'sealed'        => true,
-            'poll_attempt'  => 0,
+            'sealed'       => true,
+            'poll_attempt' => 0,
             'next_poll_gmt' => '',
-            'message'       => \__('Загружено. Идёт обработка на сервере.', 'cherrylink'),
+            'message'      => \__('Загружено. Идёт обработка на сервере.', 'cherrylink'),
         ]);
     }
 
@@ -618,7 +766,7 @@ final class AsyncBulkScan implements Registerable
     {
         $result = $this->asyncClient()->runStatus((string) $state['run_id']);
         if (! $result['ok']) {
-            $this->retryOrFail($state, 'poll', 0, $result, true);
+            $this->retryOrFail($state, 'poll', 0, $result);
             return;
         }
 
@@ -626,7 +774,7 @@ final class AsyncBulkScan implements Registerable
         $runState = (string) ($result['body']['state'] ?? '');
 
         if (\in_array($runState, self::TERMINAL_RUN_STATES, true)) {
-            $ok = $runState === 'completed';
+            $ok    = $runState === 'completed';
             $state = $this->setState(['progress' => $progress]);
             $this->finish($state, $ok ? 'done' : 'completed_with_errors', $ok
                 ? \__('Индексация завершена', 'cherrylink')
@@ -637,7 +785,7 @@ final class AsyncBulkScan implements Registerable
         $attempt = (int) $state['poll_attempt'] + 1;
         $delay   = \min(self::POLL_MAX_SECONDS, self::POLL_MIN_SECONDS * (1 + \intdiv($attempt, 3)));
 
-        $state = $this->setState([
+        $this->setState([
             'phase'         => 'poll',
             'cursor'        => 0,
             'poll_attempt'  => $attempt,
@@ -657,10 +805,51 @@ final class AsyncBulkScan implements Registerable
 
     // ── Helpers ─────────────────────────────────────────────────────────────
 
+    /**
+     * @param array<string,mixed> $state
+     * @param array{upsert:int[],delete:int[]} $plan
+     */
+    private function advancePastSlice(array $state, array $plan, int $offset, int $sent, int $accepted = 0): void
+    {
+        $nextOffset = $offset + $sent;
+        $done       = $nextOffset >= \count($plan['upsert']);
+
+        $this->advance(
+            $state,
+            $done ? 'deletes' : 'upload',
+            $done ? 0 : $nextOffset,
+            [
+                'cursor'   => $done ? 0 : $nextOffset,
+                'uploaded' => (int) $state['uploaded'] + $accepted,
+            ]
+        );
+    }
+
+    /**
+     * @param array<string,mixed> $state
+     * @param array{upsert:int[],delete:int[]} $plan
+     */
+    private function advancePastDeletes(array $state, array $plan, int $offset, int $sent, int $accepted, int $skipped): void
+    {
+        $nextOffset = $offset + $sent;
+        $done       = $nextOffset >= \count($plan['delete']);
+
+        $this->advance(
+            $state,
+            $done ? 'seal' : 'deletes',
+            $done ? 0 : $nextOffset,
+            [
+                'cursor'          => $done ? 0 : $nextOffset,
+                'deleted'         => (int) $state['deleted'] + $accepted,
+                'skipped_deletes' => (int) $state['skipped_deletes'] + $skipped,
+            ]
+        );
+    }
+
     /** @param array<string,mixed> $state @param array<string,mixed> $extra */
     private function advance(array $state, string $phase, int $cursor, array $extra = []): void
     {
-        $patch = \array_merge($extra, [
+        $this->setState(\array_merge($extra, [
             'phase'            => $phase,
             'cursor'           => $cursor,
             'retry_attempt'    => 0,
@@ -670,15 +859,49 @@ final class AsyncBulkScan implements Registerable
             'last_error'       => '',
             'failed_phase'     => null,
             'failed_offset'    => null,
-        ]);
-        $this->setState($patch);
+        ]));
 
         if ($phase === 'poll') {
             $this->scheduleLater(self::POLL_MIN_SECONDS, 'poll', 0, 0);
             return;
         }
 
+        // A scheduling failure is not fatal: the recovery sweep re-queues the
+        // persisted phase/cursor on the next cron tick.
         $this->enqueue($phase, $cursor, 0);
+        unset($state);
+    }
+
+    /**
+     * Restart a snapshot whose declared membership can no longer be uploaded.
+     * The accepting run is cancelled so the backend restores the affected heads.
+     *
+     * @param array<string,mixed> $state
+     */
+    private function restartSnapshot(array $state, int $drifted): void
+    {
+        if (! empty($state['run_id'])) {
+            $this->asyncClient()->cancelRun((string) $state['run_id']);
+        }
+        \delete_option(self::BATCH);
+
+        $this->setState([
+            'status'          => 'running',
+            'phase'           => 'manifest',
+            'cursor'          => 0,
+            'run_id'          => '',
+            'client_run_key'  => $this->newRunKey(),
+            'sealed'          => false,
+            'uploaded'        => 0,
+            'deleted'         => 0,
+            'skipped_deletes' => 0,
+            'message'         => $drifted > 0
+                ? \__('Содержимое изменилось во время сканирования — сканирование перезапущено.', 'cherrylink')
+                : \__('Состав сайта изменился — сканирование перезапущено.', 'cherrylink'),
+        ]);
+
+        \delete_option(self::PLAN);
+        $this->enqueue('manifest', 0, 0);
     }
 
     /** @param array<string,mixed> $state */
@@ -691,14 +914,12 @@ final class AsyncBulkScan implements Registerable
         $meta['last_deleted']     = (int) $state['deleted'];
         $this->options->saveMeta($meta);
         \delete_option(self::PLAN);
+        \delete_option(self::BATCH);
         if ($status === 'done') {
             $this->options->clearIndexDirty();
         }
 
-        $this->setState([
-            'status'  => $status,
-            'message' => $message,
-        ]);
+        $this->setState(['status' => $status, 'message' => $message, 'waiting' => false]);
     }
 
     /** @param array<string,mixed> $state */
@@ -716,17 +937,17 @@ final class AsyncBulkScan implements Registerable
             'last_error'    => $error,
             'failed_phase'  => $phase,
             'failed_offset' => $cursor,
+            'waiting'       => false,
         ]);
     }
 
-    /**
-     * @param array<string,mixed> $state
-     * @param array<string,mixed> $result
-     */
-    private function retryOrFail(array $state, string $phase, int $cursor, array $result, bool $polling = false): void
+    /** @param array<string,mixed> $state @param array<string,mixed> $result */
+    private function retryOrFail(array $state, string $phase, int $cursor, array $result): void
     {
         $attempt   = (int) $state['retry_attempt'] + 1;
-        $retryable = AsyncClient::isRetryable($result);
+        $retryable = \array_key_exists('retryable', $result)
+            ? (bool) $result['retryable']
+            : AsyncClient::isRetryable($result);
         $error     = (string) ($result['error'] ?? 'request failed');
 
         if (! $retryable || $attempt > self::MAX_ATTEMPTS) {
@@ -751,7 +972,6 @@ final class AsyncBulkScan implements Registerable
         ]);
 
         $this->scheduleLater($delay, $phase, $cursor, $attempt);
-        unset($polling);
     }
 
     /** @return array{upsert:int[],delete:int[]} */
@@ -760,36 +980,60 @@ final class AsyncBulkScan implements Registerable
         $plan = (array) \get_option(self::PLAN, ['upsert' => [], 'delete' => []]);
 
         return [
-            'upsert' => \array_map('intval', (array) ($plan['upsert'] ?? [])),
-            'delete' => \array_map('intval', (array) ($plan['delete'] ?? [])),
+            'upsert' => \array_values(\array_map('intval', (array) ($plan['upsert'] ?? []))),
+            'delete' => \array_values(\array_map('intval', (array) ($plan['delete'] ?? []))),
         ];
     }
 
-    /** @return array<int,array{ID:int|string,post_modified_gmt:string}> */
+    /**
+     * Published posts (ID + modified time).
+     *
+     * @return array<int,array<string,mixed>>
+     * @throws InventoryUnavailableException When the query fails.
+     */
     private function publishedPosts(): array
     {
         global $wpdb;
-        /** @var \wpdb $wpdb */
+        if (! \is_object($wpdb) || ! \is_callable([$wpdb, 'get_results'])) {
+            throw new InventoryUnavailableException('WordPress database is unavailable');
+        }
+        /** @var \wpdb $db */
+        $db      = $wpdb;
         $allowed = IndexHelpers::get_allowed_types_list();
         $ph      = \implode(',', \array_fill(0, \count($allowed), '%s'));
-        $rows    = $wpdb->get_results($wpdb->prepare(
-            "SELECT ID, post_modified_gmt FROM {$wpdb->posts} WHERE post_type IN ($ph) AND post_status = 'publish'",
-            $allowed
-        ), ARRAY_A);
 
-        return \is_array($rows) ? $rows : [];
+        try {
+            $rows = $db->get_results($db->prepare(
+                "SELECT ID, post_modified_gmt FROM {$db->posts} WHERE post_type IN ($ph) AND post_status = 'publish'",
+                $allowed
+            ), ARRAY_A);
+        } catch (\Throwable $error) {
+            throw new InventoryUnavailableException('Post inventory query failed: ' . \esc_html($error->getMessage()));
+        }
+
+        $lastError = (string) $db->last_error;
+        if (! \is_array($rows)) {
+            throw new InventoryUnavailableException(
+                'Post inventory query failed' . ($lastError !== '' ? ': ' . \esc_html($lastError) : '')
+            );
+        }
+
+        return \array_values($rows);
     }
 
-    private function membershipDigest(): string
+    /**
+     * Snapshot membership digest: sorted unique IDs, one decimal per LF-delimited
+     * line, no trailing newline — byte-identical to the API's
+     * `snapshot_membership_digest()` so seal can verify it.
+     *
+     * @param int[] $postIds
+     */
+    public function digestFor(array $postIds): string
     {
-        $ids = [];
-        foreach ($this->publishedPosts() as $row) {
-            $ids[] = (int) $row['ID'];
-        }
-        $ids = \array_values(\array_unique($ids));
+        $ids = \array_values(\array_unique(\array_map('intval', $postIds)));
         \sort($ids);
 
-        return \hash('sha256', $ids === [] ? '' : \implode("\n", $ids) . "\n");
+        return \hash('sha256', \implode("\n", $ids));
     }
 
     private function markerRevision(int $markerRowId): int
@@ -803,6 +1047,28 @@ final class AsyncBulkScan implements Registerable
     private function batchKey(array $state, string $kind, int $offset): string
     {
         return $state['client_run_key'] . ':' . $kind . ':' . $offset;
+    }
+
+    /** @return array{id:string,items:array<int,array<string,mixed>>}|null */
+    private function loadBatch(string $batchId): ?array
+    {
+        $batch = \get_option(self::BATCH, null);
+        if (! \is_array($batch) || ($batch['id'] ?? '') !== $batchId || ! \is_array($batch['items'] ?? null)) {
+            return null;
+        }
+
+        return ['id' => (string) $batch['id'], 'items' => $batch['items']];
+    }
+
+    /** @param array{id:string,items:array<int,array<string,mixed>>} $batch */
+    private function saveBatch(array $batch): void
+    {
+        \update_option(self::BATCH, $batch, false);
+    }
+
+    private function deleteBatch(): void
+    {
+        \delete_option(self::BATCH);
     }
 
     /**
@@ -843,6 +1109,7 @@ final class AsyncBulkScan implements Registerable
                 'cursor'     => $cursor,
                 'attempt'    => $attempt,
                 'force_full' => (bool) $this->getState()['force_full'],
+                'run_key'    => (string) $this->getState()['client_run_key'],
             ], self::GROUP);
         } catch (\Throwable $error) {
             return false;
@@ -862,9 +1129,10 @@ final class AsyncBulkScan implements Registerable
                 'cursor'     => $cursor,
                 'attempt'    => $attempt,
                 'force_full' => (bool) $this->getState()['force_full'],
+                'run_key'    => (string) $this->getState()['client_run_key'],
             ], self::GROUP);
         } catch (\Throwable $error) {
-            // WP-Cron / the admin tick will recover the chain.
+            // The recovery sweep re-queues the persisted phase/cursor.
         }
     }
 
@@ -887,5 +1155,42 @@ final class AsyncBulkScan implements Registerable
                 // best effort
             }
         }
+    }
+
+    // ── Worker lock ─────────────────────────────────────────────────────────
+
+    private function acquireWorkerLock(): ?string
+    {
+        $current = \get_option(self::LOCK, '');
+        if (\is_string($current) && $current !== '') {
+            $expiry = (int) \strtok($current, '|');
+            if ($expiry > \time()) {
+                return null;   // another turn is running
+            }
+            \delete_option(self::LOCK);
+        }
+
+        $token = (\time() + self::WORKER_LOCK_TTL) . '|' .
+            (\function_exists('wp_generate_uuid4') ? \wp_generate_uuid4() : \bin2hex(\random_bytes(8)));
+
+        return \add_option(self::LOCK, $token, '', false) ? $token : null;
+    }
+
+    private function releaseWorkerLock(string $token): void
+    {
+        $current = \get_option(self::LOCK, '');
+        if ($current === $token) {
+            \delete_option(self::LOCK);
+        }
+    }
+
+    private function asyncClient(): AsyncClient
+    {
+        return \call_user_func($this->client_factory);
+    }
+
+    private function capture(): Capture
+    {
+        return \call_user_func($this->capture_factory);
     }
 }

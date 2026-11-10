@@ -174,9 +174,11 @@ final class SyncService implements Registerable
      */
     public function start(bool $force_full = false): array
     {
-        // Async tenants run the durable uploader; the synchronous chain below stays
-        // for old APIs and sync-mode tenants.
-        if ($this->async !== null && $this->async->isAvailable()) {
+        // Routing follows the tenant's durable mode, not current API availability:
+        // an established async tenant must never fall back to synchronous writes
+        // (the API rejects them with 409). The adapter pauses when acceptance is
+        // unavailable and resumes once it returns.
+        if ($this->async !== null && $this->async->handlesTenant()) {
             return $this->async->start($force_full);
         }
 

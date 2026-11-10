@@ -13,6 +13,7 @@ use CherryLink\Support\Capabilities;
 use CherryLink\Support\CapabilitiesRefresh;
 use CherryLink\Support\License;
 use CherryLink\Support\Options;
+use CherryLink\Support\WorkerLock;
 
 /**
  * Durable bulk indexing run (plan stage P3).
@@ -89,6 +90,9 @@ class AsyncBulkScan implements Registerable
     /** @var Capabilities */
     private $capabilities;
 
+    /** @var WorkerLock */
+    private $lock;
+
     /** @var callable */
     private $client_factory;
 
@@ -109,6 +113,7 @@ class AsyncBulkScan implements Registerable
         $this->options         = $options;
         $this->license         = $license;
         $this->capabilities    = $capabilities ?? new Capabilities();
+        $this->lock            = new WorkerLock();
         $this->client_factory  = $client_factory ?? static function (): AsyncClient {
             return new AsyncClient(new Client(null, Client::CONTEXT_BACKGROUND));
         };
@@ -468,7 +473,7 @@ class AsyncBulkScan implements Registerable
         }
 
         // Fencing 2: only one turn may run for this scan at a time.
-        $token = $this->acquireWorkerLock();
+        $token = $this->lock->acquire(self::LOCK, self::WORKER_LOCK_TTL);
         if ($token === null) {
             return;
         }
@@ -510,7 +515,7 @@ class AsyncBulkScan implements Registerable
         } catch (\Throwable $error) {
             $this->fail($state, $phase, $cursor, $error->getMessage());
         } finally {
-            $this->releaseWorkerLock($token);
+            $this->lock->release(self::LOCK, $token);
         }
     }
 
@@ -1155,31 +1160,6 @@ class AsyncBulkScan implements Registerable
     }
 
     // ── Worker lock ─────────────────────────────────────────────────────────
-
-    private function acquireWorkerLock(): ?string
-    {
-        $current = \get_option(self::LOCK, '');
-        if (\is_string($current) && $current !== '') {
-            $expiry = (int) \strtok($current, '|');
-            if ($expiry > \time()) {
-                return null;   // another turn is running
-            }
-            \delete_option(self::LOCK);
-        }
-
-        $token = (\time() + self::WORKER_LOCK_TTL) . '|' .
-            (\function_exists('wp_generate_uuid4') ? \wp_generate_uuid4() : \bin2hex(\random_bytes(8)));
-
-        return \add_option(self::LOCK, $token, '', false) ? $token : null;
-    }
-
-    private function releaseWorkerLock(string $token): void
-    {
-        $current = \get_option(self::LOCK, '');
-        if ($current === $token) {
-            \delete_option(self::LOCK);
-        }
-    }
 
     private function asyncClient(): AsyncClient
     {

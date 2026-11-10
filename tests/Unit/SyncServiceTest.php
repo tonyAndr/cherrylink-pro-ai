@@ -94,6 +94,25 @@ final class SyncServiceTest extends TestCase
             return 202;
         });
         Functions\when('delete_option')->justReturn(true);
+        // Cross-process worker fence.
+        Functions\when('add_option')->justReturn(true);
+        Functions\when('wp_generate_uuid4')->justReturn('lock-token');
+        Functions\when('get_option')->alias(function ($key, $default = false) {
+            if ($key === SyncService::STATE) {
+                return $this->state;
+            }
+            if ($key === SyncService::PLAN) {
+                return $this->options[$key] ?? $this->plan;
+            }
+            if (\array_key_exists($key, $this->options)) {
+                return $this->options[$key];
+            }
+            return $default;
+        });
+        Functions\when('as_schedule_single_action')->alias(function ($timestamp, $hook, $args, $group) {
+            $this->scheduled[] = ['timestamp' => $timestamp, 'hook' => $hook, 'args' => $args, 'group' => $group];
+            return 202;
+        });
     }
 
     protected function tearDown(): void
@@ -123,6 +142,35 @@ final class SyncServiceTest extends TestCase
         return new SyncService($options, $license, static function () use ($client): Client {
             return $client;
         });
+    }
+
+    public function testWorkerIsFencedAndRequeuesWhenAnotherTurnHoldsTheLock(): void
+    {
+        // Another process (cron / tick / WP-CLI) is running this turn already.
+        $this->options[SyncService::LOCK] = (\time() + 120) . '|other-turn';
+        $service = $this->service(Mockery::mock(Client::class));
+
+        $service->worker('upsert', 0, 0);
+
+        // The batch must not run, and the turn must be re-queued rather than lost.
+        $this->assertCount(1, $this->scheduled);
+        $this->assertSame('upsert', $this->scheduled[0]['args']['phase']);
+        $this->assertSame(0, $this->state['indexed']);
+    }
+
+    public function testExpiredLockIsTakenOverSoTheQueueCannotStall(): void
+    {
+        $this->options[SyncService::LOCK] = (\time() - 5) . '|dead-turn';
+        $client = Mockery::mock(Client::class);
+        $client->shouldReceive('upsert_posts_by_ids_result')->once()->andReturn([
+            'ok' => true, 'retryable' => false, 'status' => 200,
+            'retry_after' => null, 'indexed' => 2, 'errors' => 0, 'error' => '',
+        ]);
+        $client->shouldReceive('log_error')->andReturnNull()->byDefault();
+
+        $this->service($client)->worker('upsert', 0, 0);
+
+        $this->assertSame(2, $this->state['indexed']);
     }
 
     public function testRetryKeepsUpsertCursorAndHonorsRetryAfter(): void

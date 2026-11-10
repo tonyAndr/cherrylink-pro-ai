@@ -1465,3 +1465,9 @@ msgstr "Paused. Uploading will continue after “Resume”."
 
 msgid "Сканирование завершено"
 msgstr "Scan completed"
+
+msgid "Получение списка статей"
+msgstr "Fetching the article list"
+
+msgid "Очередь не обрабатывается: планировщик WP-Cron не запускается. Проверьте cron или запустите wp action-scheduler run."
+msgstr "The queue is not being processed: WP-Cron is not running. Check cron or run wp action-scheduler run."

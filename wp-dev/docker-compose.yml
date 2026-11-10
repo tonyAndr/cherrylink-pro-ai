@@ -40,6 +40,40 @@ services:
       - default
       - cherry_net
 
+  # Action Scheduler / WP-Cron runner.
+  #
+  # The WordPress container publishes port 8088 on the host only, so the WP-Cron
+  # loopback to http://localhost:8088 is unreachable from inside the container and
+  # background scans would sit in the queue forever. A production site has a real
+  # traffic or server cron; this sidecar provides the equivalent locally.
+  cron:
+    image: wordpress:cli-2-php8.2
+    depends_on:
+      - wordpress
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_NAME: wordpress
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+    volumes:
+      - wp_root:/var/www/html
+      - ../:/var/www/html/wp-content/plugins/cherrylink-pro-ai
+    entrypoint:
+      - /bin/bash
+      - -lc
+      - |
+        until [ -f /var/www/html/wp-config.php ]; do sleep 2; done
+        echo "cron runner: processing due events + Action Scheduler every 5s"
+        while true; do
+          wp --allow-root --path=/var/www/html cron event run --due-now >/dev/null 2>&1 || true
+          wp --allow-root --path=/var/www/html action-scheduler run --batches=10 >/dev/null 2>&1 || true
+          sleep 5
+        done
+    networks:
+      - default
+      - cherry_net
+    restart: unless-stopped
+
   wpcli:
     image: wordpress:cli-2-php8.2
     depends_on:

@@ -1450,3 +1450,9 @@ msgstr ""
 
 msgid "Сканирование завершено"
 msgstr ""
+
+msgid "Получение списка статей"
+msgstr ""
+
+msgid "Очередь не обрабатывается: планировщик WP-Cron не запускается. Проверьте cron или запустите wp action-scheduler run."
+msgstr ""

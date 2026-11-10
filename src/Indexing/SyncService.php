@@ -11,6 +11,7 @@ use CherryLink\Api\Client;
 use CherryLink\Contracts\Registerable;
 use CherryLink\Support\License;
 use CherryLink\Support\Options;
+use CherryLink\Support\WorkerLock;
 
 /**
  * Background incremental sync via Action Scheduler.
@@ -45,6 +46,12 @@ final class SyncService implements Registerable
     public const LINK_BATCH    = 25;
     public const PRUNE_BATCH   = 1000;
 
+    /** Cross-process fence: several dispatchers can run this hook at once. */
+    public const LOCK = 'cherrylink_sync_worker_lock';
+    private const LOCK_TTL = 180;
+    /** Delay before retrying a turn that found the lock taken. */
+    private const LOCK_RETRY_SECONDS = 5;
+
     private const MAX_RETRY_ATTEMPTS = 8;
     private const MAX_RETRY_DELAY    = 300;
     private const BASE_RETRY_DELAY   = 2;
@@ -60,6 +67,9 @@ final class SyncService implements Registerable
 
     /** @var AsyncBulkScan|null Durable run used when the tenant is async-capable. */
     private $async;
+
+    /** @var WorkerLock */
+    private $lock;
 
     /**
      * @param callable|null     $client_factory Factory returning a Client; test seam for workers.
@@ -77,6 +87,7 @@ final class SyncService implements Registerable
             return new Client(null, Client::CONTEXT_BACKGROUND);
         };
         $this->async          = $async;
+        $this->lock           = new WorkerLock();
     }
 
     /** The durable bulk adapter, when this tenant uses it. */
@@ -311,6 +322,23 @@ final class SyncService implements Registerable
             return;   // stale callback from a different scan mode
         }
 
+        // Cross-process fence. WP-Cron, a server cron, the admin tick and WP-CLI can
+        // all dispatch this hook; without it two turns read the same state, both run
+        // the batch, and the later write discards the other's counters.
+        $token = $this->lock->acquire(self::LOCK, self::LOCK_TTL);
+        if ($token === null) {
+            // Another turn is running: re-queue instead of dropping this one.
+            if (\function_exists('as_schedule_single_action')) {
+                \as_schedule_single_action(\time() + self::LOCK_RETRY_SECONDS, self::HOOK, [
+                    'phase'      => $phase,
+                    'offset'     => $offset,
+                    'attempt'    => $attempt,
+                    'force_full' => (bool) ($state['force_full'] ?? false),
+                ], self::GROUP);
+            }
+            return;
+        }
+
         $plan   = \get_option(self::PLAN, ['upsert' => [], 'delete' => []]);
         $api    = $this->client();
 
@@ -402,6 +430,8 @@ final class SyncService implements Registerable
             $this->setState(['status' => 'error', 'message' => $e->getMessage()]);
             $api->log_error('background sync phase ' . $phase . ' failed: ' . $e->getMessage(), 'php_index');
             return;   // stop the chain on error
+        } finally {
+            $this->lock->release(self::LOCK, $token);
         }
 
         $state['retry_attempt']    = 0;

@@ -29,6 +29,9 @@ final class SettingsPage implements Registerable
     public function register(): void
     {
         \add_action('admin_menu', [$this, 'menu'], 1);
+        // Settings export is served through a nonce-checked admin handler, never as a
+        // static file inside the plugin directory.
+        \add_action('admin_post_cherrylink_export_options', [$this, 'exportOptions']);
         \add_filter(
             'plugin_action_links_' . \plugin_basename(Plugin::instance()->file()),
             [$this, 'actionLinks']
@@ -260,12 +263,6 @@ final class SettingsPage implements Registerable
     {
         $options = (array) \get_option('linkate-posts', []);
 
-        // Create options file to export
-        if (! isset($_POST['import_settings'])) {
-            $str = \http_build_query($options);
-            \file_put_contents(CHERRYLINK_DIR . '/export_options.txt', $str);
-        }
-
         if (isset($_POST['import_settings']) && isset($_FILES['upload_options'])) {
             \check_admin_referer('linkate-posts-update-options');
             $name = \basename(\sanitize_file_name($_FILES['upload_options']['name'] ?? ''));
@@ -287,21 +284,36 @@ final class SettingsPage implements Registerable
         }
 
         self::render('admin/main-subpage', [
-            'export_url' => CHERRYLINK_DIR_URL . '/export_options.txt',
+            'export_url' => \wp_nonce_url(
+                \admin_url('admin-post.php?action=cherrylink_export_options'),
+                'cherrylink-export-options'
+            ),
         ]);
+    }
 
-        if (isset($_POST['export_settings'])) {
-            \check_admin_referer('linkate-posts-update-options');
-
-            $str = \http_build_query($options);
-            \header('Content-Disposition: attachment; filename="cherrylink_options.txt"');
-            \header('Content-Type: application/force-download');
-            \header('Content-Length: ' . \mb_strlen($str));
-            \header('Connection: close');
-
-            echo $str; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- raw options download payload
-            exit();
+    /**
+     * Stream the settings file to the current administrator.
+     *
+     * The previous implementation wrote `export_options.txt` into the plugin
+     * directory on every settings-page render and linked to it directly: that fails
+     * on read-only installs (visible PHP warning) and, more importantly, exposed the
+     * settings — including the licence key — at a public plugin URL.
+     */
+    public function exportOptions(): void
+    {
+        if (! \current_user_can('cherrylink_settings')) {
+            \wp_die(\esc_html__('Недостаточно прав.', 'cherrylink'), '', ['response' => 403]);
         }
+        \check_admin_referer('cherrylink-export-options');
+
+        $payload = \http_build_query((array) \get_option('linkate-posts', []));
+
+        \nocache_headers();
+        \header('Content-Type: text/plain; charset=utf-8');
+        \header('Content-Disposition: attachment; filename="cherrylink_options.txt"');
+        \header('Content-Length: ' . \strlen($payload));
+        echo $payload; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- raw options download payload
+        exit;
     }
 
     public static function expertSubpage(): void

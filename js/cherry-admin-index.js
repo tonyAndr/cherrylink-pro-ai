@@ -28,6 +28,18 @@ jQuery(document).ready(function ($) {
     }
     cl_localize_times();
 
+    // If the server state stops changing while a scan is "running", the scheduler is
+    // not processing the queue (WP-Cron disabled, no server cron, loopback blocked).
+    // Say so instead of spinning forever with no explanation.
+    var sync_sig = null, sync_sig_since = 0;
+    const SYNC_STALL_MS = 20000;
+    function sync_track_progress(state) {
+        var sig = [state.status, state.phase, state.offset, state.indexed, state.links,
+            state.deleted, state.retry_attempt, state.accepted, state.vectors_applied].join('|');
+        if (sig !== sync_sig) { sync_sig = sig; sync_sig_since = Date.now(); return false; }
+        return sync_is_active(state) && (Date.now() - sync_sig_since) > SYNC_STALL_MS;
+    }
+
     function sync_is_active(s) { return s && s.status === 'running'; }
     function sync_show_running() { $('.button-reindex').hide(); $('.button-reindex-stop').show(); $('#reindex_progress').show().prop('max', 100); }
     function sync_show_idle()    { $('.button-reindex').show(); $('.button-reindex-stop').hide(); }
@@ -185,9 +197,10 @@ jQuery(document).ready(function ($) {
         if (state.status === 'running') {
             sync_show_running();
             let done = 0, total = state.upsert_total || 0, label = __('Индексация', 'cherrylink');
-            if (state.phase === 'upsert')      { done = state.indexed || 0; label = __('Индексация изменённых', 'cherrylink'); }
-            else if (state.phase === 'links')  { done = state.offset  || 0; label = __('Построение карты ссылок', 'cherrylink'); }
-            else if (state.phase === 'prune')  { label = __('Удаление устаревших', 'cherrylink'); total = 0; }
+            if (state.phase === 'upsert')       { done = state.indexed || 0; label = __('Индексация изменённых', 'cherrylink'); }
+            else if (state.phase === 'links')   { done = state.offset  || 0; label = __('Построение карты ссылок', 'cherrylink'); }
+            else if (state.phase === 'prune')   { label = __('Удаление устаревших', 'cherrylink'); total = 0; }
+            else if (state.phase === 'manifest'){ label = __('Получение списка статей', 'cherrylink'); total = 0; }
             if (total > 0) {
                 $('#reindex_progress').val(Math.min(100, Math.round(done / total * 100)));
                 /* translators: 1: phase label, 2: done count, 3: total count */
@@ -219,6 +232,16 @@ jQuery(document).ready(function ($) {
         } else {
             sync_show_idle();
         }
+        sync_stall_hint(state);
+    }
+
+    function sync_stall_hint(state) {
+        if (!sync_track_progress(state)) return;
+        $('#reindex_progress_text').append(
+            '<br><span class="cl-sync-stall">' +
+            __('Очередь не обрабатывается: планировщик WP-Cron не запускается. Проверьте cron или запустите wp action-scheduler run.', 'cherrylink') +
+            '</span>'
+        );
     }
 
     // Resume the progress view if a sync is already running (started earlier or in another tab).

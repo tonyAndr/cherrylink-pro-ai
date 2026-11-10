@@ -82,7 +82,7 @@ class AsyncClient
      * @param array<int,array<string,mixed>> $documents
      * @return array<string,mixed>
      */
-    public function appendDocuments(string $runId, string $batchId, array $documents): array
+    public function appendDocuments(string $runId, string $batchId, array $documents, ?int $expectedAccepted = null): array
     {
         $body = [
             'protocol_version' => self::PROTOCOL_VERSION,
@@ -97,7 +97,8 @@ class AsyncClient
                 $body,
                 self::ACCEPT_TIMEOUT
             ),
-            'batch'
+            'batch',
+            $expectedAccepted
         );
     }
 
@@ -107,7 +108,7 @@ class AsyncClient
      * @param array<int,array{post_id:int,source_epoch:string,source_revision:int}> $deletes
      * @return array<string,mixed>
      */
-    public function appendDeletes(string $runId, string $batchId, array $deletes): array
+    public function appendDeletes(string $runId, string $batchId, array $deletes, ?int $expectedAccepted = null): array
     {
         $body = [
             'protocol_version' => self::PROTOCOL_VERSION,
@@ -122,7 +123,8 @@ class AsyncClient
                 $body,
                 self::ACCEPT_TIMEOUT
             ),
-            'batch'
+            'batch',
+            $expectedAccepted
         );
     }
 
@@ -212,8 +214,12 @@ class AsyncClient
      * @param array<int,array<string,mixed>> $documents
      * @return array<string,mixed>
      */
-    public function mutations(string $mutationKey, array $documents, ?string $mutationGroup = null): array
-    {
+    public function mutations(
+        string $mutationKey,
+        array $documents,
+        ?string $mutationGroup = null,
+        ?int $expectedAccepted = null
+    ): array {
         $body = [
             'protocol_version' => self::PROTOCOL_VERSION,
             'mutation_key'     => $mutationKey,
@@ -225,7 +231,8 @@ class AsyncClient
 
         return $this->normalize(
             $this->client->request_result('POST', '/v1/index-mutations', $body, self::ACCEPT_TIMEOUT),
-            'mutation'
+            'mutation',
+            $expectedAccepted
         );
     }
 
@@ -278,7 +285,7 @@ class AsyncClient
      * @param array{ok:bool,status:int,headers:array<string,string>,body:array|string|null,error:string,retry_after:int|null} $response
      * @return array<string,mixed>
      */
-    private function normalize(array $response, string $kind): array
+    private function normalize(array $response, string $kind, ?int $expectedAccepted = null): array
     {
         $body  = \is_array($response['body']) ? $response['body'] : null;
         $valid = $body !== null;
@@ -300,7 +307,7 @@ class AsyncClient
         // A 2xx alone is not durable acceptance: the backend must return the
         // documented receipt. Otherwise a truncated/empty body would be
         // acknowledged as delivered and the work would be silently lost.
-        if ($valid && ! self::receiptIsValid($kind, $body)) {
+        if ($valid && ! self::receiptIsValid($kind, $body, $expectedAccepted)) {
             $result['ok']    = false;
             $result['error'] = 'invalid async receipt';
         }
@@ -339,7 +346,7 @@ class AsyncClient
      *
      * @param array<string,mixed> $body
      */
-    private static function receiptIsValid(string $kind, array $body): bool
+    private static function receiptIsValid(string $kind, array $body, ?int $expectedAccepted = null): bool
     {
         switch ($kind) {
             case 'capabilities':
@@ -360,8 +367,18 @@ class AsyncClient
                 if ($items === []) {
                     return false;   // a batch always carries at least one item
                 }
-                if (isset($body['accepted_count']) && (int) $body['accepted_count'] !== \count($items)) {
+                foreach ($items as $itemId) {
+                    // A blank id means the backend acknowledged nothing; do not
+                    // release the payload on the strength of it.
+                    if (! \is_string($itemId) || \trim($itemId) === '') {
+                        return false;
+                    }
+                }
+                if ((int) ($body['accepted_count'] ?? 0) !== \count($items)) {
                     return false;
+                }
+                if ($expectedAccepted !== null && $expectedAccepted !== \count($items)) {
+                    return false;   // must accept exactly what we uploaded
                 }
 
                 return true;

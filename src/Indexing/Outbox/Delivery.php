@@ -6,6 +6,7 @@ namespace CherryLink\Indexing\Outbox;
 
 use CherryLink\Api\AsyncClient;
 use CherryLink\Contracts\Registerable;
+use CherryLink\Support\Capabilities;
 use CherryLink\Support\CapabilitiesRefresh;
 use CherryLink\Support\Logger;
 
@@ -34,11 +35,21 @@ class Delivery implements Registerable
     /** WP-Cron hook for the independent lease-recovery sweep. */
     public const SWEEP_HOOK = 'cherrylink_outbox_sweep';
 
-    /** Rows delivered per background turn. */
+    /** Upper bound on rows delivered per background turn. */
     public const BATCH = 10;
 
-    /** Lease length; reclaimed if a turn dies mid-batch. */
-    public const LEASE_SECONDS = 120;
+    /**
+     * Lease length; reclaimed if a turn dies mid-batch. Must comfortably exceed
+     * `claimLimit() * PER_ROW_SECONDS` or a later row's lease expires while the
+     * turn is still working through earlier rows, causing duplicate attempts.
+     */
+    public const LEASE_SECONDS = 300;
+
+    /** Worst-case time one acceptance call may take (mirrors AsyncClient). */
+    public const PER_ROW_SECONDS = 30;
+
+    /** Safety margin subtracted from the lease before computing the batch size. */
+    public const LEASE_MARGIN_SECONDS = 45;
 
     /** @var Repository */
     private $repository;
@@ -49,13 +60,36 @@ class Delivery implements Registerable
     /** @var callable():int */
     private $clock;
 
-    public function __construct(?Repository $repository = null, ?AsyncClient $client = null, ?callable $clock = null)
-    {
-        $this->repository = $repository ?? new Repository();
-        $this->client     = $client ?? new AsyncClient();
-        $this->clock      = $clock ?? static function (): int {
+    /** @var Capabilities|null When set, delivery pauses while async is unavailable. */
+    private $capabilities;
+
+    public function __construct(
+        ?Repository $repository = null,
+        ?AsyncClient $client = null,
+        ?callable $clock = null,
+        ?Capabilities $capabilities = null
+    ) {
+        $this->repository   = $repository ?? new Repository();
+        $this->client       = $client ?? new AsyncClient();
+        $this->clock        = $clock ?? static function (): int {
             return \time();
         };
+        $this->capabilities = $capabilities;
+    }
+
+    /**
+     * Rows we may claim without any of their leases expiring mid-turn.
+     *
+     * Ten rows on a 120-second lease with 30-second acceptance calls meant later
+     * rows could expire before being processed, so the sweep reclaimed them and
+     * duplicated attempts (or dead-lettered them early).
+     */
+    public static function claimLimit(): int
+    {
+        $budget = \max(1, self::LEASE_SECONDS - self::LEASE_MARGIN_SECONDS);
+        $fits   = (int) \floor($budget / self::PER_ROW_SECONDS);
+
+        return \max(1, \min(self::BATCH, $fits));
     }
 
     public function register(): void
@@ -139,13 +173,19 @@ class Delivery implements Registerable
     /**
      * One delivery turn. Safe to run concurrently: claims are lease-fenced.
      *
-     * @return array{claimed:int,delivered:int,retried:int,dead:int}
+     * @return array{claimed:int,delivered:int,retried:int,dead:int,paused:int}
      */
     public function run(): array
     {
+        // While acceptance is disabled or the API is unreachable, keep rows durable
+        // and idle: retrying now would burn attempts and dead-letter real work.
+        if ($this->capabilities !== null && ! $this->capabilities->asyncAvailable()) {
+            return ['claimed' => 0, 'delivered' => 0, 'retried' => 0, 'dead' => 0, 'paused' => 1];
+        }
+
         $this->repository->reclaimExpired();
 
-        $rows      = $this->repository->claim(self::BATCH, self::LEASE_SECONDS);
+        $rows      = $this->repository->claim(self::claimLimit(), self::LEASE_SECONDS);
         $delivered = 0;
         $retried   = 0;
         $dead      = 0;
@@ -191,7 +231,13 @@ class Delivery implements Registerable
             $this->scheduleLater(Repository::retryDelay(1, null, 0));
         }
 
-        return ['claimed' => \count($rows), 'delivered' => $delivered, 'retried' => $retried, 'dead' => $dead];
+        return [
+            'claimed'   => \count($rows),
+            'delivered' => $delivered,
+            'retried'   => $retried,
+            'dead'      => $dead,
+            'paused'    => 0,
+        ];
     }
 
     /**
@@ -245,7 +291,8 @@ class Delivery implements Registerable
         $result = $this->client->mutations(
             (string) ($row['event_key'] ?? ''),
             [$document],
-            $row['run_id'] !== null ? (string) $row['run_id'] : null
+            $row['run_id'] !== null ? (string) $row['run_id'] : null,
+            1   // exactly one document uploaded: exactly one item must be accepted
         );
 
         $accepted = $result['accepted_items'] ?? [];

@@ -343,6 +343,40 @@ final class OutboxDeliveryTest extends TestCase
         $this->assertNotEmpty($this->scheduled);
     }
 
+    public function testClaimLimitCannotOutlastTheLease(): void
+    {
+        $this->assertLessThanOrEqual(Delivery::BATCH, Delivery::claimLimit());
+        $this->assertGreaterThanOrEqual(1, Delivery::claimLimit());
+        $this->assertLessThan(
+            Delivery::LEASE_SECONDS,
+            Delivery::claimLimit() * Delivery::PER_ROW_SECONDS,
+            'a full batch must finish before the lease expires'
+        );
+    }
+
+    public function testDeliveryPausesWhileAsyncIsUnavailable(): void
+    {
+        $repo = Mockery::mock(Repository::class);
+        $repo->shouldReceive('claim')->never();
+        $repo->shouldReceive('reclaimExpired')->never();
+
+        // Real Capabilities (final service): cache-only, so a stubbed transient is
+        // enough to describe the "acceptance unavailable" state.
+        Functions\when('get_transient')->justReturn([
+            'known' => false, 'async' => true, 'available' => false, 'tenant_mode' => 'async',
+        ]);
+        $capabilities = new \CherryLink\Support\Capabilities();
+
+        $delivery = new Delivery($repo, $this->clientMock(), static function (): int {
+            return 5000;
+        }, $capabilities);
+
+        $result = $delivery->run();
+
+        $this->assertSame(1, $result['paused']);
+        $this->assertSame(0, $result['claimed']);
+    }
+
     public function testScheduleUsesAsyncAction(): void
     {
         $ok = $this->delivery($this->repositoryMock())->schedule();

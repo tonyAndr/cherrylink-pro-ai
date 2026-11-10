@@ -9,6 +9,7 @@ use Brain\Monkey\Functions;
 use CherryLink\Api\Client;
 use CherryLink\Indexing\Outbox\Capture;
 use CherryLink\Indexing\Outbox\Repository;
+use CherryLink\Indexing\Outbox\StaleCaptureException;
 use Mockery;
 use PHPUnit\Framework\TestCase;
 use WP_Post;
@@ -21,11 +22,23 @@ use WP_Post;
  */
 final class OutboxCaptureTest extends TestCase
 {
+    /** @var array{status:string,modified:string}|null */
+    private $authoritative = ['status' => 'publish', 'modified' => '2026-01-01 00:00:00'];
+
     protected function setUp(): void
     {
         parent::setUp();
         Monkey\setUp();
         Functions\when('clean_post_cache')->justReturn(null);
+    }
+
+    private function capture(\Mockery\MockInterface $repo, Client $client): Capture
+    {
+        $reader = function (int $id): ?array {
+            return $this->authoritative;
+        };
+
+        return new Capture($repo, $client, null, $reader);
     }
 
     protected function tearDown(): void
@@ -66,6 +79,7 @@ final class OutboxCaptureTest extends TestCase
         $fresh = new WP_Post();
         $fresh->ID = 11;
         $fresh->post_status = 'publish';
+        $fresh->post_modified_gmt = '2026-01-01 00:00:00';
 
         $order = [];
         $repo = $this->repositoryMock();
@@ -95,7 +109,7 @@ final class OutboxCaptureTest extends TestCase
             42
         )->andReturn(9);
 
-        $id = (new Capture($repo, $client))->upsert($stale);
+        $id = $this->capture($repo, $client)->upsert($stale);
 
         $this->assertSame(9, $id);
         $this->assertSame(
@@ -115,6 +129,9 @@ final class OutboxCaptureTest extends TestCase
         $draft->ID = 11;
         $draft->post_status = 'draft';
 
+        // Authoritative row says the post is no longer published.
+        $this->authoritative = ['status' => 'draft', 'modified' => '2026-01-01 00:00:00'];
+
         $repo = $this->repositoryMock();
         $repo->shouldReceive('allocateRevision')->once()->andReturn(44);
         Functions\when('get_post')->justReturn($draft);
@@ -130,7 +147,7 @@ final class OutboxCaptureTest extends TestCase
         $client = Mockery::mock(Client::class);
         $client->shouldReceive('capture_payload')->never();
 
-        $this->assertSame(12, (new Capture($repo, $client))->upsert($stale));
+        $this->assertSame(12, $this->capture($repo, $client)->upsert($stale));
     }
 
     public function testDeletePersistsMinimalTombstonePayload(): void
@@ -146,7 +163,7 @@ final class OutboxCaptureTest extends TestCase
             43
         )->andReturn(10);
 
-        $id = (new Capture($repo, $this->clientMock()))->delete(11);
+        $id = $this->capture($repo, $this->clientMock())->delete(11);
 
         $this->assertSame(10, $id);
     }
@@ -169,7 +186,7 @@ final class OutboxCaptureTest extends TestCase
             50
         )->andReturn(11);
 
-        $id = (new Capture($repo, $this->clientMock()))->allocateRunMarker('run-key', 'snapshot', 3, \str_repeat('a', 64));
+        $id = $this->capture($repo, $this->clientMock())->allocateRunMarker('run-key', 'snapshot', 3, \str_repeat('a', 64));
 
         $this->assertSame(11, $id);
     }
@@ -184,13 +201,37 @@ final class OutboxCaptureTest extends TestCase
             return 1;
         });
 
-        $capture = new Capture($repo, $this->clientMock());
+        $capture = $this->capture($repo, $this->clientMock());
         $capture->delete(11);
         $capture->delete(11);
 
         $this->assertCount(2, $keys);
         $this->assertNotSame($keys[0], $keys[1], 'different revisions must yield different keys');
         $this->assertMatchesRegularExpression('/^ev_[0-9a-f]{32}$/', $keys[0]);
+    }
+
+    public function testStaleCachedObjectIsRefusedInsteadOfEnqueued(): void
+    {
+        // WordPress cache invalidation is suspended, so clean_post_cache() is a
+        // no-op and get_post() returns the older object even though the database
+        // row is newer. Capture must not enqueue the stale body.
+        $stale = new WP_Post();
+        $stale->ID = 11;
+        $stale->post_status = 'publish';
+        $stale->post_modified_gmt = '2026-01-01 00:00:00';
+
+        $this->authoritative = ['status' => 'publish', 'modified' => '2026-02-02 00:00:00'];
+        Functions\when('get_post')->justReturn($stale);
+
+        $repo = $this->repositoryMock();
+        $repo->shouldReceive('allocateRevision')->once()->andReturn(80);
+        $repo->shouldReceive('enqueue')->never();
+
+        $client = Mockery::mock(Client::class);
+        $client->shouldReceive('capture_payload')->never();
+
+        $this->expectException(StaleCaptureException::class);
+        $this->capture($repo, $client)->upsert($stale);
     }
 
     public function testTryUpsertFailsClosedOnStorageError(): void
@@ -202,12 +243,13 @@ final class OutboxCaptureTest extends TestCase
         $fresh = new WP_Post();
         $fresh->ID = 11;
         $fresh->post_status = 'publish';
+        $fresh->post_modified_gmt = '2026-01-01 00:00:00';
         Functions\when('get_post')->justReturn($fresh);
 
         $repo = $this->repositoryMock();
         $repo->shouldReceive('allocateRevision')->once()->andReturn(70);
         $repo->shouldReceive('enqueue')->once()->andThrow(new \RuntimeException('db down'));
 
-        $this->assertNull((new Capture($repo, $this->clientMock()))->tryUpsert($post));
+        $this->assertNull($this->capture($repo, $this->clientMock())->tryUpsert($post));
     }
 }

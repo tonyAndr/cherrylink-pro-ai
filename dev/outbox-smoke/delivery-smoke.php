@@ -167,6 +167,28 @@ if ($state['state'] === Repository::STATE_DELIVERED) {
     WP_CLI::error('an empty 202 body was acknowledged as durable delivery');
 }
 
+// --- Case 4b: 202 with a blank item id must NOT be acknowledged -------------
+$id = $repo->enqueue(
+    'smoke-delivery-blank-id-' . $now,
+    Repository::KIND_UPSERT,
+    27,
+    ['post_id' => 27, 'text' => 'x'],
+    null,
+    $repo->allocateRevision()
+);
+[$delivery, $repo] = outbox_smoke_delivery([
+    ['ok' => true, 'status' => 202, 'headers' => [], 'body' => [
+        'protocol_version' => 1, 'status' => 'accepted',
+        'accepted_items' => [''], 'accepted_count' => 1, 'replayed' => false,
+    ], 'error' => '', 'retry_after' => null],
+]);
+$delivery->run();
+$state = outbox_smoke_state($repo, $id);
+WP_CLI::log('blank-item-id: state=' . $state['state'] . ' error=' . $state['last_error']);
+if ($state['state'] === Repository::STATE_DELIVERED) {
+    WP_CLI::error('a blank accepted item id was treated as durable delivery');
+}
+
 // --- Case 5: a real receipt is acknowledged with its item id -----------------
 $id = $repo->enqueue(
     'smoke-delivery-ok-' . $now,

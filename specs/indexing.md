@@ -132,7 +132,12 @@ the default and the fallback.
   revision, then **re-read the post from the database** (the `WP_Post` passed to
   `wp_insert_post` may belong to an older request), and choose upsert vs tombstone
   from that fresh read. A stale unpublish therefore cannot tombstone content a
-  newer save republished. Failed captures keep the index-dirty marker (fail
+  newer save republished. The deciding row is read directly from `$wpdb`
+  (bypassing the object cache), because `clean_post_cache()` is a no-op while
+  cache invalidation is suspended; if the captured object does not match that
+  row's status and `post_modified_gmt`, the capture is refused
+  (`StaleCaptureException`) and the caller keeps the dirty marker instead of
+  enqueuing stale content. Failed captures keep the index-dirty marker (fail
   closed); a failed sequence update raises instead of capturing without a
   durable revision.
 - `Indexing\Outbox\Delivery` is the single retry owner on the WordPress side: one
@@ -142,7 +147,9 @@ the default and the fallback.
   (the `retryable` flag is passed explicitly to the repository, which also
   derives it from the status when a caller omits it), dead-letters permanent
   4xx, and never sleeps inside a request. A 2xx without the documented receipt
-  fields is a failure, not an acknowledgement. An independent WP-Cron sweep
+  fields is a failure, not an acknowledgement: item ids must be non-empty
+  strings, `accepted_count` must equal both the returned id count and the number
+  of documents uploaded, and a seal must report `state: sealed`. An independent WP-Cron sweep
   (`cherrylink_outbox_sweep`, every 5 minutes) reclaims expired leases so a
   crashed turn cannot strand rows; leases that exhausted the attempt budget are
   dead-lettered instead of being retried forever.

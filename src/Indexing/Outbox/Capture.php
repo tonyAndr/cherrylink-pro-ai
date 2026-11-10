@@ -31,16 +31,26 @@ class Capture
     /** @var callable():string */
     private $keyFactory;
 
+    /** @var callable(int):array{status:string,modified:string}|null Authoritative DB reader. */
+    private $rowReader;
+
     /**
      * @param callable|null $keyFactory Builds a stable per-event idempotency key.
+     * @param callable|null $rowReader  Reads the authoritative post row; injectable
+     *                                  for tests and defaults to a direct $wpdb read.
      */
-    public function __construct(Repository $repository, Client $client, ?callable $keyFactory = null)
-    {
+    public function __construct(
+        Repository $repository,
+        Client $client,
+        ?callable $keyFactory = null,
+        ?callable $rowReader = null
+    ) {
         $this->repository = $repository;
         $this->client     = $client;
         $this->keyFactory = $keyFactory ?? static function (string $epoch, int $revision, int $postId, string $kind): string {
             return 'ev_' . \substr(\md5($epoch . ':' . $revision . ':' . $postId . ':' . $kind), 0, 32);
         };
+        $this->rowReader  = $rowReader;
     }
 
     public function repository(): Repository
@@ -67,10 +77,28 @@ class Capture
     public function capture(int $postId, ?string $runId = null): int
     {
         $revision = $this->repository->allocateRevision();
+        $row      = $this->authoritativeRow($postId);
         $fresh    = $this->reload($postId);
 
-        if ($fresh === null || $fresh->post_status !== 'publish') {
+        // The authoritative row decides upsert vs tombstone. If it is gone or no
+        // longer published, the event is a tombstone regardless of the cached object.
+        if ($row === null || $row['status'] !== 'publish') {
             return $this->enqueueDelete($postId, $revision, $runId);
+        }
+
+        // The payload must describe the same revision of the post we captured. When
+        // both status and modified time match, the object is current. When they do
+        // not (for example when cache invalidation is suspended, so clean_post_cache()
+        // and get_post() are served from a stale cache), refuse to enqueue stale
+        // content: the caller marks the index dirty and a later scan reconciles.
+        if (
+            $fresh === null
+            || $fresh->post_status !== $row['status']
+            || (string) $fresh->post_modified_gmt !== $row['modified']
+        ) {
+            throw new StaleCaptureException(
+                'Post ' . $postId . ' changed while it was being captured; refusing to enqueue stale content'
+            );
         }
 
         $payload = $this->client->capture_payload($fresh);
@@ -194,10 +222,61 @@ class Capture
     }
 
     /**
+     * Authoritative post row, read straight from the database.
+     *
+     * The object cache can be unreliable here: `clean_post_cache()` is a no-op
+     * while WordPress cache invalidation is suspended, so `get_post()` is not
+     * guaranteed to see the newest row. This read does not depend on the cache and
+     * is what decides upsert vs tombstone and whether the captured object is current.
+     *
+     * @return array{status:string,modified:string}|null
+     */
+    private function authoritativeRow(int $postId): ?array
+    {
+        if ($this->rowReader !== null) {
+            return $this->readRow($postId);
+        }
+
+        global $wpdb;
+        if (! \is_object($wpdb) || ! \is_callable([$wpdb, 'get_row'])) {
+            return null;
+        }
+        /** @var \wpdb $db */
+        $db  = $wpdb;
+        $row = $db->get_row(
+            $db->prepare("SELECT post_status, post_modified_gmt FROM {$db->posts} WHERE ID = %d", $postId),
+            ARRAY_A
+        );
+
+        if (! \is_array($row)) {
+            return null;
+        }
+
+        return [
+            'status'   => (string) ($row['post_status'] ?? ''),
+            'modified' => (string) ($row['post_modified_gmt'] ?? ''),
+        ];
+    }
+
+    /** @return array{status:string,modified:string}|null */
+    private function readRow(int $postId): ?array
+    {
+        $row = \call_user_func($this->rowReader, $postId);
+        if (! \is_array($row)) {
+            return null;
+        }
+
+        return [
+            'status'   => (string) ($row['status'] ?? ''),
+            'modified' => (string) ($row['modified'] ?? ''),
+        ];
+    }
+
+    /**
      * Re-read the post after the revision has been allocated.
      *
-     * `clean_post_cache()` is required: WordPress keeps the just-saved object in
-     * the object cache, so a plain `get_post()` could return the same instance.
+     * `clean_post_cache()` helps WordPress drop the just-saved object; the
+     * authoritative row above is what guarantees ordering when it cannot.
      */
     private function reload(int $postId): ?WP_Post
     {

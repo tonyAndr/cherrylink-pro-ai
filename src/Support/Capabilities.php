@@ -45,38 +45,71 @@ final class Capabilities
 
     public const NEGATIVE_TTL = 900;
 
-    /** @var AsyncClient */
+    /** @var AsyncClient|null Built on first refresh (cache reads never need it). */
     private $client;
 
     public function __construct(?AsyncClient $client = null)
     {
-        $this->client = $client ?? new AsyncClient();
+        $this->client = $client;
+    }
+
+    /** Lazily build the transport so cache-only reads never construct a Client. */
+    private function client(): AsyncClient
+    {
+        if ($this->client === null) {
+            $this->client = new AsyncClient();
+        }
+
+        return $this->client;
     }
 
     /**
      * Whether this tenant should write live indexing through the durable outbox.
      *
-     * Cache-only: never performs HTTP. Requires the API to advertise the protocol
-     * *and* the tenant to be in async mode with both runs and mutations enabled.
+     * This is a **routing** decision about the tenant's mode, deliberately separate
+     * from whether the API currently accepts async writes (`asyncAvailable()`).
+     * Cache-only: never performs HTTP.
+     *
+     * A tenant that was ever observed in `async` mode stays there for routing, even
+     * while the API is unreachable or an operator has temporarily disabled async
+     * acceptance — falling back to synchronous writes would be rejected with
+     * `409 async_tenant_requires_queue`. Only an explicit `sync` tenant mode clears
+     * the marker.
      */
     public function asyncEnabled(): bool
     {
         $snapshot = $this->snapshot();
 
-        if ($snapshot !== null) {
-            if ((bool) ($snapshot['async'] ?? false)) {
-                return true;
-            }
-            // An explicit negative answer (sync mode / disabled) clears the sticky
-            // marker so we do not honour a stale async decision forever.
+        if ($snapshot !== null && (bool) ($snapshot['async'] ?? false)) {
+            return true;
+        }
+
+        if ($snapshot !== null && ($snapshot['known'] ?? true) === true) {
+            // A real negative observation (tenant is in sync mode).
             $this->forgetSticky();
 
             return false;
         }
 
-        // No fresh snapshot: keep the established tenant mode instead of falling
-        // back to synchronous writes the backend would reject.
+        // Unknown (expired/evicted snapshot or an outage we could not classify):
+        // keep the established tenant mode.
         return $this->stickyAsync();
+    }
+
+    /**
+     * Whether the API is currently accepting async writes for this tenant.
+     *
+     * Delivery uses this to pause instead of burning retries (and dead-lettering)
+     * while acceptance is disabled or the API is unreachable. Rows are retained.
+     */
+    public function asyncAvailable(): bool
+    {
+        $snapshot = $this->snapshot();
+        if ($snapshot === null) {
+            return false;
+        }
+
+        return (bool) ($snapshot['available'] ?? false);
     }
 
     /** Whether a previously observed async tenant is still recorded as async. */
@@ -117,20 +150,23 @@ final class Capabilities
      */
     public function refresh(): array
     {
-        $result       = $this->client->capabilities();
+        $result       = $this->client()->capabilities();
         $capabilities = $result['ok'] ? ($result['capabilities'] ?? null) : null;
 
         if (! \is_array($capabilities)) {
-            // A transient API outage must not downgrade a known-good async tenant:
-            // keep the last positive snapshot so ordering keeps flowing through the
-            // outbox while delivery retries. Only cache the negative when we have
-            // no established positive state.
-            $existing = $this->snapshot();
-            if ($existing !== null && ($existing['async'] ?? false)) {
-                return $existing;
+            // A failed probe says nothing about the tenant's mode. Never let it
+            // write a negative snapshot that would clear the sticky marker and
+            // send an async tenant back to synchronous writes.
+            if ($this->stickyAsync() || $this->snapshot() !== null && ($this->snapshot()['async'] ?? false)) {
+                $stale = $this->unavailableSnapshot();
+                \set_transient(self::CACHE_KEY, $stale, self::NEGATIVE_TTL);
+
+                return $stale;
             }
+
             $negative = $this->negativeSnapshot();
             \set_transient(self::CACHE_KEY, $negative, self::NEGATIVE_TTL);
+
             return $negative;
         }
 
@@ -151,19 +187,34 @@ final class Capabilities
     }
 
     /**
-     * Drop the cached snapshot and the sticky tenant mode. Used on activation,
-     * plugin update, and license change, where a fresh observation is required.
+     * Drop the cached snapshot but KEEP the durable tenant mode.
+     *
+     * Used on activation and plugin update, where a fresh observation is required
+     * but the tenant is still the same async tenant. Clearing the mode here would
+     * push it onto synchronous writes until the next successful probe.
      */
     public function forget(): void
+    {
+        \delete_transient(self::CACHE_KEY);
+    }
+
+    /**
+     * Drop the snapshot AND the durable tenant mode. Used only when the tenant
+     * identity changes (different licence/site) so a previous tenant's mode cannot
+     * leak into the new one.
+     */
+    public function forgetTenant(): void
     {
         \delete_transient(self::CACHE_KEY);
         $this->forgetSticky();
     }
 
-    /** @return array<string,mixed> */
+    /** A classic negative observation: the tenant really is in sync mode. */
     public function negativeSnapshot(): array
     {
         return [
+            'known'            => true,
+            'available'        => false,
             'async'            => false,
             'protocol_version' => 0,
             'tenant_mode'      => 'sync',
@@ -176,7 +227,35 @@ final class Capabilities
     }
 
     /**
-     * Reduce a capability body to the decision this plugin needs.
+     * Snapshot used while the API cannot be reached: the tenant keeps its mode,
+     * but acceptance is treated as unavailable so delivery pauses instead of
+     * retrying into dead letters.
+     *
+     * @return array<string,mixed>
+     */
+    public function unavailableSnapshot(): array
+    {
+        return [
+            'known'            => false,
+            'available'        => false,
+            'async'            => true,
+            'protocol_version' => 1,
+            'tenant_mode'      => 'async',
+            'runs'             => true,
+            'mutations'        => true,
+            'batch_items'      => AsyncClient::MAX_BATCH_ITEMS,
+            'batch_bytes'      => 1048576,
+            'checked_at'       => \time(),
+            'stale'            => true,
+        ];
+    }
+
+    /**
+     * Reduce a capability body to the decisions this plugin needs.
+     *
+     * `async` is the tenant's durable mode (routing); `available` is whether the
+     * API currently accepts async writes (delivery). An operator emergency disable
+     * sets available=false while tenant_mode stays `async`.
      *
      * @param array<string,mixed> $capabilities
      * @return array<string,mixed>
@@ -187,11 +266,12 @@ final class Capabilities
         $limits   = \is_array($capabilities['limits'] ?? null) ? $capabilities['limits'] : [];
         $features_on = ! empty($features['runs']) && ! empty($features['mutations']);
         $tenant_mode = (string) ($capabilities['tenant_mode'] ?? 'sync');
+        $enabled     = (string) ($capabilities['async_indexing'] ?? 'disabled') === 'enabled';
 
         return [
-            'async'            => $features_on
-                && $tenant_mode === 'async'
-                && (string) ($capabilities['async_indexing'] ?? 'disabled') === 'enabled',
+            'known'            => true,
+            'async'            => $tenant_mode === 'async',
+            'available'        => $enabled && $tenant_mode === 'async' && $features_on,
             'protocol_version' => (int) ($capabilities['protocol_version'] ?? 0),
             'tenant_mode'      => $tenant_mode,
             'runs'             => ! empty($features['runs']),

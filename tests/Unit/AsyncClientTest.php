@@ -207,6 +207,48 @@ final class AsyncClientTest extends TestCase
         $this->assertSame(202, $result['status']);
     }
 
+    public function testBlankAcceptedItemIdIsNotAnAcknowledgement(): void
+    {
+        $this->next = [
+            'ok' => true, 'status' => 202, 'headers' => [], 'error' => '', 'retry_after' => null,
+            'body' => ['status' => 'accepted', 'accepted_items' => [''], 'accepted_count' => 1, 'replayed' => false],
+        ];
+
+        $result = (new AsyncClient($this->client()))->mutations('ev_1', [
+            ['post_id' => 1, 'source_epoch' => 'e', 'source_revision' => 1],
+        ], null, 1);
+
+        $this->assertFalse($result['ok']);
+        $this->assertSame('invalid async receipt', $result['error']);
+    }
+
+    public function testAcceptedCountMustMatchTheUpload(): void
+    {
+        $this->next = [
+            'ok' => true, 'status' => 202, 'headers' => [], 'error' => '', 'retry_after' => null,
+            'body' => ['status' => 'accepted', 'accepted_items' => ['item-1', 'item-2'], 'accepted_count' => 2],
+        ];
+
+        // We uploaded one document, so accepting two is not a valid receipt for it.
+        $result = (new AsyncClient($this->client()))->mutations('ev_1', [
+            ['post_id' => 1, 'source_epoch' => 'e', 'source_revision' => 1],
+        ], null, 1);
+
+        $this->assertFalse($result['ok']);
+    }
+
+    public function testSealRequiresSealedState(): void
+    {
+        $this->next = [
+            'ok' => true, 'status' => 202, 'headers' => [], 'error' => '', 'retry_after' => null,
+            'body' => ['status' => 'accepted', 'run_id' => 'run-1', 'state' => 'accepting'],
+        ];
+
+        $result = (new AsyncClient($this->client()))->sealRun('run-1', 'r-1');
+
+        $this->assertFalse($result['ok']);
+    }
+
     public function testConflictIsNotRetryableButRateLimitAndServerErrorsAre(): void
     {
         $this->assertFalse(AsyncClient::isRetryable(['status' => 409, 'error' => 'HTTP 409']));

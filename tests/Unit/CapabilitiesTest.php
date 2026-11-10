@@ -151,7 +151,7 @@ final class CapabilitiesTest extends TestCase
         $this->assertTrue((new Capabilities($this->clientExpecting(0)))->asyncEnabled());
     }
 
-    public function testForgetDropsTheSnapshotAndStickyMode(): void
+    public function testForgetDropsOnlyTheSnapshotAndKeepsTheTenantMode(): void
     {
         $this->transient = ['async' => true];
         $this->options[Capabilities::STICKY_OPTION] = 123;
@@ -159,6 +159,20 @@ final class CapabilitiesTest extends TestCase
 
         $this->assertTrue($capabilities->asyncEnabled());
         $capabilities->forget();
+
+        // Plugin update / activation must not push an async tenant onto sync writes.
+        $this->assertTrue($capabilities->asyncEnabled());
+        $this->assertTrue($capabilities->stickyAsync());
+    }
+
+    public function testForgetTenantDropsBothSnapshotAndMode(): void
+    {
+        $this->transient = ['async' => true];
+        $this->options[Capabilities::STICKY_OPTION] = 123;
+        $capabilities = new Capabilities($this->clientExpecting(0));
+
+        $capabilities->forgetTenant();
+
         $this->assertFalse($capabilities->asyncEnabled());
         $this->assertFalse($capabilities->stickyAsync());
     }
@@ -184,6 +198,62 @@ final class CapabilitiesTest extends TestCase
 
         $this->assertFalse($capabilities->asyncEnabled());
         $this->assertFalse($capabilities->stickyAsync());
+    }
+
+    public function testFailedRefreshWithExpiredCacheKeepsTheAsyncTenant(): void
+    {
+        // The reviewer's repro: sticky async, cache expired, refresh fails.
+        $this->transient = null;
+        $this->options[Capabilities::STICKY_OPTION] = 123;
+
+        $client = Mockery::mock(AsyncClient::class);
+        $client->shouldReceive('capabilities')->once()->andReturn([
+            'ok' => false, 'status' => 0, 'retry_after' => null, 'error' => 'timeout', 'capabilities' => null,
+        ]);
+
+        $capabilities = new Capabilities($client);
+        $capabilities->refresh();
+
+        $this->assertTrue(
+            $capabilities->asyncEnabled(),
+            'a failed refresh must not send an async tenant back to synchronous writes'
+        );
+        $this->assertTrue($capabilities->stickyAsync());
+        $this->assertFalse($capabilities->asyncAvailable(), 'delivery must pause during an outage');
+    }
+
+    public function testEmergencyDisableKeepsTenantModeButStopsDelivery(): void
+    {
+        // Operator disables async acceptance; the tenant is still an async tenant.
+        $this->transient = [
+            'known' => true, 'async' => true, 'available' => false,
+            'tenant_mode' => 'async', 'protocol_version' => 1,
+        ];
+
+        $capabilities = new Capabilities($this->clientExpecting(0));
+
+        $this->assertTrue($capabilities->asyncEnabled(), 'routing stays async');
+        $this->assertFalse($capabilities->asyncAvailable(), 'delivery must pause');
+    }
+
+    public function testTenantModeIsAsyncEvenWhileEnrollmentIsIncomplete(): void
+    {
+        $client = Mockery::mock(AsyncClient::class);
+        $client->shouldReceive('capabilities')->once()->andReturn([
+            'ok' => true, 'status' => 200, 'retry_after' => null, 'error' => '',
+            'capabilities' => [
+                'protocol_version' => 1,
+                'async_indexing'   => 'enabled',
+                'tenant_mode'      => 'async',
+                'features'         => ['runs' => false, 'mutations' => false],
+                'limits'           => ['batch_items' => 50, 'batch_bytes' => 1048576],
+            ],
+        ]);
+
+        $snapshot = (new Capabilities($client))->refresh();
+
+        $this->assertTrue($snapshot['async'], 'tenant mode is the routing signal');
+        $this->assertFalse($snapshot['available'], 'not yet accepting mutations');
     }
 
     public function testRefreshRemembersStickyModeForAsyncTenant(): void

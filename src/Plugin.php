@@ -87,7 +87,7 @@ final class Plugin
             new \CherryLink\Editor\GutenbergAssets($this->options),
             new \CherryLink\Indexing\IndexHooks($this->options, $license),
             new \CherryLink\Indexing\SyncService($this->options, $license),
-            new \CherryLink\Indexing\Outbox\Delivery(),
+            new \CherryLink\Indexing\Outbox\Delivery(null, null, null, new \CherryLink\Support\Capabilities()),
             new \CherryLink\Support\CapabilitiesRefresh($license),
             new \CherryLink\Terms\TermsService(),
             new \CherryLink\Statistics\StatisticsService(),

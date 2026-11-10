@@ -19,6 +19,9 @@ use WP_Post;
  */
 class Client
 {
+    /** Maximum results the API accepts for /v1/search (SearchRequest le=50). */
+    public const SEARCH_LIMIT_MAX = 50;
+
     public const CONTEXT_INTERACTIVE = 'interactive';
     public const CONTEXT_BACKGROUND = 'background';
     public const CONTEXT_STATUS = 'status';
@@ -291,7 +294,10 @@ class Client
     {
         $body = [
             'query' => $query,
-            'limit' => $limit,
+            // The API validates 1..50 (le=50) and answers 422 outside it. Callers ask
+            // for headroom (e.g. limit*3) so filtering can drop rows; with the default
+            // settings that was 150 and every editor request came back empty.
+            'limit' => \max(1, \min(self::SEARCH_LIMIT_MAX, $limit)),
         ];
 
         if (!empty($source_html)) {

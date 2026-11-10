@@ -57,10 +57,10 @@ final class Cf
     {
         $options = \get_option($option_key);
         if (! isset($arg['limit_ajax'])) {
-            $arg['limit_ajax'] = \stripslashes(@$options['limit_ajax']);
+            $arg['limit_ajax'] = self::slashes(@$options['limit_ajax']);
         }
         if (! isset($arg['divider'])) {
-            $arg['divider'] = \stripslashes(@$options['divider']);
+            $arg['divider'] = self::slashes(@$options['divider']);
         }
         if (! isset($arg['show_private'])) {
             $arg['show_private'] = @$options['show_private'];
@@ -69,16 +69,16 @@ final class Cf
             $arg['show_pages'] = @$options['show_pages'];
         }
         if (! isset($arg['none_text'])) {
-            $arg['none_text'] = \stripslashes(@$options['none_text']);
+            $arg['none_text'] = self::slashes(@$options['none_text']);
         }
         if (! isset($arg['excluded_cats'])) {
-            $arg['excluded_cats'] = \stripslashes(@$options['excluded_cats']);
+            $arg['excluded_cats'] = self::slashes(@$options['excluded_cats']);
         }
         if (! isset($arg['excluded_authors'])) {
-            $arg['excluded_authors'] = \stripslashes(@$options['excluded_authors']);
+            $arg['excluded_authors'] = self::slashes(@$options['excluded_authors']);
         }
         if (! isset($arg['show_customs'])) {
-            $arg['show_customs'] = \stripslashes(@$options['show_customs']);
+            $arg['show_customs'] = self::slashes(@$options['show_customs']);
         }
         if (! isset($arg['match_cat'])) {
             $arg['match_cat'] = @$options['match_cat'];
@@ -96,6 +96,22 @@ final class Cf
     }
 
     /**
+     * Un-slash a stored value without breaking on non-strings.
+     *
+     * These options are not all strings: `Options::fill()` stores `limit_ajax` as an
+     * int, and with `declare(strict_types=1)` a plain `stripslashes()` on an int
+     * throws a TypeError on PHP 8. That fataled the editor's link-list AJAX request
+     * on every PHP 8 site.
+     *
+     * @param mixed $value
+     * @return mixed
+     */
+    private static function slashes($value)
+    {
+        return \is_string($value) ? \stripslashes($value) : $value;
+    }
+
+    /**
      * Resolve the current post ID, honoring a manual override. -666 = admin preview
      * (no id → false); the $post global can be overwritten by $wp_query, so we go
      * back to $wp_the_query.
@@ -105,23 +121,31 @@ final class Cf
      */
     public static function currentPostId($manual_current_ID = -1)
     {
-        $the_ID = -1;
-
         if ($manual_current_ID === -666) {
             return false;
         }
 
         if ($manual_current_ID > 0) {
-            $the_ID = $manual_current_ID;
-        } elseif (isset($GLOBALS['wp_the_query'])) {
-            $the_ID = $GLOBALS['wp_the_query']->post->ID;
-            if (! $the_ID) {
-                $the_ID = $GLOBALS['wp_the_query']->posts[0]->ID;
-            }
-        } else {
-            $the_ID = $GLOBALS['post']->ID;
+            return (int) $manual_current_ID;
         }
-        return $the_ID;
+
+        // AJAX requests have no post loop, so `wp_the_query->post` is null there.
+        // Dereferencing it directly logged "Attempt to read property ID on null" for
+        // every classic-editor call that arrived without a post id.
+        $query = $GLOBALS['wp_the_query'] ?? null;
+        if (\is_object($query) && ! empty($query->post->ID)) {
+            return (int) $query->post->ID;
+        }
+        if (\is_object($query) && ! empty($query->posts[0]->ID)) {
+            return (int) $query->posts[0]->ID;
+        }
+
+        $post = $GLOBALS['post'] ?? null;
+        if (\is_object($post) && ! empty($post->ID)) {
+            return (int) $post->ID;
+        }
+
+        return false;
     }
 
     // ── WHERE-clause fragments ──────────────────────────────────────────────────

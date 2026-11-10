@@ -179,6 +179,31 @@ final class ApiClientTest extends TestCase
         $this->assertSame('{"query":"hello world","limit":20}', $this->captured['args']['body']);
     }
 
+    public function testSearchClampsTheLimitToTheApiMaximum(): void
+    {
+        // The API validates 1..50 (le=50) and answers 422 otherwise. The editor asks
+        // for headroom (limit*3 = 150 with the default settings), which silently made
+        // the link list empty.
+        Functions\when('get_option')->justReturn(['hash_field' => 'LICENSE123']);
+        $this->mockHttp(['results' => []]);
+
+        (new Client())->search('hello', '', 150);
+
+        $this->assertSame('{"query":"hello","limit":50}', $this->captured['args']['body']);
+    }
+
+    public function testSearchNeverSendsAZeroOrNegativeLimit(): void
+    {
+        Functions\when('get_option')->justReturn(['hash_field' => 'LICENSE123']);
+        $this->mockHttp(['results' => []]);
+
+        (new Client())->search('hello', '', 0);
+        $this->assertSame('{"query":"hello","limit":1}', $this->captured['args']['body']);
+
+        (new Client())->search('hello', '', -5);
+        $this->assertSame('{"query":"hello","limit":1}', $this->captured['args']['body']);
+    }
+
     public function testInteractiveAllRouteCannotUseBackgroundTimeout(): void
     {
         Functions\when('get_option')->justReturn(['hash_field' => 'LICENSE123']);

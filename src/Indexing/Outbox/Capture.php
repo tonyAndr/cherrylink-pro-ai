@@ -97,7 +97,7 @@ class Capture
             || (string) $fresh->post_modified_gmt !== $row['modified']
         ) {
             throw new StaleCaptureException(
-                'Post ' . $postId . ' changed while it was being captured; refusing to enqueue stale content'
+                'Post ' . (int) $postId . ' changed during capture; refusing to enqueue stale content'
             );
         }
 

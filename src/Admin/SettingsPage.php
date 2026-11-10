@@ -362,8 +362,14 @@ final class SettingsPage implements Registerable
             $api      = new Client();
             $ok_docs  = $api->delete_all_documents();
             $ok_links = $api->delete_all_links();
-            // Clear local index table and indexing state
-            $wpdb->query("TRUNCATE `{$table_prefix}linkate_posts`"); // phpcs:ignore WordPress.DB
+            // Clear the legacy local suggestions table when the site still has it.
+            // It is no longer created by the plugin, so an unguarded TRUNCATE would
+            // print a raw "table doesn't exist" database error in the admin.
+            $legacy_table = $table_prefix . 'linkate_posts';
+            $exists       = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $wpdb->esc_like($legacy_table)));
+            if ($exists === $legacy_table) {
+                $wpdb->query("TRUNCATE `{$legacy_table}`"); // phpcs:ignore WordPress.DB
+            }
             $options_meta = (array) \get_option('linkate_posts_meta', []);
             unset($options_meta['indexing_process']);
             \update_option('linkate_posts_meta', $options_meta);

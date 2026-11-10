@@ -43,6 +43,12 @@ jQuery(document).ready(function ($) {
     function sync_is_active(s) { return s && s.status === 'running'; }
     function sync_show_running() { $('.button-reindex').hide(); $('.button-reindex-stop').show(); $('#reindex_progress').show().prop('max', 100); }
     function sync_show_idle()    { $('.button-reindex').show(); $('.button-reindex-stop').hide(); }
+    // The scan-completed prompt is rendered server-side on page load. Once a scan
+    // finishes through AJAX it is stale, so drop it without a manual reload.
+    function sync_hide_scan_notice() {
+        $('[data-cherrylink-scan-notice]').remove();
+    }
+
     function sync_stop_polling() { if (sync_poll_timer) { clearInterval(sync_poll_timer); sync_poll_timer = null; } }
     function sync_start_polling(){ sync_stop_polling(); sync_poll_timer = setInterval(sync_poll, SYNC_POLL_MS); }
 
@@ -172,6 +178,7 @@ jQuery(document).ready(function ($) {
                 $('.button-reindex').hide();
                 $('.button-reindex-stop').hide();
                 $('#reindex_progress').val(100).hide();
+                sync_hide_scan_notice();
                 sync_refresh_status();
                 if (state.status === 'done') {
                     /* translators: 1: uploaded count, 2: deleted count */
@@ -216,6 +223,7 @@ jQuery(document).ready(function ($) {
             $('.button-reindex').hide();
             $('.button-reindex-stop').hide();
             $('#reindex_progress').val(100).hide();
+            sync_hide_scan_notice();
             sync_refresh_status();   // live-update the readiness card — no reload needed
             /* translators: 1: updated count, 2: deleted count */
             $('#reindex_progress_text').html(sprintf(__('Сканирование завершено! Обновлено: %1$d, удалено: %2$d.', 'cherrylink'), state.indexed || 0, state.deleted || 0) + ' <a href="#" id="cl-rescan">' + __('Сканировать снова', 'cherrylink') + '</a>');

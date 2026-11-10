@@ -12,7 +12,7 @@
 
 defined('ABSPATH') || exit;
 ?>
-        <div class="notice notice-warning is-dismissable">
+        <div class="notice notice-warning is-dismissible" data-cherrylink-scan-notice>
             <p><?php echo $line1; ?></p>
             <p><?php echo $line2; ?></p>
             <p><?php

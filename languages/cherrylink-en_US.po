@@ -1405,3 +1405,63 @@ msgstr "Click “Check connection” to test the connection to the CherryLink se
 
 msgid "Не удалось запланировать проверку ключа. Повторите попытку вручную."
 msgstr "Could not schedule license verification. Please retry manually."
+
+msgid "Загрузка на сервер"
+msgstr "Uploading to the server"
+
+msgid "Обработка на сервере"
+msgstr "Processing on the server"
+
+msgid "Ожидание сервера… (можно закрыть страницу)"
+msgstr "Waiting for the server… (you can close this page)"
+
+msgid "Ожидание завершения обработки"
+msgstr "Waiting for processing to finish"
+
+msgid "Подготовка сканирования"
+msgstr "Preparing the scan"
+
+msgid "Приостановлено."
+msgstr "Paused."
+
+msgid "Продолжить"
+msgstr "Resume"
+
+msgid "Индексация завершена. Загружено: %1$d, удалено: %2$d."
+msgstr "Indexing completed. Uploaded: %1$d, deleted: %2$d."
+
+msgid "Индексация завершена с ошибками: обработано %1$d из %2$d."
+msgstr "Indexing completed with errors: processed %1$d of %2$d."
+
+msgid "Остановлено. Загружено: %d."
+msgstr "Stopped. Uploaded: %d."
+
+msgid "Асинхронная индексация недоступна. Загрузка возобновится автоматически."
+msgstr "Asynchronous indexing is unavailable. Uploading will resume automatically."
+
+msgid "Планирование задерживается, попробуем снова автоматически."
+msgstr "Scheduling is delayed; we will retry automatically."
+
+msgid "Загружено. Идёт обработка на сервере."
+msgstr "Uploaded. Processing on the server."
+
+msgid "Индексация завершена"
+msgstr "Indexing completed"
+
+msgid "Индексация завершена с ошибками"
+msgstr "Indexing completed with errors"
+
+msgid "Содержимое изменилось во время сканирования — сканирование перезапущено."
+msgstr "Content changed during the scan — the scan was restarted."
+
+msgid "Состав сайта изменился — сканирование перезапущено."
+msgstr "The site's contents changed — the scan was restarted."
+
+msgid "Обработка на сервере: %1$d из %2$d, в очереди %3$d."
+msgstr "Processing on the server: %1$d of %2$d, %3$d queued."
+
+msgid "Приостановлено. Загрузка продолжится после «Продолжить»."
+msgstr "Paused. Uploading will continue after “Resume”."
+
+msgid "Сканирование завершено"
+msgstr "Scan completed"

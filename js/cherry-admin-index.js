@@ -105,10 +105,83 @@ jQuery(document).ready(function ($) {
         });
     }
 
+    // Async runs report upload and processing separately: a 202 only means the API
+    // accepted the payload. Never label upload progress as indexing progress.
+    function sync_render_async(state) {
+        var done = 0, total = 0, label = '';
+
+        if (state.waiting) {
+            sync_show_running();
+            $('#reindex_progress_text').html(state.message || __('Ожидание сервера… (можно закрыть страницу)', 'cherrylink'));
+            return;
+        }
+        if (state.uploading) {
+            sync_show_running();
+            done  = state.accepted || 0;
+            total = state.upsert_total || 0;
+            label = __('Загрузка на сервер', 'cherrylink');
+        } else if (state.processing) {
+            sync_show_running();
+            done  = state.vectors_applied || 0;
+            total = state.vectors_pending || 0;
+            total = done + total;
+            label = __('Обработка на сервере', 'cherrylink');
+        } else if (state.sealed) {
+            sync_show_running();
+            label = __('Ожидание завершения обработки', 'cherrylink');
+        } else {
+            sync_show_running();
+            label = __('Подготовка сканирования', 'cherrylink');
+        }
+
+        if (total > 0) {
+            $('#reindex_progress').val(Math.min(100, Math.round(done / total * 100)));
+            /* translators: 1: phase label, 2: done count, 3: total count */
+            $('#reindex_progress_text').html(sprintf(__('%1$s: %2$d из %3$d… (можно закрыть страницу)', 'cherrylink'), label, done, total));
+        } else {
+            /* translators: %s: phase label */
+            $('#reindex_progress_text').html(sprintf(__('%s… (можно закрыть страницу)', 'cherrylink'), label));
+        }
+    }
+
     // Render UI from the server state object.
     function sync_render(state) {
         if (!state || !state.status) return;
-        console.log(state);
+        if (state.engine === 'async') {
+            sync_render_async(state);
+            if (state.status === 'paused' && !state.waiting) {
+                sync_show_idle();
+                $('#reindex_progress').hide();
+                $('#reindex_progress_text').html(
+                    state.message || __('Приостановлено.', 'cherrylink') + ' <a href="#" id="cl-rescan">' +
+                    __('Продолжить', 'cherrylink') + '</a>'
+                );
+            } else if (state.status === 'done' || state.status === 'completed_with_errors') {
+                $('.button-reindex').hide();
+                $('.button-reindex-stop').hide();
+                $('#reindex_progress').val(100).hide();
+                sync_refresh_status();
+                if (state.status === 'done') {
+                    /* translators: 1: uploaded count, 2: deleted count */
+                    $('#reindex_progress_text').html(sprintf(__('Индексация завершена. Загружено: %1$d, удалено: %2$d.', 'cherrylink'), state.uploaded || 0, state.deleted || 0) + ' <a href="#" id="cl-rescan">' + __('Сканировать снова', 'cherrylink') + '</a>');
+                } else {
+                    /* translators: 1: applied vectors, 2: total items */
+                    $('#reindex_progress_text').html(sprintf(__('Индексация завершена с ошибками: обработано %1$d из %2$d.', 'cherrylink'), state.vectors_applied || 0, state.vectors_applied || 0) + ' <a href="#" id="cl-rescan">' + __('Сканировать снова', 'cherrylink') + '</a>');
+                }
+            } else if (state.status === 'cancelled') {
+                sync_show_idle();
+                $('#reindex_progress').hide();
+                /* translators: %d: accepted count */
+                $('#reindex_progress_text').html(sprintf(__('Остановлено. Загружено: %d.', 'cherrylink'), state.accepted || 0));
+            } else if (state.status === 'error') {
+                sync_show_idle();
+                $('#reindex_progress').hide();
+                /* translators: %s: error message */
+                $('#reindex_progress_text').html(sprintf(__('Ошибка: %s.', 'cherrylink'), state.message || __('неизвестно', 'cherrylink')));
+            }
+            return;
+        }
+
         if (state.status === 'running') {
             sync_show_running();
             let done = 0, total = state.upsert_total || 0, label = __('Индексация', 'cherrylink');
@@ -152,7 +225,9 @@ jQuery(document).ready(function ($) {
     (function () {
         $.ajax({
             type: "POST", url: ajaxurl, dataType: 'json', data: 'action=linkate_sync_status&_ajax_nonce=' + cherry_ajax.nonce,
-            success: function (state) { if (sync_is_active(state)) { sync_render(state); sync_start_polling(); } }
+            success: function (state) {
+                if (sync_is_active(state) || state.status === 'paused') { sync_render(state); sync_start_polling(); }
+            }
         });
     })();
 

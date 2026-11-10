@@ -99,16 +99,27 @@ class Repository
     /**
      * Allocate the next revision from the atomic monotonic source sequence.
      * Retried events must NOT call this again — they reuse their stored revision.
+     *
+     * @throws OutboxException When the counter update fails (fail closed: a caller
+     *                         must not capture content without a durable revision).
      */
     public function allocateRevision(): int
     {
         $this->ensureStateRow();
-        $this->wpdb->query($this->wpdb->prepare(
+        $updated = $this->wpdb->query($this->wpdb->prepare(
             "UPDATE {$this->stateTableName()} SET last_revision = LAST_INSERT_ID(last_revision + 1), updated_gmt = %s WHERE id = 1",
             $this->gmtNow()
         ));
+        if ($updated === false || (int) $updated < 1) {
+            throw new OutboxException('Outbox source sequence is unavailable');
+        }
 
-        return (int) $this->wpdb->get_var('SELECT LAST_INSERT_ID()');
+        $revision = (int) $this->wpdb->get_var('SELECT LAST_INSERT_ID()');
+        if ($revision < 1) {
+            throw new OutboxException('Outbox source sequence returned no revision');
+        }
+
+        return $revision;
     }
 
     /**
@@ -161,6 +172,9 @@ class Repository
         }
 
         $epoch    = $this->sourceEpoch();
+        if ($epoch === '') {
+            throw new OutboxException('Outbox source epoch is unavailable');
+        }
         $revision = $revision ?? $this->allocateRevision();
         $now      = $this->gmtNow();
         $json     = \wp_json_encode($payload);
@@ -296,7 +310,11 @@ class Repository
             return false;
         }
 
-        $retryable = (bool) ($result['retryable'] ?? false);
+        $retryable = \array_key_exists('retryable', $result)
+            ? (bool) $result['retryable']
+            // Defensive: a caller that omits the flag must not turn a transient
+            // failure into a permanent dead letter.
+            : self::isTransientStatus((int) ($result['status'] ?? 0));
         if (! $retryable || (int) $row['attempts'] >= self::MAX_ATTEMPTS || $nextAttemptAt === null) {
             return $this->deadLetterImpl($id, $owner, $result);
         }
@@ -333,22 +351,43 @@ class Repository
 
     /**
      * Return expired leases to pending so another delivery attempt can claim them.
+     * A row that already exhausted its attempt budget is dead-lettered instead of
+     * being retried forever, so repeated crash/reclaim cycles cannot bypass the
+     * attempt limit.
      *
-     * @return int Number of rows reclaimed.
+     * @return int Number of rows reclaimed or newly dead-lettered.
      */
     public function reclaimExpired(): int
     {
         $now   = $this->gmtNow();
         $table = $this->tableName();
-        $rows  = $this->wpdb->query($this->wpdb->prepare(
-            "UPDATE {$table} SET state = %s, lease_owner = NULL, lease_expiry_gmt = NULL, updated_gmt = %s
-             WHERE state = 'leased' AND lease_expiry_gmt IS NOT NULL AND lease_expiry_gmt <= %s",
-            self::STATE_PENDING,
+        $max   = self::MAX_ATTEMPTS;
+
+        $exhausted = $this->wpdb->query($this->wpdb->prepare(
+            "UPDATE {$table} SET state = %s, lease_owner = NULL, lease_expiry_gmt = NULL, next_attempt_gmt = NULL, last_error = %s, updated_gmt = %s
+             WHERE state = %s AND lease_expiry_gmt IS NOT NULL AND lease_expiry_gmt <= %s AND attempts >= %d",
+            self::STATE_DEAD,
+            'lease expired after the attempt budget was exhausted',
             $now,
-            $now
+            self::STATE_LEASED,
+            $now,
+            $max
         ));
 
-        return \is_numeric($rows) ? (int) $rows : 0;
+        $reclaimed = $this->wpdb->query($this->wpdb->prepare(
+            "UPDATE {$table} SET state = %s, lease_owner = NULL, lease_expiry_gmt = NULL, updated_gmt = %s
+             WHERE state = %s AND lease_expiry_gmt IS NOT NULL AND lease_expiry_gmt <= %s AND attempts < %d",
+            self::STATE_PENDING,
+            $now,
+            self::STATE_LEASED,
+            $now,
+            $max
+        ));
+
+        $dead = \is_numeric($exhausted) ? (int) $exhausted : 0;
+        $back = \is_numeric($reclaimed) ? (int) $reclaimed : 0;
+
+        return $dead + $back;
     }
 
     public function pendingCount(): int
@@ -390,9 +429,23 @@ class Repository
      */
     private function update(int $id, string $owner, array $data, array $formats): bool
     {
-        $where = ['id' => $id, 'lease_owner' => $owner];
+        $where  = ['id' => $id, 'lease_owner' => $owner];
+        $result = $this->wpdb->update($this->tableName(), $data, $where, $formats, ['%d', '%s']);
 
-        return $this->wpdb->update($this->tableName(), $data, $where, $formats, ['%d', '%s']) !== false;
+        // Every fenced transition changes `lease_owner` away from the non-null
+        // owner, so zero affected rows means the fence did not match: report the
+        // failure instead of silently pretending the transition committed.
+        return \is_int($result) && $result > 0;
+    }
+
+    /** Status codes that are worth retrying (transport, 408, 429, 5xx). */
+    private static function isTransientStatus(int $status): bool
+    {
+        if ($status === 0) {
+            return true;
+        }
+
+        return $status === 408 || $status === 429 || $status >= 500;
     }
 
     /**

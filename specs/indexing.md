@@ -94,7 +94,10 @@ table. `dbDelta` is forward-only: columns are added but never dropped.
   the existing row without allocating a new revision.
 - The repository exposes claim/ack/release/reclaim/dead-letter mechanics and
   enforces a maximum attempt budget. Retry policy (backoff, Action Scheduler
-  scheduling) is owned by the delivery service, not the repository.
+  scheduling) is owned by the delivery service, not the repository. Fenced
+  transitions report failure when zero rows match, and the schema version is
+  recorded only after both tables are verified to exist (dbDelta can fail
+  without throwing).
 - Delivery rows record the last HTTP status, `Retry-After`, a sanitized error,
   and the remote item/run id once a `202` is durably accepted.
 
@@ -117,19 +120,32 @@ the default and the fallback.
 - `Support\Capabilities` is **cache-only on the request path**: `asyncEnabled()`
   reads the transient and never performs HTTP, so `wp_insert_post`/`delete_post`
   keep their no-external-I/O contract. `Support\CapabilitiesRefresh` refreshes the
-  snapshot from WP-Cron/CLI (and on activation/update) every 10 minutes; a
-  transient API outage keeps the last positive snapshot so an async tenant does
-  not flap back to synchronous writes. Async is used only when the API
-  advertises the protocol **and** the tenant is in `async` mode with both `runs`
-  and `mutations` enabled; otherwise the tenant stays on the synchronous adapter.
+  snapshot from WP-Cron/CLI on a registered **5-minute** schedule (shorter than
+  the 15-minute snapshot TTL) and on activation/update. An established async
+  tenant is also recorded in the non-autoloaded `cherrylink_async_tenant` option:
+  snapshot expiry, eviction, or an API outage cannot move it to synchronous
+  writes (which the backend rejects with `409 async_tenant_requires_queue`). Only
+  an explicit negative capability answer (sync mode / async disabled) clears that
+  marker. Async is used only when the API advertises the protocol **and** the
+  tenant is in `async` mode with both `runs` and `mutations` enabled.
 - `Indexing\Outbox\Capture` enforces the capture-order rule: allocate the source
-  revision immediately before reading the post, then persist an immutable
-  payload. Failed captures keep the index-dirty marker (fail closed).
+  revision, then **re-read the post from the database** (the `WP_Post` passed to
+  `wp_insert_post` may belong to an older request), and choose upsert vs tombstone
+  from that fresh read. A stale unpublish therefore cannot tombstone content a
+  newer save republished. Failed captures keep the index-dirty marker (fail
+  closed); a failed sequence update raises instead of capturing without a
+  durable revision.
 - `Indexing\Outbox\Delivery` is the single retry owner on the WordPress side: one
   Action Scheduler turn reclaims expired leases, claims a bounded batch, and
   delivers each row under its stable `event_key` as the idempotency key. It
-  retries transport/408/429/5xx with bounded backoff and valid `Retry-After`,
-  dead-letters permanent 4xx, and never sleeps inside a request.
+  retries transport/408/429/5xx with bounded backoff and valid `Retry-After`
+  (the `retryable` flag is passed explicitly to the repository, which also
+  derives it from the status when a caller omits it), dead-letters permanent
+  4xx, and never sleeps inside a request. A 2xx without the documented receipt
+  fields is a failure, not an acknowledgement. An independent WP-Cron sweep
+  (`cherrylink_outbox_sweep`, every 5 minutes) reclaims expired leases so a
+  crashed turn cannot strand rows; leases that exhausted the attempt budget are
+  dead-lettered instead of being retried forever.
 - `Indexing\IndexHooks` writes an outbox event for a licensed save/unpublish/delete
   when the tenant is async-capable and performs no API call in that request;
   otherwise it keeps the existing synchronous adapter. Probe failures fall back

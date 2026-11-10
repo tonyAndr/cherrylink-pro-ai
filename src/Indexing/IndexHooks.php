@@ -197,12 +197,9 @@ final class IndexHooks implements Registerable
      */
     private function captureAsync(WP_Post $post): void
     {
-        $captured = $this->capture();
-        if ($post->post_status === 'publish') {
-            $row = $captured->tryUpsert($post);
-        } else {
-            $row = $captured->tryDelete((int) $post->ID);
-        }
+        // Capture always re-reads the post after allocating the revision, so a
+        // stale request cannot win with an older body or an outdated unpublish.
+        $row = $this->capture()->tryCapture((int) $post->ID);
 
         if ($row === null) {
             $this->options->markIndexDirty();

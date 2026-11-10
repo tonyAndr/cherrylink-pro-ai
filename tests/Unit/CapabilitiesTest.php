@@ -22,12 +22,27 @@ final class CapabilitiesTest extends TestCase
     /** @var array<string,mixed>|null */
     private $transient = null;
 
+    /** @var array<string,mixed> */
+    private $options = [];
+
     protected function setUp(): void
     {
         parent::setUp();
         Monkey\setUp();
         $this->transient = null;
+        $this->options = [];
 
+        Functions\when('get_option')->alias(function ($key, $default = false) {
+            return \array_key_exists($key, $this->options) ? $this->options[$key] : $default;
+        });
+        Functions\when('update_option')->alias(function ($key, $value) {
+            $this->options[$key] = $value;
+            return true;
+        });
+        Functions\when('delete_option')->alias(function ($key) {
+            unset($this->options[$key]);
+            return true;
+        });
         Functions\when('get_transient')->alias(function () {
             return $this->transient;
         });
@@ -136,13 +151,57 @@ final class CapabilitiesTest extends TestCase
         $this->assertTrue((new Capabilities($this->clientExpecting(0)))->asyncEnabled());
     }
 
-    public function testForgetDropsTheSnapshot(): void
+    public function testForgetDropsTheSnapshotAndStickyMode(): void
     {
         $this->transient = ['async' => true];
+        $this->options[Capabilities::STICKY_OPTION] = 123;
         $capabilities = new Capabilities($this->clientExpecting(0));
 
         $this->assertTrue($capabilities->asyncEnabled());
         $capabilities->forget();
         $this->assertFalse($capabilities->asyncEnabled());
+        $this->assertFalse($capabilities->stickyAsync());
+    }
+
+    public function testExpiredSnapshotKeepsAnEstablishedAsyncTenant(): void
+    {
+        // Snapshot expired (transient gone) but the tenant was observed async.
+        $this->transient = null;
+        $this->options[Capabilities::STICKY_OPTION] = 123;
+
+        $this->assertTrue(
+            (new Capabilities($this->clientExpecting(0)))->asyncEnabled(),
+            'cache expiry must not move an async tenant back to synchronous writes'
+        );
+    }
+
+    public function testExplicitNegativeAnswerClearsStickyMode(): void
+    {
+        $this->options[Capabilities::STICKY_OPTION] = 123;
+        $this->transient = ['async' => false, 'tenant_mode' => 'sync'];
+
+        $capabilities = new Capabilities($this->clientExpecting(0));
+
+        $this->assertFalse($capabilities->asyncEnabled());
+        $this->assertFalse($capabilities->stickyAsync());
+    }
+
+    public function testRefreshRemembersStickyModeForAsyncTenant(): void
+    {
+        $client = Mockery::mock(AsyncClient::class);
+        $client->shouldReceive('capabilities')->once()->andReturn([
+            'ok' => true, 'status' => 200, 'retry_after' => null, 'error' => '',
+            'capabilities' => [
+                'protocol_version' => 1,
+                'async_indexing'   => 'enabled',
+                'tenant_mode'      => 'async',
+                'features'         => ['runs' => true, 'mutations' => true],
+                'limits'           => ['batch_items' => 50, 'batch_bytes' => 1048576],
+            ],
+        ]);
+
+        (new Capabilities($client))->refresh();
+
+        $this->assertArrayHasKey(Capabilities::STICKY_OPTION, $this->options);
     }
 }

@@ -95,6 +95,7 @@ wp_cli wp plugin activate cherrylink-pro-ai >/dev/null
 
 echo "→ repository + lifecycle assertions"
 wp_cli wp eval-file /smoke/repository-smoke.php
+wp_cli wp eval-file /smoke/delivery-smoke.php
 wp_cli wp eval-file /smoke/lifecycle-smoke.php
 
 echo "✓ outbox smoke passed"

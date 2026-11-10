@@ -6,6 +6,7 @@ namespace CherryLink\Indexing\Outbox;
 
 use CherryLink\Api\AsyncClient;
 use CherryLink\Contracts\Registerable;
+use CherryLink\Support\CapabilitiesRefresh;
 use CherryLink\Support\Logger;
 
 /**
@@ -29,6 +30,9 @@ class Delivery implements Registerable
 
     /** Action Scheduler group. */
     public const GROUP = 'cherrylink_outbox';
+
+    /** WP-Cron hook for the independent lease-recovery sweep. */
+    public const SWEEP_HOOK = 'cherrylink_outbox_sweep';
 
     /** Rows delivered per background turn. */
     public const BATCH = 10;
@@ -57,12 +61,54 @@ class Delivery implements Registerable
     public function register(): void
     {
         \add_action(self::HOOK, [$this, 'runTurn'], 10, 0);
+        \add_action(self::SWEEP_HOOK, [$this, 'sweepTurn'], 10, 0);
+        \add_action('wp_loaded', [$this, 'maybeScheduleSweep']);
+    }
+
+    /**
+     * Schedule the independent recovery sweep. Without it a worker crash (or a
+     * silently ignored scheduling failure) would strand rows until the next post
+     * change happened to start a turn.
+     */
+    public function maybeScheduleSweep(): void
+    {
+        if (! \function_exists('wp_next_scheduled') || ! \function_exists('wp_schedule_event')) {
+            return;
+        }
+        if (\wp_next_scheduled(self::SWEEP_HOOK)) {
+            return;
+        }
+        \wp_schedule_event(\time() + 60, CapabilitiesRefresh::SCHEDULE, self::SWEEP_HOOK);
+    }
+
+    /**
+     * Recovery sweep: reclaim expired leases (dead-lettering exhausted rows) and
+     * restart delivery when work is waiting. Runs from WP-Cron independently of
+     * any post save.
+     *
+     * @return array{reclaimed:int,pending:int}
+     */
+    public function sweep(): array
+    {
+        $reclaimed = $this->repository->reclaimExpired();
+        $pending   = $this->repository->pendingCount();
+        if ($reclaimed > 0 || $pending > 0 || $this->repository->leasedCount() > 0) {
+            $this->schedule();
+        }
+
+        return ['reclaimed' => $reclaimed, 'pending' => $pending];
     }
 
     /** Action Scheduler callback: run one turn and discard the summary. */
     public function runTurn(): void
     {
         $this->run();
+    }
+
+    /** WP-Cron callback: run one recovery sweep and discard the summary. */
+    public function sweepTurn(): void
+    {
+        $this->sweep();
     }
 
     /**
@@ -124,6 +170,9 @@ class Delivery implements Registerable
             }
 
             $retryable = AsyncClient::isRetryable($result);
+            // The repository requires the explicit flag; omitting it made every
+            // transient failure look permanent.
+            $result['retryable'] = $retryable;
             if (! $retryable) {
                 $this->repository->deadLetter($id, $owner, $result);
                 $dead++;

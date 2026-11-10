@@ -36,6 +36,22 @@ final class OutboxSchemaTest extends TestCase
         $wpdb = Mockery::mock();
         $wpdb->prefix = 'wp_';
         $wpdb->shouldReceive('get_charset_collate')->andReturn(' DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci');
+        // install() verifies the tables exist (dbDelta can fail silently).
+        $wpdb->shouldReceive('prepare')->andReturnUsing(static function ($sql, $value) {
+            return $sql . ' ' . $value;
+        });
+        $wpdb->shouldReceive('esc_like')->andReturnUsing(static function ($value) {
+            return $value;
+        });
+        $wpdb->shouldReceive('get_var')->andReturnUsing(static function ($sql) {
+            if (\strpos($sql, 'cherrylink_outbox_state') !== false) {
+                return 'wp_cherrylink_outbox_state';
+            }
+            if (\strpos($sql, 'cherrylink_outbox') !== false) {
+                return 'wp_cherrylink_outbox';
+            }
+            return null;
+        });
 
         return $wpdb;
     }

@@ -25,6 +25,7 @@ final class OutboxCaptureTest extends TestCase
     {
         parent::setUp();
         Monkey\setUp();
+        Functions\when('clean_post_cache')->justReturn(null);
     }
 
     protected function tearDown(): void
@@ -56,10 +57,15 @@ final class OutboxCaptureTest extends TestCase
         return $client;
     }
 
-    public function testUpsertAllocatesRevisionBeforeReadingAndPassesItToEnqueue(): void
+    public function testUpsertAllocatesRevisionBeforeRereadingThePostAndPassesItToEnqueue(): void
     {
-        $post = new WP_Post();
-        $post->ID = 11;
+        $stale = new WP_Post();
+        $stale->ID = 11;
+        $stale->post_status = 'publish';
+
+        $fresh = new WP_Post();
+        $fresh->ID = 11;
+        $fresh->post_status = 'publish';
 
         $order = [];
         $repo = $this->repositoryMock();
@@ -67,9 +73,16 @@ final class OutboxCaptureTest extends TestCase
             $order[] = 'allocate';
             return 42;
         });
+        // The hook hands over an already-loaded WP_Post; Capture must re-read it.
+        Functions\when('get_post')->alias(function ($id) use (&$order, $fresh) {
+            $order[] = 'reload';
+            return $fresh;
+        });
         $client = Mockery::mock(Client::class);
-        $client->shouldReceive('capture_payload')->once()->andReturnUsing(function () use (&$order) {
-            $order[] = 'read';
+        $client->shouldReceive('capture_payload')->once()->with(Mockery::on(static function ($p) use ($fresh) {
+            return $p === $fresh;
+        }))->andReturnUsing(function () use (&$order) {
+            $order[] = 'capture';
             return ['post_id' => 11, 'title' => 'T', 'text' => 'Body', 'url' => 'u', 'lang' => 'ru',
                     'content_hash' => 'h', 'modified_gmt' => 'm', 'link_html' => '<p>x</p>'];
         });
@@ -82,10 +95,42 @@ final class OutboxCaptureTest extends TestCase
             42
         )->andReturn(9);
 
-        $id = (new Capture($repo, $client))->upsert($post);
+        $id = (new Capture($repo, $client))->upsert($stale);
 
         $this->assertSame(9, $id);
-        $this->assertSame(['allocate', 'read'], $order, 'revision must be allocated before the read');
+        $this->assertSame(
+            ['allocate', 'reload', 'capture'],
+            $order,
+            'the revision must be allocated before the post is re-read'
+        );
+    }
+
+    public function testUpsertFallsBackToATombstoneWhenThePostIsNoLongerPublished(): void
+    {
+        $stale = new WP_Post();
+        $stale->ID = 11;
+        $stale->post_status = 'publish';
+
+        $draft = new WP_Post();
+        $draft->ID = 11;
+        $draft->post_status = 'draft';
+
+        $repo = $this->repositoryMock();
+        $repo->shouldReceive('allocateRevision')->once()->andReturn(44);
+        Functions\when('get_post')->justReturn($draft);
+        $repo->shouldReceive('enqueue')->once()->with(
+            Mockery::type('string'),
+            Repository::KIND_DELETE,
+            11,
+            ['post_id' => 11, 'operation' => 'delete'],
+            null,
+            44
+        )->andReturn(12);
+
+        $client = Mockery::mock(Client::class);
+        $client->shouldReceive('capture_payload')->never();
+
+        $this->assertSame(12, (new Capture($repo, $client))->upsert($stale));
     }
 
     public function testDeletePersistsMinimalTombstonePayload(): void
@@ -152,6 +197,12 @@ final class OutboxCaptureTest extends TestCase
     {
         $post = new WP_Post();
         $post->ID = 11;
+        $post->post_status = 'publish';
+
+        $fresh = new WP_Post();
+        $fresh->ID = 11;
+        $fresh->post_status = 'publish';
+        Functions\when('get_post')->justReturn($fresh);
 
         $repo = $this->repositoryMock();
         $repo->shouldReceive('allocateRevision')->once()->andReturn(70);

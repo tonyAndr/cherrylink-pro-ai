@@ -30,6 +30,13 @@ final class Capabilities
     public const REFRESH_HOOK = 'cherrylink_refresh_capabilities';
 
     /**
+     * Durable marker: this tenant was last observed in async mode. It survives
+     * snapshot expiry/eviction so a cache miss cannot move an async tenant back to
+     * synchronous writes (which the backend rejects with 409).
+     */
+    public const STICKY_OPTION = 'cherrylink_async_tenant';
+
+    /**
      * Cache lifetime for both directions. Capability changes are operator-driven
      * (a documented drain/reconcile mode switch), so a few minutes of staleness is
      * acceptable; the background refresh keeps it converging.
@@ -56,7 +63,38 @@ final class Capabilities
     {
         $snapshot = $this->snapshot();
 
-        return $snapshot !== null && (bool) ($snapshot['async'] ?? false);
+        if ($snapshot !== null) {
+            if ((bool) ($snapshot['async'] ?? false)) {
+                return true;
+            }
+            // An explicit negative answer (sync mode / disabled) clears the sticky
+            // marker so we do not honour a stale async decision forever.
+            $this->forgetSticky();
+
+            return false;
+        }
+
+        // No fresh snapshot: keep the established tenant mode instead of falling
+        // back to synchronous writes the backend would reject.
+        return $this->stickyAsync();
+    }
+
+    /** Whether a previously observed async tenant is still recorded as async. */
+    public function stickyAsync(): bool
+    {
+        return (bool) \get_option(self::STICKY_OPTION, false);
+    }
+
+    private function rememberSticky(): void
+    {
+        \update_option(self::STICKY_OPTION, \time(), false);
+    }
+
+    private function forgetSticky(): void
+    {
+        if (\get_option(self::STICKY_OPTION, false) !== false) {
+            \delete_option(self::STICKY_OPTION);
+        }
     }
 
     /**
@@ -103,13 +141,23 @@ final class Capabilities
             $snapshot['async'] ? self::POSITIVE_TTL : self::NEGATIVE_TTL
         );
 
+        if ($snapshot['async']) {
+            $this->rememberSticky();
+        } else {
+            $this->forgetSticky();
+        }
+
         return $snapshot;
     }
 
-    /** Drop the cached snapshot (license change, mode switch, operator disable). */
+    /**
+     * Drop the cached snapshot and the sticky tenant mode. Used on activation,
+     * plugin update, and license change, where a fresh observation is required.
+     */
     public function forget(): void
     {
         \delete_transient(self::CACHE_KEY);
+        $this->forgetSticky();
     }
 
     /** @return array<string,mixed> */

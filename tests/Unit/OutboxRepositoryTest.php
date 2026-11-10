@@ -133,7 +133,12 @@ final class OutboxRepositoryTest extends TestCase
     public function testEnqueueThrowsOutboxExceptionWhenInsertFailsWithoutReplay(): void
     {
         $wpdb = $this->mockWpdb();
-        $wpdb->shouldReceive('get_row')->andReturn(null); // no existing key, both lookups
+        $wpdb->shouldReceive('get_row')->andReturnUsing(static function ($sql) {
+            if (\strpos($sql, 'source_epoch FROM') !== false) {
+                return ['source_epoch' => 'epoch-1'];
+            }
+            return null;   // no existing event key
+        });
         $wpdb->shouldReceive('query')->andReturn(1);
         $wpdb->shouldReceive('get_var')->andReturn(7);
         $wpdb->shouldReceive('insert')->once()->andReturn(false);
@@ -340,7 +345,7 @@ final class OutboxRepositoryTest extends TestCase
         $this->assertFalse($this->repository($wpdb)->deadLetter(5, 'owner-1', ['status' => 400]));
     }
 
-    public function testReclaimExpiredReturnsLeasedRowsToPending(): void
+    public function testReclaimExpiredReturnsLeasedRowsToPendingAndDeadLettersExhausted(): void
     {
         $wpdb = $this->mockWpdb();
         $queries = [];
@@ -351,9 +356,56 @@ final class OutboxRepositoryTest extends TestCase
 
         $reclaimed = $this->repository($wpdb)->reclaimExpired();
 
-        $this->assertSame(3, $reclaimed);
-        $this->assertStringContainsString("WHERE state = 'leased'", $queries[0]);
+        $this->assertSame(6, $reclaimed);
+        $this->assertCount(2, $queries);
+        // Exhausted rows are dead-lettered instead of being retried forever.
+        $this->assertStringContainsString('attempts >=', $queries[0]);
         $this->assertStringContainsString('lease_expiry_gmt IS NOT NULL AND lease_expiry_gmt <=', $queries[0]);
+        // Remaining expired rows go back to pending.
+        $this->assertStringContainsString('attempts <', $queries[1]);
+    }
+
+    public function testAllocateRevisionFailsClosedWhenTheCounterUpdateDoesNotApply(): void
+    {
+        $wpdb = $this->mockWpdb();
+        // First query creates the singleton state row, the second advances it.
+        $wpdb->shouldReceive('query')->twice()->andReturn(1, 0);
+        $wpdb->shouldReceive('get_var')->never();
+
+        $this->expectException(OutboxException::class);
+        $this->repository($wpdb)->allocateRevision();
+    }
+
+    public function testFencedUpdateReportsFailureWhenNoRowMatches(): void
+    {
+        $wpdb = $this->mockWpdb();
+        $wpdb->shouldReceive('get_row')->once()->andReturn(['id' => 5, 'lease_owner' => 'owner-1', 'attempts' => 1]);
+        // MySQL reports 0 changed rows when the fence matched nothing.
+        $wpdb->shouldReceive('update')->once()->andReturn(0);
+
+        $this->assertFalse($this->repository($wpdb)->ack(5, 'owner-1', ['status' => 202]));
+    }
+
+    public function testReleaseWithoutExplicitRetryableUsesStatusInsteadOfDeadLettering(): void
+    {
+        $wpdb = $this->mockWpdb();
+        $wpdb->shouldReceive('get_row')->once()->andReturn(['id' => 5, 'lease_owner' => 'owner-1', 'attempts' => 2]);
+
+        $updated = null;
+        $wpdb->shouldReceive('update')->once()->andReturnUsing(static function ($table, $data) use (&$updated) {
+            $updated = $data;
+            return 1;
+        });
+
+        $ok = $this->repository($wpdb)->release(
+            5,
+            'owner-1',
+            ['status' => 503, 'error' => 'temporary'],   // no 'retryable' key
+            2000
+        );
+
+        $this->assertTrue($ok);
+        $this->assertSame('pending', $updated['state']);
     }
 
     public function testRetryDelayHonorsRetryAfter(): void

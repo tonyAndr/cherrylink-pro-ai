@@ -16,8 +16,16 @@ use CherryLink\Contracts\Registerable;
  */
 final class CapabilitiesRefresh implements Registerable
 {
-    /** Refresh cadence; shorter than the cache TTL so entries rarely expire cold. */
-    public const INTERVAL = 600;
+    /**
+     * Cron schedule id registered below. The interval (300 s) is deliberately
+     * shorter than the snapshot TTL (900 s) so the cache is refreshed roughly three
+     * times per lifetime; an hourly schedule left ~45 minutes per hour on the
+     * fallback path when the positive TTL was short.
+     */
+    public const SCHEDULE = 'cherrylink_five_minutes';
+
+    /** Refresh cadence in seconds. */
+    public const INTERVAL = 300;
 
     /** @var Capabilities */
     private $capabilities;
@@ -33,8 +41,28 @@ final class CapabilitiesRefresh implements Registerable
 
     public function register(): void
     {
+        \add_filter('cron_schedules', [$this, 'addSchedule']);
         \add_action(Capabilities::REFRESH_HOOK, [$this, 'run']);
         \add_action('wp_loaded', [$this, 'maybeSchedule']);
+    }
+
+    /**
+     * Register the five-minute interval used by the capability refresh and the
+     * outbox recovery sweep.
+     *
+     * @param array<string,array{interval:int,display:string}> $schedules
+     * @return array<string,array{interval:int,display:string}>
+     */
+    public function addSchedule(array $schedules): array
+    {
+        if (! isset($schedules[self::SCHEDULE])) {
+            $schedules[self::SCHEDULE] = [
+                'interval' => self::INTERVAL,
+                'display'  => \__('Every five minutes (CherryLink)', 'cherrylink'),
+            ];
+        }
+
+        return $schedules;
     }
 
     /**
@@ -49,7 +77,7 @@ final class CapabilitiesRefresh implements Registerable
         if (\wp_next_scheduled(Capabilities::REFRESH_HOOK)) {
             return;
         }
-        \wp_schedule_event(\time() + self::INTERVAL, 'hourly', Capabilities::REFRESH_HOOK);
+        \wp_schedule_event(\time() + self::INTERVAL, self::SCHEDULE, Capabilities::REFRESH_HOOK);
     }
 
     /** Cron callback: probe capabilities when licensed; drop the cache otherwise. */

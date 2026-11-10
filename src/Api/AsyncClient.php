@@ -297,6 +297,14 @@ class AsyncClient
             $result['error'] = $response['error'] ?: 'invalid async response body';
         }
 
+        // A 2xx alone is not durable acceptance: the backend must return the
+        // documented receipt. Otherwise a truncated/empty body would be
+        // acknowledged as delivered and the work would be silently lost.
+        if ($valid && ! self::receiptIsValid($kind, $body)) {
+            $result['ok']    = false;
+            $result['error'] = 'invalid async receipt';
+        }
+
         // Expose the concrete payload for the caller under a stable key.
         switch ($kind) {
             case 'capabilities':
@@ -324,6 +332,44 @@ class AsyncClient
         }
 
         return $result;
+    }
+
+    /**
+     * Required receipt fields per response kind (spec section 3 table).
+     *
+     * @param array<string,mixed> $body
+     */
+    private static function receiptIsValid(string $kind, array $body): bool
+    {
+        switch ($kind) {
+            case 'capabilities':
+                return isset($body['protocol_version'], $body['tenant_mode'])
+                    && isset($body['features']) && \is_array($body['features']);
+            case 'run':
+                return isset($body['run_id']) && (string) $body['run_id'] !== ''
+                    && isset($body['state']) && (string) $body['state'] !== '';
+            case 'seal':
+                return isset($body['run_id']) && (string) $body['run_id'] !== ''
+                    && (string) ($body['state'] ?? '') === 'sealed';
+            case 'batch':
+            case 'mutation':
+                if (! isset($body['accepted_items']) || ! \is_array($body['accepted_items'])) {
+                    return false;
+                }
+                $items = \array_values($body['accepted_items']);
+                if ($items === []) {
+                    return false;   // a batch always carries at least one item
+                }
+                if (isset($body['accepted_count']) && (int) $body['accepted_count'] !== \count($items)) {
+                    return false;
+                }
+
+                return true;
+            case 'items':
+                return isset($body['items']) && \is_array($body['items']);
+            default:
+                return true;
+        }
     }
 
     /**

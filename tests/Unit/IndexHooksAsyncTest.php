@@ -137,7 +137,7 @@ final class IndexHooksAsyncTest extends TestCase
         Functions\expect('get_post_meta')->never();
 
         $capture = Mockery::mock(Capture::class);
-        $capture->shouldReceive('tryUpsert')->once()->with(Mockery::type(WP_Post::class))->andReturn(5);
+        $capture->shouldReceive('tryCapture')->once()->with(11)->andReturn(5);
         $capture->shouldReceive('tryDelete')->never();
         $delivery = Mockery::mock(Delivery::class);
         $delivery->shouldReceive('schedule')->once()->andReturn(true);
@@ -152,8 +152,8 @@ final class IndexHooksAsyncTest extends TestCase
         Functions\expect('wp_remote_request')->never();
 
         $capture = Mockery::mock(Capture::class);
-        $capture->shouldReceive('tryDelete')->once()->with(11)->andReturn(6);
-        $capture->shouldReceive('tryUpsert')->never();
+        $capture->shouldReceive('tryCapture')->once()->with(11)->andReturn(6);
+        $capture->shouldReceive('tryDelete')->never();
         $delivery = Mockery::mock(Delivery::class);
         $delivery->shouldReceive('schedule')->once()->andReturn(true);
 
@@ -179,7 +179,7 @@ final class IndexHooksAsyncTest extends TestCase
     public function testFailedCaptureKeepsDirtyMarker(): void
     {
         $capture = Mockery::mock(Capture::class);
-        $capture->shouldReceive('tryUpsert')->once()->andReturn(null);
+        $capture->shouldReceive('tryCapture')->once()->andReturn(null);
         $delivery = Mockery::mock(Delivery::class);
         $delivery->shouldReceive('schedule')->never();
 
@@ -193,7 +193,7 @@ final class IndexHooksAsyncTest extends TestCase
         $this->stubSyncTransport();
 
         $capture = Mockery::mock(Capture::class);
-        $capture->shouldReceive('tryUpsert')->never();
+        $capture->shouldReceive('tryCapture')->never();
         $delivery = Mockery::mock(Delivery::class);
         $delivery->shouldReceive('schedule')->never();
 
@@ -234,7 +234,7 @@ final class IndexHooksAsyncTest extends TestCase
             throw new \RuntimeException('capability probe failed');
         };
         $capture = Mockery::mock(Capture::class);
-        $capture->shouldReceive('tryUpsert')->never();
+        $capture->shouldReceive('tryCapture')->never();
 
         $this->hooks($probe, $capture, Mockery::mock(Delivery::class))->onSave(11, $this->post('publish'), true);
 

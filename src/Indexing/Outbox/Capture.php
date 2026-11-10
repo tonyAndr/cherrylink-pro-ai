@@ -49,23 +49,51 @@ class Capture
     }
 
     /**
-     * Capture a published post: allocate revision, read the post, persist payload.
+     * Capture the current state of a post: allocate the revision, **re-read the
+     * post from the database**, then persist either an upsert or a tombstone.
+     *
+     * The `WP_Post` handed to `wp_insert_post` is already in memory and can belong
+     * to an older request that resumed after a newer save. Allocating the revision
+     * and then embedding that stale object would let the older request win with the
+     * higher revision. Re-reading after the allocation makes the revision reflect
+     * the moment the content was actually loaded.
+     *
+     * The operation is chosen from the **fresh** post, not from the caller's
+     * object, so a stale "unpublish" cannot tombstone content a newer save has
+     * already republished.
+     *
+     * @return int Outbox row id.
+     */
+    public function capture(int $postId, ?string $runId = null): int
+    {
+        $revision = $this->repository->allocateRevision();
+        $fresh    = $this->reload($postId);
+
+        if ($fresh === null || $fresh->post_status !== 'publish') {
+            return $this->enqueueDelete($postId, $revision, $runId);
+        }
+
+        $payload = $this->client->capture_payload($fresh);
+
+        return $this->repository->enqueue(
+            $this->key((int) $fresh->ID, Repository::KIND_UPSERT, $revision),
+            Repository::KIND_UPSERT,
+            (int) $fresh->ID,
+            $payload,
+            $runId,
+            $revision
+        );
+    }
+
+    /**
+     * Convenience wrapper for the save hook. The passed object is used only for its
+     * id; content always comes from a fresh read inside `capture()`.
      *
      * @return int Outbox row id.
      */
     public function upsert(WP_Post $post, ?string $runId = null): int
     {
-        $revision = $this->repository->allocateRevision();
-        $payload  = $this->client->capture_payload($post);
-
-        return $this->repository->enqueue(
-            $this->key((int) $post->ID, Repository::KIND_UPSERT, $revision),
-            Repository::KIND_UPSERT,
-            (int) $post->ID,
-            $payload,
-            $runId,
-            $revision
-        );
+        return $this->capture((int) $post->ID, $runId);
     }
 
     /**
@@ -76,16 +104,7 @@ class Capture
      */
     public function delete(int $postId, ?string $runId = null): int
     {
-        $revision = $this->repository->allocateRevision();
-
-        return $this->repository->enqueue(
-            $this->key($postId, Repository::KIND_DELETE, $revision),
-            Repository::KIND_DELETE,
-            $postId,
-            ['post_id' => $postId, 'operation' => 'delete'],
-            $runId,
-            $revision
-        );
+        return $this->enqueueDelete($postId, $this->repository->allocateRevision(), $runId);
     }
 
     /**
@@ -134,6 +153,21 @@ class Capture
     }
 
     /**
+     * Fail-closed capture for the save hook.
+     *
+     * @return int|null Null when the event could not be persisted.
+     */
+    public function tryCapture(int $postId, ?string $runId = null): ?int
+    {
+        try {
+            return $this->capture($postId, $runId);
+        } catch (\Throwable $error) {
+            (new Logger())->log('CherryLink outbox capture failed for post ' . $postId . ': ' . $error->getMessage());
+            return null;
+        }
+    }
+
+    /**
      * @return int|null Null when the tombstone could not be persisted.
      */
     public function tryDelete(int $postId, ?string $runId = null): ?int
@@ -144,6 +178,39 @@ class Capture
             (new Logger())->log('CherryLink outbox tombstone failed for post ' . $postId . ': ' . $error->getMessage());
             return null;
         }
+    }
+
+    /** @return int Outbox row id. */
+    private function enqueueDelete(int $postId, int $revision, ?string $runId): int
+    {
+        return $this->repository->enqueue(
+            $this->key($postId, Repository::KIND_DELETE, $revision),
+            Repository::KIND_DELETE,
+            $postId,
+            ['post_id' => $postId, 'operation' => 'delete'],
+            $runId,
+            $revision
+        );
+    }
+
+    /**
+     * Re-read the post after the revision has been allocated.
+     *
+     * `clean_post_cache()` is required: WordPress keeps the just-saved object in
+     * the object cache, so a plain `get_post()` could return the same instance.
+     */
+    private function reload(int $postId): ?WP_Post
+    {
+        if (\function_exists('clean_post_cache')) {
+            \clean_post_cache($postId);
+        }
+        if (! \function_exists('get_post')) {
+            return null;
+        }
+
+        $fresh = \get_post($postId);
+
+        return $fresh instanceof WP_Post ? $fresh : null;
     }
 
     private function key(int $postId, string $kind, int $revision): string

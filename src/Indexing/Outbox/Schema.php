@@ -91,7 +91,41 @@ final class Schema
             return false;
         }
 
+        // dbDelta commonly reports a failed statement without throwing. Verify the
+        // tables exist before recording the version, otherwise the defensive
+        // installer would never retry and the plugin would run on a missing table.
+        if (! self::tablesExist($wpdb)) {
+            (new Logger())->log('CherryLink outbox schema install did not create both tables');
+            return false;
+        }
+
         \update_option(self::VERSION_OPTION, self::DB_VERSION, false);
+        return true;
+    }
+
+    /**
+     * True when both outbox tables exist under the site's actual prefix.
+     *
+     * @param \wpdb|null $wpdb Defaults to the global $wpdb.
+     */
+    public static function tablesExist($wpdb = null): bool
+    {
+        if (! \is_object($wpdb)) {
+            global $wpdb;
+        }
+        if (! \is_object($wpdb) || ! \is_callable([$wpdb, 'get_var'])) {
+            return false;
+        }
+        /** @var \wpdb $db */
+        $db = $wpdb;
+        foreach ([self::OUTBOX_TABLE, self::STATE_TABLE] as $suffix) {
+            $table  = $db->prefix . $suffix;
+            $exists = $db->get_var($db->prepare('SHOW TABLES LIKE %s', $db->esc_like($table)));
+            if ($exists !== $table) {
+                return false;
+            }
+        }
+
         return true;
     }
 

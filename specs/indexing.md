@@ -114,9 +114,14 @@ the default and the fallback.
   `POST /v1/index-mutations`, and `GET /v1/index-items?item_id=…`. Every accepted
   body carries `protocol_version: 1`. A `202` is treated as durable acceptance,
   never execution, and a non-object body is a failure.
-- `Support\Capabilities` caches the decision (60 s positive / 300 s negative).
-  Async is used only when the API advertises the protocol **and** the tenant is
-  in `async` mode with both `runs` and `mutations` enabled.
+- `Support\Capabilities` is **cache-only on the request path**: `asyncEnabled()`
+  reads the transient and never performs HTTP, so `wp_insert_post`/`delete_post`
+  keep their no-external-I/O contract. `Support\CapabilitiesRefresh` refreshes the
+  snapshot from WP-Cron/CLI (and on activation/update) every 10 minutes; a
+  transient API outage keeps the last positive snapshot so an async tenant does
+  not flap back to synchronous writes. Async is used only when the API
+  advertises the protocol **and** the tenant is in `async` mode with both `runs`
+  and `mutations` enabled; otherwise the tenant stays on the synchronous adapter.
 - `Indexing\Outbox\Capture` enforces the capture-order rule: allocate the source
   revision immediately before reading the post, then persist an immutable
   payload. Failed captures keep the index-dirty marker (fail closed).

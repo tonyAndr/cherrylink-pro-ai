@@ -10,25 +10,33 @@ use CherryLink\Api\AsyncClient;
  * Cached async-capability negotiation.
  *
  * WordPress asks "is durable async indexing available for this tenant?" on every
- * post save, so the answer is cached in a non-autoloaded transient with a bounded
- * lifetime. The backend already caches for 60 seconds and sends `Cache-Control:
- * no-store` when async is active or the tenant is not in `sync` mode, so a stale
- * *negative* answer is safe (the site keeps using the synchronous path) while a
- * stale *positive* answer only costs one rejected request that falls back.
+ * post save. That check must never make an HTTP request: `wp_insert_post` and
+ * `delete_post` have a hard no-external-I/O contract (see
+ * `specs/admin-responsiveness.md`). So this class separates the two operations:
  *
- * Default is always synchronous: any missing, malformed, or failed capability
- * response returns false, preserving the current behavior for old APIs.
+ *   - `asyncEnabled()` / `snapshot()` read only the transient cache.
+ *   - `refresh()` performs the network call and is run from cron/CLI, license
+ *     activation, and plugin activation — never from a page render or save.
+ *
+ * With an empty cache the answer is `false`, i.e. the existing synchronous
+ * adapter, which is also correct for old APIs and for tenants in `sync` mode.
  */
 final class Capabilities
 {
     /** Transient key for the last successful capability snapshot. */
     public const CACHE_KEY = 'cherrylink_capabilities';
 
-    /** Short cache for a positive async answer. */
-    public const POSITIVE_TTL = 60;
+    /** Cron/CLI hook that refreshes the snapshot in the background. */
+    public const REFRESH_HOOK = 'cherrylink_refresh_capabilities';
 
-    /** Longer cache for a negative answer — re-probing on every save is wasteful. */
-    public const NEGATIVE_TTL = 300;
+    /**
+     * Cache lifetime for both directions. Capability changes are operator-driven
+     * (a documented drain/reconcile mode switch), so a few minutes of staleness is
+     * acceptable; the background refresh keeps it converging.
+     */
+    public const POSITIVE_TTL = 900;
+
+    public const NEGATIVE_TTL = 900;
 
     /** @var AsyncClient */
     private $client;
@@ -41,37 +49,49 @@ final class Capabilities
     /**
      * Whether this tenant should write live indexing through the durable outbox.
      *
-     * Requires the API to advertise the protocol *and* the tenant to be in async
-     * mode with both runs and mutations enabled. Anything else keeps the
-     * synchronous adapter.
+     * Cache-only: never performs HTTP. Requires the API to advertise the protocol
+     * *and* the tenant to be in async mode with both runs and mutations enabled.
      */
-    public function asyncEnabled(bool $forceRefresh = false): bool
+    public function asyncEnabled(): bool
     {
-        $snapshot = $this->snapshot($forceRefresh);
+        $snapshot = $this->snapshot();
 
         return $snapshot !== null && (bool) ($snapshot['async'] ?? false);
     }
 
     /**
-     * Raw capability snapshot (cached). Null when the API is unreachable or does
-     * not advertise the protocol.
+     * Cached capability snapshot, or null when nothing has been cached yet / the
+     * API did not advertise the protocol. Never performs HTTP.
      *
      * @return array<string,mixed>|null
      */
-    public function snapshot(bool $forceRefresh = false): ?array
+    public function snapshot(): ?array
     {
-        if (! $forceRefresh) {
-            $cached = \get_transient(self::CACHE_KEY);
-            if (\is_array($cached)) {
-                return $cached;
-            }
-        }
+        $cached = \get_transient(self::CACHE_KEY);
 
-        $result = $this->client->capabilities();
+        return \is_array($cached) ? $cached : null;
+    }
+
+    /**
+     * Perform the network probe and cache the result. Background contexts only.
+     *
+     * @return array<string,mixed> The stored snapshot.
+     */
+    public function refresh(): array
+    {
+        $result       = $this->client->capabilities();
         $capabilities = $result['ok'] ? ($result['capabilities'] ?? null) : null;
 
         if (! \is_array($capabilities)) {
-            $negative = ['async' => false, 'protocol_version' => 0, 'tenant_mode' => 'sync', 'checked_at' => \time()];
+            // A transient API outage must not downgrade a known-good async tenant:
+            // keep the last positive snapshot so ordering keeps flowing through the
+            // outbox while delivery retries. Only cache the negative when we have
+            // no established positive state.
+            $existing = $this->snapshot();
+            if ($existing !== null && ($existing['async'] ?? false)) {
+                return $existing;
+            }
+            $negative = $this->negativeSnapshot();
             \set_transient(self::CACHE_KEY, $negative, self::NEGATIVE_TTL);
             return $negative;
         }
@@ -86,10 +106,25 @@ final class Capabilities
         return $snapshot;
     }
 
-    /** Drop the cached capability snapshot (license/mode change, operator disable). */
+    /** Drop the cached snapshot (license change, mode switch, operator disable). */
     public function forget(): void
     {
         \delete_transient(self::CACHE_KEY);
+    }
+
+    /** @return array<string,mixed> */
+    public function negativeSnapshot(): array
+    {
+        return [
+            'async'            => false,
+            'protocol_version' => 0,
+            'tenant_mode'      => 'sync',
+            'runs'             => false,
+            'mutations'        => false,
+            'batch_items'      => AsyncClient::MAX_BATCH_ITEMS,
+            'batch_bytes'      => 1048576,
+            'checked_at'       => \time(),
+        ];
     }
 
     /**

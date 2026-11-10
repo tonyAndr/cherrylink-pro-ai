@@ -26,9 +26,13 @@ final class Lifecycle implements Registerable
     /** @var License */
     private $license;
 
-    public function __construct(License $license)
+    /** @var Capabilities|null Warms the capability cache from cron after activation. */
+    private $capabilities;
+
+    public function __construct(License $license, ?Capabilities $capabilities = null)
     {
-        $this->license = $license;
+        $this->license      = $license;
+        $this->capabilities = $capabilities;
     }
 
     public function register(): void
@@ -54,6 +58,9 @@ final class Lifecycle implements Registerable
     {
         $this->license->install();
         Schema::install();
+        if ($this->capabilities !== null) {
+            $this->capabilities->forget();
+        }
 
         $meta = \get_option('linkate_posts_meta', []);
         if (empty($meta['first_version'])) {
@@ -92,6 +99,9 @@ final class Lifecycle implements Registerable
         if (\get_transient('cherrylink_updated') && \current_user_can('update_plugins')) {
             $this->license->install();
             Schema::install();
+            if ($this->capabilities !== null) {
+                $this->capabilities->forget();
+            }
             \set_transient('cherrylink_updated', 0);
         }
     }

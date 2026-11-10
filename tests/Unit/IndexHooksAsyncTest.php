@@ -59,6 +59,7 @@ final class IndexHooksAsyncTest extends TestCase
             unset($this->options[$key]);
             return true;
         });
+        Functions\when('get_transient')->justReturn(false);
     }
 
     protected function tearDown(): void
@@ -238,6 +239,36 @@ final class IndexHooksAsyncTest extends TestCase
         $this->hooks($probe, $capture, Mockery::mock(Delivery::class))->onSave(11, $this->post('publish'), true);
 
         $this->assertGreaterThan(0, $this->httpCalls, 'probe failure must fail closed to sync');
+    }
+
+    public function testDefaultProbeNeverFetchesCapabilitiesDuringSave(): void
+    {
+        $this->defineApiConstants();
+        $urls = [];
+        Functions\when('get_permalink')->justReturn('https://site/11');
+        Functions\when('wp_strip_all_tags')->returnArg();
+        Functions\when('home_url')->justReturn('https://site');
+        Functions\when('wp_json_encode')->alias('json_encode');
+        Functions\when('get_post_meta')->justReturn('');
+        Functions\when('update_post_meta')->justReturn(true);
+        Functions\when('wp_remote_retrieve_response_code')->justReturn(200);
+        Functions\when('wp_remote_retrieve_headers')->justReturn([]);
+        Functions\when('wp_remote_retrieve_body')->justReturn('{}');
+        Functions\when('wp_parse_url')->justReturn('site');
+        Functions\when('is_wp_error')->justReturn(false);
+        Functions\when('wp_remote_request')->alias(function ($url) use (&$urls) {
+            $urls[] = $url;
+            return [];
+        });
+
+        // No injected probe: IndexHooks uses the real, cache-only Capabilities.
+        $hooks = new IndexHooks(new Options(), $this->license());
+        $hooks->onSave(11, $this->post('publish'), true);
+
+        foreach ($urls as $url) {
+            $this->assertStringNotContainsString('/v1/capabilities', $url);
+        }
+        $this->assertNotEmpty($urls, 'cold cache must fall back to the synchronous adapter');
     }
 
     /** Stub the WP functions the synchronous path needs and count outbound calls. */

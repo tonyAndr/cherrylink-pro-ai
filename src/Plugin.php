@@ -88,13 +88,14 @@ final class Plugin
             new \CherryLink\Indexing\IndexHooks($this->options, $license),
             new \CherryLink\Indexing\SyncService($this->options, $license),
             new \CherryLink\Indexing\Outbox\Delivery(),
+            new \CherryLink\Support\CapabilitiesRefresh($license),
             new \CherryLink\Terms\TermsService(),
             new \CherryLink\Statistics\StatisticsService(),
             new \CherryLink\Csv\CsvService(),
             new \CherryLink\Editor\ClassicPanel($this->options),
             new \CherryLink\Debug\Debugger(),
             $license,
-            new \CherryLink\Support\Lifecycle($license),
+            new \CherryLink\Support\Lifecycle($license, new \CherryLink\Support\Capabilities()),
             new \CherryLink\Admin\SettingsPage(),
         ];
 

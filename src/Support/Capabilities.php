@@ -97,6 +97,24 @@ final class Capabilities
     }
 
     /**
+     * Whether live mutations can be accepted right now.
+     *
+     * During initial enrollment (and whenever a snapshot is required) the API
+     * advertises `mutations: false` while the tenant is already `async`. Live save
+     * events must not be queued then — the backend rejects them — so the hook keeps
+     * its dirty marker and the next snapshot run covers the change.
+     */
+    public function mutationsAvailable(): bool
+    {
+        $snapshot = $this->snapshot();
+        if ($snapshot === null) {
+            return false;
+        }
+
+        return (bool) ($snapshot['mutations'] ?? false) && (bool) ($snapshot['available'] ?? false);
+    }
+
+    /**
      * Whether the API is currently accepting async writes for this tenant.
      *
      * Delivery uses this to pause instead of burning retries (and dead-lettering)

@@ -90,7 +90,7 @@ final class AsyncBulkScanTest extends TestCase
         ];
         $this->capabilitySnapshot = [
             'known' => true, 'async' => true, 'available' => true,
-            'tenant_mode' => 'async', 'protocol_version' => 1,
+            'mutations' => true, 'tenant_mode' => 'async', 'protocol_version' => 1,
         ];
         $this->options[Options::META] = [
             'key_valid'  => true,
@@ -474,6 +474,20 @@ final class AsyncBulkScanTest extends TestCase
         $this->assertIsArray($seen);
         $this->assertSame(2, $seen['expected_membership_count']);
         $this->assertSame($service->digestFor([1, 2]), $seen['expected_membership_digest']);
+    }
+
+    public function testEnrollmentForcesASnapshotRun(): void
+    {
+        // Tenant is async but mutations are not accepted yet (snapshot required).
+        $this->capabilitySnapshot['available'] = false;
+        $this->capabilitySnapshot['mutations'] = false;
+        $service = $this->service();
+        $this->seedRun(['phase' => 'manifest', 'force_full' => false]);
+
+        $service->worker('manifest', 0, 0, false, 'scan-1');
+
+        $this->assertSame('snapshot', $this->state()['mode']);
+        $this->assertTrue((bool) $this->state()['force_full']);
     }
 
     // ── 2. Idempotent retries ───────────────────────────────────────────────

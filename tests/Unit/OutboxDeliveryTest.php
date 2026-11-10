@@ -77,6 +77,7 @@ final class OutboxDeliveryTest extends TestCase
         $test = $this;
         $repo = Mockery::mock(Repository::class);
         $repo->shouldReceive('reclaimExpired')->andReturn(0)->byDefault();
+        $repo->shouldReceive('defer')->andReturn(true)->byDefault();
         $repo->shouldReceive('claim')->andReturnUsing(static function () use ($test) {
             return $test->claimedRows();
         })->byDefault();
@@ -263,6 +264,43 @@ final class OutboxDeliveryTest extends TestCase
 
         $this->assertCount(1, $this->dead);
         $this->assertFalse($this->dead[0]['result']['retryable']);
+    }
+
+    public function testTenantStateConflictIsDeferredNotDeadLettered(): void
+    {
+        $this->mutationResult = [
+            'ok' => false, 'status' => 409, 'retry_after' => null,
+            'error' => 'HTTP 409', 'code' => 'index_run_state_invalid',
+        ];
+        $this->rows = [$this->row()];
+
+        $deferred = null;
+        $repo = $this->repositoryMock();
+        $repo->shouldReceive('defer')->once()->andReturnUsing(static function ($id, $owner, $result, $next) use (&$deferred) {
+            $deferred = ['id' => $id, 'result' => $result, 'next' => $next];
+            return true;
+        });
+        $repo->shouldReceive('deadLetter')->never();
+
+        $result = $this->delivery($repo, 5000)->run();
+
+        $this->assertSame(1, $result['deferred']);
+        $this->assertSame(0, $result['dead']);
+        $this->assertSame(5000 + Delivery::DEFER_SECONDS, $deferred['next']);
+        $this->assertSame([], $this->dead);
+    }
+
+    public function testNonTenantStateConflictStillDeadLetters(): void
+    {
+        $this->mutationResult = [
+            'ok' => false, 'status' => 409, 'retry_after' => null,
+            'error' => 'HTTP 409', 'code' => 'idempotency_key_reused',
+        ];
+        $this->rows = [$this->row()];
+
+        $this->delivery($this->repositoryMock())->run();
+
+        $this->assertCount(1, $this->dead);
     }
 
     public function testSweepReclaimsAndRestartsDeliveryWhenWorkExists(): void

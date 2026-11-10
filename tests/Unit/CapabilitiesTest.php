@@ -236,6 +236,29 @@ final class CapabilitiesTest extends TestCase
         $this->assertFalse($capabilities->asyncAvailable(), 'delivery must pause');
     }
 
+    public function testMutationsAreUnavailableWhileEnrollmentIsIncomplete(): void
+    {
+        $this->transient = [
+            'known' => true, 'async' => true, 'available' => false, 'mutations' => false,
+            'tenant_mode' => 'async', 'protocol_version' => 1,
+        ];
+
+        $capabilities = new Capabilities($this->clientExpecting(0));
+
+        $this->assertTrue($capabilities->asyncEnabled(), 'still routes through the outbox');
+        $this->assertFalse($capabilities->mutationsAvailable(), 'but must not queue live mutations');
+    }
+
+    public function testMutationsAvailableOnceTheTenantIsReady(): void
+    {
+        $this->transient = [
+            'known' => true, 'async' => true, 'available' => true,
+            'mutations' => true, 'tenant_mode' => 'async',
+        ];
+
+        $this->assertTrue((new Capabilities($this->clientExpecting(0)))->mutationsAvailable());
+    }
+
     public function testTenantModeIsAsyncEvenWhileEnrollmentIsIncomplete(): void
     {
         $client = Mockery::mock(AsyncClient::class);

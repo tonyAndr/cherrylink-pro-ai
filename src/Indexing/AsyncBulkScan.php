@@ -549,7 +549,10 @@ class AsyncBulkScan implements Registerable
             $current[(int) $row['ID']] = (string) $row['post_modified_gmt'];
         }
 
-        $snapshot = (bool) $state['force_full'];
+        // Enrollment / snapshot-required tenants can only be seeded by a snapshot:
+        // live mutations are not accepted yet, so an incremental run would have
+        // nothing to reconcile against.
+        $snapshot = (bool) $state['force_full'] || ! $this->capabilities->mutationsAvailable();
         $plan     = IndexHelpers::compute_sync_plan($result['map'], $current, $snapshot);
         if ($snapshot) {
             // A snapshot prunes by absence at seal; explicit deletes are unnecessary
@@ -570,6 +573,7 @@ class AsyncBulkScan implements Registerable
 
         $this->advance($state, 'create', 0, [
             'mode'            => $snapshot ? 'snapshot' : 'incremental',
+            'force_full'      => $snapshot,
             'source_epoch'    => $capture->repository()->sourceEpoch(),
             'source_revision' => $this->markerRevision($marker),
             'upsert_total'    => \count($plan['upsert']),

@@ -98,8 +98,12 @@ final class IndexHooksAsyncTest extends TestCase
         return new License(new Options());
     }
 
-    private function hooks(?callable $asyncProbe, $capture = null, $delivery = null): IndexHooks
-    {
+    private function hooks(
+        ?callable $asyncProbe,
+        $capture = null,
+        $delivery = null,
+        ?callable $mutationsProbe = null
+    ): IndexHooks {
         return new IndexHooks(
             new Options(),
             $this->license(),
@@ -109,7 +113,10 @@ final class IndexHooksAsyncTest extends TestCase
             $delivery !== null ? static function () use ($delivery) {
                 return $delivery;
             } : null,
-            $asyncProbe
+            $asyncProbe,
+            $mutationsProbe ?? static function (): bool {
+                return true;
+            }
         );
     }
 
@@ -218,7 +225,10 @@ final class IndexHooksAsyncTest extends TestCase
             static function () {
                 return Mockery::mock(Delivery::class);
             },
-            $this->asyncTrue()
+            $this->asyncTrue(),
+            static function (): bool {
+                return true;
+            }
         );
 
         $hooks->onSave(11, $this->post('publish'), true);
@@ -269,6 +279,46 @@ final class IndexHooksAsyncTest extends TestCase
             $this->assertStringNotContainsString('/v1/capabilities', $url);
         }
         $this->assertNotEmpty($urls, 'cold cache must fall back to the synchronous adapter');
+    }
+
+    public function testEnrollmentKeepsDirtyMarkerAndQueuesNoMutation(): void
+    {
+        // Tenant is async but the API reports mutations=false (enrollment /
+        // snapshot required). A live mutation would be rejected, so we must not
+        // queue one; the marker stays until the snapshot runs.
+        Functions\expect('wp_remote_request')->never();
+
+        $capture = Mockery::mock(Capture::class);
+        $capture->shouldReceive('tryCapture')->never();
+        $delivery = Mockery::mock(Delivery::class);
+        $delivery->shouldReceive('schedule')->never();
+
+        $hooks = $this->hooks(
+            $this->asyncTrue(),
+            $capture,
+            $delivery,
+            static function (): bool {
+                return false;   // mutations not available yet
+            }
+        );
+
+        $hooks->onSave(11, $this->post('publish'), true);
+
+        $this->assertArrayHasKey(Options::INDEX_DIRTY, $this->updates);
+    }
+
+    public function testEmergencyDisableAlsoDefersLiveMutations(): void
+    {
+        $capture = Mockery::mock(Capture::class);
+        $capture->shouldReceive('tryCapture')->never();
+        $delivery = Mockery::mock(Delivery::class);
+        $delivery->shouldReceive('schedule')->never();
+
+        $this->hooks($this->asyncTrue(), $capture, $delivery, static function (): bool {
+            return false;
+        })->onDelete(11);
+
+        $this->assertArrayHasKey(Options::INDEX_DIRTY, $this->updates);
     }
 
     /** Stub the WP functions the synchronous path needs and count outbound calls. */

@@ -51,6 +51,21 @@ class Delivery implements Registerable
     /** Safety margin subtracted from the lease before computing the batch size. */
     public const LEASE_MARGIN_SECONDS = 45;
 
+    /** Delay before retrying work held back by a tenant-state problem. */
+    public const DEFER_SECONDS = 300;
+
+    /**
+     * 409 codes that mean "the tenant cannot accept this yet" rather than "this
+     * payload is wrong". The event is deferred, not dead-lettered, because an
+     * operator enrollment/mode change makes it valid again.
+     */
+    private const DEFERRABLE_CODES = [
+        'index_run_state_invalid',
+        'async_tenant_requires_queue',
+        'async_indexing_disabled',
+        'source_revision_exhausted',
+    ];
+
     /** @var Repository */
     private $repository;
 
@@ -173,14 +188,17 @@ class Delivery implements Registerable
     /**
      * One delivery turn. Safe to run concurrently: claims are lease-fenced.
      *
-     * @return array{claimed:int,delivered:int,retried:int,dead:int,paused:int}
+     * @return array{claimed:int,delivered:int,retried:int,deferred:int,dead:int,paused:int}
      */
     public function run(): array
     {
         // While acceptance is disabled or the API is unreachable, keep rows durable
         // and idle: retrying now would burn attempts and dead-letter real work.
         if ($this->capabilities !== null && ! $this->capabilities->asyncAvailable()) {
-            return ['claimed' => 0, 'delivered' => 0, 'retried' => 0, 'dead' => 0, 'paused' => 1];
+            return [
+                'claimed' => 0, 'delivered' => 0, 'retried' => 0,
+                'deferred' => 0, 'dead' => 0, 'paused' => 1,
+            ];
         }
 
         $this->repository->reclaimExpired();
@@ -189,6 +207,7 @@ class Delivery implements Registerable
         $delivered = 0;
         $retried   = 0;
         $dead      = 0;
+        $deferred  = 0;
 
         foreach ($rows as $row) {
             $owner = (string) ($row['lease_owner'] ?? '');
@@ -213,6 +232,16 @@ class Delivery implements Registerable
             // The repository requires the explicit flag; omitting it made every
             // transient failure look permanent.
             $result['retryable'] = $retryable;
+
+            if (! $retryable && $this->isDeferrable($result)) {
+                // Tenant not ready (enrollment, mode switch, emergency disable):
+                // keep the event durable and try again later without burning the
+                // attempt budget.
+                $this->repository->defer($id, $owner, $result, $this->now() + self::DEFER_SECONDS);
+                $deferred++;
+                continue;
+            }
+
             if (! $retryable) {
                 $this->repository->deadLetter($id, $owner, $result);
                 $dead++;
@@ -227,7 +256,7 @@ class Delivery implements Registerable
 
         // Keep the chain alive while retryable work or fresh pending rows remain.
         // Scheduling is bounded: one follow-up turn, never a tight loop.
-        if ($retried > 0 || $this->repository->pendingCount() > 0) {
+        if ($retried > 0 || $deferred > 0 || $this->repository->pendingCount() > 0) {
             $this->scheduleLater(Repository::retryDelay(1, null, 0));
         }
 
@@ -235,6 +264,7 @@ class Delivery implements Registerable
             'claimed'   => \count($rows),
             'delivered' => $delivered,
             'retried'   => $retried,
+            'deferred'  => $deferred,
             'dead'      => $dead,
             'paused'    => 0,
         ];
@@ -301,6 +331,7 @@ class Delivery implements Registerable
             'ok'             => (bool) $result['ok'],
             'status'         => (int) $result['status'],
             'retry_after'    => $result['retry_after'],
+            'code'           => (string) ($result['code'] ?? ''),
             'error'          => $this->errorMessage($result),
             'remote_item_id' => \is_array($accepted) && $accepted !== [] ? (string) $accepted[0] : null,
         ];
@@ -330,9 +361,20 @@ class Delivery implements Registerable
             'ok'             => (bool) $result['ok'],
             'status'         => (int) $result['status'],
             'retry_after'    => $result['retry_after'],
+            'code'           => (string) ($result['code'] ?? ''),
             'error'          => $this->errorMessage($result),
             'remote_item_id' => $result['run_id'] ?? null,
         ];
+    }
+
+    /** @param array<string,mixed> $result */
+    private function isDeferrable(array $result): bool
+    {
+        if ((int) ($result['status'] ?? 0) !== 409) {
+            return false;
+        }
+
+        return \in_array((string) ($result['code'] ?? ''), self::DEFERRABLE_CODES, true);
     }
 
     /** @param array<string,mixed> $result */

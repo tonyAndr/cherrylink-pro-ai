@@ -334,6 +334,38 @@ class Repository
     }
 
     /**
+     * Return a row to pending without consuming its attempt budget.
+     *
+     * Used when the failure is a *tenant state* problem that an operator action
+     * will fix (unbound source epoch, async disabled, enrollment pending): the
+     * event stays durable instead of being dead-lettered while the tenant is not
+     * yet able to accept it.
+     *
+     * @param array<string,mixed> $result
+     */
+    public function defer(int $id, string $owner, array $result, int $nextAttemptAt): bool
+    {
+        $row = $this->get($id);
+        if ($row === null || ($row['lease_owner'] ?? null) !== $owner) {
+            return false;
+        }
+
+        $data = [
+            'state'            => self::STATE_PENDING,
+            'lease_owner'      => null,
+            'lease_expiry_gmt' => null,
+            'next_attempt_gmt' => $this->gmt($nextAttemptAt),
+            'attempts'         => 0,
+            'last_http_status' => (int) ($result['status'] ?? 0),
+            'last_retry_after' => $result['retry_after'] ?? null,
+            'last_error'       => (string) ($result['error'] ?? ''),
+            'updated_gmt'      => $this->gmtNow(),
+        ];
+
+        return $this->update($id, $owner, $data, ['%s', '%s', '%s', '%s', '%d', '%d', '%s', '%s', '%s']);
+    }
+
+    /**
      * Permanently fail a row. Fenced on lease owner. Non-retryable results and
      * exhausted budgets route here from `release()`.
      *

@@ -48,6 +48,9 @@ final class IndexHooks implements Registerable
     /** @var callable|null Async-capability probe (returns bool). */
     private $async_probe;
 
+    /** @var callable|null Live-mutation availability probe (returns bool). */
+    private $mutations_probe;
+
     /**
      * @param callable|null $capture_factory  Returns a Capture; built on demand.
      * @param callable|null $delivery_factory Returns a Delivery; built on demand.
@@ -58,13 +61,15 @@ final class IndexHooks implements Registerable
         License $license,
         ?callable $capture_factory = null,
         ?callable $delivery_factory = null,
-        ?callable $async_probe = null
+        ?callable $async_probe = null,
+        ?callable $mutations_probe = null
     ) {
         $this->options          = $options;
         $this->license          = $license;
         $this->capture_factory  = $capture_factory;
         $this->delivery_factory = $delivery_factory;
         $this->async_probe      = $async_probe;
+        $this->mutations_probe  = $mutations_probe;
     }
 
     /** Async outbox path is opt-in per tenant; default is the existing synchronous adapter. */
@@ -73,6 +78,7 @@ final class IndexHooks implements Registerable
         $probe = $this->async_probe;
         if ($probe === null) {
             $probe = static function (): bool {
+                // Routing follows the durable tenant mode, not current availability.
                 return (new Capabilities())->asyncEnabled();
             };
         }
@@ -81,6 +87,29 @@ final class IndexHooks implements Registerable
             return (bool) \call_user_func($probe);
         } catch (\Throwable $error) {
             return false;   // fail closed to the synchronous adapter
+        }
+    }
+
+    /**
+     * Whether a live mutation can be queued for this tenant right now.
+     *
+     * False during enrollment (snapshot required) or while async acceptance is
+     * disabled: the backend would reject the mutation, so the change is marked
+     * dirty and picked up by the next snapshot run instead.
+     */
+    private function mutationsQueueable(): bool
+    {
+        $probe = $this->mutations_probe;
+        if ($probe === null) {
+            $probe = static function (): bool {
+                return (new Capabilities())->mutationsAvailable();
+            };
+        }
+
+        try {
+            return (bool) \call_user_func($probe);
+        } catch (\Throwable $error) {
+            return false;
         }
     }
 
@@ -177,6 +206,13 @@ final class IndexHooks implements Registerable
         }
 
         if ($this->usesAsyncOutbox()) {
+            // Same enrollment guard as a save: no live mutation until the tenant
+            // can accept them; the snapshot covers the removal.
+            if (! $this->mutationsQueueable()) {
+                $this->options->markIndexDirty();
+                return;
+            }
+
             $row = $this->capture()->tryDelete($post_id);
             if ($row === null) {
                 $this->options->markIndexDirty();
@@ -197,6 +233,13 @@ final class IndexHooks implements Registerable
      */
     private function captureAsync(WP_Post $post): void
     {
+        // Enrollment / emergency disable: the API rejects live mutations, so do not
+        // queue one. Mark dirty; the next snapshot run uploads the current state.
+        if (! $this->mutationsQueueable()) {
+            $this->options->markIndexDirty();
+            return;
+        }
+
         // Capture always re-reads the post after allocating the revision, so a
         // stale request cannot win with an older body or an outdated unpublish.
         $row = $this->capture()->tryCapture((int) $post->ID);

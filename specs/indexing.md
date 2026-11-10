@@ -47,10 +47,14 @@ the cursor, plan, and failure metadata for operator recovery.
    runs also send the published count and a sha256 membership digest.
 3. **upload** — batches of 20. Each item allocates its source revision **before**
    the authoritative read (`Outbox\Capture::build()`), so a concurrent live save
-   is a newer outbox mutation and wins. Batch ids are
-   `client_run_key:u:<offset>`, so a replayed batch is idempotent. A post that
-   disappeared between plan and capture is demoted to a delete in the same run.
+   is a newer outbox mutation and wins. The exact batch (ids, revisions, payloads)
+   is persisted in `cherrylink_async_batch` **before** it is sent and reused on
+   retry, so a lost `202` replays byte-identically and cannot trip
+   `idempotency_key_reused`. Batch ids are `client_run_key:u:<offset>`.
 4. **deletes** — batches of 50 via `/deletes` with `client_run_key:d:<offset>`.
+   Every planned delete is re-read first: if the post was republished during the
+   scan it is skipped (counted in `skipped_deletes`) instead of being tombstoned.
+   Snapshot runs plan no explicit deletes; absence is pruned at seal.
 5. **seal** — `/seal` with `client_run_key:seal`; only then does the backend
    prune absent snapshot memberships.
 6. **poll** — `GET /v1/index-runs/{id}` with delayed actions (10–60 s). Terminal
@@ -59,7 +63,15 @@ the cursor, plan, and failure metadata for operator recovery.
 Everything the chain needs (run id, phase, cursor, counts, poll/retry timers,
 progress) is persisted in the non-autoloaded `cherrylink_async_run` option, so
 closing the browser, a PHP timeout, or a WordPress restart resumes the run at the
-same cursor. Pause stops new work; resume restarts from the persisted phase and
+same cursor. An independent WP-Cron sweep (`cherrylink_async_bulk_sweep`)
+re-queues the persisted phase/cursor when no turn is queued, covering a crash
+between saving the cursor and scheduling the next action. Every callback carries
+the run key and is rejected for a different run, and a worker lock prevents two
+turns from running the same scan concurrently.
+
+Inventory reads fail closed: a failed post-list query raises
+`InventoryUnavailableException` and is retried, never interpreted as "no posts"
+(which would declare an empty snapshot or plan a full delete). Pause stops new work; resume restarts from the persisted phase and
 cursor; cancel cancels an accepting remote run and otherwise just stops the
 local chain. Stale Action Scheduler callbacks (wrong phase/cursor/attempt/mode)
 are no-ops.
@@ -67,8 +79,11 @@ are no-ops.
 Uploading and indexing are distinct states, and the admin status exposes both:
 `uploading`, `accepted`, `processing`, `vectors_applied`/`links_applied` and the
 error/retry fields. Upload completion is never reported as indexing completion.
-The existing AJAX actions are unchanged; `SyncService` delegates to the adapter
-when the tenant is async-capable and otherwise keeps the synchronous chain.
+The existing AJAX actions are unchanged. `SyncService` delegates to the adapter
+based on the tenant's **durable mode** (`handlesTenant()`), not current API
+availability: an async tenant whose acceptance is temporarily disabled pauses
+with `waiting=true` and probes every 60 s, rather than falling back to
+synchronous writes the API rejects with `409 async_tenant_requires_queue`.
 
 ## Planned capability-negotiated async flow
 

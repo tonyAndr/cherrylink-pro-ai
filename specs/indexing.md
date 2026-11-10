@@ -50,7 +50,12 @@ the cursor, plan, and failure metadata for operator recovery.
    is a newer outbox mutation and wins. The exact batch (ids, revisions, payloads)
    is persisted in `cherrylink_async_batch` **before** it is sent and reused on
    retry, so a lost `202` replays byte-identically and cannot trip
-   `idempotency_key_reused`. Batch ids are `client_run_key:u:<offset>`.
+   `idempotency_key_reused`. The cursor is persisted **before** the batch is
+   released, so a crash in between replays the stored batch rather than rebuilding
+   it with new revisions. Batch ids are `client_run_key:u:<offset>`.
+
+   The run marker is only a source revision: it is *not* written to the outbox, so
+   `Delivery` can never create a second (orphaned) run for a replaced client key.
 4. **deletes** — batches of 50 via `/deletes` with `client_run_key:d:<offset>`.
    Every planned delete is re-read first: if the post was republished during the
    scan it is skipped (counted in `skipped_deletes`) instead of being tombstoned.
@@ -58,7 +63,9 @@ the cursor, plan, and failure metadata for operator recovery.
 5. **seal** — `/seal` with `client_run_key:seal`; only then does the backend
    prune absent snapshot memberships.
 6. **poll** — `GET /v1/index-runs/{id}` with delayed actions (10–60 s). Terminal
-   states end the scan.
+   states end the scan. A successful poll clears the retry counter so the next
+   scheduled poll is accepted; a manual pause is never resumed by the recovery
+   sweep.
 
 Everything the chain needs (run id, phase, cursor, counts, poll/retry timers,
 progress) is persisted in the non-autoloaded `cherrylink_async_run` option, so
@@ -68,6 +75,10 @@ re-queues the persisted phase/cursor when no turn is queued, covering a crash
 between saving the cursor and scheduling the next action. Every callback carries
 the run key and is rejected for a different run, and a worker lock prevents two
 turns from running the same scan concurrently.
+
+Known gap: the Posts-list columns `cherry_outgoing`/`cherry_income` are written by
+the synchronous save path only, so an async tenant that never ran a synchronous
+scan shows zeros there; counts are available from the editor/API instead.
 
 Inventory reads fail closed: a failed post-list query raises
 `InventoryUnavailableException` and is retried, never interpreted as "no posts"

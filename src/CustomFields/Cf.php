@@ -225,34 +225,6 @@ final class Cf
     }
 
     /**
-     * Look up cached suggestions for a set of results from the local linkate_posts
-     * table (the custom-fields index — do not drop). Vestigial but preserved.
-     *
-     * @param array<int,\stdClass> $results
-     * @return array<int,\stdClass>
-     */
-    public static function getSuggestionsForIds(array $results): array
-    {
-        global $wpdb;
-        /** @var \wpdb $wpdb */
-        $table_name = $wpdb->prefix . 'linkate_posts';
-        $ids        = [];
-        foreach ($results as $res) {
-            $ids[] = $res->ID;
-        }
-        $query       = "SELECT pID, suggestions FROM $table_name WHERE pID IN (" . \implode(',', $ids) . ') AND is_term = 0';
-        $suggestions = $wpdb->get_results($query);
-        foreach ($results as &$o1) {
-            foreach ($suggestions as $o2) {
-                if ($o1->ID === $o2->pID) {
-                    $o1 = (object) \array_merge((array) $o1, (array) $o2);
-                }
-            }
-        }
-        return $results;
-    }
-
-    /**
      * Registered image sizes (used by the ACF settings form's {imagesrc} size picker).
      *
      * @return array<string,array<string,mixed>>

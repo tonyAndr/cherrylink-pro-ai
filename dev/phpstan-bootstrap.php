@@ -59,13 +59,6 @@ if (! function_exists('linkate_posts_install')) {
 
 // ── Legacy globals used by Debug\Debugger (defined in cherrylink_main.php +
 //    env-info/W18T.class.php at runtime) ──────────────────────────────────────
-if (! function_exists('linkate_posts')) {
-    /** @return mixed */
-    function linkate_posts(string $args = '')
-    {
-        return '';
-    }
-}
 if (! class_exists('W18T')) {
     class W18T
     {

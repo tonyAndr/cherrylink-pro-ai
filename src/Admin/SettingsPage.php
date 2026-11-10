@@ -318,7 +318,6 @@ final class SettingsPage implements Registerable
 
     public static function expertSubpage(): void
     {
-        global $wpdb, $table_prefix;
         $options = (array) \get_option('linkate-posts', []);
         if (isset($_POST['update_options_filter']) || isset($_POST['update_options_output']) || isset($_POST['update_options_relevance'])) {
             \check_admin_referer('linkate-posts-update-options');
@@ -362,21 +361,15 @@ final class SettingsPage implements Registerable
             $api      = new Client();
             $ok_docs  = $api->delete_all_documents();
             $ok_links = $api->delete_all_links();
-            // Clear the legacy local suggestions table when the site still has it.
-            // It is no longer created by the plugin, so an unguarded TRUNCATE would
-            // print a raw "table doesn't exist" database error in the admin.
-            $legacy_table = $table_prefix . 'linkate_posts';
-            $exists       = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $wpdb->esc_like($legacy_table)));
-            if ($exists === $legacy_table) {
-                $wpdb->query("TRUNCATE `{$legacy_table}`"); // phpcs:ignore WordPress.DB
-            }
+            // Nothing local to truncate: the old `linkate_posts` suggestions table is
+            // no longer part of the plugin and is not created on install.
             $options_meta = (array) \get_option('linkate_posts_meta', []);
             unset($options_meta['indexing_process']);
             \update_option('linkate_posts_meta', $options_meta);
             if ($ok_docs && $ok_links) {
                 self::notice('notice-success', \esc_html__('Данные сайта удалены из API. Выполните полную переиндексацию.', 'cherrylink'));
             } else {
-                self::notice('notice-warning', \esc_html__('Локальный индекс очищен, но API вернул ошибку. Проверьте подключение к Cherry Vector API.', 'cherrylink'));
+                self::notice('notice-warning', \esc_html__('Не удалось удалить данные из API. Проверьте подключение к Cherry Vector API.', 'cherrylink'));
             }
         }
 

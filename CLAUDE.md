@@ -18,10 +18,11 @@ namespaced, autoloaded, DI-wired layout under `src/` (PSR-4 `CherryLink\`),
 without changing runtime behavior. See the staged plan in
 `.claude/plans/humming-hopping-parasol.md`.
 
-- **Entry:** `cherrylink_main.php` (~70 lines) — plugin header, the public
-  `linkate_posts()` template tag (delegates to `Editor\SuggestionsResults`),
-  requires `vendor/autoload.php`, then calls `\CherryLink\Plugin::boot(__FILE__)`.
-  It also loads Action Scheduler + the GitHub update checker. No plugin logic.
+- **Entry:** `cherrylink_main.php` — plugin header, requires `vendor/autoload.php`,
+  then calls `\CherryLink\Plugin::boot(__FILE__)`. It also loads Action Scheduler
+  + the GitHub update checker. No plugin logic. (The public `linkate_posts()`
+  template tag was removed in `16d0387`; rendered output lives in
+  `Editor\SuggestionsResults`.)
 - **Bootstrap:** `src/Plugin.php` — defines the API runtime constants
   (`Api\Relay::defineConstants()`), constructs the shared `Options` + `License`,
   and registers services implementing `Contracts\Registerable` (each hooks itself
@@ -259,7 +260,6 @@ docker compose up -d
 - **`data-suggestions` escaping**: classic editor uses `htmlspecialchars(ENT_COMPAT)` (HTML attribute safe); Gutenberg JSON-in-JSON uses `str_replace('"', '\\"', ...)` — these are different code paths in `src/Editor/SuggestionsResults.php`
 - **Tab PNG icons**: `assets/gutenberg/tab-links.png`, `tab-taxonomies.png`, `tab-stats.png`
 - **`linkate_scheme_exists` option**: repurposed flag — means "Cherry Vector API is configured and accessible", NOT that a MySQL table exists (that table was migrated to Postgres on the API)
-- **`linkate_posts` MySQL table**: still used by `CustomFields\Cf` for the custom-fields index — do not drop
 - **Scan is incremental**: diffs current published posts against `GET /v1/documents/manifest` by `post_modified_gmt`, re-embeds only changed posts, builds their links via `POST /v1/links/parse-batch`, and prunes orphans via `POST /v1/documents/delete-batch`. The diff is a pure, unit-tested helper: `Indexing\IndexHelpers::compute_sync_plan()` (see `tests/Unit/SyncPlanTest.php`).
 - **Scan runs in the background via Action Scheduler** (`src/Indexing/SyncService.php`, bundled `vendor/woocommerce/action-scheduler`). Start it and leave the page — a self-rescheduling `cherrylink_sync_worker` action processes one batch (upsert→links→prune) and enqueues the next. AJAX: `linkate_sync_start` / `linkate_sync_cancel` / `linkate_sync_status`; JS (`cherry-admin-index.js`) starts it, polls status, and has a Stop button. Progress/worklists live in options `cherrylink_sync_state` / `cherrylink_sync_plan`. Cancel flags the state AND cancels pending actions by ID (`as_unschedule_all_actions([])` only matches arg-less actions). Needs WP-Cron enabled (or a server cron / `wp action-scheduler run`) to advance without traffic.
 - **Async queue status**: the durable backend queue routes exist but async writes

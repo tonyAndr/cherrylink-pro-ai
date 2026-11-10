@@ -657,13 +657,29 @@ final class SyncService implements Registerable
             ? \as_has_scheduled_action(self::HOOK, null, self::GROUP)
             : null;
 
-        // Async runs report their own persisted state, mapped onto the same shape
-        // the admin UI already reads, plus the accepted/applied distinction.
-        if ($this->asyncActive() || ($this->async !== null && $this->async->getState()['status'] === 'done')) {
-            $state = \array_merge($state, $this->async->statusForUi());
+        \wp_send_json($this->mergeAsyncStatus($state));
+    }
+
+    /**
+     * Overlay the durable run's state onto the sync status shape.
+     *
+     * Every non-idle async state is merged — including `error`, `cancelled` and
+     * `completed_with_errors`, which previously fell through and made the admin
+     * panel look idle while the run was dead.
+     *
+     * @param array<string,mixed> $state
+     * @return array<string,mixed>
+     */
+    public function mergeAsyncStatus(array $state): array
+    {
+        if ($this->async === null) {
+            return $state;
+        }
+        if ($this->async->getState()['status'] === 'idle') {
+            return $state;
         }
 
-        \wp_send_json($state);
+        return \array_merge($state, $this->async->statusForUi());
     }
 
     /**

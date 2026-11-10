@@ -416,7 +416,8 @@ final class OutboxDeliveryTest extends TestCase
     {
         $repo = Mockery::mock(Repository::class);
         $repo->shouldReceive('claim')->never();
-        $repo->shouldReceive('reclaimExpired')->never();
+        // Lease recovery is ordering state, not API work: it still runs while paused.
+        $repo->shouldReceive('reclaimExpired')->once()->andReturn(1);
 
         // Real Capabilities (final service): cache-only, so a stubbed transient is
         // enough to describe the "acceptance unavailable" state.

@@ -14,7 +14,9 @@ if (defined('ABSPATH') && defined('WP_UNINSTALL_PLUGIN')) {
 	delete_option('cherrylink_async_run');
 	delete_option('cherrylink_async_plan');
 	delete_option('cherrylink_async_tenant');
-	delete_option('cherrylink_capabilities');
+	// Capabilities are cached in a transient, not an option.
+	delete_option('_transient_cherrylink_capabilities');
+	delete_option('_transient_timeout_cherrylink_capabilities');
 	delete_option('cherrylink_index_dirty');
 
 	// Remove the durable async-indexing outbox (schema + rows + version marker).

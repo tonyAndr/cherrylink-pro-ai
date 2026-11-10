@@ -283,7 +283,7 @@ final class AsyncBulkScanTest extends TestCase
     {
         $repo = Mockery::mock(Repository::class);
         $repo->shouldReceive('sourceEpoch')->andReturn('epoch-1');
-        $repo->shouldReceive('allocateRevision')->andReturn(900);
+        $repo->shouldReceive('allocateRevision')->andReturn(900, 901);
         $repo->shouldReceive('enqueue')->andReturn(7);
         $repo->shouldReceive('get')->andReturnUsing(static function ($id) {
             return ['id' => $id, 'source_revision' => 555];
@@ -297,7 +297,7 @@ final class AsyncBulkScanTest extends TestCase
     {
         $test = $this;
         $capture = Mockery::mock(Capture::class);
-        $capture->shouldReceive('allocateRunMarker')->andReturn(7);
+        $capture->shouldReceive('allocateRunMarker')->never();
         $capture->shouldReceive('repository')->andReturnUsing(static function () use ($test) {
             return $test->repo();
         });
@@ -490,6 +490,19 @@ final class AsyncBulkScanTest extends TestCase
         $this->assertTrue((bool) $this->state()['force_full']);
     }
 
+    public function testManifestDoesNotWriteAnOutboxRunMarker(): void
+    {
+        $service = $this->service();
+        $this->seedRun(['phase' => 'manifest']);
+        $this->published = [['ID' => '1', 'post_modified_gmt' => '2026-01-01 00:00:00']];
+
+        $service->worker('manifest', 0, 0, false, 'scan-1');
+
+        // A marker row would later be delivered as a second createRun (ghost run).
+        $this->assertSame('create', $this->state()['phase']);
+        $this->assertSame(900, (int) $this->state()['source_revision'], 'marker is a plain revision');
+    }
+
     // ── 2. Idempotent retries ───────────────────────────────────────────────
 
     public function testRetryReusesThePersistedBatchInsteadOfRebuilding(): void
@@ -520,6 +533,34 @@ final class AsyncBulkScanTest extends TestCase
             \array_column($this->sentDocuments[0]['docs'], 'content_hash')
         );
         $this->assertArrayNotHasKey(AsyncBulkScan::BATCH, $this->options);
+    }
+
+    public function testCursorIsPersistedBeforeTheBatchIsReleased(): void
+    {
+        // A crash between acknowledging and advancing must replay the *persisted*
+        // batch, so the cursor write has to happen first.
+        $service = $this->service();
+        $this->seedRun();
+        $this->options[AsyncBulkScan::PLAN] = ['upsert' => [1, 2], 'delete' => []];
+
+        $failNextStateWrite = true;
+        $original = Functions\when('update_option');
+        Functions\when('update_option')->alias(function ($key, $value) use (&$failNextStateWrite) {
+            if ($key === AsyncBulkScan::STATE && $failNextStateWrite) {
+                $failNextStateWrite = false;
+                throw new \RuntimeException('database went away');
+            }
+            $this->options[$key] = $value;
+            return true;
+        });
+
+        $service->worker('upload', 0, 0, false, 'scan-1');
+
+        // The turn failed while persisting the cursor, so the batch must still exist
+        // for an idempotent replay.
+        $this->assertArrayHasKey(AsyncBulkScan::BATCH, $this->options, 'batch must survive a crashed cursor write');
+        $this->assertSame('error', $this->state()['status']);
+        unset($original);
     }
 
     public function testRetryDoesNotReReadThePost(): void
@@ -690,6 +731,34 @@ final class AsyncBulkScanTest extends TestCase
         $this->assertNotEmpty($this->enqueued);
         $this->assertSame($persisted['phase'], $this->enqueued[0]['args']['phase']);
         $this->assertSame((int) $persisted['cursor'], (int) $this->enqueued[0]['args']['cursor']);
+    }
+
+    public function testPollSuccessClearsTheRetryCounterSoPollingContinues(): void
+    {
+        $service = $this->service();
+        $this->seedRun(['phase' => 'poll', 'retry_attempt' => 1, 'sealed' => true, 'run_id' => 'run-1']);
+
+        // The retry callback that just succeeded carries attempt = 1.
+        $service->worker('poll', 0, 1, false, 'scan-1');
+
+        $this->assertSame(0, (int) $this->state()['retry_attempt'], 'retry counter must reset');
+        $next = end($this->scheduled);
+        $this->assertIsArray($next);
+        $this->assertSame(0, (int) $next['args']['attempt']);
+
+        // The follow-up poll must now be accepted rather than rejected as stale.
+        $this->calls = [];
+        $service->worker('poll', 0, 0, false, 'scan-1');
+        $this->assertContains('status', $this->calls, 'the scheduled poll must run');
+    }
+
+    public function testManualPauseIsNotResurrectedByTheSweep(): void
+    {
+        $service = $this->service();
+        $this->seedRun(['status' => 'paused', 'waiting' => false]);
+
+        $this->assertFalse($service->sweep());
+        $this->assertSame([], $this->enqueued);
     }
 
     public function testSweepIsQuietWhenATurnIsAlreadyQueued(): void

@@ -420,6 +420,9 @@ class AsyncBulkScan implements Registerable
         if ($state['waiting']) {
             return $this->enqueue('probe', 0, 0);
         }
+        if ($state['status'] !== 'running') {
+            return false;   // manual pause: the user must resume explicitly
+        }
 
         return $this->enqueue((string) $state['phase'], (int) $state['cursor'], (int) $state['retry_attempt']);
     }
@@ -561,21 +564,17 @@ class AsyncBulkScan implements Registerable
         }
         \update_option(self::PLAN, $plan, false);
 
-        $capture  = $this->capture();
-        $marker   = $snapshot
-            ? $capture->allocateRunMarker(
-                (string) $state['client_run_key'],
-                'snapshot',
-                \count($plan['upsert']),
-                $this->digestFor($plan['upsert'])
-            )
-            : $capture->allocateRunMarker((string) $state['client_run_key'], 'incremental');
+        $capture = $this->capture();
 
+        // The run marker is a *revision* only. Writing it as an outbox row would let
+        // Delivery create a second run later: a replayed key in the happy path, but an
+        // orphaned accepting run after a restart or a later scan, which then blocks
+        // every subsequent createRun.
         $this->advance($state, 'create', 0, [
             'mode'            => $snapshot ? 'snapshot' : 'incremental',
             'force_full'      => $snapshot,
             'source_epoch'    => $capture->repository()->sourceEpoch(),
-            'source_revision' => $this->markerRevision($marker),
+            'source_revision' => $capture->repository()->allocateRevision(),
             'upsert_total'    => \count($plan['upsert']),
             'delete_total'    => \count($plan['delete']),
             'cursor'          => 0,
@@ -680,8 +679,8 @@ class AsyncBulkScan implements Registerable
             return;
         }
 
-        $this->deleteBatch();
         $this->advancePastSlice($state, $plan, $offset, \count($slice), (int) $result['accepted_count']);
+        $this->deleteBatch();
     }
 
     /** @param array<string,mixed> $state */
@@ -740,8 +739,8 @@ class AsyncBulkScan implements Registerable
             return;
         }
 
-        $this->deleteBatch();
         $this->advancePastDeletes($state, $plan, $offset, \count($slice), (int) $result['accepted_count'], 0);
+        $this->deleteBatch();
     }
 
     /** @param array<string,mixed> $state */
@@ -792,6 +791,7 @@ class AsyncBulkScan implements Registerable
         $this->setState([
             'phase'         => 'poll',
             'cursor'        => 0,
+            'retry_attempt' => 0,
             'poll_attempt'  => $attempt,
             'next_poll_gmt' => \gmdate('Y-m-d H:i:s', \time() + $delay),
             'progress'      => $progress,
@@ -1038,13 +1038,6 @@ class AsyncBulkScan implements Registerable
         \sort($ids);
 
         return \hash('sha256', \implode("\n", $ids));
-    }
-
-    private function markerRevision(int $markerRowId): int
-    {
-        $row = $this->capture()->repository()->get($markerRowId);
-
-        return (int) ($row['source_revision'] ?? 0);
     }
 
     /** @param array<string,mixed> $state */

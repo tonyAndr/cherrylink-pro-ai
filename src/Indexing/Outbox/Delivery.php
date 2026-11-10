@@ -192,6 +192,10 @@ class Delivery implements Registerable
      */
     public function run(): array
     {
+        // Reclaim first: expired leases are ordering state, not API work, so this must
+        // happen even while acceptance is unavailable.
+        $this->repository->reclaimExpired();
+
         // While acceptance is disabled or the API is unreachable, keep rows durable
         // and idle: retrying now would burn attempts and dead-letter real work.
         if ($this->capabilities !== null && ! $this->capabilities->asyncAvailable()) {
@@ -200,8 +204,6 @@ class Delivery implements Registerable
                 'deferred' => 0, 'dead' => 0, 'paused' => 1,
             ];
         }
-
-        $this->repository->reclaimExpired();
 
         $rows      = $this->repository->claim(self::claimLimit(), self::LEASE_SECONDS);
         $delivered = 0;

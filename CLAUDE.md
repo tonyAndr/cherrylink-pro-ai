@@ -124,8 +124,8 @@ Read `specs/plugin-reports.md` before changing this path.
   stores `ops_plugin_reports` and exposes version/runtime on the admin sites and
   activity routes. Scan progress is still not reported.
 - Implemented 2026-11-11 and pushed on `refactor/plugin-modernization`; 238 PHP
-  tests / 654 assertions pass, PHPStan clean, PHPCS no errors. No plugin release.
-  Local wp-dev evidence and revert commands are in `.wp-dev-versions/README.md`.
+  tests / 654 assertions pass, PHPStan clean, PHPCS no errors. Released as
+  plugin v1.2.0. Local wp-dev evidence and revert commands are in `.wp-dev-versions/README.md`.
 
 ## Dev tooling & tests
 

@@ -294,6 +294,7 @@ final class SyncServiceTest extends TestCase
                 'status'    => 400,
                 'error'     => 'invalid payload',
             ]));
+        $api->shouldReceive('log_error')->once();
 
         $this->service($api)->worker('upsert', 0, 0);
 

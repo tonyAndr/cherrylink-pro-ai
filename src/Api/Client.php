@@ -79,16 +79,19 @@ class Client implements ReportClient
             }
         }
         $options        = \get_option('linkate-posts', []);
-        // Auth-key priority: wp-config constant (for dev) → explicit API-key setting →
-        // the license key. NO hardcoded fallback — an unconfigured site sends nothing and
-        // the API correctly refuses. Never ship the server ADMIN_KEY in plugin code.
+        // Prefer the saved customer license. An old explicit API key (wp-config
+        // constant or the expert setting) must not shadow a real license: production
+        // disables the server's admin-license bypass, so sending a leftover admin key
+        // makes every tenant request return HTTP 403 customer_license_required.
+        // The explicit key remains a fallback for license-less/local installations.
+        $explicit_key = '';
         if (\defined('CHERRY_VECTOR_API_KEY') && CHERRY_VECTOR_API_KEY !== '') {
-            $this->license_key = CHERRY_VECTOR_API_KEY;
+            $explicit_key = (string) CHERRY_VECTOR_API_KEY;
         } elseif (!empty($options['vector_api_key'])) {
-            $this->license_key = $options['vector_api_key'];
-        } else {
-            $this->license_key = $options['hash_field'] ?? '';
+            $explicit_key = (string) $options['vector_api_key'];
         }
+        $saved_license    = \trim((string) ($options['hash_field'] ?? ''));
+        $this->license_key = $saved_license !== '' ? $saved_license : $explicit_key;
         // Stable site identity: derive from home_url() (a stored WP option), NOT $_SERVER['HTTP_HOST'].
         // HTTP_HOST varies by how the request arrives (localhost vs 127.0.0.1) and is absent in
         // cron/WP-CLI, which would scatter documents across different API buckets. The HTTP_HOST
@@ -900,12 +903,13 @@ class Client implements ReportClient
         $raw     = \wp_remote_retrieve_body($response);
         $decoded = \json_decode($raw, true);
         $ok      = $code >= 200 && $code < 300;
+        $body = \is_array($decoded) ? $decoded : (\strlen($raw) > 300 ? \substr($raw, 0, 300) . '…' : $raw);
         return [
             'ok'        => $ok,
             'ms'        => $ms,
             'http_code' => $code,
-            'error'     => $ok ? '' : ('HTTP ' . $code),
-            'body'      => \is_array($decoded) ? $decoded : (\strlen($raw) > 300 ? \substr($raw, 0, 300) . '…' : $raw),
+            'error'     => $ok ? '' : self::http_error($code, $body),
+            'body'      => $body,
         ];
     }
 
@@ -1027,7 +1031,7 @@ class Client implements ReportClient
             'status'      => $code,
             'headers'     => $response_headers,
             'body'        => $body_response,
-            'error'       => $ok ? '' : ('HTTP ' . $code),
+            'error'       => $ok ? '' : self::http_error($code, $body_response),
             'retry_after' => self::parse_retry_after($response_headers['retry-after'] ?? null),
         ];
     }
@@ -1056,6 +1060,23 @@ class Client implements ReportClient
         }
 
         return (int) $value;
+    }
+
+    /**
+     * Human-readable HTTP failure, including a safe API detail string.
+     *
+     * @param array<string,mixed>|string|null $body
+     */
+    private static function http_error(int $code, $body): string
+    {
+        $error = 'HTTP ' . $code;
+        if (\is_array($body) && isset($body['detail']) && \is_scalar($body['detail'])) {
+            $detail = \trim((string) \preg_replace('/\s+/', ' ', \strip_tags((string) $body['detail'])));
+            if ($detail !== '') {
+                $error .= ': ' . \substr($detail, 0, 160);
+            }
+        }
+        return $error;
     }
 
     /**

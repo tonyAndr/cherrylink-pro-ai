@@ -70,11 +70,11 @@ jQuery(document).ready(function ($) {
 
     // Pull fresh readiness data after a scan and update the card in place (no page reload).
     var cl_status_refresh_inflight = false;
-    function sync_refresh_status() {
+    function sync_refresh_status(force) {
         if (cl_status_refresh_inflight) return;
         cl_status_refresh_inflight = true;
         $.ajax({
-            type: "POST", url: ajaxurl, dataType: 'json', data: 'action=linkate_index_status_data&_ajax_nonce=' + cherry_ajax.nonce,
+            type: "POST", url: ajaxurl, dataType: 'json', data: 'action=linkate_index_status_data&_ajax_nonce=' + cherry_ajax.nonce + (force ? '&force=1' : ''),
             timeout: 6000,
             success: function (d) {
                 if (!d) return;
@@ -320,10 +320,16 @@ jQuery(document).ready(function ($) {
         $.ajax({
             type: 'POST', url: ajaxurl, dataType: 'json', data: 'action=cherrylink_server_status&_ajax_nonce=' + cherry_ajax.nonce,
             timeout: 9000,
-            success: function (d) { cl_srv_render(d); },
+            success: function (d) {
+                cl_srv_render(d);
+                // The manual check also invalidates the readiness snapshot; refresh the
+                // card so a cached "no connection" cannot survive the successful probe.
+                sync_refresh_status(true);
+            },
             error: function (x, t, err) {
                 console.log('[CherryLink] server status request failed:', err);
                 cl_srv_render(null);
+                sync_refresh_status(true);
             },
             complete: function () {
                 cl_srv_check_inflight = false;

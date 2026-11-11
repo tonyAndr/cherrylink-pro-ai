@@ -599,6 +599,11 @@ final class SyncService implements Registerable
                 'failed_phase'     => $phase,
                 'failed_offset'    => $offset,
             ]));
+            // Terminal failures must be visible in the API journal. The previous code
+            // only logged exceptions, so a 4xx (for example a rejected API key) looked
+            // like silence in the operator panel. Best-effort: the same auth outage can
+            // also block /v1/logs.
+            $api->log_error($message, 'php_index', 0, 'error', 'status=' . (int)($result['status'] ?? 0));
             return;
         }
 

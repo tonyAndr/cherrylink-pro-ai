@@ -30,6 +30,9 @@ final class IndexHooks implements Registerable
     /** Transient holding the last readiness snapshot. */
     public const STATUS_CACHE_KEY = 'cl_status_cache';
 
+    /** Transient holding the manually requested server diagnostics. */
+    public const SERVER_STATUS_CACHE_KEY = 'cl_server_status_cache';
+
     /** Counts older than this (seconds) get a background refresh. */
     public const STATUS_STALE_S = 300;
 
@@ -221,32 +224,39 @@ final class IndexHooks implements Registerable
     public function ajaxStatusData(): void
     {
         Security::verify('edit_posts');
-        \wp_send_json(self::statusData(true));
+        // The manual "Проверить связь" path sends force=1. It must not be short-circuited
+        // by the 30-second negative cache; an administrator expects a real probe.
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- gated by Security::verify()
+        $force = !empty($_POST['force']);
+        \wp_send_json(self::statusData(true, $force));
     }
 
     public function ajaxServerStatus(): void
     {
         Security::verify('edit_posts');
-        $cached = \get_transient('cl_server_status_cache');
-        if (
-            \is_array($cached) && !empty($cached['generated_at'])
-            && \time() - (int) \strtotime($cached['generated_at']) < 30
-        ) {
-            $data = $cached;
+        // The button is an explicit manual check, so always discard the previous
+        // diagnostics/readiness snapshots and probe now. A negative diagnostic cached
+        // from a transient network failure must not survive the user's retry.
+        self::clearStatusCaches();
+        $token = RequestLock::acquire('cl_server_probe_lock', 15);
+        if ($token === null) {
+            $data = ['pending' => true];
         } else {
-            $token = RequestLock::acquire('cl_server_probe_lock', 15);
-            if ($token === null) {
-                $data = \is_array($cached) ? $cached : ['pending' => true];
-            } else {
-                try {
-                    $data = (new Client())->diagnostics();
-                    \set_transient('cl_server_status_cache', $data, HOUR_IN_SECONDS);
-                } finally {
-                    RequestLock::release('cl_server_probe_lock', $token);
-                }
+            try {
+                $data = (new Client())->diagnostics();
+                \set_transient(self::SERVER_STATUS_CACHE_KEY, $data, HOUR_IN_SECONDS);
+            } finally {
+                RequestLock::release('cl_server_probe_lock', $token);
             }
         }
         \wp_send_json($data);
+    }
+
+    /** Drop both readiness and diagnostics snapshots after a manual retry or update. */
+    public static function clearStatusCaches(): void
+    {
+        \delete_transient(self::STATUS_CACHE_KEY);
+        \delete_transient(self::SERVER_STATUS_CACHE_KEY);
     }
 
     // ── Readiness status payload (shared by settings render + AJAX refresh) ────
@@ -306,10 +316,14 @@ final class IndexHooks implements Registerable
      *
      * @return array<string,mixed>
      */
-    public static function statusData(bool $refresh = false): array
+    public static function statusData(bool $refresh = false, bool $force = false): array
     {
         $meta  = \get_option('linkate_posts_meta', []);
         $local = self::statusLocal($meta);
+
+        if ($refresh && $force) {
+            self::clearStatusCaches();
+        }
 
         if (! $refresh) {
             $cached = \get_transient(self::STATUS_CACHE_KEY);
@@ -337,7 +351,8 @@ final class IndexHooks implements Registerable
 
         $previous = \get_transient(self::STATUS_CACHE_KEY);
         if (
-            \is_array($previous) && ($previous['reachable'] ?? null) === false
+            ! $force
+            && \is_array($previous) && ($previous['reachable'] ?? null) === false
             && !empty($previous['checked_gmt'])
             && \time() - (int) \strtotime($previous['checked_gmt'] . ' UTC') < 30
         ) {

@@ -98,7 +98,7 @@ final class ApiClientTest extends TestCase
         $this->assertSame('mysite.ru', $headers['X-Site-Domain']);
     }
 
-    public function testAuthKeyPrefersVectorApiKeyOverLicense(): void
+    public function testAuthKeyPrefersSavedLicenseOverExplicitApiKey(): void
     {
         Functions\when('get_option')->justReturn([
             'vector_api_key' => 'EXPLICIT_KEY',
@@ -108,7 +108,30 @@ final class ApiClientTest extends TestCase
 
         (new Client())->get_count();
 
+        // Production disables admin-license bypass; a leftover explicit key must not
+        // shadow the customer license.
+        $this->assertSame('LICENSE123', $this->captured['args']['headers']['X-License-Key']);
+    }
+
+    public function testAuthKeyFallsBackToExplicitApiKeyWithoutLicense(): void
+    {
+        Functions\when('get_option')->justReturn(['vector_api_key' => 'EXPLICIT_KEY']);
+        $this->mockHttp(['count' => 1]);
+
+        (new Client())->get_count();
+
         $this->assertSame('EXPLICIT_KEY', $this->captured['args']['headers']['X-License-Key']);
+    }
+
+    public function testHttpErrorIncludesSafeApiDetail(): void
+    {
+        Functions\when('get_option')->justReturn(['hash_field' => 'LICENSE123']);
+        $this->mockHttp(['detail' => 'customer_license_required'], 403);
+
+        $result = (new Client())->request_result('GET', '/v1/documents/count');
+
+        $this->assertFalse($result['ok']);
+        $this->assertSame('HTTP 403: customer_license_required', $result['error']);
     }
 
     public function testReportPluginEventsPostsBoundedBatchInBackgroundContext(): void

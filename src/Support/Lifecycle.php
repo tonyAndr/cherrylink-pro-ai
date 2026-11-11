@@ -7,6 +7,7 @@ namespace CherryLink\Support;
 use CherryLink\Contracts\Registerable;
 use CherryLink\Indexing\AsyncBulkScan;
 use CherryLink\Indexing\IndexHelpers;
+use CherryLink\Indexing\IndexHooks;
 use CherryLink\Indexing\Outbox\Delivery;
 use CherryLink\Indexing\Outbox\Schema;
 use CherryLink\Indexing\SyncService;
@@ -70,6 +71,7 @@ final class Lifecycle implements Registerable
     {
         $this->license->install();
         Schema::install();
+        IndexHooks::clearStatusCaches();
         if ($this->capabilities !== null) {
             $this->capabilities->forget();
         }
@@ -161,6 +163,7 @@ final class Lifecycle implements Registerable
         if (\get_transient('cherrylink_updated') && \current_user_can('update_plugins')) {
             $this->license->install();
             Schema::install();
+            IndexHooks::clearStatusCaches();
             if ($this->capabilities !== null) {
                 $this->capabilities->forget();
             }

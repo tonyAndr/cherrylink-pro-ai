@@ -19,6 +19,7 @@ final class LicenseTest extends TestCase
     {
         parent::setUp();
         Monkey\setUp();
+        Functions\when('delete_transient')->justReturn(true);
         Functions\when('wp_remote_retrieve_response_code')->alias(static function ($response) {
             return $response['response']['code'] ?? 0;
         });

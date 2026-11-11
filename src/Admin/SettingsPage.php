@@ -109,6 +109,7 @@ final class SettingsPage implements Registerable
             $options['vector_api_url'] = \trim(\esc_url_raw(\wp_unslash($_POST['vector_api_url'] ?? '')));
             $options['vector_api_key'] = \sanitize_text_field(\wp_unslash($_POST['vector_api_key'] ?? ''));
             \update_option('linkate-posts', $options);
+            IndexHooks::clearStatusCaches();
             self::notice('notice-success', \esc_html__('Настройки Vector API сохранены', 'cherrylink'));
         }
 
@@ -135,6 +136,7 @@ final class SettingsPage implements Registerable
             $previous_key = (string) ($options['hash_field'] ?? '');
             $options = Acf::optionsFromPost($options, ['hash_field']);
             \update_option('linkate-posts', $options);
+            IndexHooks::clearStatusCaches();
             $scheduled = $license->scheduleValidation(true, $previous_key !== (string) ($options['hash_field'] ?? ''));
             self::notice(
                 $scheduled ? 'notice-success' : 'notice-error',

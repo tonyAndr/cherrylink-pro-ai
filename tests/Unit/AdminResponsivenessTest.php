@@ -133,6 +133,15 @@ final class AdminResponsivenessTest extends TestCase
         $this->assertSame(18, $data['scheme_rows']);
     }
 
+    public function testClearStatusCachesDropsReadinessAndDiagnosticsSnapshots(): void
+    {
+        Functions\expect('delete_transient')->once()->with(IndexHooks::STATUS_CACHE_KEY)->andReturn(true);
+        Functions\expect('delete_transient')->once()->with(IndexHooks::SERVER_STATUS_CACHE_KEY)->andReturn(true);
+
+        IndexHooks::clearStatusCaches();
+        $this->addToAssertionCount(1);
+    }
+
     /** @return array<string,mixed> */
     private function snapshot(bool $reachable, int $indexRows, int $schemeRows, int $age): array
     {

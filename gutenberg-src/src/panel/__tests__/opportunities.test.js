@@ -52,10 +52,11 @@ describe('relevance', () => {
         expect(relevance(undefined)).toBeNull();
         expect(relevance(0)).toBeNull();
     });
-    it('lifts the list by half the best match gap to 100', () => {
-        // best 0.885 -> 50 -> lift 25: best shows 75, a 0.82 neighbour shows 25
+    it('scales the list so the best match closes half its gap to 100', () => {
+        // best 0.885 -> 50 -> shown 75 (x1.5); a half-as-relevant neighbour stays half; noise stays 0
         expect(relevance(0.885, 0.885)).toBe(75);
-        expect(relevance(0.82, 0.885)).toBe(25);
+        expect(relevance(0.8525, 0.885)).toBe(38);
+        expect(relevance(0.82, 0.885)).toBe(0);
         expect(relevance(0.99, 0.99)).toBe(100);
     });
 });

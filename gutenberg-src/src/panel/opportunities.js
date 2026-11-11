@@ -54,13 +54,14 @@ const REL_HIGH = 0.95;
 const calibrate = (s) => 100 * Math.min(1, Math.max(0, (s - REL_LOW) / (REL_HIGH - REL_LOW)));
 /**
  * Vector score -> 0..100 relevance for display; null when the API sent no score.
- * `top` = best raw score in the same list: every value is lifted by half the best match's gap to 100,
- * so the best match reads high and the rest keep their distance from it.
+ * `top` = best raw score in the same list. The list is scaled so the best match closes half its gap to
+ * 100 ((100 - best) / 2 + best); scaling (not adding) keeps unrelated articles at 0 and the ratios intact.
  */
 export function relevance(score, top = score) {
     if (typeof score !== 'number' || !(score > 0)) return null;
-    const lift = (100 - calibrate(Math.max(score, top || 0))) / 2;
-    return Math.round(Math.min(100, calibrate(score) + lift));
+    const best = calibrate(Math.max(score, top || 0));
+    if (best === 0) return 0;
+    return Math.round(Math.min(100, calibrate(score) * ((100 + best) / 2 / best)));
 }
 
 /** Best raw score among items (for relevance()'s `top`). */

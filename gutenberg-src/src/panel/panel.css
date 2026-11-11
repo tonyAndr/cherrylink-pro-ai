@@ -65,10 +65,12 @@
 .cl-seg button[aria-pressed="true"] { background: var(--cl-text); color: var(--cl-surface); }
 .cl-back { justify-self: start; }
 
-.cl-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 8px; align-items: center; padding: 8px 10px; border: 1px solid var(--cl-border); border-radius: var(--cl-radius); background: var(--cl-surface); color: inherit; text-align: left; }
+.cl-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 8px; align-items: start; padding: 8px 10px; border: 1px solid var(--cl-border); border-radius: var(--cl-radius); background: var(--cl-surface); color: inherit; text-align: left; }
 .cl-linkrow { width: 100%; cursor: pointer; grid-template-columns: minmax(0, 1fr); }
 .cl-linkrow:hover { border-color: var(--cl-accent-line); }
 .cl-row .cl-t { font-size: 13px; }
+.cl-rowside { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.cl-rowside .cl-rel { margin: 0; }
 .cl-rowact { display: flex; gap: 6px; align-items: center; }
 .cl-iconlink { display: inline-flex; color: var(--cl-muted); padding: 3px; border-radius: 4px; }
 .cl-iconlink:hover { color: var(--cl-accent); }

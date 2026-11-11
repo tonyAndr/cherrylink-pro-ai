@@ -13,3 +13,6 @@ js/index-rtl.css
 dev/vendor/
 dev/composer.lock
 .phpunit.result.cache
+# Python seed scripts
+__pycache__/
+*.pyc

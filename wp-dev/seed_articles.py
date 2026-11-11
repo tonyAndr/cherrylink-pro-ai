@@ -1,16 +1,18 @@
 #!/usr/bin/env python3
 """
-Seed 100 diverse Russian articles into WordPress via WP-CLI (docker exec).
+Seed 87 diverse Russian articles into WordPress via WP-CLI (docker exec).
 The plugin's wp_insert_post hook will automatically index each post to the vector API.
 
 Usage:
     python3 wp-dev/seed_articles.py
 """
+import os
 import subprocess
 import sys
 
-CONTAINER = "wp-dev-wordpress-1"
-WP = "wp --allow-root --path=/var/www/html"
+# The WordPress image has no wp binary; the cron/wpcli sidecar does.
+CONTAINER = os.environ.get("WP_CONTAINER", "wp-dev-cron-1")
+WP_BASE = ["wp", "--allow-root", "--path=/var/www/html"]
 
 ARTICLES = [
     # SEO
@@ -383,39 +385,56 @@ ARTICLES = [
 ]
 
 
-def run_wpcli(args: str) -> tuple[int, str, str]:
-    cmd = f'docker exec {CONTAINER} wp --allow-root --path=/var/www/html {args}'
-    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+def run_wp(args: list[str]) -> tuple[int, str, str]:
+    """Run WP-CLI in the sidecar that actually has the wp binary."""
+    result = subprocess.run(
+        ["docker", "exec", CONTAINER, *WP_BASE, *args],
+        capture_output=True,
+        text=True,
+    )
     return result.returncode, result.stdout.strip(), result.stderr.strip()
 
 
 def get_existing_count() -> int:
-    code, out, _ = run_wpcli("post list --post_status=publish --post_type=post --format=count")
+    code, out, _ = run_wp(["post", "list", "--post_status=publish", "--post_type=post", "--format=count"])
     return int(out) if code == 0 and out.isdigit() else 0
 
 
+def find_post_id(slug: str) -> int | None:
+    code, out, _ = run_wp(["post", "list", f"--name={slug}", "--post_type=post", "--post_status=any", "--format=ids"])
+    if code != 0 or not out.strip():
+        return None
+    try:
+        return int(out.split()[0])
+    except ValueError:
+        return None
+
+
 def create_post(title: str, slug: str, content: str) -> bool:
+    existing = find_post_id(slug)
+    if existing is not None:
+        print(f"  = [{existing}] already present: {title}")
+        return True
+
     # Wrap content in <p> tags so the plugin sends proper HTML to the vector API
     html_content = '<p>' + '</p><p>'.join(
         s.strip() for s in content.split('. ') if s.strip()
     ) + '</p>'
 
-    cmd = (
-        f'post create'
-        f' --post_title="{title}"'
-        f' --post_name="{slug}"'
-        f' --post_status=publish'
-        f' --post_type=post'
-        f' --post_content="{html_content.replace(chr(34), chr(39))}"'
-    )
-    code, out, err = run_wpcli(cmd)
+    code, out, err = run_wp([
+        "post", "create",
+        f"--post_title={title}",
+        f"--post_name={slug}",
+        "--post_status=publish",
+        "--post_type=post",
+        f"--post_content={html_content}",
+    ])
     if code == 0:
         post_id = out.split()[-1].rstrip('.')
         print(f"  ✓ [{post_id}] {title}")
         return True
-    else:
-        print(f"  ✗ {title}: {err[:80]}")
-        return False
+    print(f"  ✗ {title}: {err[:160]}")
+    return False
 
 
 def main():

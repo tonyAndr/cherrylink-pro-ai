@@ -1,6 +1,6 @@
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import { IconExternal, IconEdit } from './icons';
-import { isRowLinked } from './opportunities';
+import { isRowLinked, relevance } from './opportunities';
 
 const keepSelection = (e) => e.preventDefault();
 
@@ -39,7 +39,7 @@ export default function PostList({
                     <div className="cl-row" key={r.post_id}>
                         <div>
                             <div className="cl-t">{r.title}</div>
-                            <div className="cl-meta">↑ {r.out} {__('исх', 'cherrylink')} · ↓ {r.in} {__('вх', 'cherrylink')}</div>
+                            <div className="cl-meta"><Rel score={r.score} />↑ {r.out} {__('исх', 'cherrylink')} · ↓ {r.in} {__('вх', 'cherrylink')}</div>
                         </div>
                         <div className="cl-rowact">
                             {linked ? (
@@ -76,5 +76,18 @@ export function Skeleton() {
         <>
             {[0, 1, 2].map((i) => <div key={i} className="cl-skel" aria-hidden="true" />)}
         </>
+    );
+}
+
+/** Small relevance meter; renders nothing without a score. */
+export function Rel({ score }) {
+    const pct = relevance(score);
+    if (pct === null) return null;
+    const tier = pct >= 60 ? 'hi' : pct >= 30 ? 'mid' : 'lo';
+    return (
+        <span className={`cl-rel cl-rel-${tier}`} title={sprintf(__('Релевантность %1$d%% (сходство %2$s)', 'cherrylink'), pct, score.toFixed(3))}>
+            <b aria-hidden="true"><i style={{ width: `${pct}%` }} /></b>
+            {pct}%
+        </span>
     );
 }

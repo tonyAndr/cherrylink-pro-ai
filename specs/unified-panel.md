@@ -114,8 +114,11 @@ New service `Editor\PanelApi` (Registerable). All actions: `Security::verify('ed
 | `cherrylink_panel_donor_insert` | donor_id, target_id, phrase, block_index | `{ undo_token }` |
 | `cherrylink_panel_donor_undo` | donor_id, undo_token | `{}` |
 
-`Row = { post_id, title, url, view_url, edit_url, out, in, saturated, linked?: false, open, close,
-suggestions: [{ phrase, context, block_index }] }`. Links pipeline = today's
+`Row = { post_id, score, title, url, view_url, edit_url, out, in, saturated, linked?: false, open, close,
+suggestions: [{ phrase, context, block_index }] }`. `score` is the raw API cosine;
+the panel shows it as a relevance meter (`relevance()` in `opportunities.js` rescales the E5 band
+0.82–0.95 to 0–100%; tiers ≥60 green, ≥30 amber) on «Все статьи» rows and on suggestion cards (the
+target article's score — anchors carry no score of their own). Recalibrate if the embedding model changes. Links pipeline = today's
 `SuggestionsResults` filtering (status, type, category match, exclusions, private, max incoming,
 offset/limit) refactored to return structured rows; query = `query` if given, else title +
 plain text of `source_html`, else saved content. Call `/v1/search` with `source_html` (live),

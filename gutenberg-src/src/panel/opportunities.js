@@ -46,3 +46,13 @@ export const isRowLinked = (row, links) => {
     const set = new Set(links.map((l) => normalizeUrl(l.url)));
     return set.has(normalizeUrl(row.url)) || (!!row.view_url && set.has(normalizeUrl(row.view_url)));
 };
+
+// ponytail: E5 cosine sits in ~0.82 (unrelated) .. ~0.95 (near-duplicate) on real sites, so raw % would
+// read "83%" for noise. Linear rescale of that band; recalibrate if the embedding model changes.
+const REL_LOW = 0.82;
+const REL_HIGH = 0.95;
+/** Vector score -> 0..100 relevance for display; null when the API sent no score. */
+export function relevance(score) {
+    if (typeof score !== 'number' || !(score > 0)) return null;
+    return Math.round(100 * Math.min(1, Math.max(0, (score - REL_LOW) / (REL_HIGH - REL_LOW))));
+}

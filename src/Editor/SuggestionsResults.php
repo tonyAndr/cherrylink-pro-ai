@@ -103,6 +103,7 @@ final class SuggestionsResults
             }
             $items[] = [
                 'post_id'     => $id,
+                'score'       => \round((float) ($api_row['score'] ?? 0), 4),
                 'title'       => \html_entity_decode((string) \get_the_title($id), ENT_QUOTES | ENT_HTML5, 'UTF-8'),
                 'url'         => LinkFields::url($option_key, $result),
                 'view_url'    => (string) \get_permalink($id),

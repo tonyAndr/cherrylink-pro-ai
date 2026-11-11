@@ -1,4 +1,4 @@
-import { buildOpportunities, hiddenKey, normalizeUrl } from '../opportunities';
+import { buildOpportunities, hiddenKey, normalizeUrl, relevance } from '../opportunities';
 
 const sug = (phrase, block_index = 0) => ({ phrase, context: `x [${phrase}] y`, block_index });
 const row = (id, suggestions, url = `http://s.test/p${id}/`) => ({ post_id: id, title: `T${id}`, url, suggestions });
@@ -40,5 +40,16 @@ describe('buildOpportunities', () => {
 describe('normalizeUrl', () => {
     it('treats absolute and relative same-page urls as equal', () => {
         expect(normalizeUrl('http://a.test/foo/')).toBe(normalizeUrl('/foo'));
+    });
+});
+
+describe('relevance', () => {
+    it('rescales the E5 band and clamps', () => {
+        expect(relevance(0.82)).toBe(0);
+        expect(relevance(0.885)).toBe(50);
+        expect(relevance(0.99)).toBe(100);
+        expect(relevance(0.5)).toBe(0);
+        expect(relevance(undefined)).toBeNull();
+        expect(relevance(0)).toBeNull();
     });
 });

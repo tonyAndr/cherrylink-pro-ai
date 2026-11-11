@@ -12,8 +12,13 @@ phase 3 (done 2026-11-11).
 ## 1. UX
 
 Header: cherry logo + "CherryLink" (Classic host only; the Gutenberg `PluginSidebar` title "CherryLink" is the header). Under it a **strip**: `Исходящих N · Входящих M` (counts are
-buttons that open the **Ссылки** view) plus at most one chip: if incoming = 0 and donors exist →
-warn chip "Нет входящих · K статьи могут сослаться" (opens Входящие tab); else if outgoing > 0 → ok chip.
+buttons that open the **Ссылки** view) plus at most one chip from `linkAdvice(words, out, in)`
+(Strip.js; soft heuristics, not a Google rule). From 100 live words the outgoing count shows a recommended
+range `N/min–max`, min = max(1, ⌊words/300⌋), max = max(1, ⌈words/200⌉). Chip priority:
+incoming = 0 → warn "Нет входящих · K статьи могут сослаться" (opens Входящие; static "Нет входящих
+ссылок" without donors); outgoing < min → warn "Мало исходящих · нужно min–max" (opens Подсказки);
+outgoing > max(3, ⌈words/100⌉) → static warn "Много ссылок"; incoming < 3 → soft "Мало входящих"
+(opens Входящие); else outgoing > 0 → ok "Ссылок достаточно". Word count updates with the editor.
 
 Tabs:
 1. **Подсказки** (default, badge = count). Cards: context snippet with the phrase marked, `→ target

@@ -8,7 +8,7 @@ The editor panel is one React app shared by the Gutenberg sidebar, the Classic e
 tree were removed in phase 3.
 
 ## Summary
-- Strip under the header: `Исходящих N · Входящих M` (open the Ссылки view) + one status chip.
+- Strip under the header: `Исходящих N · Входящих M` (open the Ссылки view) + one status chip (link-count advice, see unified-panel.md).
 - Tabs: **Подсказки** (cards, insert at phrase, alternatives, hide/restore, undo), **Все статьи**
   (switch Статьи | Рубрики; topic search, optional category filter, `Вставить` = link the selection),
   **Входящие** (donor articles; insert is written into the donor server side, with undo).

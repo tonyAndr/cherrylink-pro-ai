@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useMemo, useCallback } from '@wordpress/el
 import { __, sprintf } from '@wordpress/i18n';
 import { createApi } from './api';
 import { buildOpportunities, normalizeUrl } from './opportunities';
-import Strip from './Strip';
+import Strip, { countWords } from './Strip';
 import Tabs from './Tabs';
 import OpportunityList from './OpportunityList';
 import PostList, { Skeleton } from './PostList';
@@ -57,7 +57,8 @@ export default function App({ adapter, config, onClose, headProps }) {
     const [toast, setToast] = useState(null);
 
     const seq = useRef({ base: 0, filt: 0 });
-    const refreshLinks = useCallback(() => setLinks(adapter.listLinks()), [adapter]);
+    const [words, setWords] = useState(() => countWords(adapter.getText()));
+    const refreshLinks = useCallback(() => { setLinks(adapter.listLinks()); setWords(countWords(adapter.getText())); }, [adapter]);
     const say = (message, undo = false) => setToast({ message, undo, id: Date.now() });
 
     useEffect(() => adapter.onChange(refreshLinks), [adapter, refreshLinks]);
@@ -296,7 +297,7 @@ export default function App({ adapter, config, onClose, headProps }) {
     return (
         <div className="cl-panel">
             {head}
-            <Strip out={links.length} inc={inc} donorCount={donorCount}
+            <Strip out={links.length} inc={inc} words={words} donorCount={donorCount} onGoSuggestions={() => { setView(null); setTab('opp'); }}
                 onLinks={(section) => setView({ section })} onGoIncoming={() => { setView(null); setTab('in'); }} />
             <Tabs tabs={tabs} current={view ? '' : tab} onChange={(t) => { setView(null); setTab(t); }} />
             <div className="cl-body">{body}</div>

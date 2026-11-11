@@ -6,6 +6,7 @@ namespace CherryLink\Api;
 
 use CherryLink\Indexing\IndexHelpers;
 use CherryLink\Support\Logger;
+use CherryLink\Support\Language;
 use WP_Post;
 
 /**
@@ -215,7 +216,7 @@ class Client implements ReportClient
             'title'        => $post->post_title,
             'text'         => $this->build_text($post),
             'url'          => \get_permalink($post->ID),
-            'lang'         => 'ru',
+            'lang'         => Language::forPost((int) $post->ID),
             'content_hash' => $this->content_hash($post),
             'modified_gmt' => $post->post_modified_gmt,
         ];
@@ -269,7 +270,7 @@ class Client implements ReportClient
             'title'        => $title,
             'text'         => $text,
             'url'          => (string) ($url ?: ''),
-            'lang'         => 'ru',
+            'lang'         => Language::forPost((int) $row['post_id']),
             'content_hash' => \md5($text . '|' . $title),
             'modified_gmt' => (string) $row['post_modified_gmt'],
             'link_html'    => $content,
@@ -291,9 +292,11 @@ class Client implements ReportClient
      * @param string $query        Search text (current post title + content).
      * @param string $source_html  Raw HTML of the current post (for anchor suggestions).
      * @param int    $limit        Maximum number of results.
+     * @param string $lang         Optional language code of the current post.
+     * @param int    $suggestion_hits Top hits that get anchor suggestions (0..20); -1 keeps the API default.
      * @return array|null          Array of results or null on failure.
      */
-    public function search(string $query, string $source_html = '', int $limit = 20): ?array
+    public function search(string $query, string $source_html = '', int $limit = 20, string $lang = '', int $suggestion_hits = -1): ?array
     {
         $body = [
             'query' => $query,
@@ -306,6 +309,12 @@ class Client implements ReportClient
         if (!empty($source_html)) {
             $body['source_html'] = $source_html;
         }
+        if ($lang !== '') {
+            $body['lang'] = $lang;
+        }
+        if ($suggestion_hits >= 0) {
+            $body['suggestion_hits'] = \min(20, $suggestion_hits);
+        }
 
         $response = $this->request('POST', '/v1/search', $body);
         return $response['results'] ?? null;
@@ -315,16 +324,24 @@ class Client implements ReportClient
      * On-demand anchor suggestions for a single target article (fetched when the editor
      * expands a hit's suggestion panel). Returns a list of suggestion arrays.
      */
-    public function suggest_anchors(string $source_html, string $target_title, int $limit = 10): array
+    public function suggest_anchors(string $source_html, string $target_title, int $limit = 10, string $lang = '', int $target_post_id = 0): array
     {
         if (empty($source_html) || empty($target_title)) {
             return [];
         }
-        $response = $this->request('POST', '/v1/suggest-anchors', [
+        $body = [
             'source_html'  => $source_html,
             'target_title' => $target_title,
             'limit'        => $limit,
-        ], 60);
+        ];
+        if ($lang !== '') {
+            $body['lang'] = $lang;
+        }
+        // Lets the API mix the target's stored document vector into the ranking.
+        if ($target_post_id > 0) {
+            $body['target_post_id'] = $target_post_id;
+        }
+        $response = $this->request('POST', '/v1/suggest-anchors', $body, 60);
         return $response['suggestions'] ?? [];
     }
 
@@ -372,7 +389,7 @@ class Client implements ReportClient
                 'title'        => $post->post_title,
                 'text'         => $this->build_text($post),
                 'url'          => \get_permalink($post->ID),
-                'lang'         => 'ru',
+                'lang'         => Language::forPost((int) $post->ID),
                 'content_hash' => $this->content_hash($post),
                 'modified_gmt' => $post->post_modified_gmt,
             ];

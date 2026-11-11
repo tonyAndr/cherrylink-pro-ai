@@ -33,7 +33,7 @@ final class PluginMeta
      * invalidates the browser cache. Falls back to the plugin version if the file can't
      * be stat'd.
      *
-     * @param string $rel path relative to the plugin dir, e.g. 'js/cherry-front.js'
+     * @param string $rel path relative to the plugin dir, e.g. 'js/cherry-classic.js'
      */
     public static function assetVer(string $rel): string
     {

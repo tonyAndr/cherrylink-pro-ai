@@ -71,9 +71,18 @@ final class Debugger implements Registerable
             \wp_send_json(['links' => \__('(ID записи не указан)', 'cherrylink'), 'count' => 0]);
         }
 
-        $data = SuggestionsResults::execute('manual_ID=' . $post_id . '&is_term=0&offset=0&mode=gutenberg&custom_text=&');
+        $data  = SuggestionsResults::rows(['post_id' => (int) $post_id]);
+        $items = \array_map(static function (array $row): array {
+            return [
+                'post_id'     => $row['post_id'],
+                'title'       => $row['title'],
+                'url'         => $row['url'],
+                'suggestions' => \count($row['suggestions']),
+            ];
+        }, $data['items']);
 
-        \wp_send_json($data);
+        // `links` stays a JSON string: the debug panel JS parses it to report the hit count.
+        \wp_send_json(['links' => \wp_json_encode($items, JSON_UNESCAPED_UNICODE), 'count' => \count($items)]);
     }
 
     // Raw TCP-connect probe to each hop we care about, run FROM this server. Distinguishes

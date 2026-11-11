@@ -5,37 +5,13 @@ declare(strict_types=1);
 namespace CherryLink\Editor;
 
 /**
- * Builds the {tag} => value map for one search result — the data the two link-card
- * templates (templates/link-card/*.php) are filled with via strtr(). Ported verbatim
- * from the legacy cherrylink_output_tags.php (deleted). The render golden-master test
- * reproduces the original linkate_otf_* {tag}-dispatch via a test fixture
- * (tests/fixtures/legacy-output-tags.php) and asserts it matches forResult().
+ * Per-result field getters (url with the relative-link setting, title, categories, date,
+ * author, image, excerpt) used by LinkMarkup and the panel rows.
  *
  * @phpstan-type Result \stdClass
  */
 final class LinkFields
 {
-    /**
-     * Build the {tag} => value map for one result.
-     *
-     * @param \stdClass $result
-     * @return array<string,mixed>
-     */
-    public static function forResult(string $option_key, $result): array
-    {
-        return [
-            '{url}'           => self::url($option_key, $result),
-            '{title}'         => self::title($option_key, $result),
-            '{categorynames}' => self::categoryNames($option_key, $result),
-            '{date}'          => self::date($option_key, $result),
-            '{author}'        => self::author($option_key, $result),
-            '{postid}'        => self::postId($option_key, $result),
-            '{imagesrc}'      => self::imageSrc($option_key, $result),
-            '{anons}'         => self::anons($option_key, $result),
-            '{suggestions}'   => self::suggestions($option_key, $result),
-        ];
-    }
-
     /** @param \stdClass $result */
     public static function postId(string $option_key, $result): int
     {
@@ -112,12 +88,6 @@ final class LinkFields
         $excerpt = \htmlspecialchars($excerpt, ENT_QUOTES, 'UTF-8'); // for json
         $excerpt = $excerpt . '...';
         return $excerpt;
-    }
-
-    /** @param \stdClass $result */
-    public static function suggestions(string $option_key, $result): string
-    {
-        return \trim($result->suggestions);
     }
 
     /** @param \stdClass $result */

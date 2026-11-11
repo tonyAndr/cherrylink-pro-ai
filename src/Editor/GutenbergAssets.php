@@ -43,8 +43,16 @@ final class GutenbergAssets implements Registerable
         \wp_register_script(
             'cherrylink-gutenberg',
             CHERRYLINK_DIR_URL . 'js/cherry-gutenberg.js',
-            $asset_file['dependencies'],
+            // The bundle reads wp.richText / wp.editor / wp.editPost as globals; the build's
+            // dependency extraction can't see them, so declare the handles explicitly.
+            \array_values(\array_unique(\array_merge($asset_file['dependencies'], ['wp-rich-text', 'wp-editor', 'wp-edit-post', 'wp-block-editor']))),
             $asset_file['version']
+        );
+        $post = \get_post();
+        \wp_add_inline_script(
+            'cherrylink-gutenberg',
+            PanelConfig::inlineScript(PanelConfig::build($this->options, 'gutenberg', $post ? (int) $post->ID : 0)),
+            'before'
         );
         \wp_localize_script('cherrylink-gutenberg', 'ajax_var', [
             'url'   => 'admin-ajax.php',

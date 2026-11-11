@@ -22,11 +22,12 @@ class CopyToJsPlugin {
         compiler.hooks.afterEmit.tap( 'CopyToJsPlugin', ( compilation ) => {
             const src = path.resolve( __dirname, 'build' );
             const dest = path.resolve( __dirname, '../js' );
-            const copyMap = {
-                'cherry-gutenberg.js': 'cherry-gutenberg.js',
-                'cherry-gutenberg.asset.php': 'cherry-gutenberg.asset.php',
-                'index.css': 'cherry-gutenberg.css',
-            };
+            const copyMap = {};
+            for ( const name of [ 'cherry-gutenberg', 'cherry-classic' ] ) {
+                for ( const ext of [ 'js', 'asset.php', 'css' ] ) {
+                    copyMap[ `${ name }.${ ext }` ] = `${ name }.${ ext }`;
+                }
+            }
             for ( const [ srcFile, destFile ] of Object.entries( copyMap ) ) {
                 try {
                     fs.copyFileSync( path.join( src, srcFile ), path.join( dest, destFile ) );
@@ -41,9 +42,13 @@ class CopyToJsPlugin {
 module.exports = {
     ...defaultConfig,
     module: { ...defaultConfig.module, rules },
+    entry: {
+        'cherry-gutenberg': path.resolve( __dirname, 'src/index.js' ),
+        'cherry-classic': path.resolve( __dirname, 'src/classic.js' ),
+    },
     output: {
         ...defaultConfig.output,
-        filename: 'cherry-gutenberg.js',
+        filename: '[name].js',
         path: path.resolve( process.cwd(), 'build' ),
     },
     plugins: [

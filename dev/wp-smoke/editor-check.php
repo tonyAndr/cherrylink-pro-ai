@@ -44,14 +44,14 @@ if ($status === 0) {
 // 3. The full editor pipeline returns a result array (no fatal, valid shape).
 $post_id = (int) (get_posts(['numberposts' => 1, 'post_status' => 'publish', 'fields' => 'ids'])[0] ?? 0);
 smoke_check('a published post exists', $post_id > 0);
-$data = SuggestionsResults::execute('manual_ID=' . $post_id . '&is_term=0&mode=gutenberg&');
+$data = SuggestionsResults::rows(['post_id' => $post_id]);
 smoke_check(
     'editor pipeline returns the expected shape without a fatal',
-    \array_key_exists('links', $data) && \is_int($data['count'] ?? null),
-    'count=' . var_export($data['count'] ?? null, true)
+    \is_array($data['items'] ?? null) && \is_bool($data['has_more'] ?? null),
+    'items=' . \count((array) ($data['items'] ?? []))
 );
-if ((int) $data['count'] < 0) {
-    WP_CLI::log('note  count=-1 means "no results" (the API is not configured here)');
+if (! $data['items']) {
+    WP_CLI::log('note  no rows (the API is not configured here or returned no hits)');
 }
 
 // 4. No PHP warnings during the option merge (AJAX has no post loop).

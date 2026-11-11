@@ -99,6 +99,7 @@ final class Plugin
             new \CherryLink\Statistics\StatisticsService(),
             new \CherryLink\Csv\CsvService(),
             new \CherryLink\Editor\ClassicPanel($this->options),
+            new \CherryLink\Editor\PanelApi($this->options),
             new \CherryLink\Debug\Debugger(),
             $license,
             new \CherryLink\Support\Lifecycle($license, $capabilities, $reports),

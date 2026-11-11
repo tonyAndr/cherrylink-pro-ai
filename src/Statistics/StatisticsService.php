@@ -9,6 +9,7 @@ use CherryLink\Api\Client;
 use CherryLink\Contracts\Registerable;
 use CherryLink\Csv\CsvService;
 use CherryLink\Editor\ClassicPanel;
+use CherryLink\Support\Language;
 
 /**
  * The in-editor link statistics + the admin link-scheme reports (forward/backward
@@ -417,7 +418,7 @@ final class StatisticsService implements Registerable
 
         $api = new Client();
         // Ask for a few extra hits — we drop the orphan itself and any non-published posts.
-        $hits = $api->search($orphan_title, '', 8);
+        $hits = $api->search($orphan_title, '', 8, Language::forPost($post_id));
         if (empty($hits)) {
             \wp_send_json(['donors' => []]);
         }
@@ -439,7 +440,7 @@ final class StatisticsService implements Registerable
             $source_html = ClassicPanel::buildSourceHtml($src->post_content);
 
             // Best single anchor phrase inside this donor that points at the orphan.
-            $suggestions = $api->suggest_anchors($source_html, $orphan_title, 1);
+            $suggestions = $api->suggest_anchors($source_html, $orphan_title, 1, Language::forPost($post_id), $post_id);
             $anchor      = ! empty($suggestions) ? ($suggestions[0]['phrase'] ?? '') : '';
             $context     = ! empty($suggestions) ? ($suggestions[0]['context'] ?? '') : '';
 

@@ -17,42 +17,19 @@ npm run start        # dev watcher — same copy on every rebuild
 Always do a clean build before committing: `rm -rf build && npm run build`
 
 ## Architecture
+Superseded by `specs/unified-panel.md`. Current layout:
 ```
-src/index.js                    ← registers Gutenberg plugin + sidebar
-src/sidebar/
-  Wrapper.js                    ← top-level, manages tab state
-  TabsPanel.js                  ← Links / Taxonomies / Stats tabs
-  Suggestions/SuggestionsPanel.js ← search results + anchor suggestions
-  Tab_Stats/StatsTab.js         ← link graph stats
-  HOC/
-    withLinkInsert.js           ← inserts <a> into focused RichText block
-    scrollToEditor.js           ← finds + scrolls to block by URL/phrase
-    withPostMeta.js             ← reads/writes post meta
+src/index.js                    <- registers the Gutenberg plugin + PluginSidebar ("CherryLink")
+src/classic.js                  <- Classic/term host (separate bundle)
+src/panel/                      <- shared React app
+src/adapters/                   <- EditorAdapter implementations
+src/adapters/gutenberg/         <- blockUtils.js, cherryRichText.js, scrollToEditor.js, Icons.js
 ```
-
-## Key patterns
-
-### Scroll to block
-Uses block data store — NOT the DOM:
-```js
-import { findBlocksWithUrl, scrollToBlockInEditor } from '../HOC/scrollToEditor';
-const clientIds = findBlocksWithUrl(url); // scans wp.data block store for url in attributes
-scrollToBlockInEditor(clientId, phrase);  // scrolls to block + highlights phrase in iframe
-```
-
-### Link insertion
-`withLinkInsert.js` wraps selected text using the RichText format type API — not `document.execCommand`. Registers a format type that inserts `<a href="url">selected text</a>` into the focused block's content.
-
-### Data fetching
-`src/sidebar/Data/GetData.js` — `POST admin-ajax.php?action=get_linkate_links` — link list for the current post
-`src/sidebar/Data/GetIncomingLinks.js` — `POST admin-ajax.php?action=linkate_generate_json` — incoming links to this post
-`src/sidebar/Data/GetArticleStats.js` — parses `core/editor` post content via regex; subscribes to content changes
-`src/sidebar/Data/GetAllTerms.js` — `POST admin-ajax.php?action=get_linkate_terms`
+The former `src/sidebar/` tree (tabs, Wrapper, `Data/*`, `get_linkate_links`) was deleted.
 
 ### Tests
-Unit tests live in `gutenberg-src/src/sidebar/**/__tests__/` and `HOC/__tests__/`.
+Jest tests live in `gutenberg-src/src/{panel,adapters}/**/__tests__/`.
 Run with: `cd gutenberg-src && npm test -- --watchAll=false`
-All 21 tests pass. Jest config: `gutenberg-src/jest.config.js` (overrides wp-scripts defaults to add babel-transform + exclude setup.js from test discovery).
 
 ## Acceptance criteria
 - [x] Sidebar panel loads and CSS renders correctly

@@ -1,0 +1,48 @@
+/** Normalise a URL to path+query so absolute and relative links to the same page compare equal. */
+export function normalizeUrl(u) {
+    if (!u) return '';
+    try {
+        const x = new URL(u, 'http://cl.invalid');
+        return x.pathname.replace(/\/+$/, '') + x.search;
+    } catch (e) {
+        return String(u).replace(/\/+$/, '');
+    }
+}
+
+export const hiddenKey = (postId, phrase) => `${postId}|${phrase}`;
+
+/**
+ * One phrase -> one target. Targets are visited in rank order and each takes its first suggestion
+ * whose phrase is not already used, not already a link anchor, and not hidden. A target already
+ * linked from the text gets no card. Alternatives = other unlinked targets offering the same phrase.
+ *
+ * @param {Array} rows   server rows { post_id, url, view_url?, suggestions:[{phrase,context,block_index}] }
+ * @param {{links?: Array<{url,anchor}>, hidden?: Set<string>}} state
+ * @returns {Array<{ suggestion, targets: Row[] }>}
+ */
+export function buildOpportunities(rows, { links = [], hidden = new Set() } = {}) {
+    const linkedUrls = new Set(links.map((l) => normalizeUrl(l.url)));
+    const linkedTexts = new Set(links.map((l) => String(l.anchor || '').toLowerCase()));
+    const isLinked = (r) => linkedUrls.has(normalizeUrl(r.url)) || (r.view_url && linkedUrls.has(normalizeUrl(r.view_url)));
+    const used = new Set();
+    const out = [];
+    for (const t of rows) {
+        if (isLinked(t)) continue;
+        const free = (t.suggestions || []).filter((s) => {
+            const p = s.phrase.toLowerCase();
+            return !used.has(p) && !linkedTexts.has(p) && !hidden.has(hiddenKey(t.post_id, s.phrase));
+        });
+        if (!free.length) continue;
+        const s = free[0];
+        const p = s.phrase.toLowerCase();
+        used.add(p);
+        const alts = rows.filter((o) => o !== t && !isLinked(o) && (o.suggestions || []).some((x) => x.phrase.toLowerCase() === p));
+        out.push({ suggestion: s, targets: [t, ...alts] });
+    }
+    return out;
+}
+
+export const isRowLinked = (row, links) => {
+    const set = new Set(links.map((l) => normalizeUrl(l.url)));
+    return set.has(normalizeUrl(row.url)) || (!!row.view_url && set.has(normalizeUrl(row.view_url)));
+};

@@ -64,8 +64,9 @@ without changing runtime behavior. See the staged plan in
 | Post save/delete hooks + readiness payload | `src/Indexing/IndexHooks.php` |
 | Background scan (Action Scheduler worker) | `src/Indexing/SyncService.php` |
 | Incremental-sync diff (pure, tested) | `src/Indexing/IndexHelpers.php` (ex-`CL_Index_Helpers`) |
-| Classic editor panel + suggestion AJAX | `src/Editor/ClassicPanel.php` |
-| Suggestions pipeline (query→filter→render) | `src/Editor/SuggestionsResults.php`, `Editor/LinkFields.php` |
+| Classic editor integration (media button + bundle enqueue) | `src/Editor/ClassicPanel.php` |
+| Editor panel API (AJAX `cherrylink_panel_*`) + config | `src/Editor/PanelApi.php`, `PanelConfig.php`, `ContentLinker.php`, `DonorFinder.php`, `LinkMarkup.php` |
+| Suggestions pipeline (query→filter→structured rows) | `src/Editor/SuggestionsResults.php::rows()`, `Editor/LinkFields.php` |
 | Gutenberg sidebar enqueue | `src/Editor/GutenbergAssets.php` |
 | Stats / CSV / Terms services | `src/Statistics/`, `src/Csv/`, `src/Terms/` |
 | Settings page (menu, subpages, save handlers) | `src/Admin/SettingsPage.php`, `src/Admin/Subpages.php` |
@@ -73,9 +74,10 @@ without changing runtime behavior. See the staged plan in
 | Debug panel AJAX probes | `src/Debug/Debugger.php` |
 | AJAX nonce+capability guard | `src/Ajax/Security.php` |
 | Templates (escaped HTML) | `templates/**` |
-| Classic editor JS | `js/cherry-front.js` |
+| Classic editor / term panel JS | `js/cherry-classic.js` (**built** from `gutenberg-src/src/classic.js`) |
 | Gutenberg JS | `js/cherry-gutenberg.js` (**built** from `gutenberg-src/` — do not hand-edit) |
-| Styles | `css/cherry-main.css` |
+| Panel spec | `specs/unified-panel.md` |
+| Styles | panel CSS is bundled (`js/cherry-*.css`); `css/cherry-main.css` = media-button icon only |
 | Translations | `languages/` (`.pot` master, `cherrylink-en_US.{po,mo}`, JS `.json`) |
 
 ## Request isolation checkpoint
@@ -167,60 +169,31 @@ format per-request — see `IndexHooks::statusTexts()`).
 
 ## JS Architecture
 
-### Classic editor (`cherry-front.js`)
-All code lives inside `jQuery(document).ready(function($) { ... })`.
+### Unified panel (Gutenberg + Classic + term screen)
+One React app (`gutenberg-src/src/panel/`) serves every host; editor operations sit behind
+`EditorAdapter` (`gutenberg-src/src/adapters/`, contract in `EditorAdapter.md`). Entries:
+`src/index.js` (Gutenberg `PluginSidebar`) -> `js/cherry-gutenberg.js`, `src/classic.js` (floating
+host, toggled by the `#cherrylink-panel-toggle` media button) -> `js/cherry-classic.js`. Config is
+printed as `window.cherrylinkPanel` by `Editor\PanelConfig`; data comes from `Editor\PanelApi`
+(`cherrylink_panel_*` AJAX). The old jQuery panel (`cherry-front.js`) is gone. If
+`js/cherry-classic.js` is missing the Classic panel renders nothing. Read `specs/unified-panel.md`.
 
-**Scope trap:** helper functions defined inside `reLoad_when_data_received()` are NOT accessible from the outer ready scope. `fcl_findPhraseInEditor` and similar must be declared at the outer ready scope level (before `reLoad_when_data_received`).
-
-Key functions:
-- `fcl_findPhraseInEditor(phrase)` — walks TinyMCE text nodes or textarea, selects and scrolls to phrase
-- `fcl_render_api_suggestions(triggerEl, item)` — builds suggestions panel HTML from API data
-- `fcl_enableSuggestionSwitches()` — wires up suggestion item click handlers
-- `fcl_load_incoming_tab()` — loads stats tab (outgoing from editor + incoming from API), one-shot cache via `cl_incoming_loaded`
-- `fcl_isTinyMCE()` — returns true if active editor is TinyMCE (vs textarea)
-- `fcl_getEditorContent()` — gets raw HTML from TinyMCE or textarea
-
-Suggestion item UX:
-- Click on `.cl-api-suggestion-item` → `fcl_findPhraseInEditor(phrase)` (scroll to phrase)
-- Click on `.suggestion-insert` button → find phrase + insert link
-- `.cl-api-suggestion-find` button has been removed
-
-Stats tab:
-- Outgoing: parsed from editor HTML via regex on `<a href>` tags, items have class `cl-stats-outgoing`
-- Incoming: fetched from API via `fcl_fetch_incoming()`
-- Both sections wrapped in `.cl-stats-section` with `.cl-stats-section-title`
-- Clicking an outgoing anchor (`.cl-stats-outgoing .cl-incoming-anchor`) calls `fcl_findPhraseInEditor`
-
-Footer:
-- `.linkate-total-links` hidden entirely when stats tab is active, shown on articles/taxonomy tabs
-- `.cl-footer-incoming` spans are shown/hidden independently
-
-### Gutenberg sidebar (`cherry-gutenberg.js`)
-Built from `gutenberg-src/` (lives inside this repo). Toolchain: `@wordpress/scripts` v32 (webpack 5).
+### Build (`gutenberg-src/`)
+Builds both bundles (`cherry-gutenberg`, `cherry-classic`). Toolchain: `@wordpress/scripts` v32 (webpack 5).
 
 Build + deploy:
 ```bash
 cd gutenberg-src
-npm run build        # CopyToJsPlugin auto-copies JS + CSS + asset.php to ../js/
+npm run build        # postbuild copies the JS + asset.php (CSS is in the bundle files) to ../js/
 npm run start        # dev watcher — same copy on each rebuild
-npm test -- --watchAll=false  # 21 unit tests
+npm test -- --watchAll=false
 ```
 Clean build before committing: `rm -rf build && npm run build`
 
-`webpack.config.js` note: patches `css-loader` with `url: false` so absolute WP runtime paths
-(`/wp-content/plugins/.../assets/gutenberg/*.png`) are not resolved at build time.
-The check uses `/css-loader/` with slashes — `postcss-loader` contains `css-loader` as a substring
-and would otherwise also get patched.
-
-Scroll-to-block uses block data store, not DOM:
-```js
-import { findBlocksWithUrl, scrollToBlockInEditor } from '../HOC/scrollToEditor';
-```
-
-Source layout notes (`gutenberg-src/src/sidebar/`):
-- `HOC/blockUtils.js` — shared `BlockAttributes` map + `flattenBlocks()`. Both `scrollToEditor.js` and `withLinkInsert.js` import from here; do not duplicate.
-- `Data/` — render-less components (`GetData`, `GetAllTerms`, `GetIncomingLinks`, `GetArticleStats`). All fetch calls use `async/await`.
-- Text filtering is server-side (the `custom_text` payload in `GetData.loadData()`). There is no client-side filter in the Gutenberg sidebar.
+Gutenberg-specific helpers (block flattening, RichText link application, scroll-to-block)
+live in `gutenberg-src/src/adapters/gutenberg/`; scroll-to-block uses the block data store, not the DOM.
+The bundle reads `wp-rich-text`/`wp-editor`/`wp-edit-post`/`wp-block-editor` as globals, so they are
+explicit script deps in `Editor\GutenbergAssets`.
 
 ---
 
@@ -236,41 +209,12 @@ The API runtime constants + the alt-server hook live in `\CherryLink\Api\Relay`.
 
 ---
 
-## Classic Editor UI (HTML)
+## Classic Editor UI
 
-`src/Editor/ClassicPanel.php` renders the panel from `templates/editor/classic-panel.php`. Tab structure:
-```html
-<div class="linkate-tabs">
-  <div class="tab tab-articles linkate-tab-selected">  <!-- PNG icon from assets/gutenberg/tab-links.png -->
-  <div class="tab tab-taxonomy">                       <!-- tab-taxonomies.png -->
-  <div class="tab tab-stats">                          <!-- tab-stats.png -->
-</div>
-<div class="container-articles">...</div>
-<div class="container-taxonomy">...</div>
-<div class="container-stats" style="display:none">
-  <div id="cl-incoming-list">...</div>
-</div>
-<div class="linkate-total-links">  <!-- hidden on stats tab -->
-  <div class="total-links-counter">
-    <div>Исходящих</div><div id="links-count-total">?</div>
-    <div class="cl-footer-incoming">Входящих</div>
-    <div id="links-count-targets" class="cl-footer-incoming">?</div>
-  </div>
-</div>
-```
-
-Tab icons use PNG files from `assets/gutenberg/` via `plugins_url()`.
-
----
-
-## Data Attributes on Link Items
-
-Each `.linkate-link` element carries:
-- `data-url` — post permalink
-- `data-title` — H1 title
-- `data-titleseo` → maps to `title_seo` in `fcl_getDataAttrs()`
-- `data-suggestions` — JSON string (HTML-escaped with `htmlspecialchars(ENT_COMPAT)` for classic editor, backslash-escaped for Gutenberg JSON-in-JSON)
-- `data-category`, `data-date`, `data-author`
+`src/Editor/ClassicPanel.php` adds the "CherryLink Pro" media button (`#cherrylink-panel-toggle`)
+and enqueues `js/cherry-classic.{js,css}` on classic post/page and `term.php` screens. The panel
+DOM is rendered by React (`gutenberg-src/src/panel/`); there are no PHP panel templates. See
+`specs/unified-panel.md`.
 
 ---
 
@@ -288,8 +232,6 @@ docker compose up -d
 
 ## Non-obvious Things
 
-- **`data-suggestions` escaping**: classic editor uses `htmlspecialchars(ENT_COMPAT)` (HTML attribute safe); Gutenberg JSON-in-JSON uses `str_replace('"', '\\"', ...)` — these are different code paths in `src/Editor/SuggestionsResults.php`
-- **Tab PNG icons**: `assets/gutenberg/tab-links.png`, `tab-taxonomies.png`, `tab-stats.png`
 - **`linkate_scheme_exists` option**: repurposed flag — means "Cherry Vector API is configured and accessible", NOT that a MySQL table exists (that table was migrated to Postgres on the API)
 - **Scan is incremental**: diffs current published posts against `GET /v1/documents/manifest` by `post_modified_gmt`, re-embeds only changed posts, builds their links via `POST /v1/links/parse-batch`, and prunes orphans via `POST /v1/documents/delete-batch`. The diff is a pure, unit-tested helper: `Indexing\IndexHelpers::compute_sync_plan()` (see `tests/Unit/SyncPlanTest.php`).
 - **Scan runs in the background via Action Scheduler** (`src/Indexing/SyncService.php`, bundled `vendor/woocommerce/action-scheduler`). Start it and leave the page — a self-rescheduling `cherrylink_sync_worker` action processes one batch (upsert→links→prune) and enqueues the next. AJAX: `linkate_sync_start` / `linkate_sync_cancel` / `linkate_sync_status`; JS (`cherry-admin-index.js`) starts it, polls status, and has a Stop button. Progress/worklists live in options `cherrylink_sync_state` / `cherrylink_sync_plan`. Cancel flags the state AND cancels pending actions by ID (`as_unschedule_all_actions([])` only matches arg-less actions). Needs WP-Cron enabled (or a server cron / `wp action-scheduler run`) to advance without traffic.
@@ -304,7 +246,7 @@ docker compose up -d
   structured retry metadata, fail-closed/retryable manifest planning, cursor
   fencing, and 1,000-ID prune chunks; do not duplicate retry ownership in the
   client or Action Scheduler.
-- **Anchor suggestions are lazy/on-demand**: `Editor\SuggestionsResults::execute()` calls `/v1/search` with an empty `source_html` (no eager anchors, no top-5 cap). When the editor opens a hit's suggestion panel (loupe), it calls the `get_linkate_suggestions` AJAX action → `Api\Client::suggest_anchors()` → `POST /v1/suggest-anchors` for that one target. Wired in both editors: Gutenberg `SugestionsPanel.componentDidMount` fetches; classic `fcl_render_api_suggestions` fetches (both show a loading state, cache per target). `Editor\ClassicPanel::buildSourceHtml()` wraps plain-text content in `<p>` for the extractor.
+- **Anchor suggestions**: `Editor\SuggestionsResults::rows()` calls `/v1/search` with the live `source_html` and `suggestion_hits` (`min(10, limit)`), so suggestions come with each row; donors use one `Api\Client::suggest_anchors()` (`POST /v1/suggest-anchors`) per donor in `Editor\DonorFinder`. `Editor\ClassicPanel::buildSourceHtml()` wraps plain-text content in `<p>` for the extractor.
 - **Updates**: no CI; clients auto-update via the bundled Plugin Update Checker (v4.9), wired in `cherrylink_main.php` to this GitHub repo. Ship a new version by publishing a GitHub Release whose tag matches the `Version:` header, with the packaged plugin zip attached as a release asset.
 - **Logging** (`\CherryLink\Support\Logger`): writes to PHP error log; in wp-dev: `docker compose logs wordpress`
 

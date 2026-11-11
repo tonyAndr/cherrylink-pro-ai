@@ -44,6 +44,7 @@ final class IndexHooksAsyncTest extends TestCase
         $this->updates = [];
         $this->httpCalls = 0;
 
+        Functions\when('get_locale')->justReturn('ru_RU');
         Functions\when('wp_is_post_revision')->justReturn(false);
         Functions\when('wp_is_post_autosave')->justReturn(false);
         Functions\when('get_post_types')->justReturn([]);

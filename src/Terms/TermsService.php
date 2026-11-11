@@ -9,10 +9,8 @@ use CherryLink\Contracts\Registerable;
 use WP_Term;
 
 /**
- * Builds the taxonomy term trees the editor panels link into — the classic panel's
- * nested HTML list and the Gutenberg sidebar's JSON tree — plus the quick category
- * filters. Ported verbatim from the legacy cherrylink_terms.php (deleted). The
- * classic-panel template calls classicTree() directly.
+ * Builds the taxonomy term tree (JSON) the editor panel links into, plus the flat
+ * category list for its filter. Ported from the legacy cherrylink_terms.php (deleted).
  */
 final class TermsService implements Registerable
 {
@@ -37,67 +35,6 @@ final class TermsService implements Registerable
     }
 
     // ── Classic panel ──────────────────────────────────────────────────────────
-
-    /**
-     * Hierarchical term list (HTML) for the classic CherryLink panel, including tags
-     * and custom taxonomies.
-     *
-     * @param int|string       $category
-     * @param string|array<mixed> $taxonomy
-     */
-    public static function classicTree($category = 0, $taxonomy = []): string
-    {
-        $output_template_item_prefix = '<li><span class="link-counter"  title="' . \esc_attr__('Найдено в тексте / переход к ссылке', 'cherrylink') . '">[ 0 ]</span><div  title="' . \esc_attr__('Нажмите для вставки в текст', 'cherrylink') . '" class="linkate-link link-term" data-url="{url}" data-title="{title}" data-taxonomy="{taxonomy}"><span class="link-title">';
-        $output_template_item_suffix = '</span></div></li>';
-        $list_prefix                 = '<ul class="linkate-terms-list">';
-        $list_suffix                 = '</ul>';
-        $output_tepmlate_devider     = '<li class="linkate-terms-devider">{taxonomy}</li>';
-        $r                           = ''; // tax item
-
-        $next = \get_terms([
-            'parent'     => $category,
-            'taxonomy'   => $taxonomy, // if not empty - looking for children
-            'hide_empty' => false,
-            'orderby'    => 'taxonomy',
-            'order'      => 'ASC',
-        ]);
-
-        if (\is_array($next) && $next) {
-            $r .= $list_prefix;
-
-            foreach ($next as $cat) {
-                if (! $cat instanceof WP_Term || $cat->taxonomy === 'nav_menu') {
-                    continue;
-                }
-
-                $cat_tax = \get_taxonomy($cat->taxonomy);
-
-                // Don't show terms w/o taxonomies or if taxonomy isn't public
-                if ($cat_tax === false || (\is_object($cat_tax) && ! $cat_tax->public)) {
-                    continue;
-                }
-
-                if ($taxonomy !== $cat->taxonomy) { // if next type of taxonomy - add header/divider
-                    $taxonomy = $cat->taxonomy;
-                    // $cat_tax is guaranteed a WP_Taxonomy object past the === false guard above.
-                    $label    = $cat_tax->label;
-                    $r       .= \str_replace('{taxonomy}', $label, $output_tepmlate_devider);
-                }
-                $link = \get_term_link($cat);
-                $r   .= \str_replace(  // item template with values
-                    ['{url}', '{title}', '{taxonomy}'],
-                    [$link, $cat->name, $cat->taxonomy],
-                    $output_template_item_prefix
-                ) . $cat->name . ' (' . $cat->count . ')' . $output_template_item_suffix;
-                // term_id is always a positive int for a real term, so recurse for children.
-                $r   .= self::classicTree($cat->term_id, $taxonomy);
-            }
-
-            $r .= $list_suffix;
-        }
-
-        return $r;
-    }
 
     /**
      * Flat category list (for the classic quick-filter select).

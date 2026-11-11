@@ -13,7 +13,7 @@ namespace CherryLink\Support;
  *  - render(name, data): buffer-and-return an HTML partial. The template file
  *    sees only the extracted $data keys (plus any FQN class/function it calls).
  *  - string(name): `return`-style partials that yield a raw string template
- *    (e.g. the strtr() link-card templates). No output buffering, no data.
+ *    (e.g. strtr()-style templates). No output buffering, no data.
  *
  * Templates apply their own escaping (esc_html/esc_attr/esc_url_raw). Values that
  * intentionally carry markup (link_before/link_after, pre-rendered card HTML) are

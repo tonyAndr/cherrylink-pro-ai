@@ -1,7 +1,7 @@
 # Plugin lifecycle reports
 
 Status: implemented 2026-11-11, pushed on `refactor/plugin-modernization`, and
-released as plugin `v1.2.0`. Queue-only on the request path; the only network
+released as plugin `v1.2.1`. Queue-only on the request path; the only network
 call is a bounded WP-Cron event.
 
 ## Contract

@@ -15,8 +15,8 @@ async protocol or publish a plugin release.
 | Plugin lifecycle report | Activation/update only queues a pending event; one batched POST per bounded retry from WP-Cron, never from a page/save request | Pending option survives outages; five-minute local recovery tick schedules the send |
 | Scan start | Persist manifest phase and enqueue Action Scheduler | Preserve prior plan; report scheduling failure |
 | Scan status / tick | Local status; tick requests async runner dispatch only | WP-Cron remains fallback; never consume queue inline |
-| Readiness AJAX | 2 seconds per API call, 4 seconds shared per client | Preserve cached counts; one cross-request refresh lock; 30-second outage cooldown |
-| Explicit server diagnostics | At most three 2-second probes, 6-second shared deadline | Skip authenticated probes if health fails; 30-second cache and cross-request lock |
+| Readiness AJAX | 2 seconds per API call, 4 seconds shared per client | Preserve cached counts; one cross-request refresh lock; 30-second outage cooldown; a manual force check bypasses both caches |
+| Explicit server diagnostics | At most three 2-second probes, 6-second shared deadline | Manual checks always clear old snapshots and probe; cross-request lock; health failure skips authenticated probes |
 | Editor/statistics AJAX | Interactive Client defaults: 5 seconds per call, 8 seconds shared per client | Existing empty/error UI; no transport-level retry loop |
 | Background synchronous scan | Explicit background Client retains 15/60/120-second route budgets | SyncService owns persisted retries/cursors |
 

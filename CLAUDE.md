@@ -123,9 +123,9 @@ Read `specs/plugin-reports.md` before changing this path.
 - `Api\Client::report_plugin_events()` targets `POST /v1/client-events`; the API
   stores `ops_plugin_reports` and exposes version/runtime on the admin sites and
   activity routes. Scan progress is still not reported.
-- Implemented 2026-11-11 and pushed on `refactor/plugin-modernization`; 238 PHP
-  tests / 654 assertions pass, PHPStan clean, PHPCS no errors. Released as
-  plugin v1.2.0. Local wp-dev evidence and revert commands are in `.wp-dev-versions/README.md`.
+- Implemented 2026-11-11 and pushed on `refactor/plugin-modernization`; 241 PHP
+  tests / 658 assertions pass, PHPStan clean, PHPCS no errors. Released as
+  plugin v1.2.1. Local wp-dev evidence and revert commands are in `.wp-dev-versions/README.md`.
 
 ## Dev tooling & tests
 
@@ -229,7 +229,7 @@ Source layout notes (`gutenberg-src/src/sidebar/`):
 All API calls go through `\CherryLink\Api\Client` (`src/Api/Client.php`, ex-`CherryVectorAPI`).
 The API runtime constants + the alt-server hook live in `\CherryLink\Api\Relay`.
 - API URL: `CHERRY_VECTOR_API_URL` constant in wp-config → admin settings → `https://seocherry.apov.dev` (defined by `Api\Relay::defineConstants()`)
-- Auth key priority: `CHERRY_VECTOR_API_KEY` constant → `vector_api_key` setting → the license key (`hash_field`). A valid license key is normally the only key needed. **Never ship the server ADMIN_KEY in plugin code.**
+- Auth key priority: saved license key (`hash_field`) → `CHERRY_VECTOR_API_KEY` constant → `vector_api_key` setting. The explicit key is a fallback for license-less/local installs; a leftover admin key must not shadow the license. **Never ship the server ADMIN_KEY in plugin code.**
 - Headers sent: `X-License-Key`, `X-Site-Domain`
 - Errors: logged via `\CherryLink\Support\Logger`
 - Alt-server relay: `Api\Relay::resolveAltRoute()` (the `http_api_curl` hook) reroutes requests to `CL_ALT_API_*` when the "Для экспертов" toggle is on (blocked-provider workaround).

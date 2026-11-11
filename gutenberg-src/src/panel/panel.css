@@ -43,7 +43,7 @@
 .cl-target { display: flex; gap: 6px; align-items: baseline; font-size: 13px; }
 .cl-arrow { color: var(--cl-accent); font-weight: 700; }
 .cl-t { font-weight: 600; min-width: 0; overflow-wrap: anywhere; }
-.cl-meta { white-space: nowrap; color: var(--cl-muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.cl-meta { color: var(--cl-muted); font-size: 12px; font-variant-numeric: tabular-nums; }
 .cl-actions { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
 
 .cl-btn { display: inline-flex; align-items: center; gap: 4px; border: 1px solid var(--cl-border); background: var(--cl-surface); color: var(--cl-text); border-radius: 6px; padding: 5px 10px; font-weight: 600; font-size: 12.5px; line-height: 1.3; cursor: pointer; text-decoration: none; }
@@ -63,7 +63,12 @@
 .cl-seg { display: inline-flex; justify-self: start; border: 1px solid var(--cl-border); border-radius: 6px; overflow: hidden; }
 .cl-seg button { border: 0; background: none; padding: 5px 12px; font-weight: 500; font-size: 13px; color: var(--cl-muted); cursor: pointer; }
 .cl-seg button[aria-pressed="true"] { background: var(--cl-text); color: var(--cl-surface); }
-.cl-back { justify-self: start; }
+.cl-btn.cl-ghost.cl-back { justify-self: start; padding-left: 0; color: var(--cl-accent); }
+.cl-btn.cl-ghost.cl-back:hover { color: var(--cl-accent); text-decoration: underline; }
+.cl-minw { min-width: 0; }
+.cl-clip { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cl-anchor-text { color: var(--cl-accent); }
+.cl-section-label .cl-n { margin-left: 2px; text-transform: none; letter-spacing: 0; }
 
 .cl-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 8px; align-items: start; padding: 8px 10px; border: 1px solid var(--cl-border); border-radius: var(--cl-radius); background: var(--cl-surface); color: inherit; text-align: left; }
 .cl-linkrow { width: 100%; cursor: pointer; grid-template-columns: minmax(0, 1fr); }

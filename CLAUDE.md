@@ -58,6 +58,8 @@ without changing runtime behavior. See the staged plan in
 | API constants + alt-server relay hook | `src/Api/Relay.php` |
 | Plugin metadata (version, assetVer, screen check) | `src/Support/PluginMeta.php` |
 | Activation / update / textdomain lifecycle | `src/Support/Lifecycle.php` |
+| Plugin lifecycle report queue/sender | `src/Support/PluginReports.php` |
+| Runtime environment collector | `src/Support/Environment.php` (`specs/plugin-reports.md`) |
 | Settings-page asset enqueue + scan notices | `src/Admin/AdminAssets.php`, `src/Admin/Notices.php` |
 | Post save/delete hooks + readiness payload | `src/Indexing/IndexHooks.php` |
 | Background scan (Action Scheduler worker) | `src/Indexing/SyncService.php` |
@@ -102,6 +104,28 @@ start/cancel/status/tick to it when the tenant is async-capable and otherwise
 keeps the synchronous chain untouched. Remaining work: initial enrollment /
 existing-index reconciliation, the progress UI split, and one live
 WordPress -> API -> worker check.
+
+## Plugin lifecycle reports checkpoint (2026-11-11)
+
+Activation and version changes are reported to the API as bounded milestones
+(`plugin.activated` / `plugin.upgraded`) with an allowlisted runtime snapshot.
+Read `specs/plugin-reports.md` before changing this path.
+
+- `PluginReports` is queue-only on the request path: activation/update write the
+  non-autoloaded `cherrylink_plugin_reports` option; no HTTP from activation,
+  rendering, AJAX or save hooks.
+- The existing five-minute `Capabilities::REFRESH_HOOK` tick detects version
+  changes and recovers pending sends without HTTP. The actual POST is a single
+  `cherrylink_report_send` WP-Cron event: one batch, `RequestLock`, 10-second
+  background-client timeout, bounded backoff (5m/30m/2h/6h, five attempts).
+- `admin_init` stores `cherrylink_web_environment` once per plugin version so
+  cron/WP-CLI reports use Apache/PHP values rather than `cli`.
+- `Api\Client::report_plugin_events()` targets `POST /v1/client-events`; the API
+  stores `ops_plugin_reports` and exposes version/runtime on the admin sites and
+  activity routes. Scan progress is still not reported.
+- Implemented 2026-11-11; 238 PHP tests / 654 assertions pass,
+  PHPStan clean, PHPCS no errors. Local wp-dev evidence and revert commands are
+  in `.wp-dev-versions/README.md`.
 
 ## Dev tooling & tests
 

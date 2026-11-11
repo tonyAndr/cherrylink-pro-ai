@@ -17,7 +17,7 @@ use WP_Post;
  * Api\Relay. Explicit interactive/status/background contexts bound UI requests while
  * preserving long-running background scan transport and structured HTTP results.
  */
-class Client
+class Client implements ReportClient
 {
     /** Maximum results the API accepts for /v1/search (SearchRequest le=50). */
     public const SEARCH_LIMIT_MAX = 50;
@@ -799,6 +799,39 @@ class Client
     }
 
     // ── Error reporting ─────────────────────────────────────────────────────
+
+    /**
+     * Send a bounded batch of queued plugin lifecycle reports.
+     *
+     * Called only from the dedicated WP-Cron send event, never from activation,
+     * rendering or save hooks. The caller owns retries/backoff.
+     *
+     * @param array<int,array<string,mixed>> $events
+     * @return array<string,mixed>|null
+     */
+    public function report_plugin_events(array $events): ?array
+    {
+        $payload = ['events' => []];
+        foreach ($events as $event) {
+            $payload['events'][] = [
+                'event_key'      => (string) ($event['event_key'] ?? ''),
+                'action'         => (string) ($event['action'] ?? ''),
+                'plugin_version' => (string) ($event['plugin_version'] ?? ''),
+                'from_version'   => $event['from_version'] ?? null,
+                'occurred_at'    => (string) ($event['occurred_at'] ?? ''),
+                'environment'    => \is_array($event['environment'] ?? null) ? $event['environment'] : [],
+            ];
+        }
+
+        $result = $this->request_result('POST', '/v1/client-events', $payload, 10);
+        if (! $result['ok']) {
+            $this->logger->log('CherryLink plugin report failed: ' . $result['error']);
+            return null;
+        }
+
+        $body = $result['body'];
+        return \is_array($body) ? \array_merge(['ok' => true], $body) : ['ok' => true];
+    }
 
     /**
      * Push an error/warning event to the API log.

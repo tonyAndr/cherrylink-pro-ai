@@ -33,10 +33,17 @@ final class Lifecycle implements Registerable
     /** @var Capabilities|null Warms the capability cache from cron after activation. */
     private $capabilities;
 
-    public function __construct(License $license, ?Capabilities $capabilities = null)
-    {
+    /** @var PluginReports */
+    private $reports;
+
+    public function __construct(
+        License $license,
+        ?Capabilities $capabilities = null,
+        ?PluginReports $reports = null
+    ) {
         $this->license      = $license;
         $this->capabilities = $capabilities;
+        $this->reports      = $reports ?? new PluginReports($license);
     }
 
     public function register(): void
@@ -76,6 +83,14 @@ final class Lifecycle implements Registerable
             if ((new IndexHelpers())->get_indexable_posts_count() > self::INITIAL_LIMIT) {
                 \set_transient('cherry-manual-indexation-needed', true, 20);
             }
+        }
+
+        // Reporting is queue-only: no HTTP during activation. A failure here must
+        // never block activation, so keep it best-effort.
+        try {
+            $this->reports->recordActivation();
+        } catch (\Throwable $error) {
+            \error_log('CherryLink: could not queue plugin report: ' . $error->getMessage());
         }
     }
 

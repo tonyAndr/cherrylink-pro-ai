@@ -12,6 +12,7 @@ async protocol or publish a plugin release.
 | License form submission / retry | Save local key/state and schedule WP-Cron; no licensing HTTP | Pending notice and retry control; scheduling failure is an error |
 | License background callback | One 5-second call; redirects disabled | Preserve a matching unexpired license on outage; bounded delayed retries |
 | Periodic GitHub update check | Cron/CLI only through the updater filter; dashboard hooks cannot fetch GitHub | Cached update metadata; explicit update actions remain available |
+| Plugin lifecycle report | Activation/update only queues a pending event; one batched POST per bounded retry from WP-Cron, never from a page/save request | Pending option survives outages; five-minute local recovery tick schedules the send |
 | Scan start | Persist manifest phase and enqueue Action Scheduler | Preserve prior plan; report scheduling failure |
 | Scan status / tick | Local status; tick requests async runner dispatch only | WP-Cron remains fallback; never consume queue inline |
 | Readiness AJAX | 2 seconds per API call, 4 seconds shared per client | Preserve cached counts; one cross-request refresh lock; 30-second outage cooldown |

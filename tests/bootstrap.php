@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 /**
  * PHPUnit bootstrap. Loads the dev-only tooling autoloader (Brain Monkey, PHPUnit),
  * defines the constants the legacy plugin files expect at include time, and installs
@@ -10,6 +8,8 @@ declare(strict_types=1);
  * Value-returning WP functions (get_option, get_permalink, …) are NOT stubbed here —
  * tests mock those per-case with Brain Monkey so each test controls its own inputs.
  */
+
+declare(strict_types=1);
 
 $devAutoload = __DIR__ . '/../dev/vendor/autoload.php';
 if (!is_file($devAutoload)) {
@@ -51,3 +51,4 @@ if (is_file($pluginAutoload)) {
 
 require __DIR__ . '/stubs/wp-functions.php';
 require __DIR__ . '/stubs/wp-classes.php';
+require __DIR__ . '/Support/FakeReportClient.php';

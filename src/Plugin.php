@@ -81,6 +81,7 @@ final class Plugin
 
         $capabilities = new \CherryLink\Support\Capabilities();
         $async_scan   = new \CherryLink\Indexing\AsyncBulkScan($this->options, $license, $capabilities);
+        $reports      = new \CherryLink\Support\PluginReports($license);
 
         $this->services = [
             new \CherryLink\Api\Relay(),
@@ -93,13 +94,14 @@ final class Plugin
             $async_scan,
             new \CherryLink\Indexing\Outbox\Delivery(null, null, null, new \CherryLink\Support\Capabilities()),
             new \CherryLink\Support\CapabilitiesRefresh($license, $capabilities),
+            $reports,
             new \CherryLink\Terms\TermsService(),
             new \CherryLink\Statistics\StatisticsService(),
             new \CherryLink\Csv\CsvService(),
             new \CherryLink\Editor\ClassicPanel($this->options),
             new \CherryLink\Debug\Debugger(),
             $license,
-            new \CherryLink\Support\Lifecycle($license, $capabilities),
+            new \CherryLink\Support\Lifecycle($license, $capabilities, $reports),
             new \CherryLink\Admin\SettingsPage(),
         ];
 

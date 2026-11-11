@@ -111,6 +111,30 @@ final class ApiClientTest extends TestCase
         $this->assertSame('EXPLICIT_KEY', $this->captured['args']['headers']['X-License-Key']);
     }
 
+    public function testReportPluginEventsPostsBoundedBatchInBackgroundContext(): void
+    {
+        Functions\when('get_option')->justReturn(['hash_field' => 'LICENSE123']);
+        $this->mockHttp(['accepted' => 1, 'duplicates' => 0]);
+
+        $result = (new Client(null, Client::CONTEXT_BACKGROUND))->report_plugin_events([[
+            'event_key'      => 'evt-00000001',
+            'action'         => 'plugin.upgraded',
+            'plugin_version' => '1.2.0',
+            'from_version'   => '1.1.1',
+            'occurred_at'    => '2026-11-11T09:00:00+00:00',
+            'environment'    => ['wp_version' => '6.5.5', 'multisite' => false],
+        ]]);
+
+        $this->assertTrue($result['ok']);
+        $this->assertSame(1, $result['accepted']);
+        $this->assertSame('https://seocherry.apov.dev/v1/client-events', $this->captured['url']);
+        $this->assertSame('POST', $this->captured['args']['method']);
+        $this->assertSame(10, $this->captured['args']['timeout']);
+        $body = json_decode($this->captured['args']['body'], true);
+        $this->assertSame('evt-00000001', $body['events'][0]['event_key']);
+        $this->assertSame('1.1.1', $body['events'][0]['from_version']);
+    }
+
     public function testNoKeySkipsHttpAndReturnsNull(): void
     {
         Functions\when('get_option')->justReturn([]);
@@ -341,7 +365,10 @@ final class ApiClientTest extends TestCase
             $this->assertSame(2, $args['timeout']);
             $this->assertSame(0, $args['redirection']);
             return new class {
-                public function get_error_message(): string { return 'timeout'; }
+                public function get_error_message(): string
+                {
+                    return 'timeout';
+                }
             };
         });
         $result = (new Client())->diagnostics();

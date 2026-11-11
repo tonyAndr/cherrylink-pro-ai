@@ -1,7 +1,8 @@
 # Plugin lifecycle reports
 
-Status: implemented 2026-11-11 on the local modernization branch. Queue-only on
-the request path; the only network call is a bounded WP-Cron event.
+Status: implemented 2026-11-11 and pushed on `refactor/plugin-modernization`,
+not released. Queue-only on the request path; the only network call is a bounded
+WP-Cron event.
 
 ## Contract
 

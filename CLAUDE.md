@@ -123,9 +123,9 @@ Read `specs/plugin-reports.md` before changing this path.
 - `Api\Client::report_plugin_events()` targets `POST /v1/client-events`; the API
   stores `ops_plugin_reports` and exposes version/runtime on the admin sites and
   activity routes. Scan progress is still not reported.
-- Implemented 2026-11-11; 238 PHP tests / 654 assertions pass,
-  PHPStan clean, PHPCS no errors. Local wp-dev evidence and revert commands are
-  in `.wp-dev-versions/README.md`.
+- Implemented 2026-11-11 and pushed on `refactor/plugin-modernization`; 238 PHP
+  tests / 654 assertions pass, PHPStan clean, PHPCS no errors. No plugin release.
+  Local wp-dev evidence and revert commands are in `.wp-dev-versions/README.md`.
 
 ## Dev tooling & tests
 

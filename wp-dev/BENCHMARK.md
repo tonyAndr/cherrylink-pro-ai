@@ -111,6 +111,25 @@ sales material. Pricing was quoted for reference only.
 | CSV/export | Yes | Verify | Verify | Verify | Verify |
 | Free tier | Not part of this fixture | Advertised free plugin | Free audits + 50 credits | No permanent free tier advertised | Free-tier research |
 
+## Competitor onboarding gotchas
+
+- **Link Whisper 0.9.8:** before its setup wizard or initial scan, Link Whisper
+  registers only the wizard page, but its Plugins-row “Settings” link still points
+  at `admin.php?page=link_whisper_settings`. WordPress therefore shows the generic
+  “Sorry, you are not allowed to access this page” message even for an
+  administrator. Complete **Link Whisper → One Click Setup**, or for a local
+  benchmark shortcut:
+  ```bash
+  docker exec wp-dev-cron-1 wp --allow-root --path=/var/www/html \
+    option update wpil_has_run_installation_wizard 1
+  ```
+  Refresh and the settings page loads. This is competitor onboarding friction,
+  not a WordPress role/permission defect; record it in the UX comparison.
+- **LinkBoss / Linksy AI:** expect account, license or credit/onboarding gates.
+  Record how many steps are required before the first suggestion is visible.
+- **Internal Link Juicer:** rule-based setup; use it as the pricing/free-tier and
+  automatic-link baseline, not as a semantic-quality comparison.
+
 ## Test protocol
 
 Run each tool on a copy of the same WordPress database. Do not activate two

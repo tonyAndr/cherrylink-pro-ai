@@ -58,6 +58,7 @@ final class PanelApiTest extends TestCase
             return "Title $id";
         });
         Functions\when('apply_filters')->returnArg(2);
+        Functions\when('wp_strip_all_tags')->alias('strip_tags');
         Functions\when('get_post')->alias(function ($id) {
             if (! isset($this->posts[$id])) {
                 return null;

@@ -33,7 +33,9 @@ final class DonorFinder
             return [];
         }
         $lang = Language::forPost($target_id);
-        $hits = $this->api->search((string) $target->post_title, '', 12, $lang, 0);
+        // Same query shape as the outgoing list (title + text), so scores are comparable across tabs.
+        $query = \trim((string) $target->post_title . "\n" . \wp_strip_all_tags((string) $target->post_content));
+        $hits  = $this->api->search($query, '', 12, $lang, 0);
         if (empty($hits)) {
             return [];
         }
@@ -82,6 +84,7 @@ final class DonorFinder
 
             $row = [
                 'donor_id'   => $id,
+                'score'      => \round((float) ($hit['score'] ?? 0), 4),
                 'title'      => \html_entity_decode((string) \get_the_title($id), ENT_QUOTES | ENT_HTML5, 'UTF-8'),
                 'edit_url'   => \admin_url('post.php?post=' . $id . '&action=edit'),
                 'view_url'   => (string) \get_permalink($id),

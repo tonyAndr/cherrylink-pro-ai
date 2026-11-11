@@ -1,6 +1,7 @@
 import { __ } from '@wordpress/i18n';
 import Context from './Context';
 import { IconExternal } from './icons';
+import { Rel } from './PostList';
 
 export default function DonorList({ donors, status, error, done, busy, targetId, onInsert, onUndo, onRetry }) {
     return (
@@ -20,7 +21,7 @@ export default function DonorList({ donors, status, error, done, busy, targetId,
                 const can = d.can_edit !== false && !d.locked_by;
                 return (
                     <div className="cl-card" key={d.donor_id}>
-                        <div className="cl-target"><span className="cl-arrow">←</span><span className="cl-t">{d.title}</span></div>
+                        <div className="cl-target"><span className="cl-arrow">←</span><span className="cl-t">{d.title}</span><Rel score={d.score} /></div>
                         {d.suggestion ? (
                             <Context text={d.suggestion.context} link={isDone} />
                         ) : (

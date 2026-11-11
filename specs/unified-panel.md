@@ -118,14 +118,15 @@ New service `Editor\PanelApi` (Registerable). All actions: `Security::verify('ed
 suggestions: [{ phrase, context, block_index }] }`. `score` is the raw API cosine;
 the panel shows it as a relevance meter (`relevance()` in `opportunities.js` rescales the E5 band
 0.82–0.95 to 0–100%; tiers ≥60 green, ≥30 amber) on «Все статьи» rows and on suggestion cards (the
-target article's score — anchors carry no score of their own). Recalibrate if the embedding model changes. Links pipeline = today's
+target article's score — anchors carry no score of their own). Recalibrate if the embedding model changes. Donors are searched with the same title + text query,
+so «Входящие» scores are on the same scale (and the same pair scores alike in both directions). Links pipeline = today's
 `SuggestionsResults` filtering (status, type, category match, exclusions, private, max incoming,
 offset/limit) refactored to return structured rows; query = `query` if given, else title +
 plain text of `source_html`, else saved content. Call `/v1/search` with `source_html` (live),
 `lang` (Language::forPost), `suggestion_hits` = min(10, limit). Keep the old `get_linkate_links`
 renderers working until phase 3.
 
-`Donor = { donor_id, title, edit_url, view_url, in, can_edit, locked_by?, suggestion: {phrase,
+`Donor = { donor_id, score, title, edit_url, view_url, in, can_edit, locked_by?, suggestion: {phrase,
 context, block_index} | null }`: search by this post's title (+lang), up to 5 published donors
 excluding this post and donors whose content already links to this post's permalink; one
 `suggest_anchors(donor_html, title, 1, lang, target_post_id = this post)` per donor.

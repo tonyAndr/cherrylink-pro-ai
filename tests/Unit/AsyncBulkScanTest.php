@@ -159,6 +159,12 @@ final class AsyncBulkScanTest extends TestCase
         $wpdb->last_error = '';
         $wpdb->options = 'wp_options';
         $wpdb->shouldReceive('prepare')->andReturnUsing(static function ($sql, ...$args) {
+            // wpdb::prepare() accepts either variadic placeholders or one array of
+            // values (used by the post-inventory query). Flatten the array form so
+            // the mock does not cast an array to string under PHP 8.2.
+            if (\count($args) === 1 && \is_array($args[0])) {
+                $args = $args[0];
+            }
             foreach ($args as $arg) {
                 $sql = \preg_replace('/%s/', "'" . \str_replace("'", "''", (string) $arg) . "'", $sql, 1);
             }

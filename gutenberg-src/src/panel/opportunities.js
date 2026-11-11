@@ -51,8 +51,17 @@ export const isRowLinked = (row, links) => {
 // read "83%" for noise. Linear rescale of that band; recalibrate if the embedding model changes.
 const REL_LOW = 0.82;
 const REL_HIGH = 0.95;
-/** Vector score -> 0..100 relevance for display; null when the API sent no score. */
-export function relevance(score) {
+const calibrate = (s) => 100 * Math.min(1, Math.max(0, (s - REL_LOW) / (REL_HIGH - REL_LOW)));
+/**
+ * Vector score -> 0..100 relevance for display; null when the API sent no score.
+ * `top` = best raw score in the same list: every value is lifted by half the best match's gap to 100,
+ * so the best match reads high and the rest keep their distance from it.
+ */
+export function relevance(score, top = score) {
     if (typeof score !== 'number' || !(score > 0)) return null;
-    return Math.round(100 * Math.min(1, Math.max(0, (score - REL_LOW) / (REL_HIGH - REL_LOW))));
+    const lift = (100 - calibrate(Math.max(score, top || 0))) / 2;
+    return Math.round(Math.min(100, calibrate(score) + lift));
 }
+
+/** Best raw score among items (for relevance()'s `top`). */
+export const topScore = (items) => Math.max(0, ...items.map((x) => (typeof x?.score === 'number' ? x.score : 0)));

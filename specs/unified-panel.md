@@ -117,7 +117,8 @@ New service `Editor\PanelApi` (Registerable). All actions: `Security::verify('ed
 `Row = { post_id, score, title, url, view_url, edit_url, out, in, saturated, linked?: false, open, close,
 suggestions: [{ phrase, context, block_index }] }`. `score` is the raw API cosine;
 the panel shows it as a relevance meter (`relevance()` in `opportunities.js` rescales the E5 band
-0.82–0.95 to 0–100%; tiers ≥60 green, ≥30 amber) on «Все статьи» rows and on suggestion cards (the
+0.82–0.95 to 0–100%, then lifts every value in a list by half of the best match's gap to 100, so the
+best match always reads ≥50% and the others keep their distance from it; tiers ≥60 green, ≥30 amber) on «Все статьи» rows and on suggestion cards (the
 target article's score — anchors carry no score of their own). Recalibrate if the embedding model changes. Donors are searched with the same title + text query,
 so «Входящие» scores are on the same scale (and the same pair scores alike in both directions). Links pipeline = today's
 `SuggestionsResults` filtering (status, type, category match, exclusions, private, max incoming,

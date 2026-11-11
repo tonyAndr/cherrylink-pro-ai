@@ -45,11 +45,17 @@ describe('normalizeUrl', () => {
 
 describe('relevance', () => {
     it('rescales the E5 band and clamps', () => {
-        expect(relevance(0.82)).toBe(0);
-        expect(relevance(0.885)).toBe(50);
-        expect(relevance(0.99)).toBe(100);
-        expect(relevance(0.5)).toBe(0);
+        expect(relevance(0.82, 0.95)).toBe(0);
+        expect(relevance(0.885, 0.95)).toBe(50);
+        expect(relevance(0.99, 0.95)).toBe(100);
+        expect(relevance(0.5, 0.95)).toBe(0);
         expect(relevance(undefined)).toBeNull();
         expect(relevance(0)).toBeNull();
+    });
+    it('lifts the list by half the best match gap to 100', () => {
+        // best 0.885 -> 50 -> lift 25: best shows 75, a 0.82 neighbour shows 25
+        expect(relevance(0.885, 0.885)).toBe(75);
+        expect(relevance(0.82, 0.885)).toBe(25);
+        expect(relevance(0.99, 0.99)).toBe(100);
     });
 });

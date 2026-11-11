@@ -127,7 +127,7 @@ plain text of `source_html`, else saved content. Call `/v1/search` with `source_
 renderers working until phase 3.
 
 `Donor = { donor_id, score, title, edit_url, view_url, in, can_edit, locked_by?, suggestion: {phrase,
-context, block_index} | null }`: search by this post's title (+lang), up to 5 published donors
+context, block_index} | null }`: search by this post's title + text (+lang), up to 5 published donors
 excluding this post and donors whose content already links to this post's permalink; one
 `suggest_anchors(donor_html, title, 1, lang, target_post_id = this post)` per donor.
 

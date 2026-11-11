@@ -28,12 +28,12 @@ Tabs:
 2. **Все статьи**: segmented switch `Статьи | Рубрики`.
    - Статьи: search input "Найти статьи по теме…" (server-side semantic query, debounced 400 ms,
      replaces the live-text query), optional category filter when `show_cat_filter` is on, rows:
-     title, `↑out ↓in`, badge `✓ ссылка есть` if linked, else button `Сюда` (link the current
+     title, `↑out ↓in`, badge `✓ ссылка есть` if linked, else button `Вставить` (tooltip explains; link the current
      selection; whitespace-only/empty selection → toast "Выделите текст в статье для вставки ссылки",
      or the `no_selection_action` behaviour on Classic: insert title/placeholder at caret), up to 3
      anchor pills (click = insert at that phrase), small icon links `↗` view / edit (new tab).
      "Показать ещё" pagination (offset).
-   - Рубрики: hierarchical category/tag list (existing terms data), each row `Сюда` (selection) like posts.
+   - Рубрики: hierarchical category/tag list (existing terms data), each row `Вставить` (selection) like posts.
 3. **Входящие**: hint text; donor cards: `← donor title`, context snippet, `Вставить ссылку` (primary;
    writes into the donor server side), small ghost `Открыть ↗` (donor edit screen, new tab, with
    `&cherrylink_target=<this id>`), `↓ in` meta. Inserted → "✓ Ссылка добавлена · Отменить".

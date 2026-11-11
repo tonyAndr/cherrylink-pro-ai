@@ -24,7 +24,7 @@ export default function PostList({
                     {categories.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
             )}
-            <p className="cl-hint">{__('Выделите текст в статье и нажмите «Сюда». Или выберите готовую фразу.', 'cherrylink')}</p>
+            <p className="cl-hint">{__('Выделите текст в статье и нажмите «Вставить» или выберите готовую фразу.', 'cherrylink')}</p>
             {status === 'error' && (
                 <div className="cl-empty">
                     <p>{error}</p>
@@ -45,7 +45,7 @@ export default function PostList({
                             {linked ? (
                                 <span className="cl-linked">✓ {__('ссылка есть', 'cherrylink')}</span>
                             ) : (
-                                <button type="button" className="cl-btn" onMouseDown={keepSelection} onClick={() => onHere(r)}>{__('Сюда', 'cherrylink')}</button>
+                                <button type="button" className="cl-btn" title={__('Сделать выделенный текст ссылкой на эту статью', 'cherrylink')} onMouseDown={keepSelection} onClick={() => onHere(r)}>{__('Вставить', 'cherrylink')}</button>
                             )}
                             {r.view_url && (
                                 <a className="cl-iconlink" href={r.view_url} target="_blank" rel="noopener noreferrer" title={__('Открыть', 'cherrylink')} aria-label={__('Открыть', 'cherrylink')}><IconExternal /></a>

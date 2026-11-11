@@ -103,7 +103,7 @@ describe('App', () => {
         render(<App adapter={makeAdapter()} config={{ ...config, host: 'gutenberg' }} />);
         await screen.findByText('Target 1');
         fireEvent.click(screen.getByText('Все статьи'));
-        fireEvent.click(screen.getAllByText('Сюда')[0]);
+        fireEvent.click(screen.getAllByText('Вставить')[0]);
         expect(await screen.findByText('Выделите текст в статье для вставки ссылки')).toBeInTheDocument();
     });
 

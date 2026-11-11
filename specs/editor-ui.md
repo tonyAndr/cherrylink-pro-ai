@@ -10,7 +10,7 @@ tree were removed in phase 3.
 ## Summary
 - Strip under the header: `Исходящих N · Входящих M` (open the Ссылки view) + one status chip.
 - Tabs: **Подсказки** (cards, insert at phrase, alternatives, hide/restore, undo), **Все статьи**
-  (switch Статьи | Рубрики; topic search, optional category filter, `Сюда` = link the selection),
+  (switch Статьи | Рубрики; topic search, optional category filter, `Вставить` = link the selection),
   **Входящие** (donor articles; insert is written into the donor server side, with undo).
 - Gutenberg host: `PluginSidebar` titled "CherryLink" (no extra logo row). Classic host: floating,
   draggable box toggled by the "CherryLink Pro" media button (`#cherrylink-panel-toggle`).

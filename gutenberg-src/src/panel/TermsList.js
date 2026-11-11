@@ -14,7 +14,7 @@ function Term({ term, depth, links, onHere }) {
                 {linked ? (
                     <span className="cl-linked">✓ {__('ссылка есть', 'cherrylink')}</span>
                 ) : (
-                    <button type="button" className="cl-btn" onMouseDown={keepSelection} onClick={() => onHere({ ...term, title: name })}>{__('Сюда', 'cherrylink')}</button>
+                    <button type="button" className="cl-btn" title={__('Сделать выделенный текст ссылкой на эту рубрику', 'cherrylink')} onMouseDown={keepSelection} onClick={() => onHere({ ...term, title: name })}>{__('Вставить', 'cherrylink')}</button>
                 )}
             </div>
             {(term.children || []).map((c, i) => (

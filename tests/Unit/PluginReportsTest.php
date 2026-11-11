@@ -31,6 +31,9 @@ final class PluginReportsTest extends TestCase
     /** @var FakeReportClient */
     private $client;
 
+    /** @var object|null Previous global wpdb, restored after each test. */
+    private $previousWpdb;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -73,7 +76,14 @@ final class PluginReportsTest extends TestCase
         Functions\when('wp_cache_delete')->justReturn(true);
         Functions\when('wp_doing_cron')->justReturn(true);
 
+        $this->previousWpdb = $GLOBALS['wpdb'] ?? null;
         $GLOBALS['wpdb'] = new class {
+            /** @var string */
+            public $options = 'wp_options';
+
+            /** @var string */
+            public $prefix = 'wp_';
+
             /** @param mixed ...$args */
             public function prepare(string $query, ...$args): string
             {
@@ -96,7 +106,11 @@ final class PluginReportsTest extends TestCase
         $version = new ReflectionProperty(PluginMeta::class, 'version');
         $version->setAccessible(true);
         $version->setValue(null, null);
-        unset($GLOBALS['wpdb']);
+        if ($this->previousWpdb !== null) {
+            $GLOBALS['wpdb'] = $this->previousWpdb;
+        } else {
+            unset($GLOBALS['wpdb']);
+        }
         Monkey\tearDown();
         parent::tearDown();
     }

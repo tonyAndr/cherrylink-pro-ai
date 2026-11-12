@@ -64,8 +64,11 @@ final class SuggestionsResults
             return $empty;
         }
 
+        // Unedited post: let the API reuse its stored vector (same ranking quality on the
+        // benchmark fixture, one embedding call fewer). Edited content is embedded fresh.
+        $saved_post  = (! $is_term && self::sameText($html, $saved)) ? $post : null;
         $api         = new Client();
-        $api_results = $api->search($query, $html, $limit * 3, $lang, \min(10, $limit));
+        $api_results = $api->search($query, $html, $limit * 3, $lang, \min(10, $limit), $saved_post);
         if (empty($api_results)) {
             return $empty;
         }
@@ -202,5 +205,14 @@ final class SuggestionsResults
         $terms = \array_merge([$term_id], (array) \get_term_children($term_id, 'category'));
         $ids   = \array_unique(\array_map('intval', (array) \get_objects_in_term($terms, 'category')));
         return $ids ? 'ID IN (' . \implode(',', $ids) . ')' : '1 = 2';
+    }
+
+    /** Whether the editor HTML carries the same text as the saved content (markup/whitespace ignored). */
+    public static function sameText(string $html, string $saved): bool
+    {
+        $norm = static function (string $v): string {
+            return \trim((string) \preg_replace('/\s+/u', ' ', \wp_strip_all_tags($v)));
+        };
+        return $html === '' || $norm($html) === $norm($saved);
     }
 }

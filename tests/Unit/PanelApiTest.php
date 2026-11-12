@@ -285,7 +285,7 @@ final class PanelApiTest extends TestCase
                 {
                 }
 
-                public function search(string $query, string $source_html = '', int $limit = 20, string $lang = '', int $suggestion_hits = -1): ?array
+                public function search(string $query, string $source_html = '', int $limit = 20, string $lang = '', int $suggestion_hits = -1, ?\WP_Post $saved = null): ?array
                 {
                     return [['post_id' => 10], ['post_id' => 21], ['post_id' => 22], ['post_id' => 23]];
                 }

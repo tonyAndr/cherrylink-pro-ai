@@ -35,7 +35,7 @@ final class DonorFinder
         $lang = Language::forPost($target_id);
         // Same query shape as the outgoing list (title + text), so scores are comparable across tabs.
         $query = \trim((string) $target->post_title . "\n" . \wp_strip_all_tags((string) $target->post_content));
-        $hits  = $this->api->search($query, '', 12, $lang, 0);
+        $hits  = $this->api->search($query, '', 12, $lang, 0, $target);
         if (empty($hits)) {
             return [];
         }

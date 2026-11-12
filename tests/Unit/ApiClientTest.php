@@ -335,6 +335,34 @@ final class ApiClientTest extends TestCase
         $this->assertSame('{"query":"hello","limit":1}', $this->captured['args']['body']);
     }
 
+    public function testSearchSendsTheSavedPostForStoredVectorReuse(): void
+    {
+        Functions\when('get_option')->justReturn(['hash_field' => 'LICENSE123']);
+        $this->mockHttp(['results' => []]);
+        $post     = new \WP_Post();
+        $post->ID = 42;
+        $client   = new class extends Client {
+            public function content_hash(\WP_Post $post): string
+            {
+                return 'h' . $post->ID;
+            }
+        };
+
+        $client->search('hello', '', 5, '', -1, $post);
+
+        $this->assertSame('{"query":"hello","limit":5,"post_id":42,"content_hash":"h42"}', $this->captured['args']['body']);
+    }
+
+    public function testEditedContentIsNotTreatedAsTheSavedPost(): void
+    {
+        Functions\when('wp_strip_all_tags')->alias(static function ($v) {
+            return \strip_tags((string) $v);
+        });
+
+        $this->assertTrue(\CherryLink\Editor\SuggestionsResults::sameText("<p>Hello\n  world</p>", 'Hello world'));
+        $this->assertFalse(\CherryLink\Editor\SuggestionsResults::sameText('<p>Hello there</p>', 'Hello world'));
+    }
+
     public function testInteractiveAllRouteCannotUseBackgroundTimeout(): void
     {
         Functions\when('get_option')->justReturn(['hash_field' => 'LICENSE123']);

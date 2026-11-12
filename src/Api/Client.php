@@ -367,9 +367,11 @@ class Client implements ReportClient
      * @param int    $limit        Maximum number of results.
      * @param string $lang         Optional language code of the current post.
      * @param int    $suggestion_hits Top hits that get anchor suggestions (0..20); -1 keeps the API default.
+     * @param WP_Post|null $saved  The saved post the query was built from: the API then reuses its
+     *                             stored vector when the hash still matches (no embedding call).
      * @return array|null          Array of results or null on failure.
      */
-    public function search(string $query, string $source_html = '', int $limit = 20, string $lang = '', int $suggestion_hits = -1): ?array
+    public function search(string $query, string $source_html = '', int $limit = 20, string $lang = '', int $suggestion_hits = -1, ?WP_Post $saved = null): ?array
     {
         $body = [
             'query' => $query,
@@ -387,6 +389,10 @@ class Client implements ReportClient
         }
         if ($suggestion_hits >= 0) {
             $body['suggestion_hits'] = \min(20, $suggestion_hits);
+        }
+        if ($saved !== null) {
+            $body['post_id']      = (int) $saved->ID;
+            $body['content_hash'] = $this->content_hash($saved);
         }
 
         $response = $this->request('POST', '/v1/search', $body);

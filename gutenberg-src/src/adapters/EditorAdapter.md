@@ -7,7 +7,7 @@ All methods are synchronous. `link = { url, title, open, close }`.
 | `getHtml()` / `getText()` | live content (html / plain text) |
 | `getSelection()` | `{ text, collapsed }` |
 | `applyLinkToSelection(link)` | `{ ok, ref?, reason? }`, reason `no_selection` / `inside_link` / `unsupported` |
-| `applyLinkToPhrase(phrase, blockIndex, link)` | same; reason `not_found` / `unsupported` |
+| `applyLinkToPhrase(phrase, blockIndex, link)` | same; reason `not_found` / `unsupported`. Gutenberg also handles Classic blocks (`core/freeform`) by editing the parsed `content` HTML |
 | `insertAtCaret(link, text)` | optional extension (Classic adapters): insert `text` wrapped in the link at the caret |
 | `removeLink(ref)` | undo of the apply calls |
 | `listLinks()` | `[{ url, anchor, ref }]` |

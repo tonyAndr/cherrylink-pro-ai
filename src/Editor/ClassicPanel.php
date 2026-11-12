@@ -124,8 +124,15 @@ final class ClassicPanel implements Registerable
         if ($content === '') {
             return '';
         }
-        if (\strip_tags($content) === $content) {
-            $paras   = \array_filter(\array_map('trim', \preg_split('/\n{2,}/', $content)));
+        // Classic content (Classic Editor, or a Classic block once saved) is stored without <p>:
+        // paragraphs are blank-line separated and wpautop() adds the tags at render time. The API
+        // extractor only reads p/h/li/blockquote/td, so add them the same way WordPress does.
+        // Inline tags (an inserted <a>, <strong>) don't count as structure.
+        if (! \preg_match('/<(p|h[1-6]|li|blockquote|td|div|ul|ol|table|pre)[\s>]/i', $content)) {
+            if (\function_exists('wpautop')) {
+                return (string) \wpautop($content);
+            }
+            $paras   = \array_filter(\array_map('trim', \preg_split('/\n{2,}/', $content) ?: []));
             $content = '<p>' . \implode('</p><p>', $paras) . '</p>';
         }
         return $content;

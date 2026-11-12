@@ -53,10 +53,12 @@ final class SuggestionsResults
             $saved = (string) $post->post_content;
             $lang  = Language::forPost($post_id);
             if ($html === '') {
-                $html = ClassicPanel::buildSourceHtml($saved);
+                $html = $saved;
             }
         }
 
+        // Live editor HTML too: a Classic block sends wpautop-style text without <p>.
+        $html = ClassicPanel::buildSourceHtml($html);
         if ($query === '') {
             $body  = $html !== '' ? $html : $saved;
             $query = \trim($title . "\n" . \wp_strip_all_tags($body));

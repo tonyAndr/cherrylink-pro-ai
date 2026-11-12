@@ -93,7 +93,7 @@ open/close; TinyMCE/textarea wrap with `open`+text+`close` (server-rendered from
 p/h1-h6/li/blockquote/td whose text is longer than 10 chars (same rule as the API extractor).
 Gutenberg adapter reuses `HOC/blockUtils.js`, the RichText format logic in `HOC/cherryRichText.js`
 and `HOC/scrollToEditor.js` (move them under `src/adapters/gutenberg/` if convenient); unsupported
-blocks (core/freeform etc.) → reason 'unsupported'. classicSwitch delegates to tinymce or textarea
+blocks → reason 'unsupported'. Classic blocks (`core/freeform`) are supported for phrase insert/list/undo/reveal: `attributes.content` is parsed in a detached DOM, counted elements follow the same p/h/li/blockquote/td rule, and the phrase is wrapped by DOM range (may span inline tags). Raw text without block tags is split on blank lines and saved wrapped in `<p>` (wpautop-like). Manual selection insert inside a Classic block (TinyMCE) returns 'unsupported'; the TinyMCE view may not refresh until the block is re-focused. classicSwitch delegates to tinymce or textarea
 depending on which Classic tab is active (and the term description editor).
 
 Build: webpack entries `cherry-gutenberg` (src/index.js) and `cherry-classic` (src/classic.js);

@@ -2,7 +2,7 @@ import { select, dispatch, subscribe } from '@wordpress/data';
 import { applyLinkAtSelection, getActiveRichText } from './gutenberg/cherryRichText';
 import { scrollToBlockInEditor } from './gutenberg/scrollToEditor';
 import { flattenBlocks } from './gutenberg/blockUtils';
-import { debounce, CHANGE_DEBOUNCE_MS, MIN_BLOCK_LEN, stripTags, fail } from './util';
+import { debounce, CHANGE_DEBOUNCE_MS, MIN_BLOCK_LEN, BLOCK_SELECTOR, stripTags, fail } from './util';
 import { highlightRange, clearHighlight, findTextRange } from './highlight';
 
 const asHtml = (v) => (typeof v === 'string' ? v : v && v.toHTMLString ? v.toHTMLString() : String(v == null ? '' : v));
@@ -22,6 +22,57 @@ function editorDoc() {
     return (f && f.contentDocument) || document;
 }
 
+/**
+ * Classic block (core/freeform) content as a detached DOM plus its counted elements
+ * (p/h1-6/li/blockquote/td in document order, like the API extractor). Raw text without block
+ * tags follows wpautop: blank-line separated chunks become <p> (re-saved wrapped on edit).
+ */
+function parseFreeform(html) {
+    const root = document.createElement('div');
+    root.innerHTML = String(html || '');
+    if (!root.querySelector(BLOCK_SELECTOR) && root.textContent.trim()) {
+        root.innerHTML = String(html).split(/\n\s*\n/).filter((c) => c.trim()).map((c) => `<p>${c.trim()}</p>`).join('');
+    }
+    return { root, els: [...root.querySelectorAll(BLOCK_SELECTOR)] };
+}
+
+/** Wrap the first free (outside <a>) occurrence of phrase in el, even across inline tags. Returns matched text or null. */
+function wrapPhraseInElement(el, phrase, link) {
+    const doc = el.ownerDocument;
+    const nodes = [];
+    const walker = doc.createTreeWalker(el, 4 /* SHOW_TEXT */);
+    let text = '';
+    for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+        nodes.push({ node: n, start: text.length, linked: !!(n.parentElement && n.parentElement.closest('a')) });
+        text += n.data;
+    }
+    const hay = text.toLowerCase();
+    const needle = phrase.toLowerCase();
+    let from = 0;
+    for (;;) {
+        const i = hay.indexOf(needle, from);
+        if (i < 0) return null;
+        const j = i + needle.length;
+        const bad = nodes.some((x) => x.linked && x.start < j && x.start + x.node.data.length > i);
+        if (!bad) {
+            const at = (pos, end) => nodes.find((x) => (end ? pos > x.start && pos <= x.start + x.node.data.length : pos >= x.start && pos < x.start + x.node.data.length));
+            const a = at(i, false);
+            const b = at(j, true);
+            const range = doc.createRange();
+            range.setStart(a.node, i - a.start);
+            range.setEnd(b.node, j - b.start);
+            const anchor = doc.createElement('a');
+            anchor.setAttribute('href', link.url);
+            if (link.title) anchor.setAttribute('title', link.title);
+            const matched = range.toString();
+            anchor.appendChild(range.extractContents());
+            range.insertNode(anchor);
+            return matched;
+        }
+        from = i + 1;
+    }
+}
+
 const getBlocksTree = () => select('core/block-editor').getBlocks();
 
 /**
@@ -30,14 +81,16 @@ const getBlocksTree = () => select('core/block-editor').getBlocks();
  */
 function contentBlocks() {
     const out = [];
-    const push = (clientId, attr, html) => {
+    const push = (clientId, attr, html, extra) => {
         const text = stripTags(asHtml(html)).trim();
-        if (text.length > MIN_BLOCK_LEN) out.push({ clientId, attr, html: asHtml(html), text });
+        if (text.length > MIN_BLOCK_LEN) out.push({ clientId, attr, html: asHtml(html), text, ...extra });
     };
     const innerText = (b) => flattenBlocks(b.innerBlocks || []).map((x) => (TEXT_ATTR[x.name] ? stripTags(asHtml(x.attributes[TEXT_ATTR[x.name]])) : '')).join(' ');
     for (const b of flattenBlocks(getBlocksTree())) {
         if (TEXT_ATTR[b.name]) {
             push(b.clientId, TEXT_ATTR[b.name], b.attributes[TEXT_ATTR[b.name]]);
+        } else if (b.name === 'core/freeform') {
+            parseFreeform(b.attributes.content).els.forEach((el, index) => push(b.clientId, 'content', el.innerHTML, { freeform: { index } }));
         } else if (b.name === 'core/quote') {
             if (b.innerBlocks && b.innerBlocks.length) push(b.clientId, null, innerText(b));
             else push(b.clientId, 'value', b.attributes.value);
@@ -87,6 +140,7 @@ function removeLinkFromHtml(html, ref) {
 
 /** EditorAdapter for the block editor. */
 export function createGutenbergAdapter() {
+    let revealed = null;
     const update = (clientId, attrs) => dispatch('core/block-editor').updateBlockAttributes(clientId, attrs);
 
     return {
@@ -104,6 +158,11 @@ export function createGutenbergAdapter() {
             return { text: String(value.text || '').slice(value.start, value.end), collapsed: value.start === value.end };
         },
         applyLinkToSelection(link) {
+            const sel = select('core/block-editor');
+            const selId = sel.getSelectedBlockClientId && sel.getSelectedBlockClientId();
+            const selBlock = selId && sel.getBlock(selId);
+            // Classic block text lives in TinyMCE, not RichText: say so instead of acting on a stale range.
+            if (selBlock && selBlock.name === 'core/freeform') return fail('unsupported');
             const rt = getActiveRichText();
             const v = rt.value;
             if (!v || !rt.onChange || v.start === v.end) return fail('no_selection');
@@ -125,6 +184,17 @@ export function createGutenbergAdapter() {
             const list = contentBlocks();
             const order = [list[blockIndex], ...list].filter((b) => b && b.attr);
             for (const b of order) {
+                if (b.freeform) {
+                    const raw = select('core/block-editor').getBlock(b.clientId);
+                    const before = raw ? raw.attributes.content : '';
+                    const { root, els } = parseFreeform(before);
+                    const target = els[b.freeform.index];
+                    const anchor = target && wrapPhraseInElement(target, phrase, link);
+                    if (!anchor) continue;
+                    const newHtml = root.innerHTML;
+                    update(b.clientId, { content: newHtml });
+                    return { ok: true, ref: { clientId: b.clientId, attr: 'content', beforeRaw: before, afterSer: newHtml, url: link.url, anchor } };
+                }
                 const html = b.html;
                 const value = wp.richText.create({ html });
                 const i = findFreeOccurrence(value, phrase);
@@ -169,7 +239,7 @@ export function createGutenbergAdapter() {
         listLinks() {
             const out = [];
             for (const b of flattenBlocks(getBlocksTree())) {
-                const attr = TEXT_ATTR[b.name] || (b.name === 'core/quote' && !(b.innerBlocks || []).length ? 'value' : null);
+                const attr = TEXT_ATTR[b.name] || (b.name === 'core/freeform' ? 'content' : null) || (b.name === 'core/quote' && !(b.innerBlocks || []).length ? 'value' : null);
                 if (!attr) continue;
                 linksIn(asHtml(b.attributes[attr])).forEach((l) => out.push({ ...l, ref: { clientId: b.clientId, attr, url: l.url, anchor: l.anchor } }));
             }
@@ -184,9 +254,20 @@ export function createGutenbergAdapter() {
             const doc = editorDoc();
             for (const b of [list[blockIndex], ...list].filter(Boolean)) {
                 const el = doc.querySelector(`[data-block="${b.clientId}"]`);
-                const range = el && findTextRange(el, arg);
+                if (!el) continue;
+                let hdoc = doc;
+                let range = findTextRange(el, arg);
+                if (!range && b.freeform) {
+                    // Classic block: text sits in a TinyMCE iframe inside the block.
+                    for (const f of el.querySelectorAll('iframe')) {
+                        const d = f.contentDocument;
+                        range = d && d.body && findTextRange(d.body, arg);
+                        if (range) { hdoc = d; break; }
+                    }
+                }
                 if (range) {
-                    highlightRange(range, doc);
+                    revealed = hdoc;
+                    highlightRange(range, hdoc);
                     if (el.scrollIntoView) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                     return;
                 }
@@ -194,6 +275,8 @@ export function createGutenbergAdapter() {
         },
         clearReveal() {
             clearHighlight(editorDoc());
+            if (revealed) clearHighlight(revealed);
+            revealed = null;
         },
         onChange(cb) {
             const d = debounce(cb, CHANGE_DEBOUNCE_MS);

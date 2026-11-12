@@ -128,4 +128,77 @@ describe('gutenberg adapter', () => {
         expect(cb).toHaveBeenCalledTimes(1);
         jest.useRealTimers();
     });
+
+    describe('classic block (core/freeform)', () => {
+        const P1 = 'First paragraph with some words.';
+        const P2 = 'Second has <strong>quick brown</strong> fox inside.';
+        const P3 = 'Third has <a href="/old">quick brown</a> and quick brown too.';
+
+        beforeEach(() => {
+            blocks = [{ clientId: 'c1', name: 'core/freeform', attributes: { content: `<p>${P1}</p>\n<p>short</p>\n<h2>${P2}</h2><p>${P3}</p>` }, innerBlocks: [] }];
+            selectedId = 'c1';
+        });
+
+        it('links the phrase in the indexed paragraph and updates the attribute', () => {
+            const a = createGutenbergAdapter();
+            // counted elements with enough text: P1 (0), h2 (1), P3 (2); "short" is skipped
+            const res = a.applyLinkToPhrase('some words', 0, LINK);
+            expect(res.ok).toBe(true);
+            expect(updateBlockAttributes).toHaveBeenCalledTimes(1);
+            expect(blocks[0].attributes.content).toContain('<p>First paragraph with <a href="http://s.test/t/" title="T">some words</a>.</p>');
+            expect(res.ref).toEqual(expect.objectContaining({ clientId: 'c1', attr: 'content', url: LINK.url, anchor: 'some words' }));
+        });
+
+        it('uses the block index to pick the element, and skips linked text', () => {
+            const a = createGutenbergAdapter();
+            const res = a.applyLinkToPhrase('quick brown', 2, LINK);
+            expect(res.ok).toBe(true);
+            expect(blocks[0].attributes.content).toContain('and <a href="http://s.test/t/" title="T">quick brown</a> too');
+            expect(blocks[0].attributes.content).toContain('<a href="/old">quick brown</a>');
+        });
+
+        it('links a phrase spanning inline tags', () => {
+            const a = createGutenbergAdapter();
+            const res = a.applyLinkToPhrase('brown fox', 1, LINK);
+            expect(res.ok).toBe(true);
+            const c = blocks[0].attributes.content;
+            expect(c).toContain('<strong>quick </strong><a href="http://s.test/t/" title="T"><strong>brown</strong> fox</a>');
+            expect(res.ref.anchor).toBe('brown fox');
+        });
+
+        it('does not link text that is already linked', () => {
+            const a = createGutenbergAdapter();
+            blocks[0].attributes.content = '<p>Only <a href="/old">linked words here</a> remain.</p>';
+            expect(a.applyLinkToPhrase('linked words', 0, LINK)).toEqual({ ok: false, reason: 'not_found' });
+        });
+
+        it('treats raw blank-line separated text as paragraphs', () => {
+            blocks[0].attributes.content = 'Plain first paragraph text.\n\nPlain second paragraph text.';
+            const a = createGutenbergAdapter();
+            expect(a.applyLinkToPhrase('second paragraph', 1, LINK).ok).toBe(true);
+            expect(blocks[0].attributes.content).toBe('<p>Plain first paragraph text.</p><p>Plain <a href="http://s.test/t/" title="T">second paragraph</a> text.</p>');
+        });
+
+        it('lists freeform links and undoes an insert', () => {
+            const a = createGutenbergAdapter();
+            expect(a.listLinks()).toEqual([expect.objectContaining({ url: '/old', anchor: 'quick brown' })]);
+            const before = blocks[0].attributes.content;
+            const res = a.applyLinkToPhrase('some words', 0, LINK);
+            expect(a.listLinks()).toHaveLength(2);
+            a.removeLink(res.ref);
+            expect(blocks[0].attributes.content).toBe(before);
+        });
+
+        it('undo unwraps the anchor when content changed meanwhile', () => {
+            const a = createGutenbergAdapter();
+            const res = a.applyLinkToPhrase('some words', 0, LINK);
+            blocks[0].attributes.content += '<p>extra</p>';
+            a.removeLink(res.ref);
+            expect(blocks[0].attributes.content).toContain('<p>First paragraph with some words.</p>');
+        });
+
+        it('selection insert reports unsupported inside a Classic block', () => {
+            expect(createGutenbergAdapter().applyLinkToSelection(LINK)).toEqual({ ok: false, reason: 'unsupported' });
+        });
+    });
 });

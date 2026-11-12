@@ -570,8 +570,9 @@ final class AdminApi implements Registerable
                 'self'        => $self,
             ];
         }
-        $summary['links_total']   = isset($response['links_total']) ? (int) $response['links_total'] : (isset($status['scheme_rows']) ? (int) $status['scheme_rows'] : null);
-        $summary['posts_checked'] = isset($response['posts_checked']) ? (int) $response['posts_checked'] : null;
+        $api_summary              = \is_array($response['summary'] ?? null) ? $response['summary'] : [];
+        $summary['links_total']   = isset($api_summary['links_total']) ? (int) $api_summary['links_total'] : (isset($status['scheme_rows']) ? (int) $status['scheme_rows'] : null);
+        $summary['posts_checked'] = isset($api_summary['posts_checked']) ? (int) $api_summary['posts_checked'] : null;
 
         return ['checked_at' => \gmdate('c'), 'summary' => $summary, 'rows' => $rows];
     }

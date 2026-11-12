@@ -219,6 +219,11 @@ final class FreeModeTest extends TestCase
 
     public function testConnectStoresKeyAndPlanAndExposesTheNonceOnlyWhilePending(): void
     {
+        $cleared = [];
+        Functions\when('wp_clear_scheduled_hook')->alias(static function ($hook) use (&$cleared) {
+            $cleared[] = $hook;
+            return 0;
+        });
         $connect = new Connect($this->license());
         $this->assertInstanceOf(\WP_Error::class, $connect->proof(), 'no connect pending -> 404');
 
@@ -245,6 +250,8 @@ final class FreeModeTest extends TestCase
         $this->assertSame(1000, $meta['post_limit']);
         $this->assertTrue($this->license()->isLicensed());
         $this->assertContains(Capabilities::REFRESH_HOOK, $this->scheduled);
+        // The recurring event is cleared first, or WP would drop the single event next to it.
+        $this->assertContains(Capabilities::REFRESH_HOOK, $cleared);
     }
 
     public function testConnectSendsHttpsProofUrls(): void

@@ -186,6 +186,18 @@ final class AdminUiTest extends TestCase
         unset($GLOBALS['wpdb']);
     }
 
+    public function testHealthReadsTotalsFromTheApiSummary(): void
+    {
+        Functions\when('get_transient')->justReturn(false);
+        $options = new Options();
+        $license = new License($options);
+        $health  = (new AdminApi($options, $license, new SyncService($options, $license)))
+            ->buildHealth(['problems' => [], 'summary' => ['posts_checked' => 10, 'links_total' => 7]]);
+
+        $this->assertSame(10, $health['summary']['posts_checked']);
+        $this->assertSame(7, $health['summary']['links_total']);
+    }
+
     // ── state payload ─────────────────────────────────────────────────────
 
     public function testStateExposesIndexExpiredFromTheCachedSnapshot(): void

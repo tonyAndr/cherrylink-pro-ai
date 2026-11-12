@@ -8,6 +8,7 @@ use CherryLink\Ajax\Security;
 use CherryLink\Api\Client;
 use CherryLink\Contracts\Registerable;
 use CherryLink\Editor\ClassicPanel;
+use CherryLink\Editor\SuggestionsResults;
 use CherryLink\Support\Language;
 
 /**
@@ -19,6 +20,38 @@ final class StatisticsService implements Registerable
     public function register(): void
     {
         \add_action('wp_ajax_linkate_orphan_donors', [$this, 'ajaxOrphanDonors']);
+        \add_action('wp_ajax_linkate_post_targets', [$this, 'ajaxPostTargets']);
+    }
+
+    /**
+     * "No outgoing" rows: posts this post could link to, with link text found in it.
+     * The editor panel's own pipeline on the saved content: one search call, run on click.
+     */
+    public function ajaxPostTargets(): void
+    {
+        Security::verify('edit_posts');
+
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- gated by Security::verify()
+        $post_id = isset($_POST['post_id']) ? (int) $_POST['post_id'] : 0;
+        if ($post_id < 1 || ! \current_user_can('edit_post', $post_id)) {
+            \wp_send_json(['donors' => []]);
+        }
+        $edit    = \admin_url('post.php?post=' . $post_id . '&action=edit');
+        $targets = [];
+        foreach (SuggestionsResults::rows(['post_id' => $post_id])['items'] as $item) {
+            // One phrase can carry one link: take the first one no earlier target used.
+            $phrases = \array_diff(\array_column($item['suggestions'], 'phrase'), \array_column($targets, 'anchor'), ['']);
+            $phrase  = (string) \reset($phrases);
+            if ($phrase === '') {
+                continue; // nothing in this post to turn into the link
+            }
+            // Same shape as donors so the screen reuses one list; Edit opens this post.
+            $targets[] = ['source_id' => $item['post_id'], 'source_title' => $item['title'], 'anchor' => $phrase, 'edit_url' => $edit];
+            if (\count($targets) >= 5) {
+                break;
+            }
+        }
+        \wp_send_json(['donors' => $targets]);
     }
 
     // ── Orphan-fix donor suggestions ────────────────────────────────────────────

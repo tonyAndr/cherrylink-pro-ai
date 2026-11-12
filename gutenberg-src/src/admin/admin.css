@@ -81,3 +81,6 @@ textarea.cl-input { height: auto; padding: 8px; }
     .cl-hero, .cl-grid2, .cl-grid3, .cl-grid4, .cl-form { grid-template-columns: 1fr; }
     .cl-wide { padding: 20px; } .cl-plan { margin-left: 0; }
 }
+.cl-locked { position: relative; }
+.cl-locked .cl-tablewrap { filter: blur(3px); user-select: none; pointer-events: none; }
+.cl-locked-over { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 16px; text-align: center; background: rgba(250, 247, 245, .7); border-radius: 12px; }

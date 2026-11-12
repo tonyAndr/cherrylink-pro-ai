@@ -34,6 +34,7 @@ beforeEach(() => {
         cherrylink_admin_save_settings: { success: true, data: { state: mkState({ setup_done: false }) } },
         cherrylink_admin_state: { success: true, data: mkState() },
         linkate_orphan_donors: { donors: [{ source_id: 9, source_title: 'Donor nine', anchor: 'hello', edit_url: '/edit9' }] },
+        linkate_post_targets: { donors: [{ source_id: 4, source_title: 'Target four', anchor: 'world', edit_url: '/edit1' }] },
     };
     global.fetch = jest.fn(async (url, init) => {
         const action = init.body.get('action');
@@ -69,17 +70,31 @@ describe('admin pages (connected free state)', () => {
         expect(screen.queryByText('Post 1')).toBeNull();
     });
 
-    it('link health switches tabs, finds donors, and marks unlearned rows', async () => {
+    it('link health splits orphans: learned with donors on demand, unlearned behind upgrade', async () => {
         render(<App boot={boot('links')} />);
         await screen.findByText('Post 1');
-        expect(screen.getByText(/Not suggested in other posts: outside the free limit/)).toBeInTheDocument();
-        expect(screen.getAllByText('Find donors').length).toBe(2); // unlearned orphans get donors too
-        fireEvent.click(screen.getAllByText('Find donors')[0]);
+        expect(screen.getByText('1 orphan page is outside your plan')).toBeInTheDocument();
+        expect(screen.getByText('Post 2').closest('[aria-hidden="true"]')).not.toBeNull(); // blurred preview
+        expect(screen.getAllByText('Find posts that could link here').length).toBe(1); // only the learned one
+        fireEvent.click(screen.getByText('Find posts that could link here'));
         expect(await screen.findByText('Donor nine')).toBeInTheDocument();
         expect(calls.find((c) => c.action === 'linkate_orphan_donors').body.get('post_id')).toBe('1');
         fireEvent.click(screen.getByRole('tab', { name: /Broken links/ }));
         expect(screen.getByText('Post 3')).toBeInTheDocument();
         expect(screen.queryByText('Post 1')).toBeNull();
+    });
+
+    it('no outgoing rows find posts to link to on click, kept apart from orphan results', async () => {
+        responses.cherrylink_admin_link_health = { ...health, rows: [row(1, { orphan: true, no_outgoing: true })] };
+        render(<App boot={boot('links')} />);
+        await screen.findByText('Post 1');
+        fireEvent.click(screen.getByText('Find posts that could link here'));
+        expect(await screen.findByText('Donor nine')).toBeInTheDocument();
+        fireEvent.click(screen.getByRole('tab', { name: /No outgoing/ }));
+        expect(screen.queryByText('Donor nine')).toBeNull();
+        fireEvent.click(screen.getByText('Find posts to link to'));
+        expect(await screen.findByText('Target four')).toBeInTheDocument();
+        expect(calls.find((c) => c.action === 'linkate_post_targets').body.get('post_id')).toBe('1');
     });
 
     it('key pages tab lists members not linking and pins through the ajax action', async () => {

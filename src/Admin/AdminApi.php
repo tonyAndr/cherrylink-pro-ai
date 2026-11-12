@@ -556,7 +556,13 @@ final class AdminApi implements Registerable
      */
     public function buildHealth(array $response): array
     {
-        $cutoff  = self::learnedCutoff($this->license->postLimit());
+        $limit   = $this->license->postLimit();
+        $indexed = (new Capabilities())->snapshot()['plan']['indexed'] ?? null;
+        if ($limit !== null && \is_numeric($indexed)) {
+            // The API's learned count wins over a stale stored limit (raised plan, not yet rechecked).
+            $limit = \max($limit, (int) $indexed);
+        }
+        $cutoff  = self::learnedCutoff($limit);
         $allowed = IndexHelpers::get_allowed_types_list();
         $status  = IndexHooks::statusData(false);
         $summary = ['orphans' => 0, 'broken' => 0, 'no_outgoing' => 0, 'repeats' => 0, 'self_links' => 0];

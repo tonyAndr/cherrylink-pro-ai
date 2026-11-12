@@ -117,7 +117,7 @@ msgstr "Сервис подключения временно недоступе�
 
 #: src/Admin/AdminMenu.php:58
 #: src/Admin/AdminMenu.php:79
-#: js/cherry-app.js:27
+#: js/cherry-app.js:31
 msgid "Settings"
 msgstr "Настройки"
 
@@ -138,7 +138,7 @@ msgid "Link health"
 msgstr "Здоровье ссылок"
 
 #: src/Admin/AdminMenu.php:78
-#: js/cherry-app.js:24
+#: js/cherry-app.js:28
 msgid "Index"
 msgstr "Индекс"
 
@@ -327,7 +327,7 @@ msgid "This key was not accepted."
 msgstr "Этот ключ не принят."
 
 #: js/cherry-app.js:1
-#: js/cherry-app.js:27
+#: js/cherry-app.js:31
 #: js/cherry-classic.js:3
 #: js/cherry-gutenberg.js:3
 msgid "Connect CherryLink"
@@ -513,7 +513,7 @@ msgid "Continue to dashboard"
 msgstr "Перейти к обзору"
 
 #: js/cherry-app.js:6
-#: js/cherry-app.js:26
+#: js/cherry-app.js:30
 msgid "Stop"
 msgstr "Остановить"
 
@@ -575,7 +575,7 @@ msgid "%1$s posts learned, %2$s posts checked. Here is what CherryLink found."
 msgstr "Изучено записей: %1$s, проверено: %2$s. Вот что нашёл CherryLink."
 
 #: js/cherry-app.js:8
-#: js/cherry-app.js:24
+#: js/cherry-app.js:28
 msgid "Reading your links…"
 msgstr "Читаем ваши ссылки…"
 
@@ -626,7 +626,8 @@ msgid "%s learned"
 msgstr "Изучено: %s"
 
 #: js/cherry-app.js:10
-#: js/cherry-app.js:23
+#: js/cherry-app.js:24
+#: js/cherry-app.js:28
 #: js/cherry-classic.js:2
 #: js/cherry-gutenberg.js:2
 msgid "Upgrade"
@@ -855,7 +856,7 @@ msgid "%1$s of %2$s posts learned. Posts beyond the limit keep link health and t
 msgstr "Изучено записей: %1$s из %2$s. Записи сверх лимита сохраняют проверку ссылок и собственные подсказки, но другие записи не будут предлагать ссылки на них."
 
 #: js/cherry-app.js:22
-#: js/cherry-app.js:26
+#: js/cherry-app.js:30
 msgid "Upgrade to Pro"
 msgstr "Перейти на Pro"
 
@@ -1047,6 +1048,7 @@ msgstr "Экспорт в CSV"
 msgid "Issue type"
 msgstr "Тип проблемы"
 
+#: js/cherry-app.js:22
 #: js/cherry-app.js:23
 msgid "Type"
 msgstr "Тип"
@@ -1059,197 +1061,192 @@ msgstr "Все типы"
 msgid "Search posts"
 msgstr "Поиск записей"
 
-#: js/cherry-app.js:23
+#: js/cherry-app.js:22
 msgid "Post"
 msgstr "Запись"
 
-#: js/cherry-app.js:23
+#: js/cherry-app.js:22
 msgid "Related posts"
 msgstr "Связанные записи"
 
-#: js/cherry-app.js:23
+#: js/cherry-app.js:22
 msgid "Details"
 msgstr "Подробности"
 
 #: js/cherry-app.js:16
-#: js/cherry-app.js:23
 msgid "Actions"
 msgstr "Действия"
 
-#: js/cherry-app.js:23
+#: js/cherry-app.js:24
 msgid "Nothing found here."
 msgstr "Здесь ничего не найдено."
 
 #: js/cherry-app.js:16
-#: js/cherry-app.js:23
+#: js/cherry-app.js:22
 msgid "(no title)"
 msgstr "(без заголовка)"
 
-#: js/cherry-app.js:23
+#: js/cherry-app.js:24
 msgid "Not suggested in other posts: outside the free limit."
 msgstr "Не предлагается в других записях: вне лимита бесплатного тарифа."
 
-#: js/cherry-app.js:23
-msgid "Find donors"
-msgstr "Найти доноров"
-
 #. translators: 1: first row number, 2: last row number, 3: total rows
-#: js/cherry-app.js:24
+#: js/cherry-app.js:25
 #, js-format
 msgid "Showing %1$s–%2$s of %3$s"
 msgstr "Показано %1$s–%2$s из %3$s"
 
-#: js/cherry-app.js:24
+#: js/cherry-app.js:25
 msgid "‹ Previous"
 msgstr "‹ Назад"
 
-#: js/cherry-app.js:24
+#: js/cherry-app.js:25
 msgid "Next ›"
 msgstr "Далее ›"
 
-#: js/cherry-app.js:24
+#: js/cherry-app.js:28
 msgid "Scanning…"
 msgstr "Сканирование…"
 
-#: js/cherry-app.js:24
+#: js/cherry-app.js:28
 msgid "Error"
 msgstr "Ошибка"
 
-#: js/cherry-app.js:24
+#: js/cherry-app.js:28
 msgid "Stopped"
 msgstr "Остановлено"
 
-#: js/cherry-app.js:24
+#: js/cherry-app.js:28
 msgid "Up to date"
 msgstr "Актуально"
 
-#: js/cherry-app.js:24
+#: js/cherry-app.js:28
 msgid "Ready"
 msgstr "Готово"
 
-#: js/cherry-app.js:24
+#: js/cherry-app.js:28
 msgid "What is indexed"
 msgstr "Что проиндексировано"
 
-#: js/cherry-app.js:24
+#: js/cherry-app.js:28
 msgid "What CherryLink knows about your site"
 msgstr "Что CherryLink знает о вашем сайте"
 
-#: js/cherry-app.js:24
+#: js/cherry-app.js:28
 msgid "posts on the site"
 msgstr "записей на сайте"
 
-#: js/cherry-app.js:24
+#: js/cherry-app.js:28
 msgid "Published posts of the content types you chose"
 msgstr "Опубликованные записи выбранных типов контента"
 
-#: js/cherry-app.js:24
+#: js/cherry-app.js:28
 msgid "learned for suggestions"
 msgstr "изучено для подсказок"
 
 #. translators: %s: plan limit of learned posts
-#: js/cherry-app.js:25
+#: js/cherry-app.js:29
 #, js-format
 msgid "Free limit: newest %s by last update"
 msgstr "Лимит бесплатного тарифа: %s новейших по дате обновления"
 
-#: js/cherry-app.js:25
+#: js/cherry-app.js:29
 msgid "No limit on your plan"
 msgstr "На вашем тарифе лимита нет"
 
-#: js/cherry-app.js:25
+#: js/cherry-app.js:29
 msgid "checked for link health"
 msgstr "проверено на здоровье ссылок"
 
-#: js/cherry-app.js:25
+#: js/cherry-app.js:29
 msgid "Always the whole site"
 msgstr "Всегда весь сайт"
 
-#: js/cherry-app.js:25
+#: js/cherry-app.js:29
 msgid "Learned = analyzed for suggestions; counts toward the plan limit. Checked = links read for link health; whole site, no limit."
 msgstr "Изучено = проанализировано для подсказок; учитывается в лимите тарифа. Проверено = ссылки прочитаны для проверки здоровья; весь сайт, без лимита."
 
 #. translators: %s: plan limit of learned posts
-#: js/cherry-app.js:26
+#: js/cherry-app.js:30
 #, js-format
 msgid "Why only %s?"
 msgstr "Почему только %s?"
 
-#: js/cherry-app.js:26
+#: js/cherry-app.js:30
 msgid "Learning a post means computing what it is about on our servers, which costs real computing time. The free plan covers the posts you updated most recently, which is usually where links matter most. Posts beyond the limit keep link health and their own suggestions, but other posts won't suggest links to them. When you update an older post, it takes the place of the oldest learned one."
 msgstr "Изучение записи означает вычисление её смысла на наших серверах, а это требует реальных вычислительных ресурсов. Бесплатный тариф охватывает записи, обновлённые последними, — обычно именно там ссылки важнее всего. Записи сверх лимита сохраняют проверку ссылок и собственные подсказки, но другие записи не будут предлагать ссылки на них. Когда вы обновляете старую запись, она занимает место самой старой из изученных."
 
-#: js/cherry-app.js:26
+#: js/cherry-app.js:30
 msgid "Sync"
 msgstr "Синхронизация"
 
-#: js/cherry-app.js:26
+#: js/cherry-app.js:30
 msgid "Posts are updated automatically when you save, publish or delete them. Run a scan after importing content or changing what is indexed. Only changed posts are sent."
 msgstr "Записи обновляются автоматически при сохранении, публикации или удалении. Запускайте сканирование после импорта контента или смены индексируемого. Отправляются только изменённые записи."
 
-#: js/cherry-app.js:26
+#: js/cherry-app.js:30
 msgid "Scan site now"
 msgstr "Сканировать сайт сейчас"
 
 #. translators: 1: date and time (UTC), 2: posts updated, 3: posts removed
-#: js/cherry-app.js:27
+#: js/cherry-app.js:31
 #, js-format
 msgid "Last scan: %1$s UTC · %2$s posts updated · %3$s removed"
 msgstr "Последнее сканирование: %1$s UTC · обновлено записей: %2$s · удалено: %3$s"
 
-#: js/cherry-app.js:27
+#: js/cherry-app.js:31
 msgid "What to index"
 msgstr "Что индексировать"
 
-#: js/cherry-app.js:27
+#: js/cherry-app.js:31
 msgid "Content types"
 msgstr "Типы контента"
 
-#: js/cherry-app.js:27
+#: js/cherry-app.js:31
 msgid "Extra fields to include"
 msgstr "Дополнительные поля"
 
-#: js/cherry-app.js:27
+#: js/cherry-app.js:31
 msgid "Custom field keys (ACF, meta) added to the post text, one per line."
 msgstr "Ключи произвольных полей (ACF, meta), добавляемые к тексту записи, по одному в строке."
 
-#: js/cherry-app.js:27
+#: js/cherry-app.js:31
 msgid "Saved. Run a scan to apply the change."
 msgstr "Сохранено. Запустите сканирование, чтобы применить изменение."
 
-#: js/cherry-app.js:27
+#: js/cherry-app.js:31
 msgid "Save"
 msgstr "Сохранить"
 
-#: js/cherry-app.js:27
+#: js/cherry-app.js:31
 msgid "Remove data"
 msgstr "Удаление данных"
 
-#: js/cherry-app.js:27
+#: js/cherry-app.js:31
 msgid "Remove site data from CherryLink servers"
 msgstr "Удалить данные сайта с серверов CherryLink"
 
-#: js/cherry-app.js:27
+#: js/cherry-app.js:31
 msgid "Deletes the learned posts and the link map for this site. Links already in your posts are not touched. You can scan again at any time."
 msgstr "Удаляет изученные записи и карту ссылок этого сайта. Ссылки в ваших записях не затрагиваются. Сканировать заново можно в любой момент."
 
-#: js/cherry-app.js:27
+#: js/cherry-app.js:31
 msgid "Remove site data?"
 msgstr "Удалить данные сайта?"
 
-#: js/cherry-app.js:27
+#: js/cherry-app.js:31
 msgid "This deletes the learned posts and link map for this site from CherryLink servers. Your posts are not changed."
 msgstr "Изученные записи и карта ссылок этого сайта будут удалены с серверов CherryLink. Ваши записи не изменятся."
 
-#: js/cherry-app.js:27
+#: js/cherry-app.js:31
 msgid "Site data removed."
 msgstr "Данные сайта удалены."
 
-#: js/cherry-app.js:27
+#: js/cherry-app.js:31
 msgid "Connect CherryLink first"
 msgstr "Сначала подключите CherryLink"
 
-#: js/cherry-app.js:27
+#: js/cherry-app.js:31
 msgid "This page needs a connected site."
 msgstr "Для этой страницы нужен подключённый сайт."
 
@@ -1749,3 +1746,42 @@ msgstr "Выбор сохранён"
 #: js/cherry-gutenberg.js:3
 msgid "word found in the text"
 msgstr "слово есть в тексте"
+
+#: js/cherry-app.js:22
+msgid "Find posts that could link here"
+msgstr "Найти статьи, которые могут сюда ссылаться"
+
+#: js/cherry-app.js:23
+msgid "Selected page"
+msgstr "Выбранная страница"
+
+#. translators: %s: number of orphan pages that can get links now
+#: js/cherry-app.js:24
+#, js-format
+msgid "Ready to fix (%s)"
+msgstr "Можно исправить сейчас (%s)"
+
+#. translators: %s: number of orphan pages outside the plan limit
+#: js/cherry-app.js:26
+#, js-format
+msgid "Not learned on your plan (%s)"
+msgstr "Не изучены на вашем тарифе (%s)"
+
+#. translators: %s: number of orphan pages outside the plan limit
+#: js/cherry-app.js:27
+#, js-format
+msgid "%s orphan page is outside your plan"
+msgid_plural "%s orphan pages are outside your plan"
+msgstr[0] "%s страница без ссылок вне вашего тарифа"
+msgstr[1] "%s страницы без ссылок вне вашего тарифа"
+msgstr[2] "%s страниц без ссылок вне вашего тарифа"
+
+#. translators: %s: plan limit of learned posts
+#: js/cherry-app.js:28
+#, js-format
+msgid "The free plan learns your %s most recently updated posts. Upgrade to find links for these pages too."
+msgstr "Бесплатный тариф изучает %s последних обновлённых записей. Перейдите на платный тариф, чтобы находить ссылки и для этих страниц."
+
+#: js/cherry-app.js:22
+msgid "Find posts to link to"
+msgstr "Найти статьи, на которые можно сослаться"

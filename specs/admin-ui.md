@@ -123,10 +123,27 @@ The content types chosen on Index (post always; `show_pages`, `show_customs`) de
 indexed, counted (`counts.total`), learned and suggested: `IndexHelpers::get_allowed_types_list()`.
 `get_public_types_list()` lists every public type for the pickers. Pages are on by default.
 
-A post outside the learned set keeps link health, its own editor suggestions and "Find donors"; it is
-only never suggested as a link target in other posts. Updating it makes it newest, so it gets learned.
+A post outside the learned set keeps link health and its own editor suggestions; it is only never
+suggested as a link target in other posts. Updating it makes it newest, so it gets learned.
 This is explained (with Upgrade) in the editor strip (`config.postLearned === false`), on Link health
 rows, on Index ("Why only N?") and in Settings › License.
+
+`learned` on Link health rows uses the newest-N cutoff with N = max(stored plan limit, the API's
+learned count from the capabilities snapshot), so a raised plan that the licence check has not yet
+stored never marks learned posts as locked.
+
+Orphan pages tab, in three parts: **Selected page** (the `#orphans-<id>` deep link from the dashboard's
+"Easiest wins"; its donors load on open), **Ready to fix** (learned orphans, paged; the Related posts
+cell holds a "Find posts that could link here" button until donors are loaded on click, one search plus
+up to five anchor calls each) and **Not learned on your plan** (orphans outside the limit: a blurred,
+`aria-hidden` preview of up to five rows under an overlay with the count, the limit and Upgrade). The
+headings appear only when there is a selected page or locked rows. Export CSV still exports every row.
+
+No outgoing tab: the Related posts cell holds "Find posts to link to" (on click, never preloaded).
+`linkate_post_targets` runs the editor panel pipeline (`SuggestionsResults::rows`, one search call on
+the saved content) and returns up to five targets in the donors shape, each with a link phrase from
+this post that no earlier target already uses; Edit opens this post. Results are kept per tab, since a
+post can be both an orphan and without outgoing links.
 
 ## Purged index (`index_expired`)
 

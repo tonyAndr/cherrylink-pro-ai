@@ -3,13 +3,13 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: CherryLink – AI Internal Linking 1.2.1\n"
-"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/p\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/app\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-12T16:22:41+00:00\n"
+"POT-Creation-Date: 2026-11-12T16:50:07+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: cherrylink\n"
@@ -117,7 +117,7 @@ msgstr ""
 
 #: src/Admin/AdminMenu.php:58
 #: src/Admin/AdminMenu.php:79
-#: js/cherry-app.js:27
+#: js/cherry-app.js:31
 msgid "Settings"
 msgstr ""
 
@@ -138,7 +138,7 @@ msgid "Link health"
 msgstr ""
 
 #: src/Admin/AdminMenu.php:78
-#: js/cherry-app.js:24
+#: js/cherry-app.js:28
 msgid "Index"
 msgstr ""
 
@@ -335,7 +335,7 @@ msgid "This key was not accepted."
 msgstr ""
 
 #: js/cherry-app.js:1
-#: js/cherry-app.js:27
+#: js/cherry-app.js:31
 #: js/cherry-classic.js:3
 #: js/cherry-gutenberg.js:3
 msgid "Connect CherryLink"
@@ -522,7 +522,7 @@ msgid "Continue to dashboard"
 msgstr ""
 
 #: js/cherry-app.js:6
-#: js/cherry-app.js:26
+#: js/cherry-app.js:30
 msgid "Stop"
 msgstr ""
 
@@ -584,7 +584,7 @@ msgid "%1$s posts learned, %2$s posts checked. Here is what CherryLink found."
 msgstr ""
 
 #: js/cherry-app.js:8
-#: js/cherry-app.js:24
+#: js/cherry-app.js:28
 msgid "Reading your links…"
 msgstr ""
 
@@ -635,7 +635,8 @@ msgid "%s learned"
 msgstr ""
 
 #: js/cherry-app.js:10
-#: js/cherry-app.js:23
+#: js/cherry-app.js:24
+#: js/cherry-app.js:28
 #: js/cherry-classic.js:2
 #: js/cherry-gutenberg.js:2
 msgid "Upgrade"
@@ -750,12 +751,11 @@ msgid "Not linking yet"
 msgstr ""
 
 #: js/cherry-app.js:16
-#: js/cherry-app.js:23
 msgid "Actions"
 msgstr ""
 
 #: js/cherry-app.js:16
-#: js/cherry-app.js:23
+#: js/cherry-app.js:22
 msgid "(no title)"
 msgstr ""
 
@@ -944,7 +944,7 @@ msgid "%1$s of %2$s posts learned. Posts beyond the limit keep link health and t
 msgstr ""
 
 #: js/cherry-app.js:22
-#: js/cherry-app.js:26
+#: js/cherry-app.js:30
 msgid "Upgrade to Pro"
 msgstr ""
 
@@ -1114,6 +1114,31 @@ msgstr ""
 msgid "Settings reset to defaults."
 msgstr ""
 
+#: js/cherry-app.js:22
+msgid "Find posts to link to"
+msgstr ""
+
+#: js/cherry-app.js:22
+msgid "Find posts that could link here"
+msgstr ""
+
+#: js/cherry-app.js:22
+msgid "Post"
+msgstr ""
+
+#: js/cherry-app.js:22
+#: js/cherry-app.js:23
+msgid "Type"
+msgstr ""
+
+#: js/cherry-app.js:22
+msgid "Related posts"
+msgstr ""
+
+#: js/cherry-app.js:22
+msgid "Details"
+msgstr ""
+
 #. translators: 1: date and time, 2: posts checked (links read for link health; whole site, no limit)
 #: js/cherry-app.js:23
 #, js-format
@@ -1141,10 +1166,6 @@ msgid "Key pages"
 msgstr ""
 
 #: js/cherry-app.js:23
-msgid "Type"
-msgstr ""
-
-#: js/cherry-app.js:23
 msgid "All types"
 msgstr ""
 
@@ -1153,186 +1174,200 @@ msgid "Search posts"
 msgstr ""
 
 #: js/cherry-app.js:23
-msgid "Post"
+msgid "Selected page"
 msgstr ""
 
-#: js/cherry-app.js:23
-msgid "Related posts"
+#. translators: %s: number of orphan pages that can get links now
+#: js/cherry-app.js:24
+#, js-format
+msgid "Ready to fix (%s)"
 msgstr ""
 
-#: js/cherry-app.js:23
-msgid "Details"
-msgstr ""
-
-#: js/cherry-app.js:23
+#: js/cherry-app.js:24
 msgid "Nothing found here."
 msgstr ""
 
-#: js/cherry-app.js:23
+#: js/cherry-app.js:24
 msgid "Not suggested in other posts: outside the free limit."
 msgstr ""
 
-#: js/cherry-app.js:23
-msgid "Find donors"
-msgstr ""
-
 #. translators: 1: first row number, 2: last row number, 3: total rows
-#: js/cherry-app.js:24
+#: js/cherry-app.js:25
 #, js-format
 msgid "Showing %1$s–%2$s of %3$s"
 msgstr ""
 
-#: js/cherry-app.js:24
+#: js/cherry-app.js:25
 msgid "‹ Previous"
 msgstr ""
 
-#: js/cherry-app.js:24
+#: js/cherry-app.js:25
 msgid "Next ›"
 msgstr ""
 
-#: js/cherry-app.js:24
+#. translators: %s: number of orphan pages outside the plan limit
+#: js/cherry-app.js:26
+#, js-format
+msgid "Not learned on your plan (%s)"
+msgstr ""
+
+#. translators: %s: number of orphan pages outside the plan limit
+#: js/cherry-app.js:27
+#, js-format
+msgid "%s orphan page is outside your plan"
+msgid_plural "%s orphan pages are outside your plan"
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %s: plan limit of learned posts
+#: js/cherry-app.js:28
+#, js-format
+msgid "The free plan learns your %s most recently updated posts. Upgrade to find links for these pages too."
+msgstr ""
+
+#: js/cherry-app.js:28
 msgid "Scanning…"
 msgstr ""
 
-#: js/cherry-app.js:24
+#: js/cherry-app.js:28
 msgid "Error"
 msgstr ""
 
-#: js/cherry-app.js:24
+#: js/cherry-app.js:28
 msgid "Stopped"
 msgstr ""
 
-#: js/cherry-app.js:24
+#: js/cherry-app.js:28
 msgid "Up to date"
 msgstr ""
 
-#: js/cherry-app.js:24
+#: js/cherry-app.js:28
 msgid "Ready"
 msgstr ""
 
-#: js/cherry-app.js:24
+#: js/cherry-app.js:28
 msgid "What is indexed"
 msgstr ""
 
-#: js/cherry-app.js:24
+#: js/cherry-app.js:28
 msgid "What CherryLink knows about your site"
 msgstr ""
 
-#: js/cherry-app.js:24
+#: js/cherry-app.js:28
 msgid "posts on the site"
 msgstr ""
 
-#: js/cherry-app.js:24
+#: js/cherry-app.js:28
 msgid "Published posts of the content types you chose"
 msgstr ""
 
-#: js/cherry-app.js:24
+#: js/cherry-app.js:28
 msgid "learned for suggestions"
 msgstr ""
 
 #. translators: %s: plan limit of learned posts
-#: js/cherry-app.js:25
+#: js/cherry-app.js:29
 #, js-format
 msgid "Free limit: newest %s by last update"
 msgstr ""
 
-#: js/cherry-app.js:25
+#: js/cherry-app.js:29
 msgid "No limit on your plan"
 msgstr ""
 
-#: js/cherry-app.js:25
+#: js/cherry-app.js:29
 msgid "checked for link health"
 msgstr ""
 
-#: js/cherry-app.js:25
+#: js/cherry-app.js:29
 msgid "Always the whole site"
 msgstr ""
 
-#: js/cherry-app.js:25
+#: js/cherry-app.js:29
 msgid "Learned = analyzed for suggestions; counts toward the plan limit. Checked = links read for link health; whole site, no limit."
 msgstr ""
 
 #. translators: %s: plan limit of learned posts
-#: js/cherry-app.js:26
+#: js/cherry-app.js:30
 #, js-format
 msgid "Why only %s?"
 msgstr ""
 
-#: js/cherry-app.js:26
+#: js/cherry-app.js:30
 msgid "Learning a post means computing what it is about on our servers, which costs real computing time. The free plan covers the posts you updated most recently, which is usually where links matter most. Posts beyond the limit keep link health and their own suggestions, but other posts won't suggest links to them. When you update an older post, it takes the place of the oldest learned one."
 msgstr ""
 
-#: js/cherry-app.js:26
+#: js/cherry-app.js:30
 msgid "Sync"
 msgstr ""
 
-#: js/cherry-app.js:26
+#: js/cherry-app.js:30
 msgid "Posts are updated automatically when you save, publish or delete them. Run a scan after importing content or changing what is indexed. Only changed posts are sent."
 msgstr ""
 
-#: js/cherry-app.js:26
+#: js/cherry-app.js:30
 msgid "Scan site now"
 msgstr ""
 
 #. translators: 1: date and time (UTC), 2: posts updated, 3: posts removed
-#: js/cherry-app.js:27
+#: js/cherry-app.js:31
 #, js-format
 msgid "Last scan: %1$s UTC · %2$s posts updated · %3$s removed"
 msgstr ""
 
-#: js/cherry-app.js:27
+#: js/cherry-app.js:31
 msgid "What to index"
 msgstr ""
 
-#: js/cherry-app.js:27
+#: js/cherry-app.js:31
 msgid "Content types"
 msgstr ""
 
-#: js/cherry-app.js:27
+#: js/cherry-app.js:31
 msgid "Extra fields to include"
 msgstr ""
 
-#: js/cherry-app.js:27
+#: js/cherry-app.js:31
 msgid "Custom field keys (ACF, meta) added to the post text, one per line."
 msgstr ""
 
-#: js/cherry-app.js:27
+#: js/cherry-app.js:31
 msgid "Saved. Run a scan to apply the change."
 msgstr ""
 
-#: js/cherry-app.js:27
+#: js/cherry-app.js:31
 msgid "Save"
 msgstr ""
 
-#: js/cherry-app.js:27
+#: js/cherry-app.js:31
 msgid "Remove data"
 msgstr ""
 
-#: js/cherry-app.js:27
+#: js/cherry-app.js:31
 msgid "Remove site data from CherryLink servers"
 msgstr ""
 
-#: js/cherry-app.js:27
+#: js/cherry-app.js:31
 msgid "Deletes the learned posts and the link map for this site. Links already in your posts are not touched. You can scan again at any time."
 msgstr ""
 
-#: js/cherry-app.js:27
+#: js/cherry-app.js:31
 msgid "Remove site data?"
 msgstr ""
 
-#: js/cherry-app.js:27
+#: js/cherry-app.js:31
 msgid "This deletes the learned posts and link map for this site from CherryLink servers. Your posts are not changed."
 msgstr ""
 
-#: js/cherry-app.js:27
+#: js/cherry-app.js:31
 msgid "Site data removed."
 msgstr ""
 
-#: js/cherry-app.js:27
+#: js/cherry-app.js:31
 msgid "Connect CherryLink first"
 msgstr ""
 
-#: js/cherry-app.js:27
+#: js/cherry-app.js:31
 msgid "This page needs a connected site."
 msgstr ""
 

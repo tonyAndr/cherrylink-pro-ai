@@ -1,9 +1,9 @@
 import { useEffect, useState } from '@wordpress/element';
-import { __, sprintf } from '@wordpress/i18n';
+import { __, _n, sprintf } from '@wordpress/i18n';
 import { useAdmin, useLinkHealth, useSync } from './ctx';
 import { buildCsv, detailsFor, downloadCsv } from './csv';
 import KeyPagesTab from './KeyPagesTab';
-import { Btn, Card, ExpiredNotice, Notice, Title, num } from './ui';
+import { Btn, Card, ExpiredNotice, Link, Notice, Title, num } from './ui';
 
 const PER_PAGE = 25;
 export const TABS = [
@@ -69,30 +69,53 @@ export default function LinkHealth() {
         setPinBusy(0);
     };
 
+    const limit = state.license.post_limit;
     const rows = data && tab !== 'keys' ? rowsFor(tab, data.rows, type, q) : [];
-    const pages = Math.max(1, Math.ceil(rows.length / PER_PAGE));
-    const shown = rows.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+    // Orphans split in three: the page opened from the dashboard, learned pages (donors on demand),
+    // and pages outside the plan limit (locked behind an upgrade overlay).
+    const orphans = tab === 'orphans';
+    const locked = orphans && limit ? rows.filter((r) => !r.learned) : [];
+    const focus = orphans && hTab === 'orphans' ? rows.find((r) => String(r.post_id) === hPost && !locked.includes(r)) : null;
+    const list = orphans ? rows.filter((r) => r !== focus && !locked.includes(r)) : rows;
+    const pages = Math.max(1, Math.ceil(list.length / PER_PAGE));
+    const shown = list.slice((page - 1) * PER_PAGE, page * PER_PAGE);
     const types = data ? [...new Map(data.rows.map((r) => [r.type, r.type_label || r.type])).entries()] : [];
 
-    const find = async (id) => {
-        setDonors((d) => ({ ...d, [id]: 'loading' }));
+    // Orphans: posts that could link here. No outgoing: posts this one could link to. Both on click.
+    const find = async (id, action = 'linkate_orphan_donors') => {
+        const k = `${action}:${id}`; // a post can be on both tabs
+        setDonors((d) => ({ ...d, [k]: 'loading' }));
         try {
-            const r = await api('linkate_orphan_donors', { post_id: id });
-            setDonors((d) => ({ ...d, [id]: r.donors || [] }));
+            const r = await api(action, { post_id: id });
+            setDonors((d) => ({ ...d, [k]: r.donors || [] }));
         } catch (e) {
-            setDonors((d) => ({ ...d, [id]: 'error' }));
+            setDonors((d) => ({ ...d, [k]: 'error' }));
         }
     };
 
-    // Deep link `#orphans-<id>`: jump to the page holding that row and open its donors once.
+    // Deep link `#orphans-<id>` (dashboard "Easiest wins"): that page is shown first with its donors open.
     useEffect(() => {
-        if (!data || !hPost || hTab !== 'orphans') return;
-        const i = rowsFor('orphans', data.rows, '', '').findIndex((r) => String(r.post_id) === hPost);
-        if (i >= 0) { setPage(Math.floor(i / PER_PAGE) + 1); find(Number(hPost)); }
+        if (data && hPost && hTab === 'orphans') find(Number(hPost));
     }, [data]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const cur = TABS.find((t) => t.id === tab) || TABS[0];
-    const limit = state.license.post_limit;
+    const title = (r) => r.title || __('(no title)', 'cherrylink');
+    const orphanRow = (r) => {
+        const out = tab === 'no_outgoing';
+        const action = out ? 'linkate_post_targets' : 'linkate_orphan_donors';
+        const d = donors[`${action}:${r.post_id}`];
+        return (
+            <tr key={r.post_id}>
+                <td><a className="cl-link" href={r.edit_url}>{title(r)}</a></td>
+                <td>{r.type_label || r.type}</td>
+                <td>
+                    {d && <Donors list={d} />}
+                    {(!d || d === 'error') && <button type="button" className="cl-textbtn" onClick={() => find(r.post_id, action)}>{out ? __('Find posts to link to', 'cherrylink') : __('Find posts that could link here', 'cherrylink')}</button>}
+                </td>
+            </tr>
+        );
+    };
+    const head = <thead><tr><th>{__('Post', 'cherrylink')}</th><th>{__('Type', 'cherrylink')}</th><th>{orphans || tab === 'no_outgoing' ? __('Related posts', 'cherrylink') : __('Details', 'cherrylink')}</th></tr></thead>;
 
     if (expired) {
         return (
@@ -129,43 +152,68 @@ export default function LinkHealth() {
                     {tab === 'keys' ? <KeyPagesTab keys={keys} busyId={pinBusy} onPin={pin} /> : <>
                     <p className="cl-muted">{cur.help}</p>
                     <div className="cl-filters">
-                        <label htmlFor="cl-type">{__('Type', 'cherrylink')}</label>
+                        <label htmlFor="cl-type" className="screen-reader-text">{__('Type', 'cherrylink')}</label>
                         <select id="cl-type" className="cl-input" value={type} onChange={(e) => { setType(e.target.value); setPage(1); }}>
                             <option value="">{__('All types', 'cherrylink')}</option>
                             {types.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
                         </select>
-                        <label htmlFor="cl-q">{__('Search posts', 'cherrylink')}</label>
+                        <label htmlFor="cl-q" className="screen-reader-text">{__('Search posts', 'cherrylink')}</label>
                         <input id="cl-q" type="search" className="cl-input" value={q} placeholder={__('Search posts', 'cherrylink')} onChange={(e) => { setQ(e.target.value); setPage(1); }} />
                     </div>
+                    {focus && <>
+                        <h3 className="cl-eyebrow">{__('Selected page', 'cherrylink')}</h3>
+                        <div className="cl-tablewrap"><table className="cl-table">{head}<tbody>{orphanRow(focus)}</tbody></table></div>
+                    </>}
+                    {orphans && (focus || locked.length > 0) && <h3 className="cl-eyebrow">{sprintf(
+                        /* translators: %s: number of orphan pages that can get links now */
+                        __('Ready to fix (%s)', 'cherrylink'), num(list.length))}</h3>}
                     <div className="cl-tablewrap">
                         <table className="cl-table">
-                            <thead><tr><th>{__('Post', 'cherrylink')}</th><th>{__('Type', 'cherrylink')}</th><th>{tab === 'orphans' ? __('Related posts', 'cherrylink') : __('Details', 'cherrylink')}</th><th><span className="screen-reader-text">{__('Actions', 'cherrylink')}</span></th></tr></thead>
+                            {head}
                             <tbody>
-                                {!shown.length && <tr><td colSpan={4}>{__('Nothing found here.', 'cherrylink')}</td></tr>}
-                                {shown.map((r) => (
+                                {!shown.length && <tr><td colSpan={3}>{__('Nothing found here.', 'cherrylink')}</td></tr>}
+                                {shown.map((r) => orphans || tab === 'no_outgoing' ? orphanRow(r) : (
                                     <tr key={r.post_id}>
-                                        <td><a className="cl-link" href={r.edit_url}>{r.title || __('(no title)', 'cherrylink')}</a></td>
+                                        <td><a className="cl-link" href={r.edit_url}>{title(r)}</a></td>
                                         <td>{r.type_label || r.type}</td>
                                         <td>
-                                            {tab !== 'orphans' && detailsFor(tab, r)}
+                                            {detailsFor(tab, r)}
                                             {!r.learned && limit && <span className="cl-muted">{__('Not suggested in other posts: outside the free limit.', 'cherrylink')} <a className="cl-link" href={urls.upgrade} target="_blank" rel="noreferrer">{__('Upgrade', 'cherrylink')}</a></span>}
-                                            {tab === 'orphans' && donors[r.post_id] && <Donors list={donors[r.post_id]} />}
                                         </td>
-                                        <td>{tab === 'orphans' && <button type="button" className="cl-textbtn" onClick={() => find(r.post_id)}>{__('Find donors', 'cherrylink')}</button>}</td>
                                     </tr>
                                 ))}
                             </tbody>
                         </table>
                     </div>
                     <div className="cl-between">
-                        <span className="cl-muted">{rows.length ? sprintf(
+                        <span className="cl-muted">{list.length ? sprintf(
                             /* translators: 1: first row number, 2: last row number, 3: total rows */
-                            __('Showing %1$s–%2$s of %3$s', 'cherrylink'), num((page - 1) * PER_PAGE + 1), num(Math.min(page * PER_PAGE, rows.length)), num(rows.length)) : ''}</span>
+                            __('Showing %1$s–%2$s of %3$s', 'cherrylink'), num((page - 1) * PER_PAGE + 1), num(Math.min(page * PER_PAGE, list.length)), num(list.length)) : ''}</span>
                         <span className="cl-row">
                             <Btn kind="ghost" disabled={page <= 1} onClick={() => setPage(page - 1)}>{__('‹ Previous', 'cherrylink')}</Btn>
                             <Btn kind="ghost" disabled={page >= pages} onClick={() => setPage(page + 1)}>{__('Next ›', 'cherrylink')}</Btn>
                         </span>
                     </div>
+                    {locked.length > 0 && <>
+                        <h3 className="cl-eyebrow">{sprintf(
+                            /* translators: %s: number of orphan pages outside the plan limit */
+                            __('Not learned on your plan (%s)', 'cherrylink'), num(locked.length))}</h3>
+                        <div className="cl-locked">
+                            {/* ponytail: a blurred preview of the first rows; the full list is in Export CSV */}
+                            <div className="cl-tablewrap" aria-hidden="true"><table className="cl-table"><tbody>
+                                {locked.slice(0, 5).map((r) => <tr key={r.post_id}><td>{title(r)}</td><td>{r.type_label || r.type}</td></tr>)}
+                            </tbody></table></div>
+                            <div className="cl-locked-over">
+                                <strong>{sprintf(
+                                    /* translators: %s: number of orphan pages outside the plan limit */
+                                    _n('%s orphan page is outside your plan', '%s orphan pages are outside your plan', locked.length, 'cherrylink'), num(locked.length))}</strong>
+                                <span className="cl-muted">{sprintf(
+                                    /* translators: %s: plan limit of learned posts */
+                                    __('The free plan learns your %s most recently updated posts. Upgrade to find links for these pages too.', 'cherrylink'), num(limit))}</span>
+                                <Link kind="btn" href={urls.upgrade} target="_blank" rel="noreferrer">{__('Upgrade', 'cherrylink')}</Link>
+                            </div>
+                        </div>
+                    </>}
                     </>}
                 </>
             )}

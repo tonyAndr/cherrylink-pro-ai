@@ -48,7 +48,7 @@ msgid "Invalid settings."
 msgstr "Некорректные настройки."
 
 #: src/Admin/AdminApi.php:104
-#: src/Admin/AdminApi.php:429
+#: src/Admin/AdminApi.php:430
 msgid "Enter a license key."
 msgstr "Введите ключ лицензии."
 
@@ -64,53 +64,53 @@ msgstr "Не удалось удалить данные сайта на серв
 msgid "Could not import: choose a .txt file exported from CherryLink."
 msgstr "Не удалось импортировать: выберите файл .txt, экспортированный из CherryLink."
 
-#: src/Admin/AdminApi.php:425
+#: src/Admin/AdminApi.php:426
 msgid "Could not reach the license server. Try again later or contact support."
 msgstr "Не удалось связаться с сервером лицензий. Повторите позже или обратитесь в поддержку."
 
-#: src/Admin/AdminApi.php:427
+#: src/Admin/AdminApi.php:428
 msgid "The key is being checked in the background. Refresh in a few seconds."
 msgstr "Ключ проверяется в фоне. Обновите страницу через несколько секунд."
 
-#: src/Admin/AdminApi.php:431
+#: src/Admin/AdminApi.php:432
 msgid "Could not schedule the key check. Try again."
 msgstr "Не удалось запланировать проверку ключа. Повторите попытку."
 
-#: src/Admin/AdminApi.php:433
+#: src/Admin/AdminApi.php:434
 msgid "This key is bound to another domain."
 msgstr "Этот ключ привязан к другому домену."
 
-#: src/Admin/AdminApi.php:435
+#: src/Admin/AdminApi.php:436
 msgid "This key has expired."
 msgstr "Срок действия ключа истёк."
 
-#: src/Admin/AdminApi.php:437
+#: src/Admin/AdminApi.php:438
 msgid "This key is not valid."
 msgstr "Этот ключ недействителен."
 
-#: src/Admin/AdminApi.php:455
+#: src/Admin/AdminApi.php:456
 msgid "Could not verify the domain: the CherryLink server could not open your site over HTTPS. The site must be reachable from the internet; for private sites enter a key manually."
 msgstr "Не удалось подтвердить домен: сервер CherryLink не смог открыть адрес сайта по HTTPS. Сайт должен быть доступен из интернета; для закрытых сайтов введите ключ вручную."
 
 #. translators: %d: seconds to wait
-#: src/Admin/AdminApi.php:459
+#: src/Admin/AdminApi.php:460
 #, php-format
 msgid "Too many connection attempts. Try again in %d s."
 msgstr "Слишком много попыток подключения. Повторите через %d с."
 
-#: src/Admin/AdminApi.php:460
+#: src/Admin/AdminApi.php:461
 msgid "Too many connection attempts. Try again later."
 msgstr "Слишком много попыток подключения. Повторите позже."
 
-#: src/Admin/AdminApi.php:462
+#: src/Admin/AdminApi.php:463
 msgid "This domain cannot be connected (a public domain is required, not an IP address or localhost)."
 msgstr "Домен сайта не подходит для подключения (нужен публичный домен, не IP-адрес и не localhost)."
 
-#: src/Admin/AdminApi.php:464
+#: src/Admin/AdminApi.php:465
 msgid "Connecting is not available for this domain. Enter a key manually or contact support."
 msgstr "Для этого домена подключение недоступно. Введите ключ вручную или обратитесь в поддержку."
 
-#: src/Admin/AdminApi.php:466
+#: src/Admin/AdminApi.php:467
 msgid "The connection service is temporarily unavailable. Try again later."
 msgstr "Сервис подключения временно недоступен. Повторите позже."
 
@@ -131,6 +131,7 @@ msgstr "Обзор"
 
 #: src/Admin/AdminMenu.php:77
 #: js/cherry-app.js:11
+#: js/cherry-app.js:22
 #: js/cherry-app.js:23
 msgid "Link health"
 msgstr "Здоровье ссылок"
@@ -174,7 +175,7 @@ msgid "Stopping the scan…"
 msgstr "Остановка сканирования…"
 
 #: src/Indexing/AsyncBulkScan.php:434
-#: src/Indexing/SyncService.php:278
+#: src/Indexing/SyncService.php:287
 msgid "Stopped by user"
 msgstr "Остановлено пользователем"
 
@@ -248,15 +249,15 @@ msgstr " найдено %d ссылок в записях и страницах.
 msgid " no links found."
 msgstr " ссылки не найдены."
 
-#: src/Indexing/SyncService.php:203
+#: src/Indexing/SyncService.php:212
 msgid "License inactive — synchronization is unavailable. Enter your license key."
 msgstr "Лицензия неактивна — синхронизация недоступна. Введите ключ лицензии."
 
-#: src/Indexing/SyncService.php:260
+#: src/Indexing/SyncService.php:269
 msgid "Could not schedule the scan. Please try again."
 msgstr "Не удалось запланировать сканирование. Попробуйте снова."
 
-#: src/Indexing/SyncService.php:621
+#: src/Indexing/SyncService.php:630
 msgid "No changes found"
 msgstr "Изменений не найдено"
 
@@ -307,6 +308,8 @@ msgstr "Отмена"
 
 #: js/cherry-app.js:1
 #: js/cherry-app.js:6
+#: js/cherry-classic.js:1
+#: js/cherry-gutenberg.js:1
 msgid "Analyze site"
 msgstr "Проанализировать сайт"
 
@@ -328,10 +331,6 @@ msgstr "Этот ключ не принят."
 #: js/cherry-gutenberg.js:2
 msgid "Connect CherryLink"
 msgstr "Подключить CherryLink"
-
-#: js/cherry-app.js:1
-msgid "CherryLink compares your posts on its servers to suggest internal links and check link health. Connecting creates a free key bound to this site. Nothing is sent until you click Connect."
-msgstr "CherryLink сравнивает ваши записи на своих серверах, чтобы предлагать внутренние ссылки и проверять их состояние. При подключении создаётся бесплатный ключ, привязанный к этому сайту. Пока вы не нажмёте «Подключить», ничего не отправляется."
 
 #: js/cherry-app.js:1
 msgid "What is sent"
@@ -1617,3 +1616,20 @@ msgstr "Подсказки пересчитаны по текущему текс
 #: js/cherry-gutenberg.js:2
 msgid "Refresh"
 msgstr "Обновить"
+
+#: js/cherry-app.js:1
+msgid "Your site data was removed"
+msgstr "Данные вашего сайта удалены"
+
+#: js/cherry-app.js:1
+msgid "CherryLink deletes the data of free sites after 180 days without contact. Analyze the site again to get suggestions and link health back. It takes about a minute for 1,000 posts."
+msgstr "CherryLink удаляет данные бесплатных сайтов после 180 дней без обращений. Проанализируйте сайт снова, чтобы вернуть подсказки и здоровье ссылок. Это занимает около минуты на 1 000 записей."
+
+#: js/cherry-app.js:1
+msgid "CherryLink compares your posts on its servers to suggest internal links and check link health. Connecting creates a free key bound to this site. Nothing is sent until you click Connect. Data of free sites with no contact for 180 days is deleted."
+msgstr "CherryLink сравнивает ваши записи на своих серверах, чтобы предлагать внутренние ссылки и проверять их состояние. При подключении создаётся бесплатный ключ, привязанный к этому сайту. Пока вы не нажмёте «Подключить», ничего не отправляется. Данные бесплатных сайтов, не обращавшихся к серверу 180 дней, удаляются."
+
+#: js/cherry-classic.js:1
+#: js/cherry-gutenberg.js:1
+msgid "Your site data was removed after 180 days of inactivity. Analyze the site to get suggestions back."
+msgstr "Данные вашего сайта удалены после 180 дней неактивности. Проанализируйте сайт, чтобы вернуть подсказки."

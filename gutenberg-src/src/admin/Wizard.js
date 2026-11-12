@@ -55,7 +55,7 @@ function Connect() {
         <Card className="cl-card cl-wide">
             <div className="cl-stack">
                 <h1>{__('Connect CherryLink', 'cherrylink')}</h1>
-                <p className="cl-muted">{__('CherryLink compares your posts on its servers to suggest internal links and check link health. Connecting creates a free key bound to this site. Nothing is sent until you click Connect.', 'cherrylink')}</p>
+                <p className="cl-muted">{__('CherryLink compares your posts on its servers to suggest internal links and check link health. Connecting creates a free key bound to this site. Nothing is sent until you click Connect. Data of free sites with no contact for 180 days is deleted.', 'cherrylink')}</p>
             </div>
             {error && <Notice tone="danger">{error}</Notice>}
             <div className="cl-grid2">

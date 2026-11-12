@@ -127,3 +127,16 @@ A post outside the learned set keeps link health, its own editor suggestions and
 only never suggested as a link target in other posts. Updating it makes it newest, so it gets learned.
 This is explained (with Upgrade) in the editor strip (`config.postLearned === false`), on Link health
 rows, on Index ("Why only N?") and in Settings › License.
+
+## Purged index (`index_expired`)
+
+The API deletes a free site's index (vectors, link graph, inventory) after 180 days without contact and reports
+`plan.index_expired: true` in `GET /v1/capabilities`. `Capabilities::summarize()` carries it into the cached
+snapshot (`plan.index_expired`, default false; absent on older APIs). `AdminApi::state()` exposes
+`index_expired`; when set, the Dashboard shows a "Your site data was removed" notice with one **Analyze site**
+button (the normal `linkate_sync_start`), hides the stale link-health cards, and Link health shows the same
+notice instead of cached results. `SyncService::start()` clears the cached flag locally and deletes the
+`cherrylink_link_health` option, so the notice disappears at once instead of after the 5-minute refresh (the
+API flips it back on `POST /v1/sync/plan`). The editor strip shows a `.cl-plan-note` (`config.indexExpired`,
+`PanelConfig`) linking to the dashboard (`config.connectUrl`). The Wizard Connect disclosure states the 180-day
+deletion.

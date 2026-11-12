@@ -42,6 +42,7 @@ final class PanelConfig
             'upgradeUrl' => Urls::UPGRADE,
             'plan'      => $plan = self::plan($options),
             'postLearned' => $is_term ? null : self::postLearned($object_id, $plan),
+            'indexExpired' => (new Capabilities())->indexExpired(),
             'editUrlBase' => \admin_url('post.php?action=edit&post='),
         ];
         if ($is_term && $taxonomy !== '') {

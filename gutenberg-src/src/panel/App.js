@@ -304,6 +304,7 @@ export default function App({ adapter, config, onClose, headProps }) {
             {head}
             <Strip out={links.length} inc={inc} words={words} donorCount={donorCount} onGoSuggestions={() => { setView(null); setTab('opp'); }}
                 plan={config.plan} postLearned={config.postLearned} upgradeUrl={config.upgradeUrl}
+                indexExpired={!!config.indexExpired} dashboardUrl={config.connectUrl}
                 onLinks={(section) => setView({ section })} onGoIncoming={() => { setView(null); setTab('in'); }} />
             <Tabs tabs={tabs} current={view ? '' : tab} onChange={(t) => { setView(null); setTab(t); }} />
             <div className="cl-body">{body}</div>

@@ -43,6 +43,14 @@ describe('Strip plan line', () => {
         expect(screen.queryByText(/other posts won't suggest links to it/)).toBeNull();
     });
 
+    it('tells the user the site data was removed and links to the dashboard', () => {
+        const { rerender } = render(<Strip {...base} plan={null} indexExpired dashboardUrl="https://example.test/wp-admin/admin.php?page=cherrylink" />);
+        expect(screen.getByText(/site data was removed after 180 days/)).toBeInTheDocument();
+        expect(screen.getByText('Analyze site')).toHaveAttribute('href', 'https://example.test/wp-admin/admin.php?page=cherrylink');
+        rerender(<Strip {...base} plan={null} indexExpired={false} />);
+        expect(screen.queryByText(/site data was removed/)).toBeNull();
+    });
+
     it('renders nothing extra without a limit', () => {
         render(<Strip {...base} plan={null} />);
         expect(screen.queryByText(/Indexed/)).toBeNull();

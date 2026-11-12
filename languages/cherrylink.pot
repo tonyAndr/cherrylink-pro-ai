@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-12T13:34:03+00:00\n"
+"POT-Creation-Date: 2026-11-12T14:01:38+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: cherrylink\n"
@@ -48,7 +48,7 @@ msgid "Invalid settings."
 msgstr ""
 
 #: src/Admin/AdminApi.php:104
-#: src/Admin/AdminApi.php:429
+#: src/Admin/AdminApi.php:430
 msgid "Enter a license key."
 msgstr ""
 
@@ -64,53 +64,53 @@ msgstr ""
 msgid "Could not import: choose a .txt file exported from CherryLink."
 msgstr ""
 
-#: src/Admin/AdminApi.php:425
+#: src/Admin/AdminApi.php:426
 msgid "Could not reach the license server. Try again later or contact support."
 msgstr ""
 
-#: src/Admin/AdminApi.php:427
+#: src/Admin/AdminApi.php:428
 msgid "The key is being checked in the background. Refresh in a few seconds."
 msgstr ""
 
-#: src/Admin/AdminApi.php:431
+#: src/Admin/AdminApi.php:432
 msgid "Could not schedule the key check. Try again."
 msgstr ""
 
-#: src/Admin/AdminApi.php:433
+#: src/Admin/AdminApi.php:434
 msgid "This key is bound to another domain."
 msgstr ""
 
-#: src/Admin/AdminApi.php:435
+#: src/Admin/AdminApi.php:436
 msgid "This key has expired."
 msgstr ""
 
-#: src/Admin/AdminApi.php:437
+#: src/Admin/AdminApi.php:438
 msgid "This key is not valid."
 msgstr ""
 
-#: src/Admin/AdminApi.php:455
+#: src/Admin/AdminApi.php:456
 msgid "Could not verify the domain: the CherryLink server could not open your site over HTTPS. The site must be reachable from the internet; for private sites enter a key manually."
 msgstr ""
 
 #. translators: %d: seconds to wait
-#: src/Admin/AdminApi.php:459
+#: src/Admin/AdminApi.php:460
 #, php-format
 msgid "Too many connection attempts. Try again in %d s."
 msgstr ""
 
-#: src/Admin/AdminApi.php:460
+#: src/Admin/AdminApi.php:461
 msgid "Too many connection attempts. Try again later."
 msgstr ""
 
-#: src/Admin/AdminApi.php:462
+#: src/Admin/AdminApi.php:463
 msgid "This domain cannot be connected (a public domain is required, not an IP address or localhost)."
 msgstr ""
 
-#: src/Admin/AdminApi.php:464
+#: src/Admin/AdminApi.php:465
 msgid "Connecting is not available for this domain. Enter a key manually or contact support."
 msgstr ""
 
-#: src/Admin/AdminApi.php:466
+#: src/Admin/AdminApi.php:467
 msgid "The connection service is temporarily unavailable. Try again later."
 msgstr ""
 
@@ -131,6 +131,7 @@ msgstr ""
 
 #: src/Admin/AdminMenu.php:77
 #: js/cherry-app.js:11
+#: js/cherry-app.js:22
 #: js/cherry-app.js:23
 msgid "Link health"
 msgstr ""
@@ -174,7 +175,7 @@ msgid "Stopping the scan…"
 msgstr ""
 
 #: src/Indexing/AsyncBulkScan.php:434
-#: src/Indexing/SyncService.php:278
+#: src/Indexing/SyncService.php:287
 msgid "Stopped by user"
 msgstr ""
 
@@ -248,15 +249,15 @@ msgstr ""
 msgid " no links found."
 msgstr ""
 
-#: src/Indexing/SyncService.php:203
+#: src/Indexing/SyncService.php:212
 msgid "License inactive — synchronization is unavailable. Enter your license key."
 msgstr ""
 
-#: src/Indexing/SyncService.php:260
+#: src/Indexing/SyncService.php:269
 msgid "Could not schedule the scan. Please try again."
 msgstr ""
 
-#: src/Indexing/SyncService.php:621
+#: src/Indexing/SyncService.php:630
 msgid "No changes found"
 msgstr ""
 
@@ -306,7 +307,17 @@ msgid "Cancel"
 msgstr ""
 
 #: js/cherry-app.js:1
+msgid "Your site data was removed"
+msgstr ""
+
+#: js/cherry-app.js:1
+msgid "CherryLink deletes the data of free sites after 180 days without contact. Analyze the site again to get suggestions and link health back. It takes about a minute for 1,000 posts."
+msgstr ""
+
+#: js/cherry-app.js:1
 #: js/cherry-app.js:6
+#: js/cherry-classic.js:1
+#: js/cherry-gutenberg.js:1
 msgid "Analyze site"
 msgstr ""
 
@@ -330,7 +341,7 @@ msgid "Connect CherryLink"
 msgstr ""
 
 #: js/cherry-app.js:1
-msgid "CherryLink compares your posts on its servers to suggest internal links and check link health. Connecting creates a free key bound to this site. Nothing is sent until you click Connect."
+msgid "CherryLink compares your posts on its servers to suggest internal links and check link health. Connecting creates a free key bound to this site. Nothing is sent until you click Connect. Data of free sites with no contact for 180 days is deleted."
 msgstr ""
 
 #: js/cherry-app.js:1
@@ -1305,6 +1316,11 @@ msgstr ""
 #: js/cherry-gutenberg.js:1
 #, js-format
 msgid "Indexed %1$s of %2$s"
+msgstr ""
+
+#: js/cherry-classic.js:1
+#: js/cherry-gutenberg.js:1
+msgid "Your site data was removed after 180 days of inactivity. Analyze the site to get suggestions back."
 msgstr ""
 
 #. translators: %s: plan post limit. "Learned" = post analyzed for suggestions; counts toward the plan limit.

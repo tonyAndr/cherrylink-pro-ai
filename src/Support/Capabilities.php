@@ -204,6 +204,27 @@ final class Capabilities
         return $snapshot;
     }
 
+    /** Whether the API reports this free site's index as purged (cache-only). */
+    public function indexExpired(): bool
+    {
+        return ! empty($this->snapshot()['plan']['index_expired']);
+    }
+
+    /**
+     * Clear the cached `index_expired` flag locally (a scan is starting, so the
+     * server will rebuild the index) without waiting for the next refresh. TTL is
+     * re-applied by mode; a refresh within minutes re-observes the real value.
+     */
+    public function clearIndexExpired(): void
+    {
+        $snapshot = $this->snapshot();
+        if ($snapshot === null || empty($snapshot['plan']['index_expired'])) {
+            return;
+        }
+        $snapshot['plan']['index_expired'] = false;
+        \set_transient(self::CACHE_KEY, $snapshot, ! empty($snapshot['async']) ? self::POSITIVE_TTL : self::NEGATIVE_TTL);
+    }
+
     /**
      * Drop the cached snapshot but KEEP the durable tenant mode.
      *
@@ -309,6 +330,8 @@ final class Capabilities
                 'post_limit'   => isset($plan['post_limit']) ? (int) $plan['post_limit'] : null,
                 'indexed'      => isset($plan['indexed']) ? (int) $plan['indexed'] : null,
                 'paid_expired' => ! empty($plan['paid_expired']),
+                // Free site purged after 180 days without contact; absent on older APIs.
+                'index_expired' => ! empty($plan['index_expired']),
             ];
         }
 

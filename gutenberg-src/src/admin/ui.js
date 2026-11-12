@@ -40,3 +40,14 @@ export const Confirm = ({ title, text, action, onConfirm, onCancel, busy }) => (
 );
 
 export const num = (n) => (n === null || n === undefined ? '—' : Number(n).toLocaleString());
+
+/** Shown when the API purged a free site's index after 180 days without contact. */
+export const ExpiredNotice = ({ onStart, busy }) => (
+    <Notice tone="warn">
+        <div className="cl-stack">
+            <strong>{__('Your site data was removed', 'cherrylink')}</strong>
+            <span>{__('CherryLink deletes the data of free sites after 180 days without contact. Analyze the site again to get suggestions and link health back. It takes about a minute for 1,000 posts.', 'cherrylink')}</span>
+            <div><Btn onClick={onStart} disabled={busy}>{__('Analyze site', 'cherrylink')}</Btn></div>
+        </div>
+    </Notice>
+);

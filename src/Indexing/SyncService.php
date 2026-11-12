@@ -6,9 +6,11 @@ namespace CherryLink\Indexing;
 
 use ActionScheduler;
 use ActionScheduler_Store;
+use CherryLink\Admin\AdminApi;
 use CherryLink\Ajax\Security;
 use CherryLink\Api\Client;
 use CherryLink\Contracts\Registerable;
+use CherryLink\Support\Capabilities;
 use CherryLink\Support\License;
 use CherryLink\Support\Options;
 use CherryLink\Support\WorkerLock;
@@ -189,6 +191,13 @@ final class SyncService implements Registerable
      */
     public function start(bool $force_full = false): array
     {
+        // A purged free site is rebuilt by this scan: hide the "data removed" state
+        // and the stale link-health results immediately.
+        $capabilities = new Capabilities();
+        if ($capabilities->indexExpired()) {
+            $capabilities->clearIndexExpired();
+            \delete_option(AdminApi::HEALTH_OPTION);
+        }
         // Routing follows the tenant's durable mode, not current API availability:
         // an established async tenant must never fall back to synchronous writes
         // (the API rejects them with 409). The adapter pauses when acceptance is

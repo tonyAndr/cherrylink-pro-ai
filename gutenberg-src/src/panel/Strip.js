@@ -22,7 +22,7 @@ const fmt = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '\u00a0');
 /** Shown only when the plan limit actually cuts the index: more posts than the plan allows. */
 export const planLimited = (plan) => !!(plan && plan.post_limit && plan.total > plan.post_limit);
 
-export default function Strip({ out, inc, words, donorCount, plan, postLearned, upgradeUrl, onLinks, onGoIncoming, onGoSuggestions }) {
+export default function Strip({ out, inc, words, donorCount, plan, postLearned, upgradeUrl, indexExpired, dashboardUrl, onLinks, onGoIncoming, onGoSuggestions }) {
     const { rec, status } = linkAdvice(words, out, inc);
     const range = rec && (rec.min === rec.max ? String(rec.min) : `${rec.min}–${rec.max}`);
     let chip = null;
@@ -59,6 +59,12 @@ export default function Strip({ out, inc, words, donorCount, plan, postLearned, 
                     {sprintf(__('Indexed %1$s of %2$s', 'cherrylink'), fmt(plan.indexed == null ? plan.post_limit : plan.indexed), fmt(plan.total))}
                     {upgradeUrl && <> · <a href={upgradeUrl} target="_blank" rel="noopener noreferrer">{__('Upgrade', 'cherrylink')}</a></>}
                 </span>
+            )}
+            {indexExpired && (
+                <p className="cl-plan-note">
+                    {__('Your site data was removed after 180 days of inactivity. Analyze the site to get suggestions back.', 'cherrylink')}
+                    {dashboardUrl && <> <a href={dashboardUrl}>{__('Analyze site', 'cherrylink')}</a></>}
+                </p>
             )}
             {planLimited(plan) && postLearned === false && (
                 <p className="cl-plan-note">

@@ -43,6 +43,7 @@ final class SyncServiceTest extends TestCase
         parent::setUp();
         Monkey\setUp();
         Functions\when('wp_cache_delete')->justReturn(true);
+        Functions\when('get_transient')->justReturn(false); // capabilities cache is cold
 
         $this->state = [
             'status'        => 'running',
@@ -240,6 +241,34 @@ final class SyncServiceTest extends TestCase
         $this->assertSame('manifest', $this->enqueued[0]['args']['phase']);
         $this->assertSame(0, $this->enqueued[0]['args']['attempt']);
         $this->assertTrue($this->enqueued[0]['args']['force_full']);
+    }
+
+    public function testStartClearsExpiredIndexFlagAndStaleLinkHealth(): void
+    {
+        if (!\function_exists('as_enqueue_async_action')) {
+            eval('function as_enqueue_async_action($hook, $args, $group) { return call_user_func($GLOBALS["cl_sync_test_enqueue"], $hook, $args, $group); }');
+        }
+        $this->options['linkate_posts_meta'] = ['key_valid' => true, 'expires_at' => '2099-01-01'];
+        $this->state['status'] = 'idle';
+        $snapshot = ['async' => false, 'plan' => ['name' => 'free', 'index_expired' => true]];
+        $stored   = null;
+        $deleted  = [];
+        Functions\when('get_transient')->alias(static function () use (&$snapshot) {
+            return $snapshot;
+        });
+        Functions\when('set_transient')->alias(static function ($key, $value) use (&$snapshot, &$stored) {
+            $snapshot = $stored = $value;
+            return true;
+        });
+        Functions\when('delete_option')->alias(static function ($key) use (&$deleted) {
+            $deleted[] = $key;
+            return true;
+        });
+
+        $this->service(Mockery::mock(Client::class))->start();
+
+        $this->assertFalse($stored['plan']['index_expired']);
+        $this->assertContains('cherrylink_link_health', $deleted);
     }
 
     public function testManifestSchedulingFailureIsVisibleAndKeepsPriorPlan(): void

@@ -1,8 +1,8 @@
 import { useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
-import { useAdmin, useLinkHealth } from './ctx';
+import { useAdmin, useLinkHealth, useSync } from './ctx';
 import { buildCsv, detailsFor, downloadCsv } from './csv';
-import { Btn, Card, Notice, Title, num } from './ui';
+import { Btn, Card, ExpiredNotice, Notice, Title, num } from './ui';
 
 const PER_PAGE = 25;
 export const TABS = [
@@ -45,7 +45,9 @@ function Donors({ list }) {
 
 export default function LinkHealth() {
     const { api, state, urls } = useAdmin();
-    const { data, busy, error, refresh } = useLinkHealth();
+    const expired = !!state.index_expired;
+    const { data, busy, error, refresh } = useLinkHealth(expired);
+    const { start: startScan, error: scanError } = useSync();
     const hash = (window.location.hash || '').replace('#', '');
     const [hTab, hPost] = hash.split('-');
     const [tab, setTab] = useState(TABS.some((t) => t.id === hTab) ? hTab : 'orphans');
@@ -78,6 +80,16 @@ export default function LinkHealth() {
 
     const cur = TABS.find((t) => t.id === tab);
     const limit = state.license.post_limit;
+
+    if (expired) {
+        return (
+            <>
+                <Title>{__('Link health', 'cherrylink')}</Title>
+                {scanError && <Notice tone="danger">{scanError}</Notice>}
+                <ExpiredNotice onStart={startScan} />
+            </>
+        );
+    }
 
     return (
         <>

@@ -34,7 +34,10 @@ export function useSync() {
     const run = async (action) => {
         setError('');
         try {
-            setSync(await api(action));
+            const next = await api(action);
+            setSync(next);
+            // A started scan rebuilds a purged index: drop the "data removed" state at once.
+            if (action === 'linkate_sync_start' && state.index_expired) setState({ ...state, index_expired: false });
         } catch (e) {
             setError(e.message);
         }
@@ -43,10 +46,10 @@ export function useSync() {
 }
 
 /** Link-health payload; if never computed, refreshes once (explicit user-visible action on first view). */
-export function useLinkHealth() {
+export function useLinkHealth(skip = false) {
     const { api } = useAdmin();
     const [data, setData] = useState(null);
-    const [busy, setBusy] = useState(true);
+    const [busy, setBusy] = useState(!skip);
     const [error, setError] = useState('');
     const once = useRef(false);
 
@@ -65,6 +68,6 @@ export function useLinkHealth() {
         }
         setBusy(false);
     };
-    useEffect(() => { load(false); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    useEffect(() => { if (!skip) load(false); }, [skip]); // eslint-disable-line react-hooks/exhaustive-deps
     return { data, busy, error, refresh: () => load(true) };
 }

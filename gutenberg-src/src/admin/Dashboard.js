@@ -1,13 +1,15 @@
 import { __, _n, sprintf } from '@wordpress/i18n';
-import { useAdmin, useLinkHealth } from './ctx';
-import { Badge, Card, Link, Notice, Title, num } from './ui';
+import { useAdmin, useLinkHealth, useSync } from './ctx';
+import { Badge, Card, ExpiredNotice, Link, Notice, Title, num } from './ui';
 
 export const planName = (p) => ({ free: __('Free', 'cherrylink'), pro: __('Pro', 'cherrylink'), legacy: __('Legacy', 'cherrylink') }[p] || __('Unknown plan', 'cherrylink'));
 
 export default function Dashboard() {
     const { state, urls } = useAdmin();
-    const { data, busy, error } = useLinkHealth();
-    const { license, counts, sync } = state;
+    const expired = !!state.index_expired;
+    const { data, busy, error } = useLinkHealth(expired);
+    const { sync, error: syncError, start } = useSync();
+    const { license, counts } = state;
     const s = data && data.summary;
     const limit = license.post_limit;
     const orphans = (data ? data.rows : []).filter((r) => r.orphan && r.learned).slice(0, 3);
@@ -34,12 +36,14 @@ export default function Dashboard() {
                 </span>
             }>CherryLink</Title>
 
+            {expired && <ExpiredNotice onStart={start} />}
+            {syncError && <Notice tone="danger">{syncError}</Notice>}
             {sync.status === 'running' && (
                 <Notice tone="info">{__('Analysis is running in the background.', 'cherrylink')} <a href={urls.index}>{__('See progress', 'cherrylink')}</a></Notice>
             )}
             {error && <Notice tone="danger">{error}</Notice>}
 
-            <Card aria-label={__('Biggest opportunity', 'cherrylink')} className="cl-card cl-hero">
+            {!expired && <Card aria-label={__('Biggest opportunity', 'cherrylink')} className="cl-card cl-hero">
                 <div className="cl-stack">
                     <span className="cl-eyebrow">{__('Biggest opportunity', 'cherrylink')}</span>
                     <span className="cl-huge">{busy && !s ? '…' : num(s ? s.orphans : null)}</span>
@@ -55,9 +59,9 @@ export default function Dashboard() {
                         /* translators: %s: number of orphan pages */
                         __('See all %s orphan pages', 'cherrylink'), num(s.orphans))}</a>}
                 </div>
-            </Card>
+            </Card>}
 
-            <Card aria-label={__('Link health', 'cherrylink')}>
+            {!expired && <Card aria-label={__('Link health', 'cherrylink')}>
                 <div className="cl-between"><h2>{__('Link health', 'cherrylink')}</h2>
                     {s && s.links_total !== null && <span className="cl-muted">{sprintf(
                         /* translators: 1: internal links, 2: posts checked (links read for link health; whole site, no limit) */
@@ -71,7 +75,7 @@ export default function Dashboard() {
                 {data && data.checked_at && <span className="cl-muted">{sprintf(
                     /* translators: %s: date and time of the last link health check */
                     __('Checked %s.', 'cherrylink'), new Date(data.checked_at).toLocaleString())} <a className="cl-link" href={urls.links}>{__('Open link health', 'cherrylink')}</a></span>}
-            </Card>
+            </Card>}
 
             <Card aria-label={__('Plan', 'cherrylink')} className="cl-card cl-between">
                 <span>

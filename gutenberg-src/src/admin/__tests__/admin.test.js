@@ -53,6 +53,22 @@ describe('admin pages (connected free state)', () => {
         expect(calls[0].body.get('_ajax_nonce')).toBe('N');
     });
 
+    it('dashboard shows the removed-data notice, hides stale health, and Analyze starts a scan', async () => {
+        render(<App boot={boot('dashboard', mkState({ index_expired: true }))} />);
+        expect(await screen.findByText('Your site data was removed')).toBeInTheDocument();
+        expect(screen.queryByText('pages nobody links to')).toBeNull();
+        expect(calls.some((c) => c.action === 'cherrylink_admin_link_health')).toBe(false);
+        await act(async () => { fireEvent.click(screen.getByText('Analyze site')); });
+        await waitFor(() => expect(calls.some((c) => c.action === 'linkate_sync_start')).toBe(true));
+        await waitFor(() => expect(screen.queryByText('Your site data was removed')).toBeNull());
+    });
+
+    it('link health page shows the notice instead of cached results when expired', async () => {
+        render(<App boot={boot('links', mkState({ index_expired: true }))} />);
+        expect(await screen.findByText('Your site data was removed')).toBeInTheDocument();
+        expect(screen.queryByText('Post 1')).toBeNull();
+    });
+
     it('link health switches tabs, finds donors, and marks unlearned rows', async () => {
         render(<App boot={boot('links')} />);
         await screen.findByText('Post 1');

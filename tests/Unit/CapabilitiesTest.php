@@ -123,6 +123,30 @@ final class CapabilitiesTest extends TestCase
         $this->assertFalse($snapshot['async']);
     }
 
+    public function testPlanSummaryCarriesIndexExpiredAndItCanBeClearedLocally(): void
+    {
+        $caps = static function (array $plan): array {
+            return ['ok' => true, 'status' => 200, 'retry_after' => null, 'error' => '', 'capabilities' => [
+                'protocol_version' => 1, 'async_indexing' => 'disabled', 'tenant_mode' => 'sync',
+                'features' => [], 'limits' => [], 'plan' => $plan,
+            ]];
+        };
+        $client = Mockery::mock(AsyncClient::class);
+        $client->shouldReceive('capabilities')->twice()->andReturn(
+            $caps(['name' => 'free', 'post_limit' => 1000, 'indexed' => 0, 'index_expired' => true]),
+            $caps(['name' => 'free', 'post_limit' => 1000, 'indexed' => 5])
+        );
+        $capabilities = new Capabilities($client);
+
+        $this->assertTrue($capabilities->refresh()['plan']['index_expired']);
+        $this->assertTrue($capabilities->indexExpired());
+        $capabilities->clearIndexExpired();
+        $this->assertFalse($capabilities->indexExpired());
+        $this->assertSame(1000, $this->transient['plan']['post_limit']); // rest of snapshot kept
+
+        $this->assertFalse($capabilities->refresh()['plan']['index_expired']); // absent on old APIs = false
+    }
+
     public function testCapabilityProbeWithoutProtocolIsNegative(): void
     {
         $client = Mockery::mock(AsyncClient::class);

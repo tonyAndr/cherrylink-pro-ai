@@ -363,6 +363,7 @@ final class AdminApi implements Registerable
                 'checked' => $health['summary']['posts_checked'] ?? null,
                 'links'   => isset($status['scheme_rows']) ? (int) $status['scheme_rows'] : null,
             ],
+            'index_expired' => ! empty($snapshot['plan']['index_expired']),
             'sync'       => $this->sync->getState() + ['running' => $this->sync->isRunning()],
             'last_scan'  => empty($meta['last_scan_gmt']) ? null : [
                 'gmt'      => (string) $meta['last_scan_gmt'],

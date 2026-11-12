@@ -85,3 +85,9 @@ The panel AJAX handlers (`PanelApi`) remain registered only for validated keys.
 The main file returns early (admin notice "Deactivate CherryLink Pro AI first") when `CHERRYLINK_DIR` is already
 defined. `release.yml` triggers only on `v1.*` tags. `dev/build-org-zip.sh` builds `dist/cherrylink.zip`
 (`cherrylink/` folder, no `updater/`).
+
+## Free-site retention
+
+Free sites with no contact for 180 days have their index purged server-side. `plan.index_expired` (capabilities
+`plan` object, bool, absent = false) is cached in the snapshot; any scan rebuilds the index and clears the flag
+(locally at `SyncService::start()`, server-side on the next `POST /v1/sync/plan`). See `admin-ui.md`.

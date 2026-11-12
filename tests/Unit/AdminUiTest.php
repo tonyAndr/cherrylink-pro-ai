@@ -188,6 +188,28 @@ final class AdminUiTest extends TestCase
 
     // ── state payload ─────────────────────────────────────────────────────
 
+    public function testStateExposesIndexExpiredFromTheCachedSnapshot(): void
+    {
+        $this->store['linkate_posts_meta'] = ['key_valid' => true, 'plan' => 'free', 'post_limit' => 1000];
+        Functions\when('get_transient')->alias(static function ($key) {
+            return $key === \CherryLink\Support\Capabilities::CACHE_KEY
+                ? ['async' => false, 'plan' => ['name' => 'free', 'indexed' => 0, 'index_expired' => true]]
+                : false;
+        });
+        Functions\when('get_post_type_object')->justReturn(null);
+        Functions\when('wp_count_posts')->justReturn((object) ['publish' => 0]);
+        Functions\when('get_users')->justReturn([]);
+        Functions\when('get_terms')->justReturn([]);
+        Functions\when('home_url')->justReturn('https://site.test');
+        Functions\when('wp_parse_url')->alias('parse_url');
+
+        $options = new Options();
+        $license = new License($options);
+        $state   = (new AdminApi($options, $license, new SyncService($options, $license)))->state();
+
+        $this->assertTrue($state['index_expired']);
+    }
+
     public function testStatePayloadShape(): void
     {
         $this->store['linkate-posts'] = ['hash_field' => 'clp_abcd1234', 'show_pages' => 'true', 'show_customs' => 'product',
@@ -223,6 +245,7 @@ final class AdminUiTest extends TestCase
         $this->assertSame(['page', 'product'], $state['settings']['post_types']);
         $this->assertSame(['gmt' => '2026-11-12 10:00:00', 'upserted' => 4, 'deleted' => 1], $state['last_scan']);
         $this->assertSame('direct', $state['route']);
+        $this->assertFalse($state['index_expired']);
         $this->assertFalse($state['sync']['running']);
         $this->assertSame([['id' => 2, 'name' => 'Ann']], $state['settings_choices']['authors']);
         $this->assertSame(30, $state['counts']['total']);

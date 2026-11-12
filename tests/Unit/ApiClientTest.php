@@ -374,6 +374,10 @@ final class ApiClientTest extends TestCase
 
         $this->assertTrue(\CherryLink\Editor\SuggestionsResults::sameText("<p>Hello\n  world</p>", 'Hello world'));
         $this->assertFalse(\CherryLink\Editor\SuggestionsResults::sameText('<p>Hello there</p>', 'Hello world'));
+        // A typed "All posts" search must never be answered with the post's stored vector.
+        $this->assertTrue(\CherryLink\Editor\SuggestionsResults::reuseStoredVector(false, false, '<p>Hello world</p>', 'Hello world'));
+        $this->assertFalse(\CherryLink\Editor\SuggestionsResults::reuseStoredVector(false, true, '<p>Hello world</p>', 'Hello world'));
+        $this->assertFalse(\CherryLink\Editor\SuggestionsResults::reuseStoredVector(true, false, '<p>Hello world</p>', 'Hello world'));
     }
 
     public function testInteractiveAllRouteCannotUseBackgroundTimeout(): void

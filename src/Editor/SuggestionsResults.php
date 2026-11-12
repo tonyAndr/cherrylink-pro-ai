@@ -32,6 +32,7 @@ final class SuggestionsResults
         $offset  = \max(0, (int) ($p['offset'] ?? 0));
         $html    = (string) ($p['source_html'] ?? '');
         $query   = \trim((string) ($p['query'] ?? ''));
+        $typed   = $query !== '';
 
         $options = Cf::setOptions($option_key, []);
         $limit   = (int) $options['limit_ajax'];
@@ -39,6 +40,7 @@ final class SuggestionsResults
             return $empty;
         }
 
+        $post = null;
         if ($is_term) {
             $term  = \get_term($post_id, (string) ($p['taxonomy'] ?? ''));
             $title = ($term && ! \is_wp_error($term)) ? (string) $term->name : '';
@@ -67,9 +69,7 @@ final class SuggestionsResults
             return $empty;
         }
 
-        // Unedited post: let the API reuse its stored vector (same ranking quality on the
-        // benchmark fixture, one embedding call fewer). Edited content is embedded fresh.
-        $saved_post  = (! $is_term && self::sameText($html, $saved)) ? $post : null;
+        $saved_post  = ($post instanceof \WP_Post && self::reuseStoredVector($is_term, $typed, $html, $saved)) ? $post : null;
         $api         = new Client();
         $api_results = $api->search($query, $html, $limit * 3, $lang, \min(10, $limit), $saved_post);
         if (empty($api_results)) {
@@ -223,6 +223,16 @@ final class SuggestionsResults
     }
 
     /** Whether the editor HTML carries the same text as the saved content (markup/whitespace ignored). */
+    /**
+     * Unedited post: the API may reuse its stored vector (same ranking quality on the benchmark
+     * fixture, one embedding call fewer). Edited content and typed searches are embedded fresh:
+     * the stored vector would ignore what the user typed.
+     */
+    public static function reuseStoredVector(bool $is_term, bool $typed_query, string $html, string $saved): bool
+    {
+        return ! $is_term && ! $typed_query && self::sameText($html, $saved);
+    }
+
     public static function sameText(string $html, string $saved): bool
     {
         $norm = static function (string $v): string {

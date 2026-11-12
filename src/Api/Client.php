@@ -920,6 +920,22 @@ class Client implements ReportClient
         return $this->request('GET', '/v1/links/problems', [], 120);
     }
 
+    /**
+     * Auto-detected key pages for the tenant (specs: api/specs/key-pages.md). Stateless on the
+     * server: the caller sends its pin/demote choices every time.
+     *
+     * @param int[] $pin
+     * @param int[] $demote
+     * @return array<string,mixed>|null
+     */
+    public function key_pages(array $pin, array $demote): ?array
+    {
+        return $this->request('POST', '/v1/key-pages', [
+            'pin'    => \array_values(\array_map('intval', $pin)),
+            'demote' => \array_values(\array_map('intval', $demote)),
+        ], 120);
+    }
+
     // ── Error reporting ─────────────────────────────────────────────────────
 
     /**

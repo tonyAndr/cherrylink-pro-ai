@@ -169,6 +169,19 @@ final class ApiClientTest extends TestCase
         $this->assertSame('1.1.1', $body['events'][0]['from_version']);
     }
 
+    public function testKeyPagesPostsPinsAndDemotes(): void
+    {
+        Functions\when('get_option')->justReturn(['hash_field' => 'LICENSE123']);
+        $this->mockHttp(['key_pages' => [], 'posts_considered' => 2]);
+
+        $result = (new Client(null, Client::CONTEXT_BACKGROUND))->key_pages([12, 40], [7]);
+
+        $this->assertSame(2, $result['posts_considered']);
+        $this->assertSame('https://seocherry.apov.dev/v1/key-pages', $this->captured['url']);
+        $this->assertSame('POST', $this->captured['args']['method']);
+        $this->assertSame(['pin' => [12, 40], 'demote' => [7]], json_decode($this->captured['args']['body'], true));
+    }
+
     public function testNoKeySkipsHttpAndReturnsNull(): void
     {
         Functions\when('get_option')->justReturn([]);

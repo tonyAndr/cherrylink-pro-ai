@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import Strip, { countWords, linkAdvice, planLimited } from '../Strip';
 
 describe('linkAdvice', () => {
@@ -54,5 +54,41 @@ describe('Strip plan line', () => {
     it('renders nothing extra without a limit', () => {
         render(<Strip {...base} plan={null} />);
         expect(screen.queryByText(/Indexed/)).toBeNull();
+    });
+});
+
+describe('Strip key page hints', () => {
+    const base = { out: 3, inc: 4, words: 900, donorCount: 0, plan: null, onLinks() {}, onGoIncoming() {}, onGoSuggestions() {} };
+    const key = { post_id: 5, title: 'Hub guide', url: 'https://s.test/hub/', view_url: 'https://s.test/hub/' };
+
+    it('hints at the key page until the live links include it, and opens suggestions', () => {
+        const go = jest.fn();
+        const kp = { is_key: false, key, members_not_linking: 0 };
+        const { rerender } = render(<Strip {...base} links={[{ url: '/other/' }]} keyPage={kp} onGoSuggestions={go} />);
+        fireEvent.click(screen.getByText('Doesn\'t link to key page “Hub guide” yet'));
+        expect(go).toHaveBeenCalled();
+        rerender(<Strip {...base} links={[{ url: 'https://s.test/hub' }]} keyPage={kp} onGoSuggestions={go} />);
+        expect(screen.queryByText(/key page “Hub guide”/)).toBeNull();
+    });
+
+    it('a key page shows how many related posts do not link here (singular via the i18n mock) and opens incoming', () => {
+        const go = jest.fn();
+        const kp = { is_key: true, key, members_not_linking: 1 };
+        render(<Strip {...base} links={[]} keyPage={kp} onGoIncoming={go} />);
+        fireEvent.click(screen.getByText('Key page · 1 related post doesn\'t link here'));
+        expect(go).toHaveBeenCalled();
+    });
+
+    it('offers mark / unmark only to users who may pin', () => {
+        const pin = jest.fn();
+        const kp = { is_key: true, pinned: false, key, members_not_linking: 0 };
+        const { rerender } = render(<Strip {...base} links={[]} keyPage={kp} canKeyPin onKeyPin={pin} />);
+        fireEvent.click(screen.getByText('Unmark key page'));
+        expect(pin).toHaveBeenCalledWith('demote');
+        rerender(<Strip {...base} links={[]} keyPage={{ ...kp, is_key: false, key: null }} canKeyPin onKeyPin={pin} />);
+        fireEvent.click(screen.getByText('Mark as key page'));
+        expect(pin).toHaveBeenLastCalledWith('pin');
+        rerender(<Strip {...base} links={[]} keyPage={kp} canKeyPin={false} onKeyPin={pin} />);
+        expect(screen.queryByText('Unmark key page')).toBeNull();
     });
 });

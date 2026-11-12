@@ -10,6 +10,7 @@ use CherryLink\Indexing\IndexHelpers;
 use CherryLink\Indexing\IndexHooks;
 use CherryLink\Support\Capabilities;
 use CherryLink\Support\Connect;
+use CherryLink\Support\KeyPages;
 use CherryLink\Support\Options;
 use CherryLink\Support\Urls;
 
@@ -42,7 +43,9 @@ final class PanelConfig
             'upgradeUrl' => Urls::UPGRADE,
             'plan'      => $plan = self::plan($options),
             'postLearned' => $is_term ? null : self::postLearned($object_id, $plan),
-            'indexExpired' => (new Capabilities())->indexExpired(),
+            'indexExpired' => $expired = (new Capabilities())->indexExpired(),
+            'keyPage'   => $is_term || $expired ? null : (new KeyPages())->forPost($object_id),
+            'canKeyPin' => ! $is_term && \current_user_can('edit_others_posts'),
             'editUrlBase' => \admin_url('post.php?action=edit&post='),
         ];
         if ($is_term && $taxonomy !== '') {

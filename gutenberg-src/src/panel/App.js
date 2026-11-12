@@ -55,6 +55,8 @@ export default function App({ adapter, config, onClose, headProps }) {
     const [altIndex, setAltIndex] = useState({});
     const [lastInsert, setLastInsert] = useState(null);
     const [toast, setToast] = useState(null);
+    const [keyPage, setKeyPage] = useState(config.keyPage || null);
+    const [keyBusy, setKeyBusy] = useState(false);
 
     const seq = useRef({ base: 0, filt: 0 });
     const [words, setWords] = useState(() => countWords(adapter.getText()));
@@ -215,6 +217,19 @@ export default function App({ adapter, config, onClose, headProps }) {
         setDonorBusy((b) => ({ ...b, [d.donor_id]: false }));
     };
 
+    const keyPin = async (mode) => {
+        setKeyBusy(true);
+        try {
+            const res = await api('cherrylink_panel_key_pin', { post_id: config.postId, mode });
+            setKeyPage(res.keyPage || null);
+            say(mode === 'pin' ? __('Marked as a key page', 'cherrylink') : __('Key page choice saved', 'cherrylink'));
+            loadBase();
+        } catch (e) {
+            say(e.message);
+        }
+        setKeyBusy(false);
+    };
+
     const refreshAll = () => {
         loadBase();
         if (filtering) fetchRows('filt', { append: false, q: dq, cat: category, offset: 0 });
@@ -303,6 +318,7 @@ export default function App({ adapter, config, onClose, headProps }) {
         <div className="cl-panel">
             {head}
             <Strip out={links.length} inc={inc} words={words} donorCount={donorCount} onGoSuggestions={() => { setView(null); setTab('opp'); }}
+                links={links} keyPage={keyPage} canKeyPin={!!config.canKeyPin} keyBusy={keyBusy} onKeyPin={keyPin}
                 plan={config.plan} postLearned={config.postLearned} upgradeUrl={config.upgradeUrl}
                 indexExpired={!!config.indexExpired} dashboardUrl={config.connectUrl}
                 onLinks={(section) => setView({ section })} onGoIncoming={() => { setView(null); setTab('in'); }} />

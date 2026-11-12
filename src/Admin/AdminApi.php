@@ -12,6 +12,7 @@ use CherryLink\Indexing\IndexHelpers;
 use CherryLink\Indexing\IndexHooks;
 use CherryLink\Indexing\SyncService;
 use CherryLink\Support\Capabilities;
+use CherryLink\Support\KeyPages;
 use CherryLink\Support\License;
 use CherryLink\Support\Options;
 
@@ -25,7 +26,7 @@ final class AdminApi implements Registerable
     public const HEALTH_OPTION = 'cherrylink_link_health';
     public const SETUP_OPTION  = 'cherrylink_setup_done';
 
-    private const ACTIONS = ['state', 'link_health', 'save_settings', 'license', 'remove_data', 'import_settings', 'reset_settings', 'setup_done'];
+    private const ACTIONS = ['state', 'link_health', 'key_pin', 'save_settings', 'license', 'remove_data', 'import_settings', 'reset_settings', 'setup_done'];
     private const RELATIVE = ['full', 'no_proto', 'no_domain'];
     private const MAX_IMPORT_BYTES = 262144;
 
@@ -65,7 +66,7 @@ final class AdminApi implements Registerable
         $this->guard();
         // phpcs:ignore WordPress.Security.NonceVerification.Missing -- gated by guard()
         if (empty($_POST['refresh'])) {
-            \wp_send_json_success($this->cachedHealth());
+            \wp_send_json_success($this->cachedHealth() + ['keys' => (new KeyPages())->payload()]);
         }
         // The explicit "Check links" action uses the background client: the problem analysis
         // can take far longer than the 5 s interactive budget, and the admin asked for it.
@@ -76,7 +77,26 @@ final class AdminApi implements Registerable
         }
         $health = $this->buildHealth($response);
         \update_option(self::HEALTH_OPTION, $health, false);
-        \wp_send_json_success($health);
+        // Key pages ride along with the explicit check; a failure keeps the previous result.
+        $keys = new KeyPages($api);
+        $keys->refresh();
+        \wp_send_json_success($health + ['keys' => $keys->payload()]);
+    }
+
+    /** Pin / demote / clear one post as a key page, then recompute. */
+    public function ajaxKeyPin(): void
+    {
+        $this->guard();
+        // phpcs:disable WordPress.Security.NonceVerification.Missing -- gated by guard()
+        $post_id = isset($_POST['post_id']) ? \absint(\wp_unslash($_POST['post_id'])) : 0;
+        $mode    = isset($_POST['mode']) ? \sanitize_key(\wp_unslash($_POST['mode'])) : '';
+        // phpcs:enable
+        $keys = new KeyPages(); // refresh() uses a background-context client
+        if (! $keys->setMode($post_id, $mode)) {
+            $this->fail(\__('Unknown action.', 'cherrylink'));
+        }
+        $keys->refresh();
+        \wp_send_json_success(['keys' => $keys->payload()]);
     }
 
     public function ajaxSaveSettings(): void
@@ -134,6 +154,7 @@ final class AdminApi implements Registerable
         unset($meta['indexing_process']);
         $this->options->saveMeta($meta);
         \delete_option(self::HEALTH_OPTION);
+        KeyPages::clearResult();
         IndexHooks::clearStatusCaches();
         \wp_send_json_success(['state' => $this->state()]);
     }

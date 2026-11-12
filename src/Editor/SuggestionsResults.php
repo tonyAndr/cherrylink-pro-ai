@@ -6,6 +6,7 @@ namespace CherryLink\Editor;
 
 use CherryLink\Api\Client;
 use CherryLink\CustomFields\Cf;
+use CherryLink\Support\KeyPages;
 use CherryLink\Support\Language;
 
 /**
@@ -87,6 +88,17 @@ final class SuggestionsResults
             return $empty;
         }
 
+        // Key pages rank slightly above equally scored posts; the displayed score stays raw.
+        $key_pages = new KeyPages();
+        $key_ids   = $key_pages->keyIds();
+        if ($key_ids) {
+            $scores = [];
+            foreach ($ordered_ids as $oid) {
+                $scores[$oid] = (float) ($api_map[$oid]['score'] ?? 0);
+            }
+            $ordered_ids = KeyPages::rank($scores, $key_ids);
+        }
+
         $extra = self::categoryWhere((string) ($p['category'] ?? ''));
         [$results, $fetched] = self::fetchPosts($ordered_ids, $post_id, $is_term, $options, $offset, $limit, $extra);
 
@@ -118,6 +130,7 @@ final class SuggestionsResults
                 'out'         => (int) \get_post_meta($id, 'cherry_outgoing', true),
                 'in'          => (int) \get_post_meta($id, 'cherry_income', true),
                 'saturated'   => false,
+                'is_key'      => \in_array($id, $key_ids, true),
                 'open'        => $markup['open'],
                 'close'       => $markup['close'],
                 'suggestions' => $sugg,

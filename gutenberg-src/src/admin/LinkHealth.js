@@ -2,6 +2,7 @@ import { useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import { useAdmin, useLinkHealth, useSync } from './ctx';
 import { buildCsv, detailsFor, downloadCsv } from './csv';
+import KeyPagesTab from './KeyPagesTab';
 import { Btn, Card, ExpiredNotice, Notice, Title, num } from './ui';
 
 const PER_PAGE = 25;
@@ -50,13 +51,25 @@ export default function LinkHealth() {
     const { start: startScan, error: scanError } = useSync();
     const hash = (window.location.hash || '').replace('#', '');
     const [hTab, hPost] = hash.split('-');
-    const [tab, setTab] = useState(TABS.some((t) => t.id === hTab) ? hTab : 'orphans');
+    const [tab, setTab] = useState(TABS.some((t) => t.id === hTab) || hTab === 'keys' ? hTab : 'orphans');
+    const [keys, setKeys] = useState(null);
+    const [pinBusy, setPinBusy] = useState(0);
     const [type, setType] = useState('');
     const [q, setQ] = useState('');
     const [page, setPage] = useState(1);
     const [donors, setDonors] = useState({});
 
-    const rows = data ? rowsFor(tab, data.rows, type, q) : [];
+    useEffect(() => { if (data && data.keys) setKeys(data.keys); }, [data]);
+    const pin = async (id, mode) => {
+        setPinBusy(id);
+        try {
+            const r = await api('cherrylink_admin_key_pin', { post_id: id, mode });
+            setKeys(r.keys);
+        } catch (e) { /* keep the list; the next check shows the truth */ }
+        setPinBusy(0);
+    };
+
+    const rows = data && tab !== 'keys' ? rowsFor(tab, data.rows, type, q) : [];
     const pages = Math.max(1, Math.ceil(rows.length / PER_PAGE));
     const shown = rows.slice((page - 1) * PER_PAGE, page * PER_PAGE);
     const types = data ? [...new Map(data.rows.map((r) => [r.type, r.type_label || r.type])).entries()] : [];
@@ -78,7 +91,7 @@ export default function LinkHealth() {
         if (i >= 0) { setPage(Math.floor(i / PER_PAGE) + 1); find(Number(hPost)); }
     }, [data]); // eslint-disable-line react-hooks/exhaustive-deps
 
-    const cur = TABS.find((t) => t.id === tab);
+    const cur = TABS.find((t) => t.id === tab) || TABS[0];
     const limit = state.license.post_limit;
 
     if (expired) {
@@ -99,18 +112,21 @@ export default function LinkHealth() {
                         /* translators: 1: date and time, 2: posts checked (links read for link health; whole site, no limit) */
                         __('Checked %1$s · %2$s posts', 'cherrylink'), new Date(data.checked_at).toLocaleString(), num(data.summary.posts_checked ?? state.counts.checked)) : ''}</span>
                     <Btn kind="outline" onClick={refresh} disabled={busy}>{busy ? __('Checking…', 'cherrylink') : __('Check again', 'cherrylink')}</Btn>
-                    <Btn kind="outline" disabled={!rows.length} onClick={() => downloadCsv(`cherrylink-${tab}.csv`, buildCsv(tab, rows))}>{__('Export CSV', 'cherrylink')}</Btn>
+                    <Btn kind="outline" disabled={!rows.length || tab === 'keys'} onClick={() => downloadCsv(`cherrylink-${tab}.csv`, buildCsv(tab, rows))}>{__('Export CSV', 'cherrylink')}</Btn>
                 </>
             }>{__('Link health', 'cherrylink')}</Title>
             {error && <Notice tone="danger">{error}</Notice>}
             {data && (
                 <>
                     <div role="tablist" aria-label={__('Issue type', 'cherrylink')} className="cl-tabs">
+                        <button type="button" role="tab" aria-selected={tab === 'keys'} className={tab === 'keys' ? 'is-on' : ''}
+                            onClick={() => { setTab('keys'); setPage(1); }}>{__('Key pages', 'cherrylink')} <span className="cl-count">{num(keys ? keys.key_pages.length : 0)}</span></button>
                         {TABS.map((t) => (
                             <button key={t.id} type="button" role="tab" aria-selected={tab === t.id} className={tab === t.id ? 'is-on' : ''}
                                 onClick={() => { setTab(t.id); setPage(1); }}>{t.label} <span className="cl-count">{num(data.summary[t.count])}</span></button>
                         ))}
                     </div>
+                    {tab === 'keys' ? <KeyPagesTab keys={keys} busyId={pinBusy} onPin={pin} /> : <>
                     <p className="cl-muted">{cur.help}</p>
                     <div className="cl-filters">
                         <label htmlFor="cl-type">{__('Type', 'cherrylink')}</label>
@@ -150,6 +166,7 @@ export default function LinkHealth() {
                             <Btn kind="ghost" disabled={page >= pages} onClick={() => setPage(page + 1)}>{__('Next ›', 'cherrylink')}</Btn>
                         </span>
                     </div>
+                    </>}
                 </>
             )}
             {!data && busy && <Card><p className="cl-muted">{__('Reading your links…', 'cherrylink')}</p></Card>}

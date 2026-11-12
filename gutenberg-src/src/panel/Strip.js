@@ -1,4 +1,5 @@
 import { __, _n, sprintf } from '@wordpress/i18n';
+import { isRowLinked } from './opportunities';
 
 export const countWords = (text) => (String(text || '').match(/[\p{L}\p{N}]+/gu) || []).length;
 
@@ -22,7 +23,7 @@ const fmt = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '\u00a0');
 /** Shown only when the plan limit actually cuts the index: more posts than the plan allows. */
 export const planLimited = (plan) => !!(plan && plan.post_limit && plan.total > plan.post_limit);
 
-export default function Strip({ out, inc, words, donorCount, plan, postLearned, upgradeUrl, indexExpired, dashboardUrl, onLinks, onGoIncoming, onGoSuggestions }) {
+export default function Strip({ out, inc, words, donorCount, plan, postLearned, upgradeUrl, indexExpired, dashboardUrl, links = [], keyPage, canKeyPin, keyBusy, onKeyPin, onLinks, onGoIncoming, onGoSuggestions }) {
     const { rec, status } = linkAdvice(words, out, inc);
     const range = rec && (rec.min === rec.max ? String(rec.min) : `${rec.min}–${rec.max}`);
     let chip = null;
@@ -41,6 +42,25 @@ export default function Strip({ out, inc, words, donorCount, plan, postLearned, 
     } else if (out > 0) {
         chip = <span className="cl-chip cl-ok">{__('Enough links', 'cherrylink')}</span>;
     }
+    // Key page hints: the live editor links decide whether the member still misses its key page.
+    let keyChip = null;
+    if (keyPage && keyPage.is_key) {
+        const n = keyPage.members_not_linking || 0;
+        keyChip = n > 0 ? (
+            <button type="button" className="cl-chip cl-soft" onClick={onGoIncoming}>
+                {sprintf(_n('Key page · %d related post doesn\'t link here', 'Key page · %d related posts don\'t link here', n, 'cherrylink'), n)}
+            </button>
+        ) : <span className="cl-chip cl-ok cl-static">{__('Key page', 'cherrylink')}</span>;
+    } else if (keyPage && keyPage.key && !isRowLinked(keyPage.key, links)) {
+        keyChip = (
+            <button type="button" className="cl-chip cl-soft" onClick={onGoSuggestions}>
+                {sprintf(
+                    /* translators: %s: title of the key page (hub article) this post should link to */
+                    __('Doesn\'t link to key page “%s” yet', 'cherrylink'), keyPage.key.title)}
+            </button>
+        );
+    }
+    const keyMode = keyPage && keyPage.is_key ? (keyPage.pinned ? 'clear' : 'demote') : 'pin';
     return (
         <div className="cl-strip">
             <span className="cl-count">
@@ -54,6 +74,13 @@ export default function Strip({ out, inc, words, donorCount, plan, postLearned, 
                 </button>
             </span>
             {chip}
+            {keyChip}
+            {canKeyPin && keyPage && onKeyPin && (
+                <button type="button" className="cl-keytoggle" disabled={keyBusy} onClick={() => onKeyPin(keyMode)}
+                    title={__('Key pages are the hub articles of a topic. CherryLink finds them automatically; you can mark or unmark a page yourself.', 'cherrylink')}>
+                    {keyPage.is_key ? __('Unmark key page', 'cherrylink') : __('Mark as key page', 'cherrylink')}
+                </button>
+            )}
             {planLimited(plan) && (
                 <span className="cl-plan">
                     {sprintf(__('Indexed %1$s of %2$s', 'cherrylink'), fmt(plan.indexed == null ? plan.post_limit : plan.indexed), fmt(plan.total))}

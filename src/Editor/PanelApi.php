@@ -7,6 +7,7 @@ namespace CherryLink\Editor;
 use CherryLink\Ajax\Security;
 use CherryLink\Api\Client;
 use CherryLink\Contracts\Registerable;
+use CherryLink\Support\KeyPages;
 use CherryLink\Support\Options;
 use CherryLink\Terms\TermsService;
 
@@ -42,7 +43,7 @@ final class PanelApi implements Registerable
         if (! \is_admin() || empty($this->options->meta()['key_valid'])) {
             return;
         }
-        foreach (['links', 'terms', 'incoming', 'donors', 'donor_insert', 'donor_undo'] as $action) {
+        foreach (['links', 'terms', 'incoming', 'donors', 'donor_insert', 'donor_undo', 'key_pin'] as $action) {
             \add_action('wp_ajax_cherrylink_panel_' . $action, [$this, 'ajax' . \str_replace('_', '', \ucwords($action, '_'))]);
         }
     }
@@ -216,6 +217,25 @@ final class PanelApi implements Registerable
         }
         \delete_transient($key);
         $this->ok([]);
+    }
+
+    /** Mark / unmark the post being edited as a key page (pins are site-wide: edit_others_posts). */
+    public function ajaxKeyPin(): void
+    {
+        $in   = $this->start();
+        $id   = (int) ($in['post_id'] ?? 0);
+        $mode = \sanitize_key((string) ($in['mode'] ?? ''));
+        if ($id < 1 || ! \current_user_can('edit_post', $id) || ! \current_user_can('edit_others_posts')) {
+            $this->fail('forbidden', 'Not allowed', 403);
+            return;
+        }
+        $keys = new KeyPages($this->client_factory ? ($this->client_factory)() : new Client(null, Client::CONTEXT_BACKGROUND));
+        if (! $keys->setMode($id, $mode)) {
+            $this->fail('bad_request', 'Invalid request', 400);
+            return;
+        }
+        $keys->refresh();
+        $this->ok(['keyPage' => $keys->forPost($id)]);
     }
 
     // ── Helpers ─────────────────────────────────────────────────────────────────

@@ -39,7 +39,7 @@ export default function PostList({
                 return (
                     <div className="cl-row" key={r.post_id}>
                         <div>
-                            <div className="cl-t">{r.title}</div>
+                            <div className="cl-t">{r.title}{r.is_key && <KeyBadge />}</div>
                             <div className="cl-meta">↑ {r.out} {__('out', 'cherrylink')} · ↓ {r.in} {__('in', 'cherrylink')}</div>
                         </div>
                         <div className="cl-rowside">
@@ -74,6 +74,9 @@ export default function PostList({
         </>
     );
 }
+
+/** Marks a suggestion that is a key (hub) page of its topic. */
+export const KeyBadge = () => <span className="cl-keybadge">{__('Key page', 'cherrylink')}</span>;
 
 export function Skeleton() {
     return (

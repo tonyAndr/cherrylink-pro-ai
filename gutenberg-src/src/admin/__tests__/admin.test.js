@@ -82,6 +82,28 @@ describe('admin pages (connected free state)', () => {
         expect(screen.queryByText('Post 1')).toBeNull();
     });
 
+    it('key pages tab lists members not linking and pins through the ajax action', async () => {
+        const keys = { checked_at: '2026-11-12T09:14:00Z', posts_considered: 10, demoted: [{ post_id: 7, title: 'Old hub' }], key_pages: [
+            { post_id: 5, title: 'Hub guide', edit_url: '/edit5', pinned: false, inbound: 1, underlinked: true,
+                members: [{ post_id: 6, title: 'Member six', edit_url: '/edit6', links_to_key: false }, { post_id: 8, title: 'Member eight', edit_url: '/edit8', links_to_key: true }] }] };
+        responses.cherrylink_admin_link_health = { ...health, keys };
+        responses.cherrylink_admin_key_pin = { success: true, data: { keys: { ...keys, key_pages: [{ ...keys.key_pages[0], pinned: true }] } } };
+        render(<App boot={boot('links')} />);
+        await screen.findByText('Post 1');
+        fireEvent.click(screen.getByRole('tab', { name: /Key pages/ }));
+        expect(screen.getByText('Hub guide')).toHaveAttribute('href', '/edit5');
+        expect(screen.getByText('Underlinked')).toBeInTheDocument();
+        expect(screen.getByText('Old hub')).toBeInTheDocument();
+        fireEvent.click(screen.getByText('1 post'));
+        expect(screen.getByText('Member six')).toBeInTheDocument();
+        expect(screen.queryByText('Member eight')).toBeNull();
+        await act(async () => { fireEvent.click(screen.getByText('Pin')); });
+        const call = calls.find((c) => c.action === 'cherrylink_admin_key_pin');
+        expect(call.body.get('mode')).toBe('pin');
+        expect(call.body.get('post_id')).toBe('5');
+        expect(await screen.findByText('Unpin')).toBeInTheDocument();
+    });
+
     it('index renders tiles and confirms data removal in a modal', async () => {
         render(<App boot={boot('index')} />);
         expect(screen.getByText('learned for suggestions')).toBeInTheDocument();

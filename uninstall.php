@@ -30,6 +30,10 @@ if (defined('ABSPATH') && defined('WP_UNINSTALL_PLUGIN')) {
 		// Request locks.
 		'cl_server_probe_lock',
 		'cl_status_refresh_lock',
+		// Link health / key pages caches and the user's key-page pins.
+		'cherrylink_link_health',
+		'cherrylink_key_pages',
+		'cherrylink_key_pins',
 		// Schema version marker.
 		'cherrylink_db_version',
 	];

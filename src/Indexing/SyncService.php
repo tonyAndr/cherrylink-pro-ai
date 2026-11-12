@@ -197,6 +197,7 @@ final class SyncService implements Registerable
         if ($capabilities->indexExpired()) {
             $capabilities->clearIndexExpired();
             \delete_option(AdminApi::HEALTH_OPTION);
+            \CherryLink\Support\KeyPages::clearResult();
         }
         // Routing follows the tenant's durable mode, not current API availability:
         // an established async tenant must never fall back to synchronous writes

@@ -140,3 +140,22 @@ notice instead of cached results. `SyncService::start()` clears the cached flag 
 API flips it back on `POST /v1/sync/plan`). The editor strip shows a `.cl-plan-note` (`config.indexExpired`,
 `PanelConfig`) linking to the dashboard (`config.connectUrl`). The Wizard Connect disclosure states the 180-day
 deletion.
+
+## Key pages (v1)
+
+Contract: `api/specs/key-pages.md`. `Support\KeyPages` keeps the last result in the non-autoloaded option
+`cherrylink_key_pages` (`{checked_at, key_pages, posts_considered}`, each page/member enriched with
+`edit_url` and the current WP title, pages also with `view_url`) and the site-wide choices in
+`cherrylink_key_pins` (`{pin:int[], demote:int[]}`). `Api\Client::key_pages(pin, demote)` is
+`POST /v1/key-pages` (background context). Both options are removed on uninstall; the result (not the
+pins) is also cleared where `cherrylink_link_health` is: "Remove data" and the purged-index rescan.
+
+- `cherrylink_admin_link_health` now also returns `keys` (`KeyPages::payload()`: the stored result plus
+  `demoted: [{post_id,title,edit_url}]`). With `refresh=1` it recomputes key pages after the health call;
+  a key-pages failure keeps the previous result and never fails the health refresh.
+- `cherrylink_admin_key_pin` `{post_id, mode: pin|demote|clear}` (same nonce + `cherrylink_settings` guard):
+  stores the choice (one choice per post), refreshes, returns `{keys}`.
+- Link health gets a **Key pages** tab (first in the bar, deep link `#keys`; the default tab is still
+  Orphan pages): title (edit link), Pinned/Underlinked badges, group size (members + 1), inbound count,
+  expandable members that do not link yet (Edit links), Pin/Unpin and Demote buttons, and a "Demoted pages"
+  list with Restore. Help text: found automatically from what posts are about; free plan counts only learned posts.

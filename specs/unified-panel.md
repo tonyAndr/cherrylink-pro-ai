@@ -196,3 +196,20 @@ terms linking, incoming list, donor insert/undo, locked donor, unlicensed state,
 Config also carries `connectUrl`, `upgradeUrl` and `plan`. Unlicensed: a single "Подключить CherryLink" button
 (no fetch). Plan-limited sites: the strip shows "Проиндексировано N из M · Расширить". Details in
 `connect-and-plans.md`.
+
+## Key pages (v1)
+
+Contract: `api/specs/key-pages.md`; storage and admin side in `specs/admin-ui.md` ("Key pages").
+
+- `PanelConfig` passes `keyPage = KeyPages::forPost($id)` = `{is_key, key:{post_id,title,url,view_url}|null,
+  members_not_linking, pinned, demoted}` (null for terms and while the index is purged) and
+  `canKeyPin` (`edit_others_posts`).
+- Strip: a post in a key page's group whose **live** editor links (same `isRowLinked`/`normalizeUrl` as the
+  suggestions) lack the key page shows "Doesn't link to key page “Y” yet" (opens Suggestions). A key page shows
+  "Key page · N related posts don't link here" (opens Incoming; plain "Key page" when N = 0). The small
+  "Mark as key page" / "Unmark key page" link (only with `canKeyPin`) calls `cherrylink_panel_key_pin`
+  `{post_id, mode}` (`edit_posts` nonce + `edit_post` on the post + `edit_others_posts`; pins are site-wide),
+  which stores the pin (`pin`; unmark = `clear` if pinned, else `demote`), refreshes and returns `{keyPage}`.
+- Suggestion rows carry `is_key`; PostList and OpportunityList show a "Key page" badge. Ranking lives in one
+  place, `SuggestionsResults::rows()`: API order is re-ranked by `score + 0.01` for key pages
+  (`KeyPages::rank`), the displayed relevance still uses the raw score.

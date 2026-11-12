@@ -2,7 +2,7 @@ import { __, sprintf } from '@wordpress/i18n';
 import Context from './Context';
 import { IconChevron } from './icons';
 import { hiddenKey, topScore } from './opportunities';
-import { Rel } from './PostList';
+import { KeyBadge, Rel } from './PostList';
 
 export default function OpportunityList({
     items, loading, hiddenList, showHidden, altIndex, lastInsert,
@@ -52,7 +52,7 @@ export default function OpportunityList({
                         onBlur={onClearReveal}
                     >
                         <Context text={sug.context} />
-                        <div className="cl-target"><span className="cl-arrow">→</span><span className="cl-t">{t.title}</span><Rel score={t.score} top={top} /></div>
+                        <div className="cl-target"><span className="cl-arrow">→</span><span className="cl-t">{t.title}{t.is_key && <KeyBadge />}</span><Rel score={t.score} top={top} /></div>
                         <div className="cl-actions">
                             <button type="button" className="cl-btn cl-primary" onClick={() => onInsert(t, sug)}>{__('Insert link', 'cherrylink')}</button>
                             {o.targets.length > 1 && (

@@ -151,13 +151,7 @@ final class Connect implements Registerable
             IndexHooks::clearStatusCaches();
             $capabilities = new Capabilities();
             $capabilities->forget();
-            // Warm the capability snapshot from cron, never from this request. WP drops a
-            // single event within 10 minutes of the same hook, so clear the recurring one
-            // first; CapabilitiesRefresh::maybeSchedule re-creates it on the next wp_loaded.
-            if (\function_exists('wp_schedule_single_event')) {
-                \wp_clear_scheduled_hook(Capabilities::REFRESH_HOOK);
-                \wp_schedule_single_event(\time() + 5, Capabilities::REFRESH_HOOK);
-            }
+            Capabilities::refreshSoon(); // warm from cron, never from this request
 
             return ['ok' => true, 'code' => 'ok', 'retry_after' => null];
         }

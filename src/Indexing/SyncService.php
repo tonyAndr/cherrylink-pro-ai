@@ -481,6 +481,7 @@ final class SyncService implements Registerable
             \update_option('linkate_posts_meta', $meta);
             \delete_option(self::PLAN);
             $this->options->clearIndexDirty();   // index reconciled — clear any out-of-sync flag
+            self::afterScan();
             $this->setState(\array_merge($state, ['status' => 'done', 'phase' => 'done', 'offset' => 0]));
             return;
         }
@@ -599,6 +600,16 @@ final class SyncService implements Registerable
      *
      * @param array<string,mixed> $plan
      */
+    /** A finished scan changes the learned count, link health and key pages: refresh them from cron. */
+    private static function afterScan(): void
+    {
+        Capabilities::refreshSoon();
+        if (\function_exists('wp_schedule_single_event')) {
+            \wp_clear_scheduled_hook(AdminApi::HEALTH_HOOK);
+            \wp_schedule_single_event(\time() + 5, AdminApi::HEALTH_HOOK);
+        }
+    }
+
     private function publishPlan(array $plan, bool $force_full): void
     {
         // This is the first point at which a fresh plan is safe to publish.
@@ -618,6 +629,7 @@ final class SyncService implements Registerable
             \update_option('linkate_posts_meta', $meta);
             \delete_option(self::PLAN);
             $this->options->clearIndexDirty();   // index reconciled — clear any out-of-sync flag
+            self::afterScan();
             $this->setState(\array_merge($state, [
                 'status'       => 'done',
                 'phase'        => 'done',

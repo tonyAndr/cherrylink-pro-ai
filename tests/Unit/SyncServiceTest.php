@@ -8,6 +8,8 @@ use Brain\Monkey;
 use Brain\Monkey\Functions;
 use CherryLink\Api\Client;
 use CherryLink\Indexing\SyncService;
+use CherryLink\Admin\AdminApi;
+use CherryLink\Support\Capabilities;
 use CherryLink\Support\License;
 use CherryLink\Support\Options;
 use Mockery;
@@ -38,12 +40,21 @@ final class SyncServiceTest extends TestCase
     /** @var array<int,array<string,mixed>> */
     private $enqueued = [];
 
+    /** @var string[] hooks cleared before a single-event reschedule */
+    private $cleared = [];
+
     protected function setUp(): void
     {
         parent::setUp();
         Monkey\setUp();
         Functions\when('wp_cache_delete')->justReturn(true);
         Functions\when('get_transient')->justReturn(false); // capabilities cache is cold
+        $this->cleared = [];
+        Functions\when('wp_clear_scheduled_hook')->alias(function (string $hook): int {
+            $this->cleared[] = $hook;
+            return 0;
+        });
+        Functions\when('wp_schedule_single_event')->justReturn(true);
 
         $this->state = [
             'status'        => 'running',
@@ -630,5 +641,7 @@ final class SyncServiceTest extends TestCase
         $this->service($api)->worker('prune', 0, 0);
 
         $this->assertSame('done', $this->state['phase']);
+        // A finished scan refreshes the learned count and link health / key pages from cron.
+        $this->assertSame([Capabilities::REFRESH_HOOK, AdminApi::HEALTH_HOOK], $this->cleared);
     }
 }

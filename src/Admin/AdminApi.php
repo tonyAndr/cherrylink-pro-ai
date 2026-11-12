@@ -25,6 +25,7 @@ final class AdminApi implements Registerable
 {
     public const HEALTH_OPTION = 'cherrylink_link_health';
     public const SETUP_OPTION  = 'cherrylink_setup_done';
+    public const HEALTH_HOOK   = 'cherrylink_refresh_health';
 
     private const ACTIONS = ['state', 'link_health', 'key_pin', 'save_settings', 'license', 'remove_data', 'import_settings', 'reset_settings', 'setup_done'];
     private const RELATIVE = ['full', 'no_proto', 'no_domain'];
@@ -51,6 +52,31 @@ final class AdminApi implements Registerable
         foreach (self::ACTIONS as $action) {
             \add_action('wp_ajax_cherrylink_admin_' . $action, [$this, 'ajax' . \str_replace('_', '', \ucwords($action, '_'))]);
         }
+        \add_action(self::HEALTH_HOOK, function (): void {
+            $this->refreshHealth();
+        });
+    }
+
+    /**
+     * Fetch link health and key pages, store both. Cron (after a scan) and "Check again".
+     *
+     * @return array<string,mixed>|null the health payload, null when the API was unreachable
+     */
+    public function refreshHealth(): ?array
+    {
+        // Background client: the problem analysis can take far longer than the 5 s interactive budget.
+        $api      = new Client(null, Client::CONTEXT_BACKGROUND);
+        $response = $api->get_link_problems();
+        if (! \is_array($response)) {
+            return null;
+        }
+        $health = $this->buildHealth($response);
+        \update_option(self::HEALTH_OPTION, $health, false);
+        // Key pages ride along; a failure keeps the previous result.
+        $keys = new KeyPages($api);
+        $keys->refresh();
+
+        return $health + ['keys' => $keys->payload()];
     }
 
     // ── AJAX ───────────────────────────────────────────────────────────────
@@ -68,19 +94,11 @@ final class AdminApi implements Registerable
         if (empty($_POST['refresh'])) {
             \wp_send_json_success($this->cachedHealth() + ['keys' => (new KeyPages())->payload()]);
         }
-        // The explicit "Check links" action uses the background client: the problem analysis
-        // can take far longer than the 5 s interactive budget, and the admin asked for it.
-        $api      = new Client(null, Client::CONTEXT_BACKGROUND);
-        $response = $api->get_link_problems();
-        if (! \is_array($response)) {
+        $result = $this->refreshHealth();
+        if ($result === null) {
             $this->fail(\__('Could not reach the CherryLink server. Try again in a moment.', 'cherrylink'));
         }
-        $health = $this->buildHealth($response);
-        \update_option(self::HEALTH_OPTION, $health, false);
-        // Key pages ride along with the explicit check; a failure keeps the previous result.
-        $keys = new KeyPages($api);
-        $keys->refresh();
-        \wp_send_json_success($health + ['keys' => $keys->payload()]);
+        \wp_send_json_success($result);
     }
 
     /** Pin / demote / clear one post as a key page, then recompute. */

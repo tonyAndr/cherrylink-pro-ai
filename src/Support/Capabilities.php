@@ -232,6 +232,19 @@ final class Capabilities
      * but the tenant is still the same async tenant. Clearing the mode here would
      * push it onto synchronous writes until the next successful probe.
      */
+    /**
+     * Refresh the snapshot from cron a few seconds from now (after Connect or a finished scan).
+     * WP drops a single event within 10 minutes of the same hook, so clear the recurring one
+     * first; CapabilitiesRefresh::maybeSchedule re-creates it on the next wp_loaded.
+     */
+    public static function refreshSoon(): void
+    {
+        if (\function_exists('wp_schedule_single_event')) {
+            \wp_clear_scheduled_hook(self::REFRESH_HOOK);
+            \wp_schedule_single_event(\time() + 5, self::REFRESH_HOOK);
+        }
+    }
+
     public function forget(): void
     {
         \delete_transient(self::CACHE_KEY);

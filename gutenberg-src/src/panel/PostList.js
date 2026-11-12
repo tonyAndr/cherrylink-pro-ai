@@ -40,7 +40,7 @@ export default function PostList({
                     <div className="cl-row" key={r.post_id}>
                         <div>
                             <div className="cl-t">{r.title}{r.is_key && <KeyBadge />}</div>
-                            <div className="cl-meta">↑ {r.out} {__('out', 'cherrylink')} · ↓ {r.in} {__('in', 'cherrylink')}</div>
+                            <div className="cl-meta">↑ {r.out} {__('out', 'cherrylink')} · ↓ {r.in} {__('in', 'cherrylink')}{r.match === 'text' && <> · {__('word found in the text', 'cherrylink')}</>}</div>
                         </div>
                         <div className="cl-rowside">
                             <Rel score={r.score} top={top} />

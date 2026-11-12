@@ -213,3 +213,17 @@ Contract: `api/specs/key-pages.md`; storage and admin side in `specs/admin-ui.md
 - Suggestion rows carry `is_key`; PostList and OpportunityList show a "Key page" badge. Ranking lives in one
   place, `SuggestionsResults::rows()`: API order is re-ranked by `score + KeyPages::BOOST` (0.004 cosine ≈ 3 display points, a tie-breaker) for key pages
   (`KeyPages::rank`), the displayed relevance still uses the raw score.
+
+## "All posts" typed search (hybrid)
+
+A typed query (`query` in `cherrylink_panel_links`) is answered by `SuggestionsResults::rows()` as:
+1. **Word matches** (WordPress SQL): published posts containing every typed word, using crude
+   stems (`stems()`: ≥6 letters drop 2, 5 letters drop 1) so word forms match. Title matches first
+   (by meaning score), posts with the words only in the text last (`match: 'text'`, labelled
+   "word found in the text").
+2. **Meaning-based hits** in between, kept only within `NEAR_BEST` (0.03 raw cosine) of the best
+   one — single words embed poorly (fixture: "SSL" 0.866 right post vs ≤0.817 noise). A one-word
+   query that has word matches shows the matches only.
+3. Typed searches never reuse the post's stored vector, and key-page ranking boosts are skipped.
+Fixture results: "наращивать" → Ссылочная масса (title), Конкурентный анализ (text); "SSL" → SSL-сертификат,
+Безопасность WordPress; "email рассылка" → Email-маркетинг first.

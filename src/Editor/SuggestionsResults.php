@@ -6,6 +6,7 @@ namespace CherryLink\Editor;
 
 use CherryLink\Api\Client;
 use CherryLink\CustomFields\Cf;
+use CherryLink\Indexing\IndexHelpers;
 use CherryLink\Support\KeyPages;
 use CherryLink\Support\Language;
 
@@ -71,9 +72,11 @@ final class SuggestionsResults
 
         $saved_post  = ($post instanceof \WP_Post && self::reuseStoredVector($is_term, $typed, $html, $saved)) ? $post : null;
         $api         = new Client();
-        $api_results = $api->search($query, $html, $limit * 3, $lang, \min(10, $limit), $saved_post);
-        if (empty($api_results)) {
-            return $empty;
+        $api_results = (array) ($api->search($query, $html, $limit * 3, $lang, \min(10, $limit), $saved_post) ?? []);
+        if ($typed) {
+            // A typed search: posts containing the words come first; meaning-based hits only
+            // when they are about as close as the best one (single words embed poorly).
+            $api_results = self::nearBest($api_results);
         }
 
         $api_map     = [];
@@ -86,6 +89,20 @@ final class SuggestionsResults
             $api_map[$pid] = $r;
             $ordered_ids[] = $pid;
         }
+        $matches = $typed ? self::wordMatches($query, $is_term ? 0 : $post_id) : [];
+        if ($matches && \count(self::stems($query)) === 1) {
+            // One word: its embedding barely separates topics, so word matches are the answer.
+            $ordered_ids = \array_values(\array_filter($ordered_ids, static function (int $id) use ($matches): bool {
+                return isset($matches[$id]);
+            }));
+        }
+        if ($matches) {
+            $scores = [];
+            foreach ($ordered_ids as $oid) {
+                $scores[$oid] = (float) ($api_map[$oid]['score'] ?? 0);
+            }
+            $ordered_ids = self::mergeWordMatches($matches, $scores);
+        }
         if (! $ordered_ids) {
             return $empty;
         }
@@ -93,7 +110,7 @@ final class SuggestionsResults
         // Key pages rank slightly above equally scored posts; the displayed score stays raw.
         $key_pages = new KeyPages();
         $key_ids   = $key_pages->keyIds();
-        if ($key_ids) {
+        if ($key_ids && ! $matches) {
             $scores = [];
             foreach ($ordered_ids as $oid) {
                 $scores[$oid] = (float) ($api_map[$oid]['score'] ?? 0);
@@ -133,6 +150,7 @@ final class SuggestionsResults
                 'in'          => (int) \get_post_meta($id, 'cherry_income', true),
                 'saturated'   => false,
                 'is_key'      => \in_array($id, $key_ids, true),
+                'match'       => $matches[$id] ?? '',
                 'open'        => $markup['open'],
                 'close'       => $markup['close'],
                 'suggestions' => $sugg,
@@ -223,6 +241,119 @@ final class SuggestionsResults
     }
 
     /** Whether the editor HTML carries the same text as the saved content (markup/whitespace ignored). */
+    /** Typed-search noise cut: keep hits within this raw-cosine distance of the best one. */
+    public const NEAR_BEST = 0.03;
+
+    /**
+     * Meaning-based hits for a typed search, kept only near the best score.
+     * ponytail: fixed gap measured on the fixture (best 0.866 vs noise ≤0.817 for "SSL"; a
+     * phrase like "как ускорить индексацию" keeps 4–5 real hits). Tune if queries get longer.
+     *
+     * @param array<int,array<string,mixed>> $results
+     * @return array<int,array<string,mixed>>
+     */
+    public static function nearBest(array $results): array
+    {
+        $best = 0.0;
+        foreach ($results as $r) {
+            $best = \max($best, (float) ($r['score'] ?? 0));
+        }
+        return \array_values(\array_filter($results, static function ($r) use ($best): bool {
+            return (float) ($r['score'] ?? 0) >= $best - self::NEAR_BEST;
+        }));
+    }
+
+    /**
+     * Word stems for LIKE matching. ponytail: crude suffix trim (Russian/English endings) so
+     * "наращивать" also finds "наращивание"; swap for a real stemmer if users miss matches.
+     *
+     * @return string[]
+     */
+    public static function stems(string $query): array
+    {
+        $out = [];
+        foreach ((array) \preg_split('/[^\p{L}\p{N}]+/u', \mb_strtolower($query), -1, PREG_SPLIT_NO_EMPTY) as $w) {
+            $len = \mb_strlen((string) $w);
+            if ($len < 2) {
+                continue;
+            }
+            $out[] = $len >= 6 ? \mb_substr((string) $w, 0, $len - 2) : ($len === 5 ? \mb_substr((string) $w, 0, 4) : (string) $w);
+        }
+        return \array_slice(\array_values(\array_unique($out)), 0, 6);
+    }
+
+    /**
+     * Published posts containing every typed word: title matches, then text-only matches.
+     *
+     * @return array<int,string> post id => 'title'|'text', best first
+     */
+    private static function wordMatches(string $query, int $exclude_id): array
+    {
+        global $wpdb;
+        /** @var \wpdb $wpdb */
+        $stems = self::stems($query);
+        if (! $stems) {
+            return [];
+        }
+        $types  = IndexHelpers::get_public_types_list();
+        $title  = [];
+        $any    = [];
+        $args   = [];
+        $targs  = [];
+        foreach ($stems as $stem) {
+            $like    = '%' . $wpdb->esc_like($stem) . '%';
+            $title[] = 'post_title LIKE %s';
+            $any[]   = '(post_title LIKE %s OR post_content LIKE %s)';
+            $targs[] = $like;
+            $args[]  = $like;
+            $args[]  = $like;
+        }
+        $ph  = \implode(',', \array_fill(0, \count($types), '%s'));
+        $sql = "SELECT ID, (" . \implode(' AND ', $title) . ") AS in_title FROM {$wpdb->posts}
+                WHERE post_status = 'publish' AND post_type IN ($ph) AND ID <> %d AND " . \implode(' AND ', $any) . "
+                ORDER BY in_title DESC, post_date DESC LIMIT 100";
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- placeholders built above
+        $rows = (array) $wpdb->get_results($wpdb->prepare($sql, \array_merge($targs, $types, [$exclude_id], $args)));
+        $out  = [];
+        foreach ($rows as $r) {
+            $out[(int) $r->ID] = ((int) $r->in_title) === 1 ? 'title' : 'text';
+        }
+        return $out;
+    }
+
+    /**
+     * Title matches first (by meaning score), then the meaning-based hits in API order, then
+     * posts that only contain the words in their text.
+     *
+     * @param array<int,string> $matches post id => 'title'|'text', in SQL order
+     * @param array<int,float>  $scores  post id => raw API score, in API order
+     * @return int[]
+     */
+    public static function mergeWordMatches(array $matches, array $scores): array
+    {
+        $pos    = \array_flip(\array_keys($matches));
+        $titles = \array_keys(\array_filter($matches, static function (string $m): bool {
+            return $m === 'title';
+        }));
+        \usort($titles, static function (int $a, int $b) use ($scores, $pos): int {
+            $sa = $scores[$a] ?? -1.0;
+            $sb = $scores[$b] ?? -1.0;
+            return $sa === $sb ? $pos[$a] <=> $pos[$b] : ($sa < $sb ? 1 : -1);
+        });
+        $ids = $titles;
+        foreach (\array_keys($scores) as $id) {
+            if (($matches[$id] ?? '') !== 'title') {
+                $ids[] = (int) $id;
+            }
+        }
+        foreach ($matches as $id => $m) {
+            if ($m === 'text' && ! isset($scores[$id])) {
+                $ids[] = (int) $id;
+            }
+        }
+        return \array_map('intval', $ids);
+    }
+
     /**
      * Unedited post: the API may reuse its stored vector (same ranking quality on the benchmark
      * fixture, one embedding call fewer). Edited content and typed searches are embedded fresh:

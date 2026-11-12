@@ -39,79 +39,79 @@ msgstr "Anton SeoCherry.ru"
 msgid "Deactivate CherryLink Pro AI first. Two CherryLink plugins cannot run together."
 msgstr "Deactivate CherryLink Pro AI first. Two CherryLink plugins cannot run together."
 
-#: src/Admin/AdminApi.php:76
+#: src/Admin/AdminApi.php:99
 msgid "Could not reach the CherryLink server. Try again in a moment."
 msgstr "Не удалось связаться с сервером CherryLink. Повторите через минуту."
 
-#: src/Admin/AdminApi.php:108
+#: src/Admin/AdminApi.php:126
 msgid "Invalid settings."
 msgstr "Некорректные настройки."
 
-#: src/Admin/AdminApi.php:124
-#: src/Admin/AdminApi.php:451
+#: src/Admin/AdminApi.php:142
+#: src/Admin/AdminApi.php:469
 msgid "Enter a license key."
 msgstr "Введите ключ лицензии."
 
-#: src/Admin/AdminApi.php:96
-#: src/Admin/AdminApi.php:139
+#: src/Admin/AdminApi.php:114
+#: src/Admin/AdminApi.php:157
 msgid "Unknown action."
 msgstr "Неизвестное действие."
 
-#: src/Admin/AdminApi.php:151
+#: src/Admin/AdminApi.php:169
 msgid "Could not delete the site data on the CherryLink server. Check the connection and try again."
 msgstr "Не удалось удалить данные сайта на сервере CherryLink. Проверьте соединение и повторите."
 
-#: src/Admin/AdminApi.php:170
+#: src/Admin/AdminApi.php:188
 msgid "Could not import: choose a .txt file exported from CherryLink."
 msgstr "Не удалось импортировать: выберите файл .txt, экспортированный из CherryLink."
 
-#: src/Admin/AdminApi.php:447
+#: src/Admin/AdminApi.php:465
 msgid "Could not reach the license server. Try again later or contact support."
 msgstr "Не удалось связаться с сервером лицензий. Повторите позже или обратитесь в поддержку."
 
-#: src/Admin/AdminApi.php:449
+#: src/Admin/AdminApi.php:467
 msgid "The key is being checked in the background. Refresh in a few seconds."
 msgstr "Ключ проверяется в фоне. Обновите страницу через несколько секунд."
 
-#: src/Admin/AdminApi.php:453
+#: src/Admin/AdminApi.php:471
 msgid "Could not schedule the key check. Try again."
 msgstr "Не удалось запланировать проверку ключа. Повторите попытку."
 
-#: src/Admin/AdminApi.php:455
+#: src/Admin/AdminApi.php:473
 msgid "This key is bound to another domain."
 msgstr "Этот ключ привязан к другому домену."
 
-#: src/Admin/AdminApi.php:457
+#: src/Admin/AdminApi.php:475
 msgid "This key has expired."
 msgstr "Срок действия ключа истёк."
 
-#: src/Admin/AdminApi.php:459
+#: src/Admin/AdminApi.php:477
 msgid "This key is not valid."
 msgstr "Этот ключ недействителен."
 
-#: src/Admin/AdminApi.php:477
+#: src/Admin/AdminApi.php:495
 msgid "Could not verify the domain: the CherryLink server could not open your site over HTTPS. The site must be reachable from the internet; for private sites enter a key manually."
 msgstr "Не удалось подтвердить домен: сервер CherryLink не смог открыть адрес сайта по HTTPS. Сайт должен быть доступен из интернета; для закрытых сайтов введите ключ вручную."
 
 #. translators: %d: seconds to wait
-#: src/Admin/AdminApi.php:481
+#: src/Admin/AdminApi.php:499
 #, php-format
 msgid "Too many connection attempts. Try again in %d s."
 msgstr "Слишком много попыток подключения. Повторите через %d с."
 
-#: src/Admin/AdminApi.php:482
+#: src/Admin/AdminApi.php:500
 msgid "Too many connection attempts. Try again later."
 msgstr "Слишком много попыток подключения. Повторите позже."
 
-#: src/Admin/AdminApi.php:484
+#: src/Admin/AdminApi.php:502
 msgid "This domain cannot be connected (a public domain is required, not an IP address or localhost)."
 msgstr "Домен сайта не подходит для подключения (нужен публичный домен, не IP-адрес и не localhost)."
 
-#: src/Admin/AdminApi.php:486
+#: src/Admin/AdminApi.php:504
 msgid "Connecting is not available for this domain. Enter a key manually or contact support."
 msgstr "Для этого домена подключение недоступно. Введите ключ вручную или обратитесь в поддержку."
 
-#: src/Admin/AdminApi.php:488
+#: src/Admin/AdminApi.php:506
 msgid "The connection service is temporarily unavailable. Try again later."
 msgstr "Сервис подключения временно недоступен. Повторите позже."
 
@@ -258,7 +258,7 @@ msgstr "Лицензия неактивна — синхронизация не�
 msgid "Could not schedule the scan. Please try again."
 msgstr "Не удалось запланировать сканирование. Попробуйте снова."
 
-#: src/Indexing/SyncService.php:631
+#: src/Indexing/SyncService.php:643
 msgid "No changes found"
 msgstr "Изменений не найдено"
 
@@ -1744,3 +1744,8 @@ msgstr "Страница отмечена как ключевая"
 #: js/cherry-gutenberg.js:3
 msgid "Key page choice saved"
 msgstr "Выбор сохранён"
+
+#: js/cherry-classic.js:3
+#: js/cherry-gutenberg.js:3
+msgid "word found in the text"
+msgstr "слово есть в тексте"

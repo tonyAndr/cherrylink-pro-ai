@@ -221,8 +221,26 @@ class Client implements ReportClient
             'modified_gmt' => $post->post_modified_gmt,
         ];
 
-        $response = $this->request('POST', '/v1/documents', $body);
-        return $response !== null;
+        $result = $this->request_result('POST', '/v1/documents', $body);
+        // 409 plan_limit: the site is over its plan's post limit. The post is simply not
+        // indexed; that is a handled outcome, not an error.
+        if (self::is_plan_limit_result($result)) {
+            return true;
+        }
+
+        return $result['ok'];
+    }
+
+    /**
+     * Single-upsert rejection because the plan's post limit is reached.
+     *
+     * @param array{status?:int,body?:mixed} $result
+     */
+    public static function is_plan_limit_result(array $result): bool
+    {
+        return (int) ($result['status'] ?? 0) === 409
+            && \is_array($result['body'] ?? null)
+            && ($result['body']['detail'] ?? '') === 'plan_limit';
     }
 
     /**
@@ -366,19 +384,20 @@ class Client implements ReportClient
      * Batch-upsert with transport and partial-result metadata for background sync.
      *
      * @param WP_Post[] $wp_posts
-     * @return array{ok:bool,retryable:bool,status:int,retry_after:int|null,indexed:int,errors:int,error:string}
+     * @return array{ok:bool,retryable:bool,status:int,retry_after:int|null,indexed:int,errors:int,error:string,plan_limited:int[]}
      */
     public function upsert_batch_result(array $wp_posts): array
     {
         if (empty($wp_posts)) {
             return [
-                'ok'          => true,
-                'retryable'   => false,
-                'status'      => 200,
-                'retry_after' => null,
-                'indexed'     => 0,
-                'errors'      => 0,
-                'error'       => '',
+                'ok'           => true,
+                'retryable'    => false,
+                'status'       => 200,
+                'retry_after'  => null,
+                'indexed'      => 0,
+                'errors'       => 0,
+                'error'        => '',
+                'plan_limited' => [],
             ];
         }
 
@@ -410,6 +429,9 @@ class Client implements ReportClient
             'indexed'     => $indexed,
             'errors'      => $errors,
             'error'       => $response['error'] ?: (!$valid ? 'invalid batch response' : ($errors > 0 ? 'batch contained errors' : '')),
+            // Over-plan posts the API skipped: handled outcome (not an error, never retried).
+            'plan_limited' => $valid && \is_array($body['plan_limited'] ?? null)
+                ? \array_values(\array_map('intval', $body['plan_limited'])) : [],
         ];
     }
 
@@ -899,7 +921,12 @@ class Client implements ReportClient
     private function probe(string $method, string $path, bool $auth, int $timeout, float $deadline): array
     {
         $remaining = $deadline - ($this->clock)();
-        if ($remaining <= 0 || ($auth && $this->license_key === '')) {
+        if ($this->license_key === '') {
+            // No outbound request before the site is connected (WordPress.org guideline 7).
+            return ['ok' => false, 'ms' => 0, 'http_code' => 0,
+                    'error' => 'no license key configured', 'body' => null];
+        }
+        if ($remaining <= 0) {
             return ['ok' => false, 'ms' => 0, 'http_code' => 0,
                     'error' => $remaining <= 0 ? 'request budget exhausted' : 'no license key configured', 'body' => null];
         }

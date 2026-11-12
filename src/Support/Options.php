@@ -242,6 +242,9 @@ final class Options
         if (! isset($options['vector_custom_fields'])) {
             $options['vector_custom_fields'] = '';
         }
+        if (! isset($options['lifecycle_reports'])) {
+            $options['lifecycle_reports'] = 'false'; // opt-in plugin lifecycle reports (WordPress.org)
+        }
         if (! isset($options['use_alt_server'])) {
             $options['use_alt_server'] = 'false'; // alternative connection route
         }

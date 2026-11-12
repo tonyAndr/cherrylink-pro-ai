@@ -50,7 +50,7 @@ text (anchor, target title if internal, click = reveal in editor) and incoming l
 anchor, edit/view links). This replaces the old Stats tab.
 
 Empty / error / loading states: skeleton rows while loading; API errors show the message plus
-`Повторить`; unlicensed → existing notice text.
+`Повторить`; unlicensed → single Connect button (see Free mode additions).
 
 ## 2. Visual system
 
@@ -173,7 +173,7 @@ terms linking, incoming list, donor insert/undo, locked donor, unlicensed state,
   `SuggestionsResults::rows()` is the structured pipeline (the old `execute()` was removed in phase 3).
 - Config is emitted with `wp_add_inline_script(..., 'before')` (`window.cherrylinkPanel = {...}`),
   not `wp_localize_script`, so booleans/ints keep their types. Extra key `categories: [{id,name,level}]`
-  (only when `showCatFilter`). `licensed` is always true (services are not registered unlicensed).
+  (only when `showCatFilter`). `licensed` is false for unconnected sites (the host still loads; the panel shows the Connect button).
 - Classic toggle: the media button has `id="cherrylink-panel-toggle"` (printed once per page) and class
   `cherrylink-panel-toggle`. Old jQuery panel is only used when `js/cherry-classic.js` does not exist.
 - Error replies: `{ok:false,error,message}` with HTTP status. Codes: forbidden 403, bad_request 400,
@@ -190,3 +190,9 @@ terms linking, incoming list, donor insert/undo, locked donor, unlicensed state,
   `<a href title>` (relative-link setting applied); otherwise the link_before/link_after templates.
 - Plain-text donor content (no tags) uses blank-line paragraphs as blocks, like `buildSourceHtml`.
 - `StatisticsService::ajaxOrphanDonors` is untouched (still works; does not share DonorFinder).
+
+## Free mode additions
+
+Config also carries `connectUrl`, `upgradeUrl` and `plan`. Unlicensed: a single "Подключить CherryLink" button
+(no fetch). Plan-limited sites: the strip shows "Проиндексировано N из M · Расширить". Details in
+`connect-and-plans.md`.

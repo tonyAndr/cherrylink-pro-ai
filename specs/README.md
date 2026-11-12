@@ -11,6 +11,7 @@ Spec-driven development: write or update the spec before implementing. Each spec
 | [editor-ui.md](editor-ui.md) | Classic editor panel UX | stable |
 | [gutenberg-sidebar.md](gutenberg-sidebar.md) | Gutenberg sidebar UX, build toolchain | stable |
 | [indexing.md](indexing.md) | Synchronous scan, retries, and planned async delivery | design / synchronous implementation |
+| [connect-and-plans.md](connect-and-plans.md) | Connect flow, free plan, plan-limited indexing, no outbound calls before connect | implemented locally on `feature/free-mode` |
 | [plugin-reports.md](plugin-reports.md) | Activation/upgrade lifecycle reports, bounded runtime snapshot, cron-only sending | implemented and pushed; released as plugin v1.2.1 |
 
 ## How to use specs

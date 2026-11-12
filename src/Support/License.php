@@ -22,6 +22,7 @@ use CherryLink\Contracts\Registerable;
 final class License implements Registerable
 {
     public const VALIDATION_HOOK = 'clpro_license_validation_hook';
+    public const DEFAULT_LICENSING_URL = 'https://seocherry.ru/cherrylink-pro-licensing/';
     private const MAX_ATTEMPTS = 3;
 
     /** @var Options */
@@ -59,13 +60,57 @@ final class License implements Registerable
 
     // ── license state ───────────────────────────────────────────────────────
 
-    /** True when a valid, non-expired license is on file. */
+    /**
+     * Base URL of the licensing authority (check + connect). A wp-config constant
+     * overrides it for local development.
+     */
+    public static function licensingUrl(): string
+    {
+        $url = \defined('CHERRYLINK_LICENSING_URL') ? (string) \constant('CHERRYLINK_LICENSING_URL') : '';
+        if ($url === '') {
+            $url = self::DEFAULT_LICENSING_URL;
+        }
+
+        return \rtrim($url, '/') . '/';
+    }
+
+    /** A key is stored (valid or not). */
+    public function hasKey(): bool
+    {
+        return \trim((string) $this->options->get('hash_field', '')) !== '';
+    }
+
+    /** True when the site is connected: a key is stored and validated (free or paid). */
+    public function isConnected(): bool
+    {
+        return $this->hasKey() && $this->isValid();
+    }
+
+    /** Gate for all indexing/panel work: a validated key (free or paid) is on file. */
     public function isLicensed(): bool
     {
         return $this->isValid();
     }
 
-    /** Cached validity: key marked valid AND not past its expiry date. */
+    /**
+     * A free plan never expires (also the paid_expired fallback, whose expires_at is
+     * in the past); every other plan needs a future expiry.
+     *
+     * @param array<string,mixed> $meta
+     */
+    private static function metaActive(array $meta): bool
+    {
+        if (empty($meta['key_valid'])) {
+            return false;
+        }
+        if (($meta['plan'] ?? '') === 'free') {
+            return true;
+        }
+
+        return \strtotime((string) ($meta['expires_at'] ?? '')) > \time();
+    }
+
+    /** Cached validity: key marked valid AND (free plan OR not past its expiry date). */
     public function isValid(): bool
     {
         $meta = $this->options->meta();
@@ -75,10 +120,70 @@ final class License implements Registerable
             if ($stored_hash !== '' && $stored_hash !== $this->keyFingerprint($current_key)) {
                 return false;
             }
-            return \strtotime((string) $meta['expires_at']) > \time();
+            return self::metaActive($meta);
         }
 
         return false;
+    }
+
+    /** Plan post limit for a validated key; null = unlimited (legacy keys and no key). */
+    public function postLimit(): ?int
+    {
+        $meta = $this->options->meta();
+        if (! $this->isValid() || ! isset($meta['post_limit']) || ! \is_numeric($meta['post_limit'])) {
+            return null;
+        }
+        $limit = (int) $meta['post_limit'];
+
+        return $limit > 0 ? $limit : null;
+    }
+
+    /**
+     * Copy a valid/invalid authority decision into the meta array (pure).
+     * Plan fields are stored only when the authority sent a plan (legacy keeps none).
+     *
+     * @param array<string,mixed> $meta
+     * @param \stdClass|array<string,mixed> $decision
+     * @return array<string,mixed>
+     */
+    public static function applyDecision(array $meta, $decision): array
+    {
+        $d = (array) $decision;
+        foreach (['plan', 'post_limit', 'features', 'paid_expired'] as $field) {
+            unset($meta[$field]);
+        }
+        if (isset($d['plan']) && \is_string($d['plan']) && $d['plan'] !== '') {
+            $meta['plan']         = $d['plan'];
+            $meta['post_limit']   = isset($d['post_limit']) && \is_numeric($d['post_limit']) ? (int) $d['post_limit'] : null;
+            $meta['features']     = isset($d['features']) ? (array) $d['features'] : [];
+            $meta['paid_expired'] = ! empty($d['paid_expired']);
+        }
+
+        return $meta;
+    }
+
+    /**
+     * Store a freshly connected (free) key and mark it validated, without a second
+     * round trip. Writes the key first (its update hook resets validation), then the meta.
+     *
+     * @param array<string,mixed> $decision plan fields from the connect response
+     */
+    public function storeConnected(string $key, array $decision): void
+    {
+        $this->options->set('hash_field', $key);
+        $meta = self::applyDecision($this->options->meta(), $decision);
+        $meta['key_valid']            = true;
+        $meta['expires_at']           = '';
+        $meta['key_error_reason']     = '';
+        $meta['validation_status']    = 'valid';
+        $meta['validation_attempt']   = 0;
+        $meta['validation_next_gmt']  = '';
+        $meta['validation_key_hash']  = $this->keyFingerprint($key);
+        $this->options->saveMeta($meta);
+        if (\function_exists('wp_clear_scheduled_hook')) {
+            // The key-change hook queued a validation we no longer need.
+            \wp_clear_scheduled_hook(self::VALIDATION_HOOK);
+        }
     }
 
     /** Queue a key check without making an external request in the current page render. */
@@ -93,6 +198,7 @@ final class License implements Registerable
         if ($changed || $keyChanged) {
             $meta['key_valid'] = false;
             $meta['expires_at'] = '';
+            unset($meta['plan'], $meta['post_limit'], $meta['features'], $meta['paid_expired']);
         }
 
         $meta['validation_key_hash'] = $hash;
@@ -147,8 +253,11 @@ final class License implements Registerable
      */
     public function callHome($key, string $domain)
     {
+        if (\trim((string) $key) === '') {
+            return false; // nothing to check, and no request before the site is connected
+        }
         $response = \wp_remote_post(
-            'https://seocherry.ru/cherrylink-pro-licensing/',
+            self::licensingUrl(),
             [
                 'method'      => 'POST',
                 'timeout'     => 5,
@@ -175,14 +284,20 @@ final class License implements Registerable
         if (! \in_array((string) $decoded->key_valid, ['0', '1'], true)) {
             return false;
         }
-        if (! isset($decoded->expires_at) || ! \is_string($decoded->expires_at)) {
-            return false;
-        }
-        if (
-            (string) $decoded->key_valid === '1'
-            && \strtotime($decoded->expires_at) === false
-        ) {
-            return false;
+        // Free keys never expire: the authority answers plan 'free' with expires_at null.
+        $free_no_expiry = (string) $decoded->key_valid === '1'
+            && isset($decoded->plan) && $decoded->plan === 'free'
+            && (! isset($decoded->expires_at) || $decoded->expires_at === null);
+        if (! $free_no_expiry) {
+            if (! isset($decoded->expires_at) || ! \is_string($decoded->expires_at)) {
+                return false;
+            }
+            if (
+                (string) $decoded->key_valid === '1'
+                && \strtotime($decoded->expires_at) === false
+            ) {
+                return false;
+            }
         }
         if (
             (string) $decoded->key_valid === '0'
@@ -245,8 +360,9 @@ final class License implements Registerable
             }
 
             if ($response !== false) {
+                $meta = self::applyDecision($meta, $response);
                 $meta['key_valid'] = (int) $response->key_valid === 1;
-                $meta['expires_at'] = (string) $response->expires_at;
+                $meta['expires_at'] = isset($response->expires_at) ? (string) $response->expires_at : '';
                 $meta['key_error_reason'] = $meta['key_valid'] ? '' : (string) $response->key_error_reason;
                 $meta['validation_status'] = $meta['key_valid'] ? 'valid' : 'error';
                 $meta['validation_attempt'] = 0;
@@ -262,9 +378,7 @@ final class License implements Registerable
             $same_key = isset($meta['validation_key_hash'])
                 ? $meta['validation_key_hash'] === $key_hash
                 : ! empty($meta['key_valid']);
-            $valid_now = $same_key
-                && ! empty($meta['key_valid'])
-                && \strtotime((string) ($meta['expires_at'] ?? '')) > \time();
+            $valid_now = $same_key && self::metaActive($meta);
             if ($valid_now) {
                 $meta['validation_status'] = 'valid';
             } else {
@@ -311,9 +425,7 @@ final class License implements Registerable
         $same_key = $stored_key_hash !== ''
             ? $stored_key_hash === $this->keyFingerprint($key)
             : ! empty($meta['key_valid']);
-        $valid_now = $same_key
-            && ! empty($meta['key_valid'])
-            && \strtotime((string) ($meta['expires_at'] ?? '')) > \time();
+        $valid_now = $same_key && self::metaActive($meta);
         if (! $valid_now) {
             $meta['key_valid'] = false;
             $meta['expires_at'] = '';
@@ -349,6 +461,10 @@ final class License implements Registerable
     public function indexNotice(): void
     {
         if (! \current_user_can('edit_posts') || $this->isLicensed()) {
+            return;
+        }
+        // No key at all: the setup wizard / key card explains what to do.
+        if (\trim((string) $this->options->get('hash_field', '')) === '') {
             return;
         }
         // Only on the CherryLink settings page — not every admin screen.

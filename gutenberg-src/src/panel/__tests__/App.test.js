@@ -122,10 +122,26 @@ describe('App', () => {
         expect(calls.find((c) => c.action === 'donor_insert').body).toEqual({ donor_id: 9, target_id: 7, phrase: 'p', block_index: 0 });
     });
 
-    it('shows the unlicensed notice without fetching', () => {
-        render(<App adapter={makeAdapter()} config={{ ...config, licensed: false }} />);
-        expect(screen.getByText(/Лицензия CherryLink не активна/)).toBeInTheDocument();
+    it('shows a single Connect button without fetching when not connected', () => {
+        render(<App adapter={makeAdapter()} config={{ ...config, licensed: false, connectUrl: '/wp-admin/options-general.php?page=cherrylink-pro' }} />);
+        expect(screen.getByText(/CherryLink ещё не подключён/)).toBeInTheDocument();
+        const link = screen.getByText('Подключить CherryLink');
+        expect(link.closest('a')).toHaveAttribute('href', '/wp-admin/options-general.php?page=cherrylink-pro');
+        expect(screen.getAllByRole('link')).toHaveLength(1);
         expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    it('shows the plan line in the strip only when the limit cuts the index', async () => {
+        const plan = { name: 'free', post_limit: 1000, indexed: 1000, total: 2340 };
+        const { unmount } = render(<App adapter={makeAdapter()} config={{ ...config, plan, upgradeUrl: 'https://example.test/pricing' }} />);
+        await screen.findByText('Target 1');
+        expect(screen.getByText(/Проиндексировано 1\s000 из 2\s340/)).toBeInTheDocument();
+        expect(screen.getByText('Расширить')).toHaveAttribute('href', 'https://example.test/pricing');
+        unmount();
+
+        render(<App adapter={makeAdapter()} config={{ ...config, plan: { ...plan, total: 800 } }} />);
+        await screen.findByText('Target 1');
+        expect(screen.queryByText(/Проиндексировано/)).toBeNull();
     });
 
     it('always shows the Статьи/Рубрики switch and loads terms lazily', async () => {

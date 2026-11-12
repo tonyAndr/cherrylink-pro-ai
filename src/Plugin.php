@@ -88,6 +88,7 @@ final class Plugin
             new \CherryLink\Admin\StatsColumn(),
             new \CherryLink\Admin\AdminAssets($this->options),
             new \CherryLink\Admin\Notices(),
+            new \CherryLink\Support\Connect($license),
             new \CherryLink\Editor\GutenbergAssets($this->options),
             new \CherryLink\Indexing\IndexHooks($this->options, $license),
             new \CherryLink\Indexing\SyncService($this->options, $license, null, $async_scan),

@@ -286,7 +286,7 @@ final class Capabilities
         $tenant_mode = (string) ($capabilities['tenant_mode'] ?? 'sync');
         $enabled     = (string) ($capabilities['async_indexing'] ?? 'disabled') === 'enabled';
 
-        return [
+        $summary = [
             'known'            => true,
             'async'            => $tenant_mode === 'async',
             // Acceptance of a *run* only needs `runs`. Live mutations are a
@@ -301,5 +301,17 @@ final class Capabilities
             'batch_bytes'      => (int) ($limits['batch_bytes'] ?? 1048576),
             'checked_at'       => \time(),
         ];
+        // Plan state (free/pro tenants only; absent for legacy keys).
+        if (\is_array($capabilities['plan'] ?? null)) {
+            $plan = $capabilities['plan'];
+            $summary['plan'] = [
+                'name'         => (string) ($plan['name'] ?? ''),
+                'post_limit'   => isset($plan['post_limit']) ? (int) $plan['post_limit'] : null,
+                'indexed'      => isset($plan['indexed']) ? (int) $plan['indexed'] : null,
+                'paid_expired' => ! empty($plan['paid_expired']),
+            ];
+        }
+
+        return $summary;
     }
 }

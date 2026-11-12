@@ -386,7 +386,8 @@ final class SyncService implements Registerable
                     break;
 
                 case 'links':
-                    $slice = \array_slice($plan['upsert'], $offset, self::LINK_BATCH);
+                    $link_ids = $plan['links'] ?? $plan['upsert'];
+                    $slice = \array_slice($link_ids, $offset, self::LINK_BATCH);
                     if ($slice) {
                         $res = $api->parse_links_for_ids_result($slice);
                         if (!$res['ok']) {
@@ -396,8 +397,8 @@ final class SyncService implements Registerable
                         $state['links'] += (int) $res['count'];
                     }
                     $next = $offset + \count($slice);
-                    if ($next >= \count($plan['upsert'])) {
-                        $next_phase  = $plan['delete'] ? 'prune' : 'done';
+                    if ($next >= \count($link_ids)) {
+                        $next_phase  = self::pruneList($plan) ? 'prune' : 'done';
                         $next_offset = 0;
                     } else {
                         $next_phase  = 'links';
@@ -406,7 +407,8 @@ final class SyncService implements Registerable
                     break;
 
                 case 'prune':
-                    $slice = \array_slice($plan['delete'], $offset, self::PRUNE_BATCH);
+                    $prune_all = self::pruneList($plan);
+                    $slice     = \array_slice($prune_all, $offset, self::PRUNE_BATCH);
                     if ($slice) {
                         $res = $api->delete_documents_batch_result($slice);
                         if (!$res['ok']) {
@@ -414,7 +416,11 @@ final class SyncService implements Registerable
                             return;
                         }
                         $state['deleted'] += (int) $res['deleted'];
-                        foreach ($slice as $pid) {
+                        $n_delete = \count($plan['delete']);
+                        foreach ($slice as $i => $pid) {
+                            if ($offset + $i >= $n_delete) {
+                                continue; // plan-limit drop: keep the link graph
+                            }
                             $link_result = $api->delete_links_result((int) $pid, 0);
                             if (!$link_result['ok']) {
                                 $this->handleFailure($api, $phase, $offset, $state, $link_result);
@@ -423,7 +429,7 @@ final class SyncService implements Registerable
                         }
                     }
                     $next = $offset + \count($slice);
-                    if ($next >= \count($plan['delete'])) {
+                    if ($next >= \count($prune_all)) {
                         $next_phase  = 'done';
                         $next_offset = 0;
                     } else {
@@ -504,11 +510,12 @@ final class SyncService implements Registerable
             $current_modified[(int) $r->ID] = $r->post_modified_gmt;
         }
 
-        $plan = IndexHelpers::compute_sync_plan($manifest, $current_modified, $force_full);
+        $plan = IndexHelpers::compute_sync_plan($manifest, $current_modified, $force_full, $this->license->postLimit());
         // This is the first point at which a fresh plan is safe to publish.
         \update_option(self::PLAN, $plan, false);
 
-        $first = $plan['upsert'] ? 'upsert' : ($plan['delete'] ? 'prune' : 'done');
+        $prune = self::pruneList($plan);
+        $first = $plan['upsert'] ? 'upsert' : (! empty($plan['links']) ? 'links' : ($prune ? 'prune' : 'done'));
         $state = $this->getState();
 
         // Nothing changed — finish immediately, no background round-trip.
@@ -545,7 +552,7 @@ final class SyncService implements Registerable
             'phase'            => $first,
             'offset'           => 0,
             'upsert_total'     => \count($plan['upsert']),
-            'delete_total'     => \count($plan['delete']),
+            'delete_total'     => \count($prune),
             'indexed'          => 0,
             'links'            => 0,
             'deleted'          => 0,
@@ -569,6 +576,18 @@ final class SyncService implements Registerable
             ],
             self::GROUP
         );
+    }
+
+    /**
+     * Posts whose vectors are removed: orphans (`delete`, link graph removed too) first,
+     * then plan-limit `drop` entries (vector only). Legacy plans have no `drop`.
+     *
+     * @param array<string,mixed> $plan
+     * @return int[]
+     */
+    private static function pruneList(array $plan): array
+    {
+        return \array_merge((array) ($plan['delete'] ?? []), (array) ($plan['drop'] ?? []));
     }
 
     /**

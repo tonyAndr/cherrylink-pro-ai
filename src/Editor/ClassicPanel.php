@@ -29,7 +29,8 @@ final class ClassicPanel implements Registerable
 
     public function register(): void
     {
-        if (! \is_admin() || empty($this->options->meta()['key_valid'])) {
+        // Not gated on the key: unconnected sites get the panel with a single Connect button.
+        if (! \is_admin()) {
             return;
         }
 

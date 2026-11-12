@@ -62,12 +62,20 @@ class IndexHelpers
      * @param array<int,array{modified?:string|null}> $manifest         API index state, keyed by post ID
      * @param array<int,string>                       $current_modified post_modified_gmt of published posts
      * @param bool                                    $force_full       re-upsert every published post
-     * @return array{upsert:int[],delete:int[]}
+     * @param int|null                                $post_limit       plan limit; null/0 = unlimited (legacy plan shape)
+     * @return array{upsert:int[],delete:int[]}|array{upsert:int[],delete:int[],drop:int[],links:int[]}
      *   upsert = posts new to the index or whose modified timestamp changed;
-     *   delete = indexed posts no longer published (orphans)
+     *   delete = indexed posts no longer published (orphans).
+     *   With a post limit only the newest `post_limit` posts (by modified, newest first)
+     *   are upserted; `drop` = indexed published posts outside that set (vector only,
+     *   their link graph is kept); `links` = posts whose link graph must be (re)built
+     *   (the upserts plus every post outside the limit, which has no vector).
      */
-    public static function compute_sync_plan(array $manifest, array $current_modified, bool $force_full = false): array
+    public static function compute_sync_plan(array $manifest, array $current_modified, bool $force_full = false, ?int $post_limit = null): array
     {
+        if ($post_limit !== null && $post_limit > 0) {
+            return self::compute_limited_plan($manifest, $current_modified, $force_full, $post_limit);
+        }
         $upsert = [];
         foreach ($current_modified as $id => $modified) {
             $id = (int) $id;
@@ -80,5 +88,33 @@ class IndexHelpers
             array_map('intval', array_keys($current_modified))
         ));
         return ['upsert' => $upsert, 'delete' => $delete];
+    }
+
+    /**
+     * @param array<int,array{modified?:string|null}> $manifest
+     * @param array<int,string>                       $current_modified
+     * @return array{upsert:int[],delete:int[],drop:int[],links:int[]}
+     */
+    private static function compute_limited_plan(array $manifest, array $current_modified, bool $force_full, int $limit): array
+    {
+        $ids = array_map('intval', array_keys($current_modified));
+        usort($ids, static function (int $a, int $b) use ($current_modified): int {
+            $cmp = strcmp((string) $current_modified[$b], (string) $current_modified[$a]); // newest first
+            return $cmp !== 0 ? $cmp : $b <=> $a;
+        });
+        $top  = array_slice($ids, 0, $limit);
+        $rest = array_slice($ids, $limit);
+
+        $upsert = [];
+        foreach ($top as $id) {
+            if ($force_full || !isset($manifest[$id]) || (string) ($manifest[$id]['modified'] ?? '') !== (string) $current_modified[$id]) {
+                $upsert[] = $id;
+            }
+        }
+        $indexed = array_map('intval', array_keys($manifest));
+        $delete  = array_values(array_diff($indexed, $ids));
+        $drop    = array_values(array_intersect($rest, $indexed));
+
+        return ['upsert' => $upsert, 'delete' => $delete, 'drop' => $drop, 'links' => array_merge($upsert, $rest)];
     }
 }

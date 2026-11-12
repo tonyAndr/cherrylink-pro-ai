@@ -65,6 +65,7 @@ final class OptionDefaultsTest extends TestCase
             'vector_api_key'              => '',
             'vector_custom_fields'        => '',
             'use_alt_server'              => 'false',
+            'lifecycle_reports'           => 'false',
         ];
 
         foreach ($expected as $key => $value) {
@@ -120,7 +121,7 @@ final class OptionDefaultsTest extends TestCase
             'match_cat', 'max_incoming_links', 'multilink', 'no_selection_action',
             'none_text', 'relative_links', 'show_cat_filter', 'show_customs',
             'show_pages', 'show_private', 'status', 'template_image_size',
-            'term_after', 'term_before', 'term_temp_alt', 'use_alt_server',
+            'term_after', 'term_before', 'term_temp_alt', 'use_alt_server', 'lifecycle_reports',
             'vector_api_key', 'vector_api_url', 'vector_custom_fields',
         ];
         sort($expectedKeys);

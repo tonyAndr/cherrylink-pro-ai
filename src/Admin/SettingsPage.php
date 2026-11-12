@@ -8,7 +8,10 @@ use CherryLink\Api\Client;
 use CherryLink\Contracts\Registerable;
 use CherryLink\CustomFields\Acf;
 use CherryLink\Indexing\IndexHooks;
+use CherryLink\Editor\PanelConfig;
+use CherryLink\Indexing\IndexHelpers;
 use CherryLink\Plugin;
+use CherryLink\Support\Connect;
 use CherryLink\Support\License;
 use CherryLink\Support\Options;
 use CherryLink\Support\Tailwind;
@@ -73,7 +76,105 @@ final class SettingsPage implements Registerable
         $m->addSubpage(\__('Для экспертов', 'cherrylink'), 'pro', [self::class, 'expertSubpage']);
         $m->addSubpage(\__('Статистика', 'cherrylink'), 'statistics', [self::class, 'statisticsSubpage']);
 
-        self::render('admin/settings-page', ['menu' => $m]);
+        $license = new License(new Options());
+        $step    = self::wizardStep($license->isLicensed(), $license->hasKey());
+        $data    = ['menu' => $m, 'wizard' => null, 'connect_notice' => self::connectNotice()];
+        if ($step > 0) {
+            $data['wizard'] = [
+                'step'         => $step,
+                'connect_url'  => \admin_url('admin-post.php'),
+                'action'       => Connect::ACTION,
+                'key_url'      => \admin_url('options-general.php?page=cherrylink-pro&subpage=main&cl_key=1'),
+                'step2_url'    => \admin_url('options-general.php?page=cherrylink-pro&cl_step=2'),
+                'step3_url'    => \admin_url('options-general.php?page=cherrylink-pro&cl_step=3'),
+                'done_url'     => \admin_url('options-general.php?page=cherrylink-pro&subpage=main'),
+                'terms_url'    => Connect::TERMS_URL,
+                'privacy_url'  => Connect::PRIVACY_URL,
+                'post_types'   => IndexHelpers::get_allowed_types_list(),
+                'expert_url'   => \admin_url('options-general.php?page=cherrylink-pro&subpage=pro'),
+                'plan'         => self::planLine(),
+                'indexed'      => IndexHooks::statusData(false)['index_rows'] ?? null,
+            ];
+        }
+
+        self::render('admin/settings-page', $data);
+    }
+
+    /**
+     * Which setup-wizard step to show: 0 = the normal tabbed page.
+     * Step 1 while there is no key (unless the user chose "I already have a key"),
+     * steps 2-3 only for a connected site (after Connect, or via cl_step).
+     */
+    public static function wizardStep(bool $connected, bool $has_key): int
+    {
+        // phpcs:disable WordPress.Security.NonceVerification.Recommended -- read-only screen selectors
+        if ($connected) {
+            $requested = isset($_GET['cl_step']) ? (int) $_GET['cl_step'] : 0;
+            if ($requested === 3) {
+                return 3;
+            }
+            if ($requested === 2 || (isset($_GET['cl_connect']) && $_GET['cl_connect'] === 'ok')) {
+                return 2;
+            }
+            return 0;
+        }
+        if (! $has_key && ! isset($_GET['cl_key'])) {
+            return 1;
+        }
+        // phpcs:enable
+
+        return 0;
+    }
+
+    /** Translated message for a failed Connect redirect (cl_connect=<code>), or ''. */
+    private static function connectNotice(): string
+    {
+        // phpcs:disable WordPress.Security.NonceVerification.Recommended -- read-only outcome code, mapped to fixed strings
+        $code = isset($_GET['cl_connect']) ? \sanitize_key(\wp_unslash($_GET['cl_connect'])) : '';
+        $wait = isset($_GET['cl_retry']) ? (int) $_GET['cl_retry'] : 0;
+        // phpcs:enable
+        switch ($code) {
+            case '':
+            case 'ok':
+                return '';
+            case 'domain_proof_failed':
+                return \esc_html__('Не удалось подтвердить домен: сервер CherryLink не смог открыть адрес сайта по HTTPS. Сайт должен быть доступен из интернета; для закрытых сайтов введите ключ вручную.', 'cherrylink');
+            case 'rate_limited':
+                return $wait > 0
+                    /* translators: %d: seconds to wait */
+                    ? \sprintf(\esc_html__('Слишком много попыток подключения. Повторите через %d с.', 'cherrylink'), $wait)
+                    : \esc_html__('Слишком много попыток подключения. Повторите позже.', 'cherrylink');
+            case 'invalid_domain':
+                return \esc_html__('Домен сайта не подходит для подключения (нужен публичный домен, не IP-адрес и не localhost).', 'cherrylink');
+            case 'subscription_not_eligible':
+                return \esc_html__('Для этого домена подключение недоступно. Введите ключ вручную или обратитесь в поддержку.', 'cherrylink');
+            default:
+                return \esc_html__('Сервер подключения временно недоступен. Повторите попытку позже.', 'cherrylink');
+        }
+    }
+
+    /** "Plan: free · 1,000 of 2,340 posts indexed" for the settings card; '' when no plan. */
+    private static function planLine(): string
+    {
+        $plan = PanelConfig::plan(new Options());
+        if ($plan === null) {
+            return '';
+        }
+        $line = \sprintf(
+            /* translators: %s: plan name (free, pro) */
+            \__('Тариф: %s', 'cherrylink'),
+            $plan['name']
+        );
+        if ($plan['post_limit'] !== null) {
+            $line .= ' · ' . \sprintf(
+                /* translators: 1: indexed posts, 2: total posts */
+                \__('проиндексировано %1$s из %2$s', 'cherrylink'),
+                \number_format_i18n((int) ($plan['indexed'] ?? 0)),
+                \number_format_i18n($plan['total'])
+            );
+        }
+
+        return $line;
     }
 
     // ── output helpers ──────────────────────────────────────────────────────────
@@ -206,6 +307,8 @@ final class SettingsPage implements Registerable
             'options'        => $options,
             'key_error'      => $key_error,
             'validation_status' => $validation_status,
+            'plan_line'      => $info ? self::planLine() : '',
+            'upgrade_url'    => Connect::UPGRADE_URL,
         ]);
 
         // The card's active-license branch hides the key field. Keep the manual retry
@@ -285,7 +388,15 @@ final class SettingsPage implements Registerable
             }
         }
 
+        if (isset($_POST['update_reports'])) {
+            \check_admin_referer('linkate-posts-update-options');
+            $options['lifecycle_reports'] = isset($_POST['lifecycle_reports']) ? 'true' : 'false';
+            \update_option('linkate-posts', $options);
+            self::notice('notice-success', \esc_html__('Настройки обновлены.', 'cherrylink'));
+        }
+
         self::render('admin/main-subpage', [
+            'reports_enabled' => \CherryLink\Support\PluginReports::enabled(),
             'export_url' => \wp_nonce_url(
                 \admin_url('admin-post.php?action=cherrylink_export_options'),
                 'cherrylink-export-options'

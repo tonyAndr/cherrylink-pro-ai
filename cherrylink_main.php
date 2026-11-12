@@ -1,7 +1,7 @@
 <?php
 
 /*
-Plugin Name: CherryLink Pro AI
+Plugin Name: CherryLink – AI Internal Linking
 Plugin URI: http://seocherry.ru/
 Description: Плагин для автоматической внутренней перелинковки на основе семантического поиска (AI). Находит релевантные статьи и предлагает анкорные фразы с помощью векторных эмбеддингов.
 Version: 1.2.1
@@ -14,6 +14,17 @@ Domain Path: /languages
 */
 
 defined('ABSPATH') || exit;
+
+// Two plugin lines share the CherryLink\ namespace and options: never load both.
+// The legacy "CherryLink Pro AI" loads first (alphabetical) and defines CHERRYLINK_DIR.
+if (defined('CHERRYLINK_DIR')) {
+    add_action('admin_notices', static function () {
+        echo '<div class="notice notice-error"><p><strong>CherryLink</strong>: '
+            . esc_html__('Deactivate CherryLink Pro AI first. Two CherryLink plugins cannot run together.', 'cherrylink')
+            . '</p></div>';
+    });
+    return;
+}
 
 // ========================================================================================= //
 // ============================== Defines and Bootstrap ============================== //

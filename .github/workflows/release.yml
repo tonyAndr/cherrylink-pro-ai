@@ -7,7 +7,7 @@ name: Release plugin zip
 on:
   push:
     tags:
-      - 'v*'
+      - 'v1.*'  # 2.x (WordPress.org line) tags must never create a release here; legacy PUC serves these
 
 permissions:
   contents: write

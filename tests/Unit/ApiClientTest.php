@@ -417,4 +417,62 @@ final class ApiClientTest extends TestCase
         $this->assertSame(1, $calls);
         $this->assertSame('request budget exhausted', $result['probes']['links_count']['error']);
     }
+
+    public function testSingleUpsertTreatsPlanLimit409AsHandled(): void
+    {
+        Functions\when('get_option')->justReturn(['hash_field' => 'LICENSE123']);
+        Functions\when('get_permalink')->justReturn('https://mysite.ru/p/');
+        Functions\when('get_post_meta')->justReturn('');
+        Functions\when('wp_strip_all_tags')->returnArg();
+        $this->mockHttp(['detail' => 'plan_limit', 'post_limit' => 1000], 409);
+        $post = new \WP_Post();
+        $post->ID = 5;
+
+        $this->assertTrue((new Client())->upsert_post($post));
+    }
+
+    public function testSingleUpsertStillFailsOnOtherErrors(): void
+    {
+        Functions\when('get_option')->justReturn(['hash_field' => 'LICENSE123']);
+        Functions\when('get_permalink')->justReturn('https://mysite.ru/p/');
+        Functions\when('get_post_meta')->justReturn('');
+        Functions\when('wp_strip_all_tags')->returnArg();
+        $this->mockHttp(['detail' => 'sync_mode_required'], 409);
+        $post = new \WP_Post();
+        $post->ID = 5;
+
+        $this->assertFalse((new Client())->upsert_post($post));
+    }
+
+    public function testBatchPlanLimitedIdsAreNotErrorsOrRetried(): void
+    {
+        Functions\when('get_option')->justReturn(['hash_field' => 'LICENSE123']);
+        Functions\when('get_permalink')->justReturn('https://mysite.ru/p/');
+        Functions\when('get_post_meta')->justReturn('');
+        Functions\when('wp_strip_all_tags')->returnArg();
+        $this->mockHttp(['status' => 'ok', 'indexed' => 1, 'errors' => 0, 'plan_limited' => [7, '8']]);
+        $a = new \WP_Post();
+        $a->ID = 6;
+        $b = new \WP_Post();
+        $b->ID = 7;
+
+        $result = (new Client())->upsert_batch_result([$a, $b]);
+
+        $this->assertTrue($result['ok']);
+        $this->assertSame(1, $result['indexed']);
+        $this->assertSame([7, 8], $result['plan_limited']);
+    }
+
+    public function testBatchWithoutPlanLimitedKeepsAnEmptyList(): void
+    {
+        Functions\when('get_option')->justReturn(['hash_field' => 'LICENSE123']);
+        Functions\when('get_permalink')->justReturn('https://mysite.ru/p/');
+        Functions\when('get_post_meta')->justReturn('');
+        Functions\when('wp_strip_all_tags')->returnArg();
+        $this->mockHttp(['status' => 'ok', 'indexed' => 1, 'errors' => 0]);
+        $a = new \WP_Post();
+        $a->ID = 6;
+
+        $this->assertSame([], (new Client())->upsert_batch_result([$a])['plan_limited']);
+    }
 }

@@ -45,6 +45,14 @@ final class PluginReports implements Registerable
         };
     }
 
+    /** Opt-in setting (main options, default off): nothing is queued or sent while off. */
+    public static function enabled(): bool
+    {
+        $options = \get_option(Options::MAIN, []);
+
+        return \is_array($options) && ($options['lifecycle_reports'] ?? 'false') === 'true';
+    }
+
     public function register(): void
     {
         \add_action(self::SEND_HOOK, [$this, 'send']);
@@ -75,6 +83,9 @@ final class PluginReports implements Registerable
     /** Called from the activation hook after the install routine has finished. */
     public function recordActivation(): void
     {
+        if (! self::enabled()) {
+            return;
+        }
         $version = PluginMeta::version();
         $last    = (string) \get_option(self::VERSION_OPTION, '');
 
@@ -95,6 +106,9 @@ final class PluginReports implements Registerable
      */
     public function sweep(): void
     {
+        if (! self::enabled()) {
+            return;
+        }
         $version = PluginMeta::version();
         $last    = (string) \get_option(self::VERSION_OPTION, '');
 
@@ -117,6 +131,10 @@ final class PluginReports implements Registerable
     /** Cron callback: send one bounded batch, then reschedule on failure. */
     public function send(): void
     {
+        if (! self::enabled()) {
+            \update_option(self::OPTION, [], false); // opted out: drop anything queued earlier
+            return;
+        }
         if (! $this->license->isLicensed()) {
             return;
         }

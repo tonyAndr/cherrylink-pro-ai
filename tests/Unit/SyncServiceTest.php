@@ -445,4 +445,60 @@ final class SyncServiceTest extends TestCase
         $this->assertSame(300, SyncService::retry_delay(99, 999, 0));
         $this->assertSame(10, SyncService::retry_delay(3, null, 2));
     }
+
+    public function testManifestPlanIsLimitedToTheNewestPostsOfAPlanLimitedKey(): void
+    {
+        $this->state['phase'] = 'manifest';
+        $this->options['linkate-posts'] = ['hash_field' => 'free-key'];
+        $this->options['linkate_posts_meta'] = ['key_valid' => true, 'expires_at' => '', 'plan' => 'free', 'post_limit' => 1];
+
+        Functions\when('get_post_types')->justReturn([]);
+        $GLOBALS['wpdb'] = new class {
+            public $posts = 'wp_posts';
+
+            public function prepare($query, ...$args)
+            {
+                return $query;
+            }
+
+            public function get_results($query)
+            {
+                return [
+                    (object) ['ID' => 1, 'post_modified_gmt' => '2026-01-01 00:00:00'],
+                    (object) ['ID' => 2, 'post_modified_gmt' => '2026-01-02 00:00:00'],
+                ];
+            }
+        };
+        $api = Mockery::mock(Client::class);
+        $api->shouldReceive('fetch_manifest_result')->once()->andReturn([
+            'ok' => true, 'map' => [1 => ['hash' => 'h', 'modified' => '2026-01-01 00:00:00']],
+            'status' => 200, 'retry_after' => null, 'retryable' => false, 'error' => '',
+        ]);
+
+        $this->service($api)->worker('manifest', 0, 0, false);
+
+        $plan = $this->options[SyncService::PLAN];
+        $this->assertSame([2], $plan['upsert']);
+        $this->assertSame([1], $plan['drop']);
+        $this->assertSame([2, 1], $plan['links']);
+        $this->assertSame('upsert', $this->state['phase']);
+        $this->assertSame(1, $this->state['delete_total'], 'the dropped post counts as prune work');
+    }
+
+    public function testPlanLimitDropRemovesTheVectorButKeepsTheLinkGraph(): void
+    {
+        $this->state['phase'] = 'prune';
+        $this->state['upsert_total'] = 0;
+        $this->state['delete_total'] = 3;
+        $this->plan = ['upsert' => [], 'delete' => [5], 'drop' => [6, 7], 'links' => []];
+
+        $ok = ['ok' => true, 'retryable' => false, 'status' => 200, 'retry_after' => null, 'error' => ''];
+        $api = Mockery::mock(Client::class);
+        $api->shouldReceive('delete_documents_batch_result')->once()->with([5, 6, 7])->andReturn($ok + ['deleted' => 3]);
+        $api->shouldReceive('delete_links_result')->once()->with(5, 0)->andReturn($ok);
+
+        $this->service($api)->worker('prune', 0, 0);
+
+        $this->assertSame('done', $this->state['phase']);
+    }
 }

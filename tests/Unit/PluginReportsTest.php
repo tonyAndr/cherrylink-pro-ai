@@ -40,7 +40,7 @@ final class PluginReportsTest extends TestCase
         Monkey\setUp();
 
         $this->options = [
-            'linkate-posts' => ['hash_field' => 'LICENSE123'],
+            'linkate-posts' => ['hash_field' => 'LICENSE123', 'lifecycle_reports' => 'true'],
             'linkate_posts_meta' => ['key_valid' => true, 'expires_at' => '2099-01-01 00:00:00'],
             PluginReports::WEB_ENV_OPTION => [
                 'wp_version' => '6.5.5',
@@ -217,5 +217,33 @@ final class PluginReportsTest extends TestCase
         $this->assertSame([], $this->client->calls);
         $this->assertCount(1, $this->options[PluginReports::OPTION] ?? []);
         $this->assertSame([], $this->scheduled);
+    }
+
+    public function testReportsAreOffByDefaultAndQueueAndSendNothing(): void
+    {
+        $this->options['linkate-posts'] = ['hash_field' => 'LICENSE123']; // no lifecycle_reports
+        $this->assertFalse(PluginReports::enabled());
+        $reports = $this->reports();
+
+        $reports->recordActivation();
+        $reports->sweep();
+        $reports->send();
+
+        $this->assertSame([], $this->options[PluginReports::OPTION] ?? []);
+        $this->assertSame([], $this->client->calls);
+        $this->assertSame([], $this->scheduled);
+    }
+
+    public function testOptingOutDropsAnythingAlreadyQueued(): void
+    {
+        $reports = $this->reports();
+        $reports->recordActivation();
+        $this->assertCount(1, $this->options[PluginReports::OPTION]);
+
+        $this->options['linkate-posts']['lifecycle_reports'] = 'false';
+        $reports->send();
+
+        $this->assertSame([], $this->options[PluginReports::OPTION]);
+        $this->assertSame([], $this->client->calls);
     }
 }

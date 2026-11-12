@@ -242,7 +242,12 @@ export default function App({ adapter, config, onClose, headProps }) {
         return (
             <div className="cl-panel">
                 {head}
-                <div className="cl-body"><div className="cl-empty">{__('Лицензия CherryLink не активна. Введите ключ на странице настроек плагина.', 'cherrylink')}</div></div>
+                <div className="cl-body">
+                    <div className="cl-empty">
+                        <p>{__('CherryLink ещё не подключён. Подключите плагин, чтобы получать подсказки ссылок.', 'cherrylink')}</p>
+                        <a className="cl-btn cl-primary" href={config.connectUrl}>{__('Подключить CherryLink', 'cherrylink')}</a>
+                    </div>
+                </div>
             </div>
         );
     }
@@ -298,6 +303,7 @@ export default function App({ adapter, config, onClose, headProps }) {
         <div className="cl-panel">
             {head}
             <Strip out={links.length} inc={inc} words={words} donorCount={donorCount} onGoSuggestions={() => { setView(null); setTab('opp'); }}
+                plan={config.plan} upgradeUrl={config.upgradeUrl}
                 onLinks={(section) => setView({ section })} onGoIncoming={() => { setView(null); setTab('in'); }} />
             <Tabs tabs={tabs} current={view ? '' : tab} onChange={(t) => { setView(null); setTab(t); }} />
             <div className="cl-body">{body}</div>

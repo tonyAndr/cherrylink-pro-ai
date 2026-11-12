@@ -79,3 +79,8 @@ The shareable validation vocabulary lives in `api/plugin_report_schema.py`.
 - API tests cover payload validation, tenant derivation, and idempotent replay.
 - Manual wp-dev check must show zero `/v1/client-events` calls during activation
   and an ordinary admin load, then exactly one batched call from cron.
+
+## Opt-in (free mode)
+
+Reports are **off by default** (`lifecycle_reports` main option, checkbox on the settings page). While off,
+`recordActivation`, `sweep` and `send` do nothing and any queued events are dropped. See `connect-and-plans.md`.

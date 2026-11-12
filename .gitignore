@@ -16,3 +16,4 @@ dev/composer.lock
 # Python seed scripts
 __pycache__/
 *.pyc
+dist/

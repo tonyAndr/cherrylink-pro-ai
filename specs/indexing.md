@@ -281,3 +281,8 @@ Sealed runs are left to drain. Resume preserves the pending retry attempt.
 Worker locks use conditional SQL deletion for stale takeover and release. State
 and callback identity are revalidated after acquiring the mutex, and the synchronous
 worker retains its lock through cursor persistence and follow-up scheduling.
+
+## Plan limit (free mode)
+
+Plans with a `post_limit` index only the newest N posts; over-limit vectors are dropped but their link graph is
+kept. `plan_limit` (single) and `plan_limited` (batch) are handled outcomes. See `connect-and-plans.md`.

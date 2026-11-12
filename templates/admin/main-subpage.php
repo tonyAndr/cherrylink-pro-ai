@@ -3,6 +3,7 @@
  * "Основные" (main) settings subpage.
  *
  * @var string $export_url  download URL for the exported options file
+ * @var bool   $reports_enabled  opt-in plugin lifecycle reports
  *
  * Calls the readiness/license/api partial functions (which render their own
  * templates) for composition.
@@ -29,6 +30,19 @@ defined('ABSPATH') || exit;
             <div class="grid grid-col-1 gap-4">
                 <?php \CherryLink\Admin\SettingsPage::licenseField(); ?>
                 <?php \CherryLink\Admin\SettingsPage::vectorApiField(); ?>
+
+                <div class="<?= \CherryLink\Support\Tailwind::$CARD ?>">
+                    <h2 class="<?= \CherryLink\Support\Tailwind::$H2 ?>"><?php esc_html_e('Отчёты о плагине', 'cherrylink'); ?></h2>
+                    <form method="post" action="">
+                        <label>
+                            <input type="checkbox" name="lifecycle_reports" value="1" <?php checked($reports_enabled); ?>>
+                            <?php esc_html_e('Отправлять анонимные отчёты об активации и обновлении плагина (версия плагина, PHP и WordPress). По умолчанию выключено.', 'cherrylink'); ?>
+                        </label>
+                        <br>
+                        <input type="submit" class="<?= \CherryLink\Support\Tailwind::$BTN_SAVE ?> mt-2" name="update_reports" value="<?php esc_attr_e('Сохранить', 'cherrylink'); ?>" />
+                        <?php if (function_exists('wp_nonce_field')) wp_nonce_field('linkate-posts-update-options'); ?>
+                    </form>
+                </div>
 
                 <div class="<?= \CherryLink\Support\Tailwind::$CARD ?> cherry-settings-export-container">
 

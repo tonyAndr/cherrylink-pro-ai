@@ -8,6 +8,8 @@
  * @var array  $options         linkate-posts options (for hash_field)
  * @var string $key_error       human-readable activation error, or ''
  * @var string $validation_status pending / valid / error
+ * @var string $plan_line       "Plan: free · N of M indexed", or ''
+ * @var string $upgrade_url     upgrade link (placeholder until the site exists)
  */
 
 defined('ABSPATH') || exit;
@@ -16,6 +18,9 @@ defined('ABSPATH') || exit;
         <?php echo $license_header; ?>
         <?php if ($info) : ?>
             <p><?php esc_html_e('Действует лицензия на текущий домен, ключ скрыт в целях безопасности.', 'cherrylink'); ?></p>
+            <?php if (! empty($plan_line)) : ?>
+                <p><strong><?php echo esc_html($plan_line); ?></strong> · <a target="_blank" rel="noopener" href="<?php echo esc_url($upgrade_url); ?>"><?php esc_html_e('Расширить', 'cherrylink'); ?></a></p>
+            <?php endif; ?>
             <form method="post" action="">
                 <input type="submit" class="<?= \CherryLink\Support\Tailwind::$BTN_NORMAL ?> " name="remove_license" value="<?php _e('Сбросить лицензию', 'cherrylink') ?>" />
                 <?php if (function_exists('wp_nonce_field')) wp_nonce_field('linkate-posts-update-options'); ?>

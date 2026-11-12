@@ -93,4 +93,54 @@ final class SyncPlanTest extends TestCase
             IndexHelpers::compute_sync_plan($manifest, $current, true)
         );
     }
+
+    public function testNullAndZeroLimitKeepTheLegacyPlanShape(): void
+    {
+        $current = [1 => '2026-01-01 00:00:00', 2 => '2026-01-02 00:00:00'];
+        $legacy  = IndexHelpers::compute_sync_plan([], $current);
+        $this->assertSame($legacy, IndexHelpers::compute_sync_plan([], $current, false, null));
+        $this->assertSame($legacy, IndexHelpers::compute_sync_plan([], $current, false, 0));
+        $this->assertSame(['upsert', 'delete'], array_keys($legacy));
+    }
+
+    public function testLimitedPlanUpsertsNewestNFirstAndDropsTheRest(): void
+    {
+        $manifest = [
+            1 => ['modified' => '2026-01-01 00:00:00'],   // oldest, indexed -> dropped
+            2 => ['modified' => '2026-01-02 00:00:00'],
+            9 => ['modified' => '2026-01-09 00:00:00'],   // gone from the site -> orphan
+        ];
+        $current = [
+            1 => '2026-01-01 00:00:00',
+            2 => '2026-01-02 00:00:00',
+            3 => '2026-01-03 00:00:00',
+            4 => '2026-01-04 00:00:00',
+        ];
+
+        $plan = IndexHelpers::compute_sync_plan($manifest, $current, false, 2);
+
+        $this->assertSame([4, 3], $plan['upsert']);        // newest first, 2 is out of the limit
+        $this->assertSame([9], $plan['delete']);           // orphan: vector + links
+        $this->assertSame([2, 1], $plan['drop']);          // outside the limit but indexed: vector only
+        $this->assertSame([4, 3, 2, 1], $plan['links']);   // link graph covers every post
+    }
+
+    public function testLimitedPlanSkipsUnchangedPostsInsideTheLimit(): void
+    {
+        $manifest = [4 => ['modified' => '2026-01-04 00:00:00']];
+        $current  = [3 => '2026-01-03 00:00:00', 4 => '2026-01-04 00:00:00'];
+
+        $plan = IndexHelpers::compute_sync_plan($manifest, $current, false, 5);
+
+        $this->assertSame([3], $plan['upsert']);
+        $this->assertSame([], $plan['drop']);
+        $this->assertSame([3], $plan['links']);
+    }
+
+    public function testLimitedPlanBreaksModifiedTiesByNewestId(): void
+    {
+        $same = '2026-01-01 00:00:00';
+        $plan = IndexHelpers::compute_sync_plan([], [1 => $same, 2 => $same, 3 => $same], false, 2);
+        $this->assertSame([3, 2], $plan['upsert']);
+    }
 }

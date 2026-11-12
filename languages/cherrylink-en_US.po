@@ -3,8 +3,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: CherryLink Pro AI 1.2.0\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-10 20:07+0100\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/plugin\n"
+"POT-Creation-Date: 2026-11-12T09:50:41+00:00\n"
 "PO-Revision-Date: 2026-08-09 16:40+0000\n"
 "Last-Translator: CherryLink <anton@learningheroes.com>\n"
 "Language-Team: English (United States)\n"
@@ -15,6 +15,246 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.7.1\n"
 "X-Domain: cherrylink\n"
+
+#. Plugin Name of the plugin
+msgid "CherryLink – AI Internal Linking"
+msgstr "CherryLink – AI Internal Linking"
+
+#. Plugin URI of the plugin
+#. Author URI of the plugin
+msgid "http://seocherry.ru/"
+msgstr "http://seocherry.ru/"
+
+#. Description of the plugin
+msgid ""
+"Плагин для автоматической внутренней перелинковки на основе семантического "
+"поиска (AI). Находит релевантные статьи и предлагает анкорные фразы с "
+"помощью векторных эмбеддингов."
+msgstr ""
+"A plugin for automatic internal linking based on semantic search (AI). It "
+"finds relevant articles and suggests anchor phrases using vector embeddings."
+
+#. Author of the plugin
+msgid "Anton SeoCherry.ru"
+msgstr "Anton SeoCherry.ru"
+
+#: cherrylink_main.php:23
+msgid ""
+"Deactivate CherryLink Pro AI first. Two CherryLink plugins cannot run "
+"together."
+msgstr "Deactivate CherryLink Pro AI first. Two CherryLink plugins cannot run together."
+
+#: src/Admin/Notices.php:80
+msgid "установлен!"
+msgstr "installed!"
+
+#: src/Admin/Notices.php:83
+msgid "Для начала работы с ним %s."
+msgstr "To start using it, %s."
+
+#: src/Admin/Notices.php:84
+msgid "необходимо просканировать ваш сайт"
+msgstr "you need to scan your site"
+
+#: src/Admin/Notices.php:92
+msgid "сканирование не завершено!"
+msgstr "the scan is not complete!"
+
+#: src/Admin/Notices.php:95
+msgid "Плагин может работать некорректно или не видеть все записи, %s."
+msgstr "The plugin may work incorrectly or not see all posts, %s."
+
+#: src/Admin/Notices.php:96
+msgid "необходимо завершить сканирование"
+msgstr "you need to finish the scan"
+
+#: src/Admin/SettingsPage.php:53
+msgid "Настройки CherryLink"
+msgstr "CherryLink Settings"
+
+#: src/Admin/SettingsPage.php:54
+msgid "Настройки"
+msgstr "Settings"
+
+#: src/Admin/SettingsPage.php:63
+msgid "CherryLink Options"
+msgstr "CherryLink Options"
+
+#: src/Admin/SettingsPage.php:64
+msgid "CherryLink Pro"
+msgstr "CherryLink Pro"
+
+#: src/Admin/SettingsPage.php:74
+msgid "Основные"
+msgstr "General"
+
+#: src/Admin/SettingsPage.php:75
+msgid "Сканирование сайта"
+msgstr "Site scan"
+
+#: src/Admin/SettingsPage.php:76
+msgid "Для экспертов"
+msgstr "For experts"
+
+#: src/Admin/SettingsPage.php:77
+msgid "Статистика"
+msgstr "Statistics"
+
+#: src/Admin/SettingsPage.php:141
+msgid ""
+"Не удалось подтвердить домен: сервер CherryLink не смог открыть адрес сайта "
+"по HTTPS. Сайт должен быть доступен из интернета; для закрытых сайтов "
+"введите ключ вручную."
+msgstr "Could not verify the domain: the CherryLink server could not open your site over HTTPS. The site must be reachable from the internet; for private sites enter a key manually."
+
+#. translators: %d: seconds to wait
+#: src/Admin/SettingsPage.php:145
+msgid "Слишком много попыток подключения. Повторите через %d с."
+msgstr "Too many connection attempts. Try again in %d s."
+
+#: src/Admin/SettingsPage.php:146
+msgid "Слишком много попыток подключения. Повторите позже."
+msgstr "Too many connection attempts. Try again later."
+
+#: src/Admin/SettingsPage.php:148
+msgid ""
+"Домен сайта не подходит для подключения (нужен публичный домен, не IP-адрес "
+"и не localhost)."
+msgstr "This domain cannot be connected (a public domain is required, not an IP address or localhost)."
+
+#: src/Admin/SettingsPage.php:150
+msgid ""
+"Для этого домена подключение недоступно. Введите ключ вручную или обратитесь "
+"в поддержку."
+msgstr "Connecting is not available for this domain. Enter a key manually or contact support."
+
+#: src/Admin/SettingsPage.php:152
+msgid "Сервер подключения временно недоступен. Повторите попытку позже."
+msgstr "The connection server is temporarily unavailable. Please try again later."
+
+#. translators: %s: plan name (free, pro)
+#: src/Admin/SettingsPage.php:165
+msgid "Тариф: %s"
+msgstr "Plan: %s"
+
+#. translators: 1: indexed posts, 2: total posts
+#: src/Admin/SettingsPage.php:171
+msgid "проиндексировано %1$s из %2$s"
+msgstr "%1$s of %2$s indexed"
+
+#: src/Admin/SettingsPage.php:214
+msgid "Настройки Vector API сохранены"
+msgstr "Vector API settings saved"
+
+#: src/Admin/SettingsPage.php:245 src/Admin/SettingsPage.php:255
+msgid "Проверка ключа запланирована. Статус обновится после фоновой проверки."
+msgstr ""
+"License verification is scheduled. The status will update after the "
+"background check."
+
+#: src/Admin/SettingsPage.php:246 src/Admin/SettingsPage.php:256
+#: src/Admin/SettingsPage.php:339
+msgid "Не удалось запланировать проверку ключа. Повторите попытку вручную."
+msgstr "Could not schedule license verification. Please retry manually."
+
+#: src/Admin/SettingsPage.php:278
+msgid "Ключ сброшен"
+msgstr "Key reset"
+
+#: src/Admin/SettingsPage.php:291
+msgid "Лицензия активирована"
+msgstr "License activated"
+
+#: src/Admin/SettingsPage.php:294 templates/notices/license-inactive.php:15
+msgid "Введите ключ лицензии"
+msgstr "Enter your license key"
+
+#. translators: %s: link to seocherry.ru
+#: src/Admin/SettingsPage.php:297
+msgid "Получите ключ у нас на сайте: [%s]."
+msgstr "Get a key on our website: [%s]."
+
+#: src/Admin/SettingsPage.php:320 templates/admin/partials/license-card.php:51
+msgid "Проверить ключ повторно"
+msgstr "Check license again"
+
+#: src/Admin/SettingsPage.php:333
+msgid "Нет связи с сервером. Попробуйте позже или обратитесь в тех. поддержку."
+msgstr "No connection to the server. Try again later or contact support."
+
+#: src/Admin/SettingsPage.php:335
+msgid ""
+"Проверка ключа выполняется в фоне. Обновите страницу через несколько секунд."
+msgstr ""
+"The license is being checked in the background. Refresh this page in a few "
+"seconds."
+
+#: src/Admin/SettingsPage.php:337
+msgid "Введите ключ лицензии для проверки."
+msgstr "Enter a licence key to validate."
+
+#: src/Admin/SettingsPage.php:341
+msgid "Ключ привязан к другому домену, активация невозможна."
+msgstr "The key is bound to another domain, activation is not possible."
+
+#: src/Admin/SettingsPage.php:343
+msgid "Срок действия ключа истек."
+msgstr "The key has expired."
+
+#: src/Admin/SettingsPage.php:345
+msgid "Неверно указан ключ."
+msgstr "The key is invalid."
+
+#: src/Admin/SettingsPage.php:385
+msgid "Настройки импортированы."
+msgstr "Settings imported."
+
+#: src/Admin/SettingsPage.php:387
+msgid "Не удалось импортировать..."
+msgstr "Import failed..."
+
+#: src/Admin/SettingsPage.php:395 src/Admin/SettingsPage.php:452
+msgid "Настройки обновлены."
+msgstr "Settings updated."
+
+#: src/Admin/SettingsPage.php:418 src/Support/Connect.php:77
+msgid "Недостаточно прав."
+msgstr "You do not have permission to do that."
+
+#: src/Admin/SettingsPage.php:460
+msgid "Настройки плагина сброшены."
+msgstr "Plugin settings reset."
+
+#: src/Admin/SettingsPage.php:462
+msgid "Операция завершилась с ошибкой."
+msgstr "The operation failed with an error."
+
+#: src/Admin/SettingsPage.php:469
+msgid "Настройки сброшены."
+msgstr "Settings reset."
+
+#: src/Admin/SettingsPage.php:483
+msgid "Данные сайта удалены из API. Выполните полную переиндексацию."
+msgstr "Site data removed from the API. Run a full re-indexing."
+
+#: src/Admin/SettingsPage.php:485
+msgid ""
+"Не удалось удалить данные из API. Проверьте подключение к Cherry Vector API."
+msgstr ""
+"Could not remove the site data from the API. Check the connection to the "
+"Cherry Vector API."
+
+#: src/Admin/SettingsPage.php:500
+msgid "Дополнительные поля сохранены."
+msgstr "Additional fields saved."
+
+#: src/Admin/StatsColumn.php:47
+msgid "Исх"
+msgstr "Out"
+
+#: src/Admin/StatsColumn.php:48
+msgid "Вх"
+msgstr "In"
 
 #: src/Csv/CsvService.php:69
 msgid "Тип"
@@ -37,7 +277,7 @@ msgid "URL_цели"
 msgstr "Target_URL"
 
 #: src/Csv/CsvService.php:73 templates/admin/statistics-subpage.php:58
-#: templates/admin/statistics-subpage.php:152
+#: templates/admin/statistics-subpage.php:152 js/cherry-admin-csv.js:404
 msgid "Анкор"
 msgstr "Anchor"
 
@@ -49,220 +289,96 @@ msgstr "Outgoing_links"
 msgid "Входящих_ссылок"
 msgstr "Incoming_links"
 
-#: src/Admin/SettingsPage.php:50
-msgid "Настройки CherryLink"
-msgstr "CherryLink Settings"
+#: src/Debug/Debugger.php:71
+msgid "(ID записи не указан)"
+msgstr "(Post ID not specified)"
 
-#: src/Admin/SettingsPage.php:51
-msgid "Настройки"
-msgstr "Settings"
+#: src/Indexing/AsyncBulkScan.php:282
+msgid "Лицензия неактивна — синхронизация недоступна."
+msgstr "The licence is inactive — synchronisation is unavailable."
 
-#: src/Admin/SettingsPage.php:60
-msgid "CherryLink Options"
-msgstr "CherryLink Options"
-
-#: src/Admin/SettingsPage.php:61
-msgid "CherryLink Pro"
-msgstr "CherryLink Pro"
-
-#: src/Admin/SettingsPage.php:71
-msgid "Основные"
-msgstr "General"
-
-#: src/Admin/SettingsPage.php:72
-msgid "Сканирование сайта"
-msgstr "Site scan"
-
-#: src/Admin/SettingsPage.php:73
-msgid "Для экспертов"
-msgstr "For experts"
-
-#: src/Admin/SettingsPage.php:74 templates/editor/classic-panel.php:40
-msgid "Статистика"
-msgstr "Statistics"
-
-#: src/Admin/SettingsPage.php:112
-msgid "Настройки Vector API сохранены"
-msgstr "Vector API settings saved"
-
-#: src/Admin/SettingsPage.php:142 src/Admin/SettingsPage.php:152
-msgid "Проверка ключа запланирована. Статус обновится после фоновой проверки."
+#: src/Indexing/AsyncBulkScan.php:340
+msgid "Асинхронная индексация недоступна. Загрузка возобновится автоматически."
 msgstr ""
-"License verification is scheduled. The status will update after the "
-"background check."
+"Asynchronous indexing is unavailable. Uploading will resume automatically."
 
-#: src/Admin/SettingsPage.php:143 src/Admin/SettingsPage.php:153
-#: src/Admin/SettingsPage.php:234
-msgid "Не удалось запланировать проверку ключа. Повторите попытку вручную."
-msgstr "Could not schedule license verification. Please retry manually."
+#: src/Indexing/AsyncBulkScan.php:350
+msgid "Планирование задерживается, попробуем снова автоматически."
+msgstr "Scheduling is delayed; we will retry automatically."
 
-#: src/Admin/SettingsPage.php:175
-msgid "Ключ сброшен"
-msgstr "Key reset"
+#: src/Indexing/AsyncBulkScan.php:363
+msgid "Приостановлено. Загрузка продолжится после «Продолжить»."
+msgstr "Paused. Uploading will continue after “Resume”."
 
-#: src/Admin/SettingsPage.php:188
-msgid "Лицензия активирована"
-msgstr "License activated"
-
-#: src/Admin/SettingsPage.php:191 templates/notices/license-inactive.php:15
-msgid "Введите ключ лицензии"
-msgstr "Enter your license key"
-
-#. translators: %s: link to seocherry.ru
-#: src/Admin/SettingsPage.php:194
-#, php-format
-msgid "Получите ключ у нас на сайте: [%s]."
-msgstr "Get a key on our website: [%s]."
-
-#: src/Admin/SettingsPage.php:215 templates/admin/partials/license-card.php:46
-msgid "Проверить ключ повторно"
-msgstr "Check license again"
-
-#: src/Admin/SettingsPage.php:228
-msgid "Нет связи с сервером. Попробуйте позже или обратитесь в тех. поддержку."
-msgstr "No connection to the server. Try again later or contact support."
-
-#: src/Admin/SettingsPage.php:230
-msgid ""
-"Проверка ключа выполняется в фоне. Обновите страницу через несколько секунд."
+#: src/Indexing/AsyncBulkScan.php:402
+msgid "Остановка сканирования…"
 msgstr ""
-"The license is being checked in the background. Refresh this page in a few "
-"seconds."
 
-#: src/Admin/SettingsPage.php:232
-msgid "Введите ключ лицензии для проверки."
-msgstr "Enter a licence key to validate."
+#: src/Indexing/AsyncBulkScan.php:434 src/Indexing/SyncService.php:274
+msgid "Остановлено пользователем"
+msgstr "Stopped by user"
 
-#: src/Admin/SettingsPage.php:236
-msgid "Ключ привязан к другому домену, активация невозможна."
-msgstr "The key is bound to another domain, activation is not possible."
+#: src/Indexing/AsyncBulkScan.php:564
+msgid "Сканирование завершено"
+msgstr "Scan completed"
 
-#: src/Admin/SettingsPage.php:238
-msgid "Срок действия ключа истек."
-msgstr "The key has expired."
+#: src/Indexing/AsyncBulkScan.php:833
+msgid "Загружено. Идёт обработка на сервере."
+msgstr "Uploaded. Processing on the server."
 
-#: src/Admin/SettingsPage.php:240
-msgid "Неверно указан ключ."
-msgstr "The key is invalid."
+#: src/Indexing/AsyncBulkScan.php:856
+msgid "Индексация завершена"
+msgstr "Indexing completed"
 
-#: src/Admin/SettingsPage.php:280
-msgid "Настройки импортированы."
-msgstr "Settings imported."
+#: src/Indexing/AsyncBulkScan.php:857
+msgid "Индексация завершена с ошибками"
+msgstr "Indexing completed with errors"
 
-#: src/Admin/SettingsPage.php:282
-msgid "Не удалось импортировать..."
-msgstr "Import failed..."
-
-#: src/Admin/SettingsPage.php:305
-msgid "Недостаточно прав."
-msgstr "You do not have permission to do that."
-
-#: src/Admin/SettingsPage.php:339
-msgid "Настройки обновлены."
-msgstr "Settings updated."
-
-#: src/Admin/SettingsPage.php:347
-msgid "Настройки плагина сброшены."
-msgstr "Plugin settings reset."
-
-#: src/Admin/SettingsPage.php:349
-msgid "Операция завершилась с ошибкой."
-msgstr "The operation failed with an error."
-
-#: src/Admin/SettingsPage.php:356
-msgid "Настройки сброшены."
-msgstr "Settings reset."
-
-#: src/Admin/SettingsPage.php:370
-msgid "Данные сайта удалены из API. Выполните полную переиндексацию."
-msgstr "Site data removed from the API. Run a full re-indexing."
-
-#: src/Admin/SettingsPage.php:372
-msgid ""
-"Не удалось удалить данные из API. Проверьте подключение к Cherry Vector API."
-msgstr "Could not remove the site data from the API. Check the connection to the Cherry Vector API."
-
-#: src/Admin/SettingsPage.php:387
-msgid "Дополнительные поля сохранены."
-msgstr "Additional fields saved."
-
-#: src/Admin/Notices.php:33
-msgid "установлен!"
-msgstr "installed!"
-
-#: src/Admin/Notices.php:36
-#, php-format
-msgid "Для начала работы с ним %s."
-msgstr "To start using it, %s."
-
-#: src/Admin/Notices.php:37
-msgid "необходимо просканировать ваш сайт"
-msgstr "you need to scan your site"
-
-#: src/Admin/Notices.php:45
-msgid "сканирование не завершено!"
-msgstr "the scan is not complete!"
-
-#: src/Admin/Notices.php:48
-#, php-format
-msgid "Плагин может работать некорректно или не видеть все записи, %s."
-msgstr "The plugin may work incorrectly or not see all posts, %s."
-
-#: src/Admin/Notices.php:49
-msgid "необходимо завершить сканирование"
-msgstr "you need to finish the scan"
-
-#: src/Admin/StatsColumn.php:47
-msgid "Исх"
-msgstr "Out"
-
-#: src/Admin/StatsColumn.php:48
-msgid "Вх"
-msgstr "In"
+#. translators: 1: applied vectors, 2: total items, 3: pending items
+#: src/Indexing/AsyncBulkScan.php:873
+msgid "Обработка на сервере: %1$d из %2$d, в очереди %3$d."
+msgstr "Processing on the server: %1$d of %2$d, %3$d queued."
 
 #. translators: 1: <time> element with the formatted scan date, 2: upserted count, 3: deleted count
-#: src/Indexing/IndexHooks.php:313
-#, php-format
+#: src/Indexing/IndexHooks.php:287
 msgid "Последнее сканирование: %1$s (обновлено: %2$d, удалено: %3$d)."
 msgstr "Last scan: %1$s (updated: %2$d, removed: %3$d)."
 
-#: src/Indexing/IndexHooks.php:321
+#: src/Indexing/IndexHooks.php:295
 msgid "Сканирование не завершено"
 msgstr "Scan not complete"
 
-#: src/Indexing/IndexHooks.php:324
+#: src/Indexing/IndexHooks.php:298
 msgid "Все хорошо"
 msgstr "All good"
 
-#: src/Indexing/IndexHooks.php:327
+#: src/Indexing/IndexHooks.php:301
 msgid "Нужно просканировать сайт"
 msgstr "You need to scan the site"
 
-#: src/Indexing/IndexHooks.php:366 src/Indexing/IndexHooks.php:367
+#: src/Indexing/IndexHooks.php:344 src/Indexing/IndexHooks.php:345
 msgid " загрузка данных…"
 msgstr " loading data…"
 
-#: src/Indexing/IndexHooks.php:435 src/Indexing/IndexHooks.php:443
+#: src/Indexing/IndexHooks.php:414 src/Indexing/IndexHooks.php:422
 msgid " не удалось получить данные (нет связи с сервером)."
 msgstr " failed to retrieve data (no connection to the server)."
 
 #. translators: %d: number of indexed articles
-#: src/Indexing/IndexHooks.php:439
-#, php-format
+#: src/Indexing/IndexHooks.php:418
 msgid " проиндексировано %d статей в Vector API."
 msgstr " %d articles indexed in the Vector API."
 
-#: src/Indexing/IndexHooks.php:440
+#: src/Indexing/IndexHooks.php:419
 msgid " статьи не проиндексированы, запустите сканирование."
 msgstr " articles are not indexed, run a scan."
 
 #. translators: %d: number of links found
-#: src/Indexing/IndexHooks.php:447
-#, php-format
+#: src/Indexing/IndexHooks.php:426
 msgid " найдено %d ссылок в записях и страницах."
 msgstr " %d links found in posts and pages."
 
-#: src/Indexing/IndexHooks.php:448
+#: src/Indexing/IndexHooks.php:427
 msgid " ссылки не найдены."
 msgstr " no links found."
 
@@ -275,61 +391,9 @@ msgstr ""
 msgid "Не удалось запланировать сканирование. Попробуйте снова."
 msgstr "Could not schedule the scan. Please try again."
 
-#: src/Indexing/SyncService.php:274 src/Indexing/AsyncBulkScan.php:382
-msgid "Остановлено пользователем"
-msgstr "Stopped by user"
-
-#: src/Indexing/SyncService.php:524
+#: src/Indexing/SyncService.php:541
 msgid "Изменений не найдено"
 msgstr "No changes found"
-
-#: src/Indexing/AsyncBulkScan.php:266
-msgid "Лицензия неактивна — синхронизация недоступна."
-msgstr "The licence is inactive — synchronisation is unavailable."
-
-#: src/Indexing/AsyncBulkScan.php:317
-msgid "Асинхронная индексация недоступна. Загрузка возобновится автоматически."
-msgstr ""
-"Asynchronous indexing is unavailable. Uploading will resume automatically."
-
-#: src/Indexing/AsyncBulkScan.php:327
-msgid "Планирование задерживается, попробуем снова автоматически."
-msgstr "Scheduling is delayed; we will retry automatically."
-
-#: src/Indexing/AsyncBulkScan.php:340
-msgid "Приостановлено. Загрузка продолжится после «Продолжить»."
-msgstr "Paused. Uploading will continue after “Resume”."
-
-#: src/Indexing/AsyncBulkScan.php:505
-msgid "Сканирование завершено"
-msgstr "Scan completed"
-
-#: src/Indexing/AsyncBulkScan.php:768
-msgid "Загружено. Идёт обработка на сервере."
-msgstr "Uploaded. Processing on the server."
-
-#: src/Indexing/AsyncBulkScan.php:788
-msgid "Индексация завершена"
-msgstr "Indexing completed"
-
-#: src/Indexing/AsyncBulkScan.php:789
-msgid "Индексация завершена с ошибками"
-msgstr "Indexing completed with errors"
-
-#. translators: 1: applied vectors, 2: total items, 3: pending items
-#: src/Indexing/AsyncBulkScan.php:805
-#, php-format
-msgid "Обработка на сервере: %1$d из %2$d, в очереди %3$d."
-msgstr "Processing on the server: %1$d of %2$d, %3$d queued."
-
-#: src/Indexing/AsyncBulkScan.php:908
-msgid ""
-"Содержимое изменилось во время сканирования — сканирование перезапущено."
-msgstr "Content changed during the scan — the scan was restarted."
-
-#: src/Indexing/AsyncBulkScan.php:909
-msgid "Состав сайта изменился — сканирование перезапущено."
-msgstr "The site's contents changed — the scan was restarted."
 
 #: src/Support/CapabilitiesRefresh.php:61
 msgid "Every five minutes (CherryLink)"
@@ -338,199 +402,6 @@ msgstr "Every five minutes (CherryLink)"
 #: src/Support/Options.php:160
 msgid "Ничего не найдено..."
 msgstr "Nothing found..."
-
-#: src/Terms/TermsService.php:50 templates/link-card/classic.php:10
-msgid "Найдено в тексте / переход к ссылке"
-msgstr "Found in text / go to link"
-
-#: src/Terms/TermsService.php:50 templates/link-card/classic.php:14
-msgid "Нажмите для вставки в текст"
-msgstr "Click to insert into text"
-
-#: src/Debug/Debugger.php:71
-msgid "(ID записи не указан)"
-msgstr "(Post ID not specified)"
-
-#: src/Editor/ClassicPanel.php:244
-msgid "Все рубрики"
-msgstr "All categories"
-
-#: templates/link-card/classic.php:11
-msgid "Редактировать статью в новой вкладке"
-msgstr "Edit article in a new tab"
-
-#: templates/link-card/classic.php:15
-msgid "Сколько раз сослались на эту статью"
-msgstr "How many times this article was linked to"
-
-#: templates/link-card/classic.php:15
-msgid "Сколько исходящих ссылок содержит статья"
-msgstr "How many outgoing links the article contains"
-
-#: templates/link-card/classic.php:15
-msgid "Подсказка"
-msgstr "Hint"
-
-#: templates/editor/classic-panel.php:33
-msgid "Фильтр"
-msgstr "Filter"
-
-#: templates/editor/classic-panel.php:38 templates/admin/expert-subpage.php:56
-msgid "Записи"
-msgstr "Posts"
-
-#: templates/editor/classic-panel.php:39
-msgid "Таксономии"
-msgstr "Taxonomies"
-
-#: templates/editor/classic-panel.php:40
-msgid "Статистика ссылок"
-msgstr "Link statistics"
-
-#: templates/editor/classic-panel.php:42
-msgid "Назад"
-msgstr "Back"
-
-#: templates/editor/classic-panel.php:61
-msgid "Загрузить еще..."
-msgstr "Load more..."
-
-#: templates/editor/classic-panel.php:75
-msgid "Загрузка..."
-msgstr "Loading..."
-
-#: templates/editor/classic-panel.php:80
-msgid "Исходящих"
-msgstr "Outgoing"
-
-#: templates/editor/classic-panel.php:82
-msgid "Входящих"
-msgstr "Incoming"
-
-#: templates/admin/statistics-subpage.php:13
-msgid "Поиск проблем с перелинковкой"
-msgstr "Find internal linking problems"
-
-#: templates/admin/statistics-subpage.php:14
-msgid ""
-"Нажмите на кнопку \"Проверить перелинковку\", чтобы найти записи, в которых:"
-msgstr "Click the \"Check internal linking\" button to find posts that:"
-
-#: templates/admin/statistics-subpage.php:16
-msgid "Есть повторяющиеся ссылки;"
-msgstr "Have duplicate links;"
-
-#: templates/admin/statistics-subpage.php:17
-msgid "Нет входящих ссылок;"
-msgstr "Have no incoming links;"
-
-#: templates/admin/statistics-subpage.php:18
-msgid "Нет исходящих ссылок."
-msgstr "Have no outgoing links."
-
-#: templates/admin/statistics-subpage.php:26
-msgid "Опции поиска"
-msgstr "Search options"
-
-#: templates/admin/statistics-subpage.php:32
-#: templates/admin/statistics-subpage.php:121
-msgid "Типы публикаций"
-msgstr "Publication types"
-
-#: templates/admin/statistics-subpage.php:42
-msgid "Статус публикаций"
-msgstr "Publication status"
-
-#: templates/admin/statistics-subpage.php:52
-#: templates/admin/statistics-subpage.php:132
-msgid "Поля данных"
-msgstr "Data fields"
-
-#: templates/admin/statistics-subpage.php:53
-#: templates/admin/statistics-subpage.php:139
-msgid "ID источника"
-msgstr "Source ID"
-
-#: templates/admin/statistics-subpage.php:54
-#: templates/admin/statistics-subpage.php:140
-msgid "Тип источника"
-msgstr "Source type"
-
-#: templates/admin/statistics-subpage.php:55
-#: templates/admin/statistics-subpage.php:141
-msgid "Рубрики"
-msgstr "Categories"
-
-#: templates/admin/statistics-subpage.php:56
-#: templates/admin/statistics-subpage.php:142
-#: templates/admin/statistics-subpage.php:150
-msgid "URL источника"
-msgstr "Source URL"
-
-#: templates/admin/statistics-subpage.php:57
-#: templates/admin/statistics-subpage.php:143
-#: templates/admin/statistics-subpage.php:149
-msgid "URL цели"
-msgstr "Target URL"
-
-#: templates/admin/statistics-subpage.php:59
-#: templates/admin/statistics-subpage.php:153
-msgid "Кол-во исходящих ссылок"
-msgstr "Outgoing links count"
-
-#: templates/admin/statistics-subpage.php:60
-#: templates/admin/statistics-subpage.php:154
-msgid "Кол-во входящих ссылок"
-msgstr "Incoming links count"
-
-#: templates/admin/statistics-subpage.php:61
-#: templates/admin/statistics-subpage.php:155
-msgid "Дублировать поля (id, тип, ...)"
-msgstr "Duplicate fields (id, type, ...)"
-
-#: templates/admin/statistics-subpage.php:65
-msgid "Проверить перелинковку"
-msgstr "Check internal linking"
-
-#: templates/admin/statistics-subpage.php:73
-msgid "Найдены проблемы с перелинковкой"
-msgstr "Internal linking problems found"
-
-#: templates/admin/statistics-subpage.php:105
-msgid "Экспорт перелинковки в .CSV"
-msgstr "Export internal linking to .CSV"
-
-#: templates/admin/statistics-subpage.php:116
-msgid "Типы записей"
-msgstr "Post types"
-
-#: templates/admin/statistics-subpage.php:133
-msgid "Ориентация ссылок"
-msgstr "Link direction"
-
-#: templates/admin/statistics-subpage.php:135
-msgid "Исходящие"
-msgstr "Outgoing"
-
-#: templates/admin/statistics-subpage.php:136
-msgid "Входящие"
-msgstr "Incoming"
-
-#: templates/admin/statistics-subpage.php:146
-msgid "ID цели"
-msgstr "Target ID"
-
-#: templates/admin/statistics-subpage.php:147
-msgid "Тип цели"
-msgstr "Target type"
-
-#: templates/admin/statistics-subpage.php:148
-msgid "Рубрики цели"
-msgstr "Target categories"
-
-#: templates/admin/statistics-subpage.php:159
-msgid "Скачать схему в .CSV"
-msgstr "Download map as .CSV"
 
 #: templates/admin/expert-subpage.php:24
 msgid "Опции редактора"
@@ -556,6 +427,10 @@ msgstr "Number of links:"
 #: templates/admin/expert-subpage.php:51
 msgid "Тип контента:"
 msgstr "Content type:"
+
+#: templates/admin/expert-subpage.php:56
+msgid "Записи"
+msgstr "Posts"
 
 #: templates/admin/expert-subpage.php:56
 msgid "Страницы"
@@ -649,6 +524,8 @@ msgstr "Username"
 
 #: templates/admin/expert-subpage.php:214
 #: templates/admin/expert-subpage.php:235
+#: templates/notices/connect-prompt.php:14 js/cherry-classic.js:1
+#: js/cherry-gutenberg.js:1
 msgid "Скрыть"
 msgstr "Hide"
 
@@ -656,7 +533,8 @@ msgstr "Hide"
 msgid "Скрыть записи из рубрик:"
 msgstr "Hide posts from categories:"
 
-#: templates/admin/expert-subpage.php:235
+#: templates/admin/expert-subpage.php:235 js/cherry-classic.js:1
+#: js/cherry-gutenberg.js:1
 msgid "Рубрика"
 msgstr "Category"
 
@@ -704,8 +582,8 @@ msgstr "Disabled"
 msgid "Включён"
 msgstr "Enabled"
 
-#: templates/admin/expert-subpage.php:298
-#: templates/admin/partials/license-card.php:36
+#: templates/admin/expert-subpage.php:298 templates/admin/main-subpage.php:42
+#: templates/admin/partials/license-card.php:41
 #: templates/admin/partials/vector-api-card.php:29
 msgid "Сохранить"
 msgstr "Save"
@@ -746,17 +624,93 @@ msgstr "Delete all vectors and the link graph for this site from the API?"
 msgid "Вернуть настройки по умолчанию"
 msgstr "Restore default settings"
 
-#: templates/admin/partials/license-card.php:18
+#: templates/admin/main-subpage.php:20
+msgid "Справочные материалы"
+msgstr "Reference materials"
+
+#: templates/admin/main-subpage.php:22
+msgid "Тарифы и получение ключа"
+msgstr "Pricing and getting a key"
+
+#: templates/admin/main-subpage.php:23
+msgid "Настройки плагина"
+msgstr "Plugin settings"
+
+#: templates/admin/main-subpage.php:24
+msgid "Работа в редакторе WP"
+msgstr "Working in the WP editor"
+
+#: templates/admin/main-subpage.php:25
+msgid "Видео-инструкции"
+msgstr "Video tutorials"
+
+#: templates/admin/main-subpage.php:26
+msgid "Полезные материалы про перелинковку"
+msgstr "Useful materials about internal linking"
+
+#: templates/admin/main-subpage.php:35
+msgid "Отчёты о плагине"
+msgstr "Plugin reports"
+
+#: templates/admin/main-subpage.php:39
+msgid ""
+"Отправлять анонимные отчёты об активации и обновлении плагина (версия "
+"плагина, PHP и WordPress). По умолчанию выключено."
+msgstr "Send anonymous reports about plugin activation and updates (plugin, PHP and WordPress versions). Off by default."
+
+#: templates/admin/main-subpage.php:50
+msgid "Экспорт и импорт настроек"
+msgstr "Export and import settings"
+
+#: templates/admin/main-subpage.php:51
+msgid "Для переноса настроек между сайтами, скачайте файл настроек"
+msgstr "To transfer settings between sites, download the settings file"
+
+#: templates/admin/main-subpage.php:51
+msgid "и импортируйте его на другом сайте."
+msgstr "and import it on another site."
+
+#: templates/admin/main-subpage.php:52
+msgid "Скачать файл настроек"
+msgstr "Download settings file"
+
+#: templates/admin/main-subpage.php:56
+msgid "Для импорта настроек плагина загрузите текстовый файл"
+msgstr "To import plugin settings, upload a text file"
+
+#: templates/admin/main-subpage.php:56
+msgid ", полученный при экспорте настроек."
+msgstr ", obtained when exporting settings."
+
+#: templates/admin/main-subpage.php:61
+msgid "Импортировать настройки"
+msgstr "Import settings"
+
+#: templates/admin/partials/index-progress.php:12
+#: templates/notices/scan-prompt.php:23
+msgid "Начать сканирование"
+msgstr "Start scan"
+
+#: templates/admin/partials/index-progress.php:13
+msgid "Остановить"
+msgstr "Stop"
+
+#: templates/admin/partials/license-card.php:20
 msgid "Действует лицензия на текущий домен, ключ скрыт в целях безопасности."
 msgstr ""
 "The license is active for the current domain; the key is hidden for security "
 "reasons."
 
-#: templates/admin/partials/license-card.php:20
+#: templates/admin/partials/license-card.php:22 js/cherry-classic.js:1
+#: js/cherry-gutenberg.js:1
+msgid "Расширить"
+msgstr "Upgrade"
+
+#: templates/admin/partials/license-card.php:25
 msgid "Сбросить лицензию"
 msgstr "Reset license"
 
-#: templates/admin/partials/license-card.php:25
+#: templates/admin/partials/license-card.php:30
 msgid "Ваш ключ:"
 msgstr "Your key:"
 
@@ -790,9 +744,13 @@ msgid ""
 msgstr ""
 "Click “Check connection” to test the connection to the CherryLink server."
 
-#: templates/admin/partials/readiness-card.php:37
+#: templates/admin/partials/readiness-card.php:37 js/cherry-admin-index.js:336
 msgid "Проверить связь"
 msgstr "Test connection"
+
+#: templates/admin/partials/tooltip.php:10
+msgid "Перейти к справке"
+msgstr "Go to help"
 
 #: templates/admin/partials/vector-api-card.php:14
 msgid "URL и ключ доступа к вашему Cherry Vector API."
@@ -800,22 +758,8 @@ msgstr "URL and access key for your Cherry Vector API."
 
 #. translators: 1: ADMIN_KEY (code), 2: .env (code)
 #: templates/admin/partials/vector-api-card.php:17
-#, php-format
 msgid "Ключ должен совпадать с %1$s в %2$s на сервере."
 msgstr "The key must match %1$s in %2$s on the server."
-
-#: templates/admin/partials/tooltip.php:10
-msgid "Перейти к справке"
-msgstr "Go to help"
-
-#: templates/admin/partials/index-progress.php:12
-#: templates/notices/scan-prompt.php:23
-msgid "Начать сканирование"
-msgstr "Start scan"
-
-#: templates/admin/partials/index-progress.php:13
-msgid "Остановить"
-msgstr "Stop"
 
 #: templates/admin/scan-subpage.php:25
 msgid "Настройка сканирования"
@@ -837,57 +781,201 @@ msgstr ""
 msgid "Сохранить поля"
 msgstr "Save fields"
 
-#: templates/admin/main-subpage.php:19
-msgid "Справочные материалы"
-msgstr "Reference materials"
+#: templates/admin/settings-page.php:18
+msgid "CherryLink Pro AI 🍒"
+msgstr ""
 
-#: templates/admin/main-subpage.php:21
-msgid "Тарифы и получение ключа"
-msgstr "Pricing and getting a key"
+#: templates/admin/statistics-subpage.php:13
+msgid "Поиск проблем с перелинковкой"
+msgstr "Find internal linking problems"
 
-#: templates/admin/main-subpage.php:22
-msgid "Настройки плагина"
-msgstr "Plugin settings"
+#: templates/admin/statistics-subpage.php:14
+msgid ""
+"Нажмите на кнопку \"Проверить перелинковку\", чтобы найти записи, в которых:"
+msgstr "Click the \"Check internal linking\" button to find posts that:"
 
-#: templates/admin/main-subpage.php:23
-msgid "Работа в редакторе WP"
-msgstr "Working in the WP editor"
+#: templates/admin/statistics-subpage.php:16
+msgid "Есть повторяющиеся ссылки;"
+msgstr "Have duplicate links;"
 
-#: templates/admin/main-subpage.php:24
-msgid "Видео-инструкции"
-msgstr "Video tutorials"
+#: templates/admin/statistics-subpage.php:17
+msgid "Нет входящих ссылок;"
+msgstr "Have no incoming links;"
 
-#: templates/admin/main-subpage.php:25
-msgid "Полезные материалы про перелинковку"
-msgstr "Useful materials about internal linking"
+#: templates/admin/statistics-subpage.php:18
+msgid "Нет исходящих ссылок."
+msgstr "Have no outgoing links."
 
-#: templates/admin/main-subpage.php:36
-msgid "Экспорт и импорт настроек"
-msgstr "Export and import settings"
+#: templates/admin/statistics-subpage.php:26
+msgid "Опции поиска"
+msgstr "Search options"
 
-#: templates/admin/main-subpage.php:37
-msgid "Для переноса настроек между сайтами, скачайте файл настроек"
-msgstr "To transfer settings between sites, download the settings file"
+#: templates/admin/statistics-subpage.php:32
+#: templates/admin/statistics-subpage.php:121
+msgid "Типы публикаций"
+msgstr "Publication types"
 
-#: templates/admin/main-subpage.php:37
-msgid "и импортируйте его на другом сайте."
-msgstr "and import it on another site."
+#: templates/admin/statistics-subpage.php:42
+msgid "Статус публикаций"
+msgstr "Publication status"
 
-#: templates/admin/main-subpage.php:38
-msgid "Скачать файл настроек"
-msgstr "Download settings file"
+#: templates/admin/statistics-subpage.php:52
+#: templates/admin/statistics-subpage.php:132
+msgid "Поля данных"
+msgstr "Data fields"
 
-#: templates/admin/main-subpage.php:42
-msgid "Для импорта настроек плагина загрузите текстовый файл"
-msgstr "To import plugin settings, upload a text file"
+#: templates/admin/statistics-subpage.php:53
+#: templates/admin/statistics-subpage.php:139
+msgid "ID источника"
+msgstr "Source ID"
 
-#: templates/admin/main-subpage.php:42
-msgid ", полученный при экспорте настроек."
-msgstr ", obtained when exporting settings."
+#: templates/admin/statistics-subpage.php:54
+#: templates/admin/statistics-subpage.php:140
+msgid "Тип источника"
+msgstr "Source type"
 
-#: templates/admin/main-subpage.php:47
-msgid "Импортировать настройки"
-msgstr "Import settings"
+#: templates/admin/statistics-subpage.php:55
+#: templates/admin/statistics-subpage.php:141 js/cherry-classic.js:1
+#: js/cherry-gutenberg.js:1
+msgid "Рубрики"
+msgstr "Categories"
+
+#: templates/admin/statistics-subpage.php:56
+#: templates/admin/statistics-subpage.php:142
+#: templates/admin/statistics-subpage.php:150
+msgid "URL источника"
+msgstr "Source URL"
+
+#: templates/admin/statistics-subpage.php:57
+#: templates/admin/statistics-subpage.php:143
+#: templates/admin/statistics-subpage.php:149
+msgid "URL цели"
+msgstr "Target URL"
+
+#: templates/admin/statistics-subpage.php:59
+#: templates/admin/statistics-subpage.php:153
+msgid "Кол-во исходящих ссылок"
+msgstr "Outgoing links count"
+
+#: templates/admin/statistics-subpage.php:60
+#: templates/admin/statistics-subpage.php:154
+msgid "Кол-во входящих ссылок"
+msgstr "Incoming links count"
+
+#: templates/admin/statistics-subpage.php:61
+#: templates/admin/statistics-subpage.php:155
+msgid "Дублировать поля (id, тип, ...)"
+msgstr "Duplicate fields (id, type, ...)"
+
+#: templates/admin/statistics-subpage.php:65
+msgid "Проверить перелинковку"
+msgstr "Check internal linking"
+
+#: templates/admin/statistics-subpage.php:73
+msgid "Найдены проблемы с перелинковкой"
+msgstr "Internal linking problems found"
+
+#: templates/admin/statistics-subpage.php:105
+msgid "Экспорт перелинковки в .CSV"
+msgstr "Export internal linking to .CSV"
+
+#: templates/admin/statistics-subpage.php:116
+msgid "Типы записей"
+msgstr "Post types"
+
+#: templates/admin/statistics-subpage.php:133
+msgid "Ориентация ссылок"
+msgstr "Link direction"
+
+#: templates/admin/statistics-subpage.php:135 js/cherry-classic.js:1
+#: js/cherry-gutenberg.js:1
+msgid "Исходящие"
+msgstr "Outgoing"
+
+#: templates/admin/statistics-subpage.php:136 js/cherry-classic.js:1
+#: js/cherry-gutenberg.js:1
+msgid "Входящие"
+msgstr "Incoming"
+
+#: templates/admin/statistics-subpage.php:146
+msgid "ID цели"
+msgstr "Target ID"
+
+#: templates/admin/statistics-subpage.php:147
+msgid "Тип цели"
+msgstr "Target type"
+
+#: templates/admin/statistics-subpage.php:148
+msgid "Рубрики цели"
+msgstr "Target categories"
+
+#: templates/admin/statistics-subpage.php:159
+msgid "Скачать схему в .CSV"
+msgstr "Download map as .CSV"
+
+#: templates/admin/wizard.php:28
+msgid "Шаг 1 из 3. Подключите CherryLink"
+msgstr "Step 1 of 3. Connect CherryLink"
+
+#: templates/admin/wizard.php:29
+msgid ""
+"Для подбора ссылок плагин отправляет на серверы CherryLink (ЕС) заголовки, "
+"текст и адреса ваших записей. Данные используются только для расчёта ссылок. "
+"Пока вы не нажмёте «Подключить», плагин ничего никуда не отправляет."
+msgstr "To suggest links the plugin sends the titles, text and URLs of your posts to CherryLink servers (EU). The data is used only to compute links. Until you press Connect, the plugin sends nothing anywhere."
+
+#: templates/admin/wizard.php:31
+msgid "Условия использования"
+msgstr "Terms of Use"
+
+#: templates/admin/wizard.php:32
+msgid "Политика конфиденциальности"
+msgstr "Privacy Policy"
+
+#: templates/admin/wizard.php:37 templates/notices/connect-prompt.php:13
+msgid "Подключить"
+msgstr "Connect"
+
+#: templates/admin/wizard.php:38
+msgid "У меня уже есть ключ"
+msgstr "I already have a key"
+
+#: templates/admin/wizard.php:43
+msgid "Шаг 2 из 3. Индексация"
+msgstr "Step 2 of 3. Indexing"
+
+#: templates/admin/wizard.php:44
+msgid "Типы записей для индексации:"
+msgstr "Post types to index:"
+
+#: templates/admin/wizard.php:45
+msgid "изменить"
+msgstr "change"
+
+#: templates/admin/wizard.php:47
+msgid "Далее"
+msgstr "Next"
+
+#: templates/admin/wizard.php:51
+msgid "Шаг 3 из 3. Готово"
+msgstr "Step 3 of 3. Done"
+
+#. translators: %s: number of indexed posts
+#: templates/admin/wizard.php:56
+msgid "Проиндексировано записей: %s"
+msgstr "Posts indexed: %s"
+
+#: templates/admin/wizard.php:59
+msgid "Откройте любую запись в редакторе: панель CherryLink предложит ссылки."
+msgstr "Open any post in the editor: the CherryLink panel will suggest links."
+
+#: templates/admin/wizard.php:60
+msgid "Перейти к настройкам"
+msgstr "Go to settings"
+
+#: templates/notices/connect-prompt.php:12
+msgid "подключите CherryLink, чтобы начать."
+msgstr "connect CherryLink to get started."
 
 #: templates/notices/license-inactive.php:12
 msgid ""
@@ -903,7 +991,6 @@ msgstr "The internal linking index is not synchronized"
 
 #. translators: %s: human-readable date since which changes have not been indexed
 #: templates/notices/license-inactive.php:14
-#, php-format
 msgid ""
 "(изменения с %s не проиндексированы). Активируйте ключ и запустите "
 "сканирование, чтобы восстановить синхронизацию."
@@ -912,7 +999,6 @@ msgstr ""
 "restore synchronization."
 
 #: templates/notices/scan-prompt.php:21
-#, php-format
 msgid ""
 "Перейдите в настройки плагина на вкладку %1$s, и нажмите на кнопку \"%2$s\"."
 msgstr ""
@@ -921,6 +1007,145 @@ msgstr ""
 #: templates/notices/scan-prompt.php:22
 msgid "Сканирование"
 msgstr "Scan"
+
+#: js/cherry-admin-csv.js:67 js/cherry-admin-csv.js:82
+#: js/cherry-admin-csv.js:335
+msgid "Найти доноров"
+msgstr "Find donors"
+
+#: js/cherry-admin-csv.js:71
+msgid "Загрузка..."
+msgstr "Loading..."
+
+#: js/cherry-admin-csv.js:78
+msgid "Скрыть доноров"
+msgstr "Hide donors"
+
+#: js/cherry-admin-csv.js:83
+msgid "Не удалось получить рекомендации."
+msgstr "Failed to get recommendations."
+
+#: js/cherry-admin-csv.js:222
+msgid "Проверено записей"
+msgstr "Posts checked"
+
+#: js/cherry-admin-csv.js:223
+msgid "Всего ссылок"
+msgstr "Total links"
+
+#: js/cherry-admin-csv.js:224
+msgid "Без входящих"
+msgstr "No incoming"
+
+#: js/cherry-admin-csv.js:225
+msgid "Без исходящих"
+msgstr "No outgoing"
+
+#: js/cherry-admin-csv.js:226
+msgid "Повторы ссылок"
+msgstr "Duplicate links"
+
+#: js/cherry-admin-csv.js:227
+msgid "Битые ссылки"
+msgstr "Broken links"
+
+#: js/cherry-admin-csv.js:228
+msgid "Ссылки на себя"
+msgstr "Self-links"
+
+#: js/cherry-admin-csv.js:233
+msgid "Перелинковка не обнаружена."
+msgstr "No internal linking detected."
+
+#: js/cherry-admin-csv.js:234
+msgid "Проблем с текущей перелинковкой не найдено."
+msgstr "No problems found with the current internal linking."
+
+#: js/cherry-admin-csv.js:248
+msgid "В редактор"
+msgstr "To editor"
+
+#: js/cherry-admin-csv.js:254
+msgid "Подходящих доноров не найдено."
+msgstr "No suitable donors found."
+
+#: js/cherry-admin-csv.js:258
+msgid "якорь: «<strong>%s</strong>»"
+msgstr "anchor: «<strong>%s</strong>»"
+
+#: js/cherry-admin-csv.js:259
+msgid "подходящий анкор не найден"
+msgstr "no suitable anchor found"
+
+#: js/cherry-admin-csv.js:265
+msgid "Открыть донор"
+msgstr "Open donor"
+
+#: js/cherry-admin-csv.js:270
+msgid "Откуда можно сослаться на эту статью:"
+msgstr "Where you can link to this article from:"
+
+#. translators: %d: number of posts with repeated links
+#: js/cherry-admin-csv.js:324
+msgid "Найдены повторы (%d)"
+msgstr "Duplicates found (%d)"
+
+#: js/cherry-admin-csv.js:325 js/cherry-admin-csv.js:339
+#: js/cherry-admin-csv.js:356 js/cherry-admin-csv.js:381
+#: js/cherry-admin-csv.js:404
+msgid "Запись"
+msgstr "Post"
+
+#: js/cherry-admin-csv.js:325
+msgid "Ссылается на (количество)"
+msgstr "Links to (count)"
+
+#: js/cherry-admin-csv.js:325 js/cherry-admin-csv.js:339
+#: js/cherry-admin-csv.js:356 js/cherry-admin-csv.js:381
+#: js/cherry-admin-csv.js:404
+msgid "Действия"
+msgstr "Actions"
+
+#. translators: %d: number of posts without incoming links
+#: js/cherry-admin-csv.js:338
+msgid "Статьи без входящих ссылок (%d)"
+msgstr "Articles with no incoming links (%d)"
+
+#: js/cherry-admin-csv.js:341 js/cherry-admin-csv.js:358
+#: js/cherry-admin-csv.js:383 js/cherry-admin-csv.js:406
+msgid "Показано только 50 первых результатов."
+msgstr "Only the first 50 results are shown."
+
+#: js/cherry-admin-csv.js:347
+msgid "Повторы ссылок не обнаружены"
+msgstr "No duplicate links detected"
+
+#. translators: %d: number of posts with no outgoing links
+#: js/cherry-admin-csv.js:355
+msgid "Статьи, которые никуда не ссылаются (%d)"
+msgstr "Articles that don't link anywhere (%d)"
+
+#. translators: %d: number of posts with broken links
+#: js/cherry-admin-csv.js:380
+msgid "Статьи cо сломанными ссылками (%d)"
+msgstr "Articles with broken links (%d)"
+
+#: js/cherry-admin-csv.js:381
+msgid "Нерабочие ссылки (анкор)"
+msgstr "Broken links (anchor)"
+
+#. translators: %d: number of posts that link to themselves
+#: js/cherry-admin-csv.js:403
+msgid "Статьи, которые ссылаются на себя (%d)"
+msgstr "Articles that link to themselves (%d)"
+
+#: js/cherry-admin-csv.js:426 js/cherry-admin-csv.js:428
+msgid ""
+"Что-то пошло не так, возникла ошибка при обработке запроса: <strong>%s</"
+"strong>."
+msgstr ""
+"Something went wrong; an error occurred while processing the request: "
+"<strong>%s</strong>."
 
 #: js/cherry-admin-index.js:59
 msgid "Запуск фонового сканирования…"
@@ -952,13 +1177,11 @@ msgstr "Preparing the scan"
 
 #. translators: 1: phase label, 2: done count, 3: total count
 #: js/cherry-admin-index.js:158 js/cherry-admin-index.js:214
-#, javascript-format
 msgid "%1$s: %2$d из %3$d… (можно закрыть страницу)"
 msgstr "%1$s: %2$d of %3$d… (you can close the page)"
 
 #. translators: %s: phase label
 #: js/cherry-admin-index.js:161 js/cherry-admin-index.js:217
-#, javascript-format
 msgid "%s… (можно закрыть страницу)"
 msgstr "%s… (you can close the page)"
 
@@ -972,7 +1195,6 @@ msgstr "Resume"
 
 #. translators: 1: uploaded count, 2: deleted count
 #: js/cherry-admin-index.js:185
-#, javascript-format
 msgid "Индексация завершена. Загружено: %1$d, удалено: %2$d."
 msgstr "Indexing completed. Uploaded: %1$d, deleted: %2$d."
 
@@ -983,19 +1205,16 @@ msgstr "Scan again"
 
 #. translators: 1: applied vectors, 2: total items
 #: js/cherry-admin-index.js:188
-#, javascript-format
 msgid "Индексация завершена с ошибками: обработано %1$d из %2$d."
 msgstr "Indexing completed with errors: processed %1$d of %2$d."
 
 #. translators: %d: accepted count
 #: js/cherry-admin-index.js:194
-#, javascript-format
 msgid "Остановлено. Загружено: %d."
 msgstr "Stopped. Uploaded: %d."
 
 #. translators: %s: error message
 #: js/cherry-admin-index.js:199 js/cherry-admin-index.js:239
-#, javascript-format
 msgid "Ошибка: %s."
 msgstr "Error: %s."
 
@@ -1025,13 +1244,11 @@ msgstr "Fetching the article list"
 
 #. translators: 1: updated count, 2: deleted count
 #: js/cherry-admin-index.js:229
-#, javascript-format
 msgid "Сканирование завершено! Обновлено: %1$d, удалено: %2$d."
 msgstr "Scan complete! Updated: %1$d, removed: %2$d."
 
 #. translators: %d: number of partially indexed items
 #: js/cherry-admin-index.js:234
-#, javascript-format
 msgid "Остановлено. Частично проиндексировано: %d."
 msgstr "Stopped. Partially indexed: %d."
 
@@ -1048,7 +1265,6 @@ msgid "мс"
 msgstr "ms"
 
 #: js/cherry-admin-index.js:276
-#, javascript-format
 msgid "ОШИБКА (%s)"
 msgstr "ERROR (%s)"
 
@@ -1098,7 +1314,6 @@ msgid "Внимание:"
 msgstr "Note:"
 
 #: js/cherry-admin-index.js:309
-#, javascript-format
 msgid ""
 "ответы приходят дольше 3 секунд. На медленном канале плагин может показывать "
 "«0» и подсказки могут не грузиться (таймаут чтения — %s с)."
@@ -1110,7 +1325,7 @@ msgstr ""
 msgid "Проверяем…"
 msgstr "Checking…"
 
-#: js/cherry-admin-index.js:347
+#: js/cherry-admin-index.js:353
 msgid ""
 "Что-то пошло не так при сканировании. Проверьте консоль браузера (F12), "
 "чтобы узнать больше."
@@ -1118,115 +1333,416 @@ msgstr ""
 "Something went wrong during the scan. Check the browser console (F12) for "
 "more details."
 
-#: js/cherry-front.js:209
-msgid "Вставить вокруг выделения"
-msgstr "Insert around selection"
+#: js/cherry-admin.js:26
+msgid "Шаблоны восстановлены, не забудьте сохранить настройки"
+msgstr "Templates restored; don't forget to save the settings"
 
-#: js/cherry-front.js:212
-msgid "Подбираем анкорные подсказки…"
-msgstr "Selecting anchor suggestions…"
+#: js/cherry-admin.js:53
+msgid "Обновляем, подождите..."
+msgstr "Updating, please wait..."
 
-#. translators: %s: article title
-#: js/cherry-front.js:215
-#, javascript-format
-msgid "Подсказки для: <strong>%s</strong>"
-msgstr "Suggestions for: <strong>%s</strong>"
+#: js/cherry-admin.js:61
+msgid "Произошла ошибка при обновлении: %s"
+msgstr "An error occurred during the update: %s"
 
-#. translators: %s: link to the settings page
-#: js/cherry-front.js:218
-msgid "Подсказки не найдены."
-msgstr "No suggestions found."
+#: js/cherry-admin.js:63
+msgid "Обновление прошло успешно."
+msgstr "The update completed successfully."
 
-#: js/cherry-front.js:218
-#, javascript-format
-msgid "Убедитесь, что статья проиндексирована через Cherry Vector API. %s."
-msgstr "Make sure the article is indexed via the Cherry Vector API. %s."
+#: js/cherry-admin.js:94
+msgid "Идет загрузка..."
+msgstr "Loading..."
 
-#: js/cherry-front.js:235
-msgid "Найти в тексте"
-msgstr "Find in text"
+#: js/cherry-admin.js:115
+msgid "(ID записи не указан — проверка подбора ссылок пропущена)"
+msgstr "(Post ID not specified — link suggestion check skipped)"
 
-#: js/cherry-front.js:238
-msgid "Вставить ссылку"
-msgstr "Insert link"
+#: js/cherry-admin.js:166
+msgid "(проверка связи не выполнена)"
+msgstr "(connection test not performed)"
 
-#: js/cherry-front.js:238
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid "Нет входящих · %d статьи могут сослаться"
+msgstr ""
+
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid "Нет входящих ссылок"
+msgstr ""
+
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid "Мало исходящих · нужно %s"
+msgstr ""
+
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid "Больше одной ссылки на ~100 слов мешает читать и выглядит как спам."
+msgstr ""
+
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid "Много ссылок"
+msgstr ""
+
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid "Мало входящих"
+msgstr ""
+
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid "Ссылок достаточно"
+msgstr ""
+
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid "Рекомендуется %1$s исходящих для %2$d слов"
+msgstr ""
+
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid "Исходящих"
+msgstr "Outgoing"
+
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid "Входящих"
+msgstr "Incoming"
+
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid "Проиндексировано %1$s из %2$s"
+msgstr "Indexed %1$s of %2$s"
+
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid "Найти статьи по теме…"
+msgstr ""
+
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid "Найти статьи по теме"
+msgstr ""
+
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid "Все рубрики"
+msgstr "All categories"
+
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid ""
+"Выделите текст в статье и нажмите «Вставить» или выберите готовую фразу."
+msgstr ""
+
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid "Повторить"
+msgstr ""
+
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid "Ничего не найдено."
+msgstr ""
+
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid "исх"
+msgstr ""
+
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid "вх"
+msgstr ""
+
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid "ссылка есть"
+msgstr ""
+
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid "Сделать выделенный текст ссылкой на эту статью"
+msgstr ""
+
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
 msgid "Вставить"
 msgstr "Insert"
 
-#: js/cherry-front.js:557 js/cherry-front.js:591
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid "Открыть"
+msgstr ""
+
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid "Редактировать"
+msgstr ""
+
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid "Показать ещё"
+msgstr ""
+
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid "Релевантность %1$d%% (сходство %2$s)"
+msgstr ""
+
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid "Скрытые подсказки (%d)"
+msgstr ""
+
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid "Вернуть"
+msgstr ""
+
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid "Добавлено"
+msgstr ""
+
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid "Отменить"
+msgstr ""
+
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid ""
+"Фразы из вашего текста, которые подходят для ссылки. Наведите, чтобы увидеть "
+"фразу в тексте."
+msgstr ""
+
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid ""
+"Подсказок больше нет. Можно выбрать статью вручную во вкладке «Все статьи»."
+msgstr ""
+
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid "Вставить ссылку"
+msgstr "Insert link"
+
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid "Другая статья (%1$d/%2$d)"
+msgstr ""
+
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid "Сделать выделенный текст ссылкой на эту рубрику"
+msgstr ""
+
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid "на сайте"
+msgstr "on the site"
+
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid "Рубрики не найдены"
+msgstr "No categories found"
+
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid ""
+"Статьи, которые могут ссылаться на эту. «Вставить ссылку» добавит её прямо в "
+"ту статью, без открытия редактора."
+msgstr ""
+
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid "Подходящих статей не нашлось."
+msgstr ""
+
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid "Подходящей фразы не нашлось. Откройте статью и выделите текст вручную."
+msgstr ""
+
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid "Статью сейчас редактирует"
+msgstr ""
+
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid "У вас нет прав на редактирование этой статьи."
+msgstr ""
+
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid "Ссылка добавлена"
+msgstr ""
+
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid "Открыть в редакторе в новой вкладке"
+msgstr ""
+
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid "Назад"
+msgstr "Back"
+
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid "В тексте пока нет ссылок."
+msgstr ""
+
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid "Другие статьи пока не ссылаются на эту."
+msgstr ""
+
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid "Выделите текст в статье для вставки ссылки"
+msgstr ""
+
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid "Выделите текст вне существующей ссылки"
+msgstr ""
+
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid "Фраза не найдена в тексте статьи"
+msgstr "The phrase was not found in the article text"
+
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid "Этот блок не поддерживает вставку ссылок"
+msgstr ""
+
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid "Нет соединения с сервером"
+msgstr ""
+
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid "Не удалось получить данные. Попробуйте ещё раз."
+msgstr ""
+
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid "Ссылка вставлена"
+msgstr "Link inserted"
+
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
 msgid "ТЕКСТ_ССЫЛКИ"
 msgstr "LINK_TEXT"
 
-#: js/cherry-front.js:878
-msgid "_Без анкора_"
-msgstr "_No anchor_"
-
-#: js/cherry-front.js:1135
-msgid "Ссылки в тексте [анкор:url]"
-msgstr "Links in text [anchor:url]"
-
-#: js/cherry-front.js:1208
-msgid ""
-"Произошла ошибка при загрузке ссылок, подробности для разработчика плагина "
-"ниже:"
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid "Закрыть"
 msgstr ""
-"An error occurred while loading links; details for the plugin developer are "
-"below:"
 
-#: js/cherry-front.js:1243
-msgid "Входящие ссылки [анкор:url]"
-msgstr "Incoming links [anchor:url]"
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid ""
+"CherryLink ещё не подключён. Подключите плагин, чтобы получать подсказки "
+"ссылок."
+msgstr "CherryLink is not connected yet. Connect the plugin to get link suggestions."
 
-#: js/cherry-front.js:1253
-msgid "Нет данных, перейдите по ссылки для настройки"
-msgstr "No data; follow the link to configure"
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid "Подключить CherryLink"
+msgstr "Connect CherryLink"
 
-#. translators: %d: number of outgoing links
-#: js/cherry-front.js:1275
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid "Подсказки"
+msgstr "Suggestions"
+
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid "Все статьи"
+msgstr ""
+
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid "Что показывать"
+msgstr ""
+
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid "Статьи"
+msgstr ""
+
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid "Ссылка добавлена в «%s»"
+msgstr ""
+
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid "Ссылка убрана"
+msgstr ""
+
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid "Статья уже изменилась, отменить автоматически нельзя"
+msgstr ""
+
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid "Подсказки по текущему тексту"
+msgstr ""
+
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid "Подсказки пересчитаны по текущему тексту"
+msgstr ""
+
+#: js/cherry-classic.js:1 js/cherry-gutenberg.js:1
+msgid "Обновить"
+msgstr ""
+
+#: js/cherry-gutenberg.js:1
+msgid "CherryLink"
+msgstr ""
+
+#~ msgid ""
+#~ "Содержимое изменилось во время сканирования — сканирование перезапущено."
+#~ msgstr "Content changed during the scan — the scan was restarted."
+
+#~ msgid "Состав сайта изменился — сканирование перезапущено."
+#~ msgstr "The site's contents changed — the scan was restarted."
+
+#~ msgid "Найдено в тексте / переход к ссылке"
+#~ msgstr "Found in text / go to link"
+
+#~ msgid "Нажмите для вставки в текст"
+#~ msgstr "Click to insert into text"
+
+#~ msgid "Редактировать статью в новой вкладке"
+#~ msgstr "Edit article in a new tab"
+
+#~ msgid "Сколько раз сослались на эту статью"
+#~ msgstr "How many times this article was linked to"
+
+#~ msgid "Сколько исходящих ссылок содержит статья"
+#~ msgstr "How many outgoing links the article contains"
+
+#~ msgid "Подсказка"
+#~ msgstr "Hint"
+
+#~ msgid "Фильтр"
+#~ msgstr "Filter"
+
+#~ msgid "Таксономии"
+#~ msgstr "Taxonomies"
+
+#~ msgid "Статистика ссылок"
+#~ msgstr "Link statistics"
+
+#~ msgid "Загрузить еще..."
+#~ msgstr "Load more..."
+
+#~ msgid "Вставить вокруг выделения"
+#~ msgstr "Insert around selection"
+
+#~ msgid "Подбираем анкорные подсказки…"
+#~ msgstr "Selecting anchor suggestions…"
+
 #, javascript-format
-msgid "Исходящие (%d)"
-msgstr "Outgoing (%d)"
+#~ msgid "Подсказки для: <strong>%s</strong>"
+#~ msgstr "Suggestions for: <strong>%s</strong>"
 
-#: js/cherry-front.js:1278
-msgid "Перейти к фразе в редакторе"
-msgstr "Go to the phrase in the editor"
+#~ msgid "Подсказки не найдены."
+#~ msgstr "No suggestions found."
 
-#: js/cherry-front.js:1287
-msgid "Данные недоступны."
-msgstr "Data unavailable."
-
-#. translators: %d: number of incoming links
-#: js/cherry-front.js:1296
 #, javascript-format
-msgid "Входящие (%d)"
-msgstr "Incoming (%d)"
+#~ msgid "Убедитесь, что статья проиндексирована через Cherry Vector API. %s."
+#~ msgstr "Make sure the article is indexed via the Cherry Vector API. %s."
 
-#: js/cherry-front.js:1302
-msgid "Из статьи:"
-msgstr "From article:"
+#~ msgid "Найти в тексте"
+#~ msgstr "Find in text"
 
-#: js/cherry-front.js:1307
-msgid "Входящих ссылок не найдено."
-msgstr "No incoming links found."
+#~ msgid "_Без анкора_"
+#~ msgstr "_No anchor_"
+
+#~ msgid "Ссылки в тексте [анкор:url]"
+#~ msgstr "Links in text [anchor:url]"
+
+#~ msgid ""
+#~ "Произошла ошибка при загрузке ссылок, подробности для разработчика "
+#~ "плагина ниже:"
+#~ msgstr ""
+#~ "An error occurred while loading links; details for the plugin developer "
+#~ "are below:"
+
+#~ msgid "Входящие ссылки [анкор:url]"
+#~ msgstr "Incoming links [anchor:url]"
+
+#~ msgid "Нет данных, перейдите по ссылки для настройки"
+#~ msgstr "No data; follow the link to configure"
+
+#, javascript-format
+#~ msgid "Исходящие (%d)"
+#~ msgstr "Outgoing (%d)"
+
+#~ msgid "Перейти к фразе в редакторе"
+#~ msgstr "Go to the phrase in the editor"
+
+#~ msgid "Данные недоступны."
+#~ msgstr "Data unavailable."
+
+#, javascript-format
+#~ msgid "Входящие (%d)"
+#~ msgstr "Incoming (%d)"
+
+#~ msgid "Из статьи:"
+#~ msgstr "From article:"
+
+#~ msgid "Входящих ссылок не найдено."
+#~ msgstr "No incoming links found."
 
 #~ msgid "CherryLink Pro AI"
 #~ msgstr "CherryLink Pro AI"
-
-#~ msgid "http://seocherry.ru/"
-#~ msgstr "http://seocherry.ru/"
-
-#~ msgid ""
-#~ "Плагин для автоматической внутренней перелинковки на основе "
-#~ "семантического поиска (AI). Находит релевантные статьи и предлагает "
-#~ "анкорные фразы с помощью векторных эмбеддингов."
-#~ msgstr ""
-#~ "A plugin for automatic internal linking based on semantic search (AI). It "
-#~ "finds relevant articles and suggests anchor phrases using vector "
-#~ "embeddings."
-
-#~ msgid "Anton SeoCherry.ru"
-#~ msgstr "Anton SeoCherry.ru"
 
 #~ msgid "Показывать защищенные паролем?"
 #~ msgstr "Show password-protected?"
@@ -1250,129 +1766,11 @@ msgstr "No incoming links found."
 #~ msgid "Проверяем соединение с сервером CherryLink…"
 #~ msgstr "Checking the connection to the CherryLink server…"
 
-#~ msgid "Найти доноров"
-#~ msgstr "Find donors"
-
-#~ msgid "Скрыть доноров"
-#~ msgstr "Hide donors"
-
-#~ msgid "Не удалось получить рекомендации."
-#~ msgstr "Failed to get recommendations."
-
-#~ msgid "Проверено записей"
-#~ msgstr "Posts checked"
-
-#~ msgid "Всего ссылок"
-#~ msgstr "Total links"
-
-#~ msgid "Без входящих"
-#~ msgstr "No incoming"
-
-#~ msgid "Без исходящих"
-#~ msgstr "No outgoing"
-
-#~ msgid "Повторы ссылок"
-#~ msgstr "Duplicate links"
-
-#~ msgid "Битые ссылки"
-#~ msgstr "Broken links"
-
-#~ msgid "Ссылки на себя"
-#~ msgstr "Self-links"
-
-#~ msgid "Перелинковка не обнаружена."
-#~ msgstr "No internal linking detected."
-
-#~ msgid "Проблем с текущей перелинковкой не найдено."
-#~ msgstr "No problems found with the current internal linking."
-
-#~ msgid "В редактор"
-#~ msgstr "To editor"
-
-#~ msgid "Подходящих доноров не найдено."
-#~ msgstr "No suitable donors found."
-
-#~ msgid "якорь: «<strong>%s</strong>»"
-#~ msgstr "anchor: «<strong>%s</strong>»"
-
-#~ msgid "подходящий анкор не найден"
-#~ msgstr "no suitable anchor found"
-
-#~ msgid "Открыть донор"
-#~ msgstr "Open donor"
-
-#~ msgid "Откуда можно сослаться на эту статью:"
-#~ msgstr "Where you can link to this article from:"
-
-#~ msgid "Найдены повторы (%d)"
-#~ msgstr "Duplicates found (%d)"
-
-#~ msgid "Запись"
-#~ msgstr "Post"
-
-#~ msgid "Ссылается на (количество)"
-#~ msgstr "Links to (count)"
-
-#~ msgid "Действия"
-#~ msgstr "Actions"
-
-#~ msgid "Статьи без входящих ссылок (%d)"
-#~ msgstr "Articles with no incoming links (%d)"
-
-#~ msgid "Показано только 50 первых результатов."
-#~ msgstr "Only the first 50 results are shown."
-
-#~ msgid "Повторы ссылок не обнаружены"
-#~ msgstr "No duplicate links detected"
-
-#~ msgid "Статьи, которые никуда не ссылаются (%d)"
-#~ msgstr "Articles that don't link anywhere (%d)"
-
-#~ msgid "Статьи cо сломанными ссылками (%d)"
-#~ msgstr "Articles with broken links (%d)"
-
-#~ msgid "Нерабочие ссылки (анкор)"
-#~ msgstr "Broken links (anchor)"
-
-#~ msgid "Статьи, которые ссылаются на себя (%d)"
-#~ msgstr "Articles that link to themselves (%d)"
-
-#~ msgid ""
-#~ "Что-то пошло не так, возникла ошибка при обработке запроса: <strong>%s</"
-#~ "strong>."
-#~ msgstr ""
-#~ "Something went wrong; an error occurred while processing the request: "
-#~ "<strong>%s</strong>."
-
-#~ msgid "Шаблоны восстановлены, не забудьте сохранить настройки"
-#~ msgstr "Templates restored; don't forget to save the settings"
-
-#~ msgid "Обновляем, подождите..."
-#~ msgstr "Updating, please wait..."
-
-#~ msgid "Произошла ошибка при обновлении: %s"
-#~ msgstr "An error occurred during the update: %s"
-
-#~ msgid "Обновление прошло успешно."
-#~ msgstr "The update completed successfully."
-
-#~ msgid "Идет загрузка..."
-#~ msgstr "Loading..."
-
-#~ msgid "(ID записи не указан — проверка подбора ссылок пропущена)"
-#~ msgstr "(Post ID not specified — link suggestion check skipped)"
-
-#~ msgid "(проверка связи не выполнена)"
-#~ msgstr "(connection test not performed)"
-
 #~ msgid "Ничего не нашлось"
 #~ msgstr "Nothing found"
 
 #~ msgid "Произошла ошибка при загрузке (подробности в консоли)"
 #~ msgstr "An error occurred while loading (details in the console)"
-
-#~ msgid "Ссылка вставлена"
-#~ msgstr "Link inserted"
 
 #~ msgid "Ссылка уже присутствует в тексте"
 #~ msgstr "The link is already present in the text"
@@ -1380,17 +1778,11 @@ msgstr "No incoming links found."
 #~ msgid "Выделите текст для вставки ссылки"
 #~ msgstr "Select text to insert a link"
 
-#~ msgid "Фраза не найдена в тексте статьи"
-#~ msgstr "The phrase was not found in the article text"
-
 #~ msgid "Ссылка скопирована в буфер обмена"
 #~ msgstr "Link copied to clipboard"
 
 #~ msgid "Подсказки анкоров"
 #~ msgstr "Anchor suggestions"
-
-#~ msgid "Подсказки"
-#~ msgstr "Suggestions"
 
 #~ msgid "Копировать ссылку"
 #~ msgstr "Copy link"
@@ -1416,14 +1808,8 @@ msgstr "No incoming links found."
 #~ msgid "Просмотр таксономии"
 #~ msgstr "View taxonomy"
 
-#~ msgid "на сайте"
-#~ msgstr "on the site"
-
 #~ msgid "Произошла ошибка во время загрузки..."
 #~ msgstr "An error occurred while loading..."
-
-#~ msgid "Рубрики не найдены"
-#~ msgstr "No categories found"
 
 #~ msgid "Поиск по сайту"
 #~ msgstr "Search the site"

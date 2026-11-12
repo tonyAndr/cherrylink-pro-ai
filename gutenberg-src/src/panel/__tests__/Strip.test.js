@@ -1,4 +1,5 @@
-import { countWords, linkAdvice } from '../Strip';
+import { render, screen } from '@testing-library/react';
+import Strip, { countWords, linkAdvice, planLimited } from '../Strip';
 
 describe('linkAdvice', () => {
     it('recommends ~1 link per 200-300 words', () => {
@@ -14,5 +15,27 @@ describe('linkAdvice', () => {
     });
     it('counts words in any script', () => {
         expect(countWords('Привет, мир! Hello — wörld 42')).toBe(5);
+    });
+});
+
+describe('Strip plan line', () => {
+    const base = { out: 3, inc: 4, words: 900, donorCount: 0, onLinks() {}, onGoIncoming() {}, onGoSuggestions() {} };
+
+    it('is limited only when total exceeds the plan limit', () => {
+        expect(planLimited({ post_limit: 1000, total: 2340 })).toBe(true);
+        expect(planLimited({ post_limit: 1000, total: 1000 })).toBe(false);
+        expect(planLimited({ post_limit: null, total: 5000 })).toBe(false);
+        expect(planLimited(null)).toBe(false);
+    });
+
+    it('renders "indexed of total" with an upgrade link', () => {
+        render(<Strip {...base} plan={{ post_limit: 1000, indexed: 1000, total: 2340 }} upgradeUrl="https://example.test/up" />);
+        expect(screen.getByText(/Проиндексировано 1\s000 из 2\s340/)).toBeInTheDocument();
+        expect(screen.getByText('Расширить')).toHaveAttribute('href', 'https://example.test/up');
+    });
+
+    it('renders nothing extra without a limit', () => {
+        render(<Strip {...base} plan={null} />);
+        expect(screen.queryByText(/Проиндексировано/)).toBeNull();
     });
 });

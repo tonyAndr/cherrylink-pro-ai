@@ -5,6 +5,10 @@ declare(strict_types=1);
 namespace CherryLink\Editor;
 
 use CherryLink\Ajax\Security;
+use CherryLink\Indexing\IndexHelpers;
+use CherryLink\Indexing\IndexHooks;
+use CherryLink\Support\Capabilities;
+use CherryLink\Support\Connect;
 use CherryLink\Support\Options;
 
 /**
@@ -32,6 +36,9 @@ final class PanelConfig
                 'limit'             => (int) ($main['limit_ajax'] ?? 0),
             ],
             'licensed'  => ! empty($options->meta()['key_valid']),
+            'connectUrl' => Connect::settingsUrl(),
+            'upgradeUrl' => Connect::UPGRADE_URL,
+            'plan'      => self::plan($options),
             'editUrlBase' => \admin_url('post.php?action=edit&post='),
         ];
         if ($is_term && $taxonomy !== '') {
@@ -41,6 +48,41 @@ final class PanelConfig
             $cfg['categories'] = self::categories();
         }
         return $cfg;
+    }
+
+    /** Transient caching the eligible-post count (one COUNT query per window). */
+    public const TOTAL_TRANSIENT = 'cherrylink_eligible_total';
+
+    /**
+     * Plan state for the strip: {name, post_limit, indexed, total}, or null for keys
+     * without a plan (legacy). `indexed` comes from the cached capabilities snapshot,
+     * then the cached readiness count; no API call.
+     *
+     * @return array{name:string,post_limit:int|null,indexed:int|null,total:int}|null
+     */
+    public static function plan(Options $options): ?array
+    {
+        $meta = $options->meta();
+        if (empty($meta['key_valid']) || empty($meta['plan'])) {
+            return null;
+        }
+        $snapshot = (new Capabilities())->snapshot();
+        $indexed  = $snapshot['plan']['indexed'] ?? null;
+        if ($indexed === null) {
+            $indexed = IndexHooks::statusData(false)['index_rows'] ?? null;
+        }
+        $total = \get_transient(self::TOTAL_TRANSIENT);
+        if ($total === false) {
+            $total = (int) (new IndexHelpers())->get_indexable_posts_count();
+            \set_transient(self::TOTAL_TRANSIENT, $total, 600);
+        }
+
+        return [
+            'name'       => (string) $meta['plan'],
+            'post_limit' => isset($meta['post_limit']) && $meta['post_limit'] !== null ? (int) $meta['post_limit'] : null,
+            'indexed'    => $indexed === null ? null : (int) $indexed,
+            'total'      => (int) $total,
+        ];
     }
 
     /** Inline script defining window.cherrylinkPanel; attach 'before' the bundle. */

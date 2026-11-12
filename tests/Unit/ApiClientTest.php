@@ -32,7 +32,7 @@ final class ApiClientTest extends TestCase
 
         // Runtime constants normally set by cherrylink_vector_api.php at include time.
         if (!defined('CHERRY_VECTOR_API_URL')) {
-            define('CHERRY_VECTOR_API_URL', 'https://seocherry.apov.dev');
+            define('CHERRY_VECTOR_API_URL', 'https://api.cherrylink.app');
         }
         if (!defined('CL_ALT_API_PORT')) {
             define('CL_ALT_API_PORT', 9443);
@@ -101,7 +101,7 @@ final class ApiClientTest extends TestCase
         $count = (new Client())->get_count();
 
         $this->assertSame(42, $count);
-        $this->assertSame('https://seocherry.apov.dev/v1/documents/count', $this->captured['url']);
+        $this->assertSame('https://api.cherrylink.app/v1/documents/count', $this->captured['url']);
         $this->assertSame('GET', $this->captured['args']['method']);
         $headers = $this->captured['args']['headers'];
         $this->assertSame('application/json', $headers['Content-Type']);
@@ -161,7 +161,7 @@ final class ApiClientTest extends TestCase
 
         $this->assertTrue($result['ok']);
         $this->assertSame(1, $result['accepted']);
-        $this->assertSame('https://seocherry.apov.dev/v1/client-events', $this->captured['url']);
+        $this->assertSame('https://api.cherrylink.app/v1/client-events', $this->captured['url']);
         $this->assertSame('POST', $this->captured['args']['method']);
         $this->assertSame(10, $this->captured['args']['timeout']);
         $body = json_decode($this->captured['args']['body'], true);
@@ -177,7 +177,7 @@ final class ApiClientTest extends TestCase
         $result = (new Client(null, Client::CONTEXT_BACKGROUND))->key_pages([12, 40], [7]);
 
         $this->assertSame(2, $result['posts_considered']);
-        $this->assertSame('https://seocherry.apov.dev/v1/key-pages', $this->captured['url']);
+        $this->assertSame('https://api.cherrylink.app/v1/key-pages', $this->captured['url']);
         $this->assertSame('POST', $this->captured['args']['method']);
         $this->assertSame(['pin' => [12, 40], 'demote' => [7]], json_decode($this->captured['args']['body'], true));
     }
@@ -200,7 +200,7 @@ final class ApiClientTest extends TestCase
         (new Client())->get_count();
 
         // Same hostname, relay port: TLS/SNI/cert are unchanged; only the port differs.
-        $this->assertSame('https://seocherry.apov.dev:9443/v1/documents/count', $this->captured['url']);
+        $this->assertSame('https://api.cherrylink.app:9443/v1/documents/count', $this->captured['url']);
         $this->assertSame('relay', Client::route());
     }
 
@@ -222,8 +222,8 @@ final class ApiClientTest extends TestCase
         $this->assertSame(3, (new Client())->get_count());
 
         $this->assertSame([
-            'https://seocherry.apov.dev/v1/documents/count',
-            'https://seocherry.apov.dev:9443/v1/documents/count',
+            'https://api.cherrylink.app/v1/documents/count',
+            'https://api.cherrylink.app:9443/v1/documents/count',
         ], $urls);
         $this->assertArrayHasKey('cherrylink_relay_until', $this->transients);
     }
@@ -647,7 +647,7 @@ final class ApiClientTest extends TestCase
         $this->mockHttp(['index' => [1], 'links' => [1], 'drop_vectors' => [], 'drop_links' => []]);
         $res = (new Client())->fetch_sync_plan_result($entries);
         $this->assertTrue($res['ok']);
-        $this->assertSame('https://seocherry.apov.dev/v1/sync/plan', $this->captured['url']);
+        $this->assertSame('https://api.cherrylink.app/v1/sync/plan', $this->captured['url']);
         $this->assertSame(['entries' => $entries, 'complete' => true], json_decode($this->captured['args']['body'], true));
 
         $this->mockHttp(['detail' => 'Not Found'], 404);

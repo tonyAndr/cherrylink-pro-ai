@@ -115,7 +115,7 @@ final class LicenseTest extends TestCase
     public function testCallHomeRejectsMalformedSuccessfulResponse(string $body): void
     {
         Functions\expect('wp_remote_post')->once()->with(
-            'https://cherrylink.apov.dev/cherrylink-pro-licensing/',
+            'https://api.cherrylink.app/cherrylink-pro-licensing/',
             Mockery::on(static function (array $args): bool {
                 return $args['timeout'] === 5 && $args['redirection'] === 0
                     && $args['body']['domain'] === 'example.test';
@@ -156,7 +156,7 @@ final class LicenseTest extends TestCase
             return true;
         });
         Functions\expect('wp_remote_post')->once()->with(
-            'https://cherrylink.apov.dev/cherrylink-pro-licensing/',
+            'https://api.cherrylink.app/cherrylink-pro-licensing/',
             Mockery::on(static function (array $args): bool {
                 return $args['body']['domain'] === 'site.example' && $args['timeout'] === 5;
             })

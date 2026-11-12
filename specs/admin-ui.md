@@ -114,7 +114,7 @@ Settings › Troubleshooting. The legacy `use_alt_server` option is ignored and 
 ## Reports / hosts
 
 Lifecycle reports run iff connected (`License::isConnected()`); the `lifecycle_reports` option and its UI are
-removed. Licensing default `https://cherrylink.apov.dev/cherrylink-pro-licensing/` (override constant stays).
+removed. Licensing default `https://api.cherrylink.app/cherrylink-pro-licensing/` (override constant stays).
 User-facing links live only in `Support\Urls` (cherrylink.app; may become market-aware, see plan step 6).
 
 ## Content types and the plan limit

@@ -42,7 +42,7 @@ final class FreeModeTest extends TestCase
         parent::setUp();
         Monkey\setUp();
         if (!defined('CHERRY_VECTOR_API_URL')) {
-            define('CHERRY_VECTOR_API_URL', 'https://seocherry.apov.dev');
+            define('CHERRY_VECTOR_API_URL', 'https://api.cherrylink.app');
         }
         if (!defined('CL_ALT_API_PORT')) {
             define('CL_ALT_API_PORT', 9443);
@@ -156,7 +156,7 @@ final class FreeModeTest extends TestCase
 
     public function testCallHomeUsesTheOverridableLicensingBase(): void
     {
-        $this->assertSame('https://cherrylink.apov.dev/cherrylink-pro-licensing/', License::licensingUrl());
+        $this->assertSame('https://api.cherrylink.app/cherrylink-pro-licensing/', License::licensingUrl());
     }
 
     public function testCallHomeMakesNoRequestWithoutAKey(): void
@@ -237,7 +237,7 @@ final class FreeModeTest extends TestCase
         $result = $connect->connect();
 
         $this->assertTrue($result['ok']);
-        $this->assertSame('https://cherrylink.apov.dev/cherrylink-pro-licensing/connect', $this->posts[0][0]);
+        $this->assertSame('https://api.cherrylink.app/cherrylink-pro-licensing/connect', $this->posts[0][0]);
         $body = json_decode($this->posts[0][1]['body'], true);
         $this->assertSame('mysite.example', $body['domain']);
         $this->assertSame(['nonce' => $body['nonce']], $seen, 'proof route served the nonce during the call');

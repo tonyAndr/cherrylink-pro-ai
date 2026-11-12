@@ -21,7 +21,7 @@ final class AdminResponsivenessTest extends TestCase
             \define('HOUR_IN_SECONDS', 3600);
         }
         if (!\defined('CHERRY_VECTOR_API_URL')) {
-            \define('CHERRY_VECTOR_API_URL', 'https://seocherry.apov.dev');
+            \define('CHERRY_VECTOR_API_URL', 'https://api.cherrylink.app');
         }
     }
 

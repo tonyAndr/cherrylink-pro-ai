@@ -7,7 +7,7 @@
 
 ## What This Is
 
-WordPress plugin for AI-powered internal linking. Connects to Cherry Vector API (`https://seocherry.apov.dev`) for semantic search and link graph tracking. Works in both Gutenberg and the classic editor.
+WordPress plugin for AI-powered internal linking. Connects to Cherry Vector API (`https://api.cherrylink.app`) for semantic search and link graph tracking. Works in both Gutenberg and the classic editor.
 
 ---
 
@@ -215,7 +215,7 @@ explicit script deps in `Editor\GutenbergAssets`.
 
 All API calls go through `\CherryLink\Api\Client` (`src/Api/Client.php`, ex-`CherryVectorAPI`).
 The API runtime constants + the alt-server hook live in `\CherryLink\Api\Relay`.
-- API URL: `CHERRY_VECTOR_API_URL` constant in wp-config → admin settings → `https://seocherry.apov.dev` (defined by `Api\Relay::defineConstants()`)
+- API URL: `CHERRY_VECTOR_API_URL` constant in wp-config → admin settings → `https://api.cherrylink.app` (defined by `Api\Relay::defineConstants()`)
 - Auth key priority: saved license key (`hash_field`) → `CHERRY_VECTOR_API_KEY` constant → `vector_api_key` setting. The explicit key is a fallback for license-less/local installs; a leftover admin key must not shadow the license. **Never ship the server ADMIN_KEY in plugin code.**
 - Headers sent: `X-License-Key`, `X-Site-Domain`
 - Errors: logged via `\CherryLink\Support\Logger`
@@ -239,7 +239,7 @@ cd wp-dev
 docker compose up -d
 # WordPress: http://localhost:8088 (admin/admin)
 # Plugin mounted as live bind — PHP edits take effect immediately
-# Connect to API: use https://seocherry.apov.dev or a local API at http://host.docker.internal:8000
+# Connect to API: use https://api.cherrylink.app or a local API at http://host.docker.internal:8000
 ```
 
 ---

@@ -9,7 +9,7 @@ use CherryLink\Contracts\Registerable;
 /**
  * License validation + activation lifecycle.
  *
- * Owns the "call home" check against seocherry.ru, the cached validity state in the
+ * Owns the "call home" check against the licensing authority, the cached validity state in the
  * linkate_posts_meta option, the daily re-check cron, the settings-page "index out of
  * sync while unlicensed" notice, and the administrator capability grant. Ported from
  * the legacy cherrylink_install.php (deleted); the activation/update lifecycle now lives
@@ -22,7 +22,7 @@ use CherryLink\Contracts\Registerable;
 final class License implements Registerable
 {
     public const VALIDATION_HOOK = 'clpro_license_validation_hook';
-    public const DEFAULT_LICENSING_URL = 'https://cherrylink.apov.dev/cherrylink-pro-licensing/';
+    public const DEFAULT_LICENSING_URL = 'https://api.cherrylink.app/cherrylink-pro-licensing/';
     private const MAX_ATTEMPTS = 3;
 
     /** @var Options */

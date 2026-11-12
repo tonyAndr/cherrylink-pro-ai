@@ -23,7 +23,7 @@ Tests: `FreeModeTest::testNothingReachesTheNetworkWithoutAKey`.
 
 ## Licensing URL
 `License::licensingUrl()` is the single base for check and connect (default
-`https://cherrylink.apov.dev/cherrylink-pro-licensing/`); define `CHERRYLINK_LICENSING_URL` in wp-config for local dev.
+`https://api.cherrylink.app/cherrylink-pro-licensing/`); define `CHERRYLINK_LICENSING_URL` in wp-config for local dev.
 
 ## Free keys in the license
 - `callHome` accepts `key_valid: 1` with `expires_at: null` **only** when `plan === 'free'`; responses without

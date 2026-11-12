@@ -14,7 +14,7 @@ use CherryLink\Contracts\Registerable;
  * our relay-port requests only — overrides the connect address to the relay IP while
  * keeping the real hostname (so SNI / Host / certificate validation are unchanged; the
  * relay just pipes encrypted bytes to the API). Used when the primary API IP is blocked
- * upstream (e.g. RKN). License → seocherry.ru, the GitHub updater, etc. are never touched.
+ * upstream (e.g. RKN). License (api.cherrylink.app), the GitHub updater, etc. are never touched.
  *
  * Ported from the legacy cherrylink_vector_api.php (now deleted).
  */
@@ -34,7 +34,7 @@ final class Relay implements Registerable
     {
         if (! \defined('CHERRY_VECTOR_API_URL')) {
             $options = \get_option('linkate-posts', []);
-            $url     = ! empty($options['vector_api_url']) ? $options['vector_api_url'] : 'https://seocherry.apov.dev';
+            $url     = ! empty($options['vector_api_url']) ? $options['vector_api_url'] : 'https://api.cherrylink.app';
             \define('CHERRY_VECTOR_API_URL', $url);
         }
         if (! \defined('CL_ALT_API_PORT')) {

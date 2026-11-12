@@ -334,7 +334,9 @@ final class SyncServiceTest extends TestCase
     {
         $this->state['phase'] = 'manifest';
         $this->plan = ['upsert' => [99], 'delete' => [100]];
+        $this->eligible([]);
         $api = Mockery::mock(Client::class);
+        $api->shouldReceive('fetch_sync_plan_result')->once()->andReturn($this->planResult([], 404));
         $api->shouldReceive('fetch_manifest_result')
             ->once()
             ->andReturn($this->result([
@@ -363,25 +365,11 @@ final class SyncServiceTest extends TestCase
         $this->state['force_full'] = true;
         $this->plan = ['upsert' => [77], 'delete' => []];
 
-        Functions\when('get_post_types')->justReturn([]);
-        $GLOBALS['wpdb'] = new class {
-            public $posts = 'wp_posts';
-
-            public function prepare($query, ...$args)
-            {
-                return $query;
-            }
-
-            public function get_results($query)
-            {
-                return [
-                    (object) ['ID' => 1, 'post_modified_gmt' => '2026-01-01 00:00:00'],
-                    (object) ['ID' => 2, 'post_modified_gmt' => '2026-01-02 00:00:00'],
-                ];
-            }
-        };
+        $this->eligible([1 => '2026-01-01 00:00:00', 2 => '2026-01-02 00:00:00']);
 
         $api = Mockery::mock(Client::class);
+        $api->shouldReceive('content_hash')->andReturn('h');
+        $api->shouldReceive('fetch_sync_plan_result')->once()->andReturn($this->planResult([], 404));
         $api->shouldReceive('fetch_manifest_result')
             ->once()
             ->andReturn([
@@ -446,15 +434,23 @@ final class SyncServiceTest extends TestCase
         $this->assertSame(10, SyncService::retry_delay(3, null, 2));
     }
 
-    public function testManifestPlanIsLimitedToTheNewestPostsOfAPlanLimitedKey(): void
+    /** @param array<int,string> $rows post_modified_gmt by ID */
+    private function eligible(array $rows): void
     {
-        $this->state['phase'] = 'manifest';
-        $this->options['linkate-posts'] = ['hash_field' => 'free-key'];
-        $this->options['linkate_posts_meta'] = ['key_valid' => true, 'expires_at' => '', 'plan' => 'free', 'post_limit' => 1];
-
         Functions\when('get_post_types')->justReturn([]);
-        $GLOBALS['wpdb'] = new class {
+        Functions\when('get_post')->alias(static function ($id) {
+            $p = new \WP_Post();
+            $p->ID = (int) $id;
+            return $p;
+        });
+        $GLOBALS['wpdb'] = new class ($rows) {
             public $posts = 'wp_posts';
+            private $rows;
+
+            public function __construct(array $rows)
+            {
+                $this->rows = $rows;
+            }
 
             public function prepare($query, ...$args)
             {
@@ -463,26 +459,128 @@ final class SyncServiceTest extends TestCase
 
             public function get_results($query)
             {
-                return [
-                    (object) ['ID' => 1, 'post_modified_gmt' => '2026-01-01 00:00:00'],
-                    (object) ['ID' => 2, 'post_modified_gmt' => '2026-01-02 00:00:00'],
-                ];
+                $out = [];
+                foreach ($this->rows as $id => $modified) {
+                    $out[] = (object) ['ID' => $id, 'post_modified_gmt' => $modified];
+                }
+                return $out;
             }
         };
+    }
+
+    /** @return array<string,mixed> */
+    private function planResult(array $plan, int $status = 200): array
+    {
+        return ['ok' => $status === 200, 'plan' => $plan, 'status' => $status, 'retry_after' => null,
+                'retryable' => false, 'error' => $status === 200 ? '' : 'nope'];
+    }
+
+    private function manifestOk(array $map): array
+    {
+        return ['ok' => true, 'map' => $map, 'status' => 200, 'retry_after' => null, 'retryable' => false, 'error' => ''];
+    }
+
+    public function testServerPlanRequestUsesEligiblePostsAndTheUpsertHash(): void
+    {
+        $this->state['phase'] = 'manifest';
+        $this->eligible([1 => '2026-01-01 00:00:00', 2 => '2026-01-02 00:00:00']);
         $api = Mockery::mock(Client::class);
-        $api->shouldReceive('fetch_manifest_result')->once()->andReturn([
-            'ok' => true, 'map' => [1 => ['hash' => 'h', 'modified' => '2026-01-01 00:00:00']],
-            'status' => 200, 'retry_after' => null, 'retryable' => false, 'error' => '',
-        ]);
+        $api->shouldReceive('content_hash')->twice()->andReturnUsing(static function ($post) {
+            return 'hash-' . $post->ID;
+        });
+        $api->shouldReceive('fetch_sync_plan_result')->once()->with([
+            ['post_id' => 1, 'modified_gmt' => '2026-01-01 00:00:00', 'content_hash' => 'hash-1'],
+            ['post_id' => 2, 'modified_gmt' => '2026-01-02 00:00:00', 'content_hash' => 'hash-2'],
+        ])->andReturn($this->planResult([
+            'index' => [2], 'links' => [1, 2], 'drop_vectors' => [7, 9], 'drop_links' => [9],
+        ]));
+        $api->shouldNotReceive('fetch_manifest_result');
+
+        $this->service($api)->worker('manifest', 0, 0, false);
+
+        $this->assertSame(
+            ['upsert' => [2], 'delete' => [9], 'drop' => [7], 'links' => [1, 2]],
+            $this->options[SyncService::PLAN]
+        );
+        $this->assertSame('upsert', $this->state['phase']);
+        $this->assertSame(2, $this->state['delete_total'], 'full removal + vector-only drop both count as prune work');
+    }
+
+    public function testServerPlanForceFullReuploadsEveryEligiblePost(): void
+    {
+        $this->state['phase'] = 'manifest';
+        $this->state['force_full'] = true;
+        $this->eligible([1 => '2026-01-01 00:00:00', 2 => '2026-01-02 00:00:00']);
+        $api = Mockery::mock(Client::class);
+        $api->shouldReceive('content_hash')->andReturn('h');
+        $api->shouldReceive('fetch_sync_plan_result')->once()->andReturn($this->planResult([
+            'index' => [], 'links' => [], 'drop_vectors' => [], 'drop_links' => [],
+        ]));
+
+        $this->service($api)->worker('manifest', 0, 0, true);
+
+        $plan = $this->options[SyncService::PLAN];
+        $this->assertSame([2, 1], $plan['upsert']);
+        $this->assertSame([2, 1], $plan['links']);
+    }
+
+    public function testServerPlanFailureRetriesThePlanPhase(): void
+    {
+        $this->state['phase'] = 'manifest';
+        $this->eligible([1 => '2026-01-01 00:00:00']);
+        $api = Mockery::mock(Client::class);
+        $api->shouldReceive('content_hash')->andReturn('h');
+        $api->shouldReceive('fetch_sync_plan_result')->once()->andReturn(
+            $this->result(['status' => 429, 'retry_after' => 4]) + ['plan' => []]
+        );
+
+        $this->service($api)->worker('manifest', 0, 0, false);
+
+        $this->assertSame('manifest', $this->state['phase']);
+        $this->assertSame(1, $this->state['retry_attempt']);
+        $this->assertSame('manifest', $this->scheduled[0]['args']['phase']);
+    }
+
+    public function testOlderApiWithoutPlanRouteFallsBackToTheManifest(): void
+    {
+        $this->state['phase'] = 'manifest';
+        $this->options['linkate-posts'] = ['hash_field' => 'free-key'];
+        $this->options['linkate_posts_meta'] = ['key_valid' => true, 'expires_at' => '', 'plan' => 'free', 'post_limit' => 1];
+        $this->eligible([1 => '2026-01-01 00:00:00', 2 => '2026-01-02 00:00:00']);
+        $api = Mockery::mock(Client::class);
+        $api->shouldReceive('content_hash')->andReturn('h');
+        $api->shouldReceive('fetch_sync_plan_result')->once()->andReturn($this->planResult([], 404));
+        $api->shouldReceive('fetch_manifest_result')->once()->andReturn(
+            $this->manifestOk([1 => ['hash' => 'h', 'modified' => '2026-01-01 00:00:00']])
+        );
 
         $this->service($api)->worker('manifest', 0, 0, false);
 
         $plan = $this->options[SyncService::PLAN];
         $this->assertSame([2], $plan['upsert']);
         $this->assertSame([1], $plan['drop']);
-        $this->assertSame([2, 1], $plan['links']);
+        $this->assertSame([2], $plan['links'], 'limited plans on an old API: links follow upserts');
         $this->assertSame('upsert', $this->state['phase']);
         $this->assertSame(1, $this->state['delete_total'], 'the dropped post counts as prune work');
+    }
+
+    public function testInventoryAboveTheServerLimitUsesTheManifest(): void
+    {
+        $this->state['phase'] = 'manifest';
+        $rows = [];
+        for ($i = 1; $i <= SyncService::PLAN_MAX_ENTRIES + 1; ++$i) {
+            $rows[$i] = '2026-01-01 00:00:00';
+        }
+        $this->eligible($rows);
+        $api = Mockery::mock(Client::class);
+        $api->shouldNotReceive('fetch_sync_plan_result');
+        $api->shouldNotReceive('content_hash');
+        $api->shouldReceive('log_error')->once()->with(Mockery::type('string'), 'php_index', 0, 'warning');
+        $api->shouldReceive('fetch_manifest_result')->once()->andReturn($this->manifestOk([]));
+
+        $this->service($api)->worker('manifest', 0, 0, false);
+
+        $this->assertCount(SyncService::PLAN_MAX_ENTRIES + 1, $this->options[SyncService::PLAN]['upsert']);
     }
 
     public function testPlanLimitDropRemovesTheVectorButKeepsTheLinkGraph(): void

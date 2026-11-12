@@ -562,6 +562,30 @@ class Client implements ReportClient
     }
 
     /**
+     * Ask the server for the sync plan. 404 means an older API without the route.
+     *
+     * @param array<int,array{post_id:int,modified_gmt:string,content_hash:string}> $entries
+     * @return array{ok:bool,plan:array<string,mixed>,status:int,retry_after:int|null,retryable:bool,error:string}
+     */
+    public function fetch_sync_plan_result(array $entries): array
+    {
+        $response = $this->request_result('POST', '/v1/sync/plan', ['entries' => $entries, 'complete' => true], 120);
+        $body     = \is_array($response['body']) ? $response['body'] : [];
+        $valid    = $response['ok'] && isset($body['index'], $body['links'], $body['drop_vectors'], $body['drop_links'])
+            && \is_array($body['index']) && \is_array($body['links'])
+            && \is_array($body['drop_vectors']) && \is_array($body['drop_links']);
+
+        return [
+            'ok'          => $valid,
+            'plan'        => $valid ? $body : [],
+            'status'      => $response['status'],
+            'retry_after' => $response['retry_after'],
+            'retryable'   => $response['ok'] ? false : self::is_retryable_result($response),
+            'error'       => $response['error'] ?: (!$valid ? 'sync plan response is invalid' : ''),
+        ];
+    }
+
+    /**
      * Load posts by ID and upsert them in one batch. Returns ['indexed'=>int,'errors'=>int].
      *
      * @param int[] $post_ids
@@ -618,6 +642,7 @@ class Client implements ReportClient
                 'source_type' => 0,
                 'source_url'  => $url,
                 'html'        => $post->post_content,
+                'content_hash' => $this->content_hash($post),
             ];
         }
         if (empty($items)) {
@@ -745,14 +770,18 @@ class Client implements ReportClient
      * Send raw post HTML to the API for link extraction and storage.
      * Returns the number of outgoing links found (for cherry_outgoing post meta).
      */
-    public function parse_links(int $source_id, int $source_type, string $source_url, string $html): int
+    public function parse_links(int $source_id, int $source_type, string $source_url, string $html, ?string $content_hash = null): int
     {
-        $response = $this->request('POST', '/v1/links/parse', [
+        $body = [
             'source_id'   => $source_id,
             'source_type' => $source_type,
             'source_url'  => $source_url,
             'html'        => $html,
-        ], 60);
+        ];
+        if ($content_hash !== null) {
+            $body['content_hash'] = $content_hash;
+        }
+        $response = $this->request('POST', '/v1/links/parse', $body, 60);
         return (int)($response['count'] ?? 0);
     }
 

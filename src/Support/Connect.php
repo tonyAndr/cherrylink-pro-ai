@@ -21,6 +21,7 @@ final class Connect implements Registerable
     public const NONCE_TRANSIENT = 'cherrylink_connect_nonce';
     public const NONCE_TTL       = 600;
     public const ACTION          = 'cherrylink_connect';
+    public const PROOF_ACTION    = 'cherrylink_connect_proof';
 
     // Placeholders until the public site exists (see FREE-PRO-PLAN-2026-11-12.md, step 6).
     public const TERMS_URL   = 'https://cherrylink.app/terms/';
@@ -39,6 +40,10 @@ final class Connect implements Registerable
     {
         \add_action('rest_api_init', [$this, 'registerRoute']);
         \add_action('admin_post_' . self::ACTION, [$this, 'handleAdminPost']);
+        // Same proof for sites where the REST API is blocked or unreachable (plain permalinks,
+        // security plugins). Public on purpose, like the REST route.
+        \add_action('wp_ajax_nopriv_' . self::PROOF_ACTION, [$this, 'handleAjaxProof']);
+        \add_action('wp_ajax_' . self::PROOF_ACTION, [$this, 'handleAjaxProof']);
     }
 
     public function registerRoute(): void
@@ -62,6 +67,17 @@ final class Connect implements Registerable
         }
 
         return ['nonce' => $nonce];
+    }
+
+    /** admin-ajax twin of the REST proof route: `{"nonce":...}` while a connect is pending, else 404. */
+    public function handleAjaxProof(): void
+    {
+        $proof = $this->proof();
+        if ($proof instanceof \WP_Error) {
+            \wp_send_json(['code' => 'cherrylink_no_connect'], 404);
+        } else {
+            \wp_send_json($proof);
+        }
     }
 
     /** Settings-page URL (the wizard lives there). */
@@ -99,6 +115,14 @@ final class Connect implements Registerable
             return ['ok' => false, 'code' => 'invalid_domain', 'retry_after' => null];
         }
 
+        // https only (the authority refuses anything else); omit the field when none remain.
+        $proof_urls = \array_values(\array_filter([
+            \rest_url('cherrylink/v1/connect-proof'),
+            \admin_url('admin-ajax.php?action=' . self::PROOF_ACTION),
+        ], static function ($url): bool {
+            return \is_string($url) && \strpos($url, 'https://') === 0;
+        }));
+
         $nonce = \wp_generate_password(40, false);
         \set_transient(self::NONCE_TRANSIENT, $nonce, self::NONCE_TTL);
 
@@ -107,7 +131,9 @@ final class Connect implements Registerable
                 'timeout'     => 20, // the authority fetches the proof (<= 5 s) before answering
                 'redirection' => 0,
                 'headers'     => ['Content-Type' => 'application/json'],
-                'body'        => \wp_json_encode(['domain' => $domain, 'nonce' => $nonce]),
+                'body'        => \wp_json_encode(\array_filter(
+                    ['domain' => $domain, 'nonce' => $nonce, 'proof_urls' => $proof_urls]
+                )),
             ]);
         } finally {
             \delete_transient(self::NONCE_TRANSIENT);

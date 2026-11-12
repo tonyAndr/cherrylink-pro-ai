@@ -475,4 +475,54 @@ final class ApiClientTest extends TestCase
 
         $this->assertSame([], (new Client())->upsert_batch_result([$a])['plan_limited']);
     }
+
+    public function testLinkBatchCarriesTheUpsertContentHashPerItem(): void
+    {
+        Functions\when('get_option')->justReturn(['hash_field' => 'LICENSE123']);
+        $post = new \WP_Post();
+        $post->ID = 5;
+        $post->post_title = 'T';
+        $post->post_content = 'body';
+        Functions\when('get_post')->justReturn($post);
+        Functions\when('get_permalink')->justReturn('https://mysite.ru/t/');
+        Functions\when('wp_strip_all_tags')->returnArg();
+        Functions\when('get_post_meta')->justReturn('');
+        $this->mockHttp(['results' => [['count' => 1]], 'errors' => 0]);
+
+        $client = new Client();
+        $client->parse_links_for_ids_result([5]);
+
+        $item = json_decode($this->captured['args']['body'], true)['items'][0];
+        $this->assertSame($client->content_hash($post), $item['content_hash']);
+    }
+
+    public function testSingleLinkParseSendsContentHashOnlyWhenGiven(): void
+    {
+        Functions\when('get_option')->justReturn(['hash_field' => 'LICENSE123']);
+        $this->mockHttp(['count' => 0]);
+        $client = new Client();
+
+        $client->parse_links(5, 0, 'https://mysite.ru/t/', '<p>x</p>', 'abc');
+        $this->assertSame('abc', json_decode($this->captured['args']['body'], true)['content_hash']);
+
+        $client->parse_links(5, 0, 'https://mysite.ru/t/', '<p>x</p>');
+        $this->assertArrayNotHasKey('content_hash', json_decode($this->captured['args']['body'], true));
+    }
+
+    public function testSyncPlanRequestIsCompleteAndA404IsReportedForFallback(): void
+    {
+        Functions\when('get_option')->justReturn(['hash_field' => 'LICENSE123']);
+        $entries = [['post_id' => 1, 'modified_gmt' => '2026-01-01 00:00:00', 'content_hash' => 'h']];
+
+        $this->mockHttp(['index' => [1], 'links' => [1], 'drop_vectors' => [], 'drop_links' => []]);
+        $res = (new Client())->fetch_sync_plan_result($entries);
+        $this->assertTrue($res['ok']);
+        $this->assertSame('https://seocherry.apov.dev/v1/sync/plan', $this->captured['url']);
+        $this->assertSame(['entries' => $entries, 'complete' => true], json_decode($this->captured['args']['body'], true));
+
+        $this->mockHttp(['detail' => 'Not Found'], 404);
+        $res = (new Client())->fetch_sync_plan_result($entries);
+        $this->assertFalse($res['ok']);
+        $this->assertSame(404, $res['status']);
+    }
 }

@@ -122,7 +122,7 @@ final class SyncPlanTest extends TestCase
         $this->assertSame([4, 3], $plan['upsert']);        // newest first, 2 is out of the limit
         $this->assertSame([9], $plan['delete']);           // orphan: vector + links
         $this->assertSame([2, 1], $plan['drop']);          // outside the limit but indexed: vector only
-        $this->assertSame([4, 3, 2, 1], $plan['links']);   // link graph covers every post
+        $this->assertSame([4, 3], $plan['links']);         // links follow upserts, not the whole tail
     }
 
     public function testLimitedPlanSkipsUnchangedPostsInsideTheLimit(): void
@@ -142,5 +142,21 @@ final class SyncPlanTest extends TestCase
         $same = '2026-01-01 00:00:00';
         $plan = IndexHelpers::compute_sync_plan([], [1 => $same, 2 => $same, 3 => $same], false, 2);
         $this->assertSame([3, 2], $plan['upsert']);
+    }
+
+    public function testServerPlanMapsPhasesAndDedupesDropVectorsAgainstDropLinks(): void
+    {
+        $plan = IndexHelpers::plan_from_server(
+            ['index' => [3, 3, 4], 'links' => [4], 'drop_vectors' => [8, 9], 'drop_links' => [9]],
+            [3 => '2026-01-03 00:00:00', 4 => '2026-01-04 00:00:00']
+        );
+        $this->assertSame(['upsert' => [3, 4], 'delete' => [9], 'drop' => [8], 'links' => [4]], $plan);
+    }
+
+    public function testServerPlanForceFullHonoursThePostLimit(): void
+    {
+        $plan = IndexHelpers::plan_from_server([], [1 => '2026-01-01 00:00:00', 2 => '2026-01-02 00:00:00', 3 => '2026-01-03 00:00:00'], true, 2);
+        $this->assertSame([3, 2], $plan['upsert']);
+        $this->assertSame([3, 2, 1], $plan['links']);
     }
 }

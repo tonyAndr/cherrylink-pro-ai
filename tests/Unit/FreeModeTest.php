@@ -82,6 +82,12 @@ final class FreeModeTest extends TestCase
             return json_encode($data);
         });
         Functions\when('sanitize_text_field')->returnArg();
+        Functions\when('rest_url')->alias(static function ($path = '') {
+            return 'https://mysite.example/wp-json/' . $path;
+        });
+        Functions\when('admin_url')->alias(static function ($path = '') {
+            return 'https://mysite.example/wp-admin/' . $path;
+        });
         Functions\when('wp_generate_password')->justReturn('nonceNONCE1234567890nonceNONCE1234567890');
         Functions\when('wp_clear_scheduled_hook')->justReturn(true);
         Functions\when('wp_schedule_single_event')->alias(function ($time, $hook) {
@@ -239,6 +245,54 @@ final class FreeModeTest extends TestCase
         $this->assertSame(1000, $meta['post_limit']);
         $this->assertTrue($this->license()->isLicensed());
         $this->assertContains(Capabilities::REFRESH_HOOK, $this->scheduled);
+    }
+
+    public function testConnectSendsHttpsProofUrls(): void
+    {
+        Functions\when('wp_remote_post')->alias(function ($url, $args) {
+            $this->posts[] = [$url, $args];
+            return ['response' => ['code' => 422], 'body' => '{}'];
+        });
+        (new Connect($this->license()))->connect();
+        $body = json_decode($this->posts[0][1]['body'], true);
+        $this->assertSame([
+            'https://mysite.example/wp-json/cherrylink/v1/connect-proof',
+            'https://mysite.example/wp-admin/admin-ajax.php?action=cherrylink_connect_proof',
+        ], $body['proof_urls']);
+    }
+
+    public function testConnectDropsNonHttpsProofUrlsAndOmitsTheFieldWhenNoneRemain(): void
+    {
+        Functions\when('rest_url')->justReturn('http://mysite.example/wp-json/cherrylink/v1/connect-proof');
+        Functions\when('wp_remote_post')->alias(function ($url, $args) {
+            $this->posts[] = [$url, $args];
+            return ['response' => ['code' => 422], 'body' => '{}'];
+        });
+        (new Connect($this->license()))->connect();
+        $body = json_decode($this->posts[0][1]['body'], true);
+        $this->assertSame(['https://mysite.example/wp-admin/admin-ajax.php?action=cherrylink_connect_proof'], $body['proof_urls']);
+
+        Functions\when('admin_url')->justReturn('http://mysite.example/wp-admin/admin-ajax.php');
+        (new Connect($this->license()))->connect();
+        $body = json_decode($this->posts[1][1]['body'], true);
+        $this->assertArrayNotHasKey('proof_urls', $body);
+    }
+
+    public function testAjaxProofServesTheNonceOnlyWhilePending(): void
+    {
+        $sent = [];
+        Functions\when('wp_send_json')->alias(static function ($data, $status = null) use (&$sent) {
+            $sent[] = [$data, $status];
+        });
+        $connect = new Connect($this->license());
+
+        $connect->handleAjaxProof();
+        $this->assertSame(404, $sent[0][1]);
+        $this->assertArrayNotHasKey('nonce', $sent[0][0]);
+
+        $this->transients[Connect::NONCE_TRANSIENT] = 'abc';
+        $connect->handleAjaxProof();
+        $this->assertSame([['nonce' => 'abc'], null], $sent[1]);
     }
 
     public function testProofRouteProofShape(): void

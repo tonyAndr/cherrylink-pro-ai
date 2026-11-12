@@ -46,6 +46,9 @@ final class SyncService implements Registerable
     public const LINK_BATCH    = 25;
     public const PRUNE_BATCH   = 1000;
 
+    /** Server limit for `/v1/sync/plan` entries; larger inventories use the manifest path. */
+    public const PLAN_MAX_ENTRIES = 50000;
+
     /** Cross-process fence: several dispatchers can run this hook at once. */
     public const LOCK = 'cherrylink_sync_worker_lock';
     private const LOCK_TTL = 180;
@@ -178,8 +181,9 @@ final class SyncService implements Registerable
     // ── Public actions ──────────────────────────────────────────────────────
 
     /**
-     * Persist the manifest phase and kick off the background chain. Returns immediately;
-     * the worker fetches the manifest and builds the plan.
+     * Persist the planning phase (still named `manifest`, a persisted/UI-visible key) and kick
+     * off the background chain. Returns immediately; the worker asks the server for the sync
+     * plan (or fetches the manifest on older APIs).
      *
      * @return array<string,mixed>
      */
@@ -357,12 +361,7 @@ final class SyncService implements Registerable
         try {
             switch ($phase) {
                 case 'manifest':
-                    $res = $api->fetch_manifest_result();
-                    if (!$res['ok']) {
-                        $this->handleFailure($api, $phase, $offset, $state, $res);
-                        return;
-                    }
-                    $this->startFromManifest($res['map'], (bool) ($state['force_full'] ?? false));
+                    $this->planFromServer($api, $offset, $state);
                     return;
 
                 case 'upsert':
@@ -490,12 +489,11 @@ final class SyncService implements Registerable
     }
 
     /**
-     * Build a plan only after the complete manifest has been fetched, then enter the
-     * first work phase. Existing plans remain untouched while manifest retrieval retries.
+     * Eligible published posts as [post_id => post_modified_gmt].
      *
-     * @param array<int,array{hash:mixed,modified:mixed}> $manifest
+     * @return array<int,string>
      */
-    private function startFromManifest(array $manifest, bool $force_full): void
+    private function eligiblePosts(): array
     {
         global $wpdb;
         $allowed = IndexHelpers::get_allowed_types_list();
@@ -506,11 +504,92 @@ final class SyncService implements Registerable
             $allowed
         ));
         $current_modified = [];
-        foreach ($rows as $r) {
-            $current_modified[(int) $r->ID] = $r->post_modified_gmt;
+        foreach ((array) $rows as $r) {
+            $current_modified[(int) $r->ID] = (string) $r->post_modified_gmt;
         }
 
-        $plan = IndexHelpers::compute_sync_plan($manifest, $current_modified, $force_full, $this->license->postLimit());
+        return $current_modified;
+    }
+
+    /**
+     * Plan phase: send the inventory to `/v1/sync/plan`. An older API (404) or an inventory
+     * above the server limit falls back to the manifest + local diff. The prior plan stays
+     * untouched until a complete answer arrives; failures retry this phase.
+     *
+     * @param array<string,mixed> $state
+     */
+    private function planFromServer(Client $api, int $offset, array $state): void
+    {
+        $force_full = (bool) ($state['force_full'] ?? false);
+        $eligible   = $this->eligiblePosts();
+
+        if (\count($eligible) > self::PLAN_MAX_ENTRIES) {
+            // ponytail: one unpaged plan request is the server contract; paging comes when a site outgrows 50k.
+            $api->log_error('sync plan skipped: inventory above ' . self::PLAN_MAX_ENTRIES . ' posts, using the manifest', 'php_index', 0, 'warning');
+            $this->planFromManifest($api, $offset, $state, $eligible);
+            return;
+        }
+
+        $entries = [];
+        foreach (\array_chunk(\array_keys($eligible), 200) as $chunk) {
+            if (\function_exists('_prime_post_caches')) {
+                \_prime_post_caches($chunk, false, false);
+            }
+            foreach ($chunk as $id) {
+                $post = \get_post($id);
+                if (!$post) {
+                    unset($eligible[$id]);
+                    continue;
+                }
+                $entries[] = [
+                    'post_id'      => $id,
+                    'modified_gmt' => $eligible[$id],
+                    'content_hash' => $api->content_hash($post), // same hash the upsert sends
+                ];
+            }
+        }
+
+        $res = $api->fetch_sync_plan_result($entries);
+        if (!$res['ok']) {
+            if ((int) $res['status'] === 404) {
+                $this->planFromManifest($api, $offset, $state, $eligible);
+                return;
+            }
+            $this->handleFailure($api, 'manifest', $offset, $state, $res);
+            return;
+        }
+
+        $plan = IndexHelpers::plan_from_server($res['plan'], $eligible, $force_full, $this->license->postLimit());
+        $this->publishPlan($plan, $force_full);
+    }
+
+    /**
+     * Legacy planning for APIs without `/v1/sync/plan`.
+     *
+     * @param array<string,mixed> $state
+     * @param array<int,string>   $eligible
+     */
+    private function planFromManifest(Client $api, int $offset, array $state, array $eligible): void
+    {
+        $res = $api->fetch_manifest_result();
+        if (!$res['ok']) {
+            $this->handleFailure($api, 'manifest', $offset, $state, $res);
+            return;
+        }
+        $force_full = (bool) ($state['force_full'] ?? false);
+        $this->publishPlan(
+            IndexHelpers::compute_sync_plan($res['map'], $eligible, $force_full, $this->license->postLimit()),
+            $force_full
+        );
+    }
+
+    /**
+     * Persist a freshly computed plan and enter its first work phase.
+     *
+     * @param array<string,mixed> $plan
+     */
+    private function publishPlan(array $plan, bool $force_full): void
+    {
         // This is the first point at which a fresh plan is safe to publish.
         \update_option(self::PLAN, $plan, false);
 

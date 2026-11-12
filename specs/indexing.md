@@ -14,12 +14,25 @@ available.
 - `Api\\Client` is the only PHP transport boundary. Structured results retain
   HTTP status, response body, normalized headers, and `Retry-After`; legacy
   array/count wrappers remain compatible.
-- `Indexing\\SyncService` builds a manifest diff and processes `upsert -> links ->
+- `Indexing\\SyncService` obtains a plan (server-side, below) and processes `upsert -> links ->
   prune` through Action Scheduler. It never advances a cursor after a failed or
   partial API operation.
-- Manifest retrieval is fail-closed. A failed page leaves the previous plan
+- Planning is fail-closed. A failed plan/manifest request leaves the previous plan
   untouched and schedules a bounded, fenced retry; `force_full` is persisted
-  through that manifest phase and still prunes orphan IDs.
+  through the planning phase and still prunes orphan IDs.
+
+### Server-side sync plan
+The persisted phase is still called `manifest`. The worker builds the inventory of eligible published posts
+`{post_id, modified_gmt, content_hash}` (`content_hash` = `Client::content_hash()`, the exact hash the upsert sends)
+and POSTs it to `/v1/sync/plan` with `complete: true` (`Client::fetch_sync_plan_result`, 120 s). The response maps via
+`IndexHelpers::plan_from_server`: `index` -> `upsert`, `links` -> `links`, `drop_vectors` -> `drop` (vector only),
+`drop_links` -> `delete` (vector + links; an id in both drop lists is treated as `delete`). `force_full` ignores the
+server's `index`/`links` and re-uploads every eligible post (newest `post_limit` for upserts on limited plans); the server
+records the new hashes. Link uploads (`parse_links_for_ids_result`, save-hook `parse_links`) send `content_hash`
+so the server records `links_hash`. Failures use the usual retry (429/5xx/`Retry-After`).
+Fallback to the manifest + local diff (unchanged, except links now follow upserts on limited plans): `404` from
+`/v1/sync/plan` (older API) or more than `SyncService::PLAN_MAX_ENTRIES` (50,000) eligible posts (logged as a warning;
+paging is a ponytail deferral). Async tenants use `AsyncBulkScan` and are unchanged.
 - Retry ownership is in `SyncService`, not `Api\\Client` or WooCommerce Action
   Scheduler: retry transport failures, 408, 429, and 5xx; honor valid
   `Retry-After`; otherwise use bounded exponential backoff with jitter. A

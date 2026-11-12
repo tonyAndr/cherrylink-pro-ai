@@ -68,8 +68,7 @@ class IndexHelpers
      *   delete = indexed posts no longer published (orphans).
      *   With a post limit only the newest `post_limit` posts (by modified, newest first)
      *   are upserted; `drop` = indexed published posts outside that set (vector only,
-     *   their link graph is kept); `links` = posts whose link graph must be (re)built
-     *   (the upserts plus every post outside the limit, which has no vector).
+     *   their link graph is kept); `links` = the upserts (links follow upserts).
      */
     public static function compute_sync_plan(array $manifest, array $current_modified, bool $force_full = false, ?int $post_limit = null): array
     {
@@ -115,6 +114,42 @@ class IndexHelpers
         $delete  = array_values(array_diff($indexed, $ids));
         $drop    = array_values(array_intersect($rest, $indexed));
 
-        return ['upsert' => $upsert, 'delete' => $delete, 'drop' => $drop, 'links' => array_merge($upsert, $rest)];
+        // Links follow upserts, as in the unlimited path (the old "links for every over-limit
+        // post" branch re-sent the whole tail on each scan; the server-side plan replaces it).
+        return ['upsert' => $upsert, 'delete' => $delete, 'drop' => $drop, 'links' => $upsert];
+    }
+
+    /**
+     * Map a `/v1/sync/plan` response onto the persisted plan shape (pure).
+     *
+     * index -> upsert, links -> links, drop_vectors -> drop (vector only), drop_links ->
+     * delete (vector + links). With $force_full every eligible post is re-uploaded
+     * (index + links), restricted to the newest `post_limit` posts when the plan has one.
+     *
+     * @param array<string,mixed> $response         decoded plan response
+     * @param array<int,string>   $current_modified post_modified_gmt of the eligible posts, by ID
+     * @return array{upsert:int[],delete:int[],drop:int[],links:int[]}
+     */
+    public static function plan_from_server(array $response, array $current_modified, bool $force_full = false, ?int $post_limit = null): array
+    {
+        $ints   = static function ($v): array {
+            return \is_array($v) ? \array_values(\array_unique(\array_map('intval', $v))) : [];
+        };
+        $delete = $ints($response['drop_links'] ?? []);
+        $drop   = \array_values(\array_diff($ints($response['drop_vectors'] ?? []), $delete));
+        $upsert = $ints($response['index'] ?? []);
+        $links  = $ints($response['links'] ?? []);
+
+        if ($force_full) {
+            $ids = \array_map('intval', \array_keys($current_modified));
+            \usort($ids, static function (int $a, int $b) use ($current_modified): int {
+                $cmp = \strcmp((string) $current_modified[$b], (string) $current_modified[$a]);
+                return $cmp !== 0 ? $cmp : $b <=> $a;
+            });
+            $upsert = ($post_limit !== null && $post_limit > 0) ? \array_slice($ids, 0, $post_limit) : $ids;
+            $links  = $ids;
+        }
+
+        return ['upsert' => $upsert, 'delete' => $delete, 'drop' => $drop, 'links' => $links];
     }
 }

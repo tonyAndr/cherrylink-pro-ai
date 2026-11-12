@@ -38,9 +38,13 @@ Tests: `FreeModeTest::testNothingReachesTheNetworkWithoutAKey`.
 ## Connect flow (`Support\Connect`)
 1. Settings page wizard step 1 posts to `admin-post.php?action=cherrylink_connect` (nonce, `cherrylink_settings`).
 2. Plugin stores a random nonce in transient `cherrylink_connect_nonce` (10 min), POSTs JSON
-   `{domain, nonce}` (domain = `home_url()` host) to `<licensing base>connect` (20 s), then deletes the transient.
+   `{domain, nonce, proof_urls}` (domain = `home_url()` host) to `<licensing base>connect` (20 s), then deletes the transient.
 3. `GET /wp-json/cherrylink/v1/connect-proof` (public) returns `{"nonce": ...}` only while the transient exists,
-   else 404. The authority fetches it over HTTPS as domain proof.
+   else 404. The authority fetches it over HTTPS as domain proof. `proof_urls` lists `rest_url('cherrylink/v1/connect-proof')`
+   and `admin_url('admin-ajax.php?action=cherrylink_connect_proof')` (non-https entries dropped; field omitted if none
+   remain), so plain permalinks, subdirectory installs and REST-blocking plugins still prove. The ajax twin
+   (`wp_ajax_nopriv_` + `wp_ajax_cherrylink_connect_proof`, `Connect::handleAjaxProof`) answers `{"nonce": ...}` while
+   the transient exists, else 404.
 4. 200: `license_key` is stored in the key option, plan fields and `key_valid` in meta (no second round trip), a
    capabilities refresh is scheduled on cron, and the user is redirected to wizard step 2.
 5. Errors map to `cl_connect=<code>` notices: `domain_proof_failed` (409), `rate_limited` (429, `Retry-After`),
@@ -55,13 +59,14 @@ activation redirect. Plugins screen only: dismissible notice "connect CherryLink
 connected, with `admin_url()` links. Terms/Privacy/Upgrade URLs are placeholder constants on `Connect`.
 
 ## Plan limit in indexing
-`License::postLimit()` (null = unlimited/legacy). In `SyncService::startFromManifest` a limit changes only the plan:
+`License::postLimit()` (null = unlimited/legacy). The limit is applied by the server in `POST /v1/sync/plan` (see
+`indexing.md` "Server-side sync plan"): `index` covers only the newest `post_limit` posts, `drop_vectors` removes
+vectors outside that set (**link graph kept**), `links` is driven by the stored links hash, not by the limit.
+Fallback for an API without the route (manifest + local diff, `IndexHelpers::compute_sync_plan`):
 - `upsert` = only the newest `post_limit` eligible posts by `post_modified_gmt` (ties: higher ID), newest first;
 - `drop` = indexed published posts outside that set: vectors deleted in the prune phase, **link graph kept**;
-- `links` = upserts plus every post outside the limit (the link audit covers the whole site; costs a re-parse of
-  the overflow each scan);
+- `links` = the upserts (links follow upserts; the former "links for every over-limit post" re-sent the tail each scan);
 - `delete` = orphans (vector and links), as before.
-With no limit the plan is exactly `{upsert, delete}` as before.
 Server rejections are handled outcomes, not errors: single upsert `409 {detail: plan_limit}` returns success;
 batch responses expose `plan_limited: [ids]` on `upsert_batch_result` and never count as `errors` (no retry loop).
 The async bulk run (`AsyncBulkScan`) is not plan-limited (the API does not limit async routes either).

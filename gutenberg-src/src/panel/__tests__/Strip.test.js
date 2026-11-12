@@ -30,8 +30,8 @@ describe('Strip plan line', () => {
 
     it('renders "indexed of total" with an upgrade link', () => {
         render(<Strip {...base} plan={{ post_limit: 1000, indexed: 1000, total: 2340 }} upgradeUrl="https://example.test/up" />);
-        expect(screen.getByText(/Проиндексировано 1\s000 из 2\s340/)).toBeInTheDocument();
-        expect(screen.getByText('Расширить')).toHaveAttribute('href', 'https://example.test/up');
+        expect(screen.getByText(/Indexed 1\s000 of 2\s340/)).toBeInTheDocument();
+        expect(screen.getByText('Upgrade')).toHaveAttribute('href', 'https://example.test/up');
     });
 
     it('explains why a post outside the limit is not suggested elsewhere', () => {
@@ -45,6 +45,6 @@ describe('Strip plan line', () => {
 
     it('renders nothing extra without a limit', () => {
         render(<Strip {...base} plan={null} />);
-        expect(screen.queryByText(/Проиндексировано/)).toBeNull();
+        expect(screen.queryByText(/Indexed/)).toBeNull();
     });
 });

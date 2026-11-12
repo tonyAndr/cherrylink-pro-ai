@@ -23,7 +23,7 @@ export function createApi({ ajaxUrl, nonce }) {
                 body: JSON.stringify(body),
             });
         } catch (e) {
-            throw new ApiError('network', __('Нет соединения с сервером', 'cherrylink'));
+            throw new ApiError('network', __('No connection to the server', 'cherrylink'));
         }
         let data = null;
         try {
@@ -33,7 +33,7 @@ export function createApi({ ajaxUrl, nonce }) {
         }
         if (!data || typeof data !== 'object' || data.ok === false || !res.ok) {
             const code = (data && data.error) || `http_${res.status}`;
-            const message = (data && data.message) || __('Не удалось получить данные. Попробуйте ещё раз.', 'cherrylink');
+            const message = (data && data.message) || __('Could not load data. Try again.', 'cherrylink');
             throw new ApiError(code, message);
         }
         return data;

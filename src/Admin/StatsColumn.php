@@ -7,7 +7,7 @@ namespace CherryLink\Admin;
 use CherryLink\Contracts\Registerable;
 
 /**
- * Adds the "Исх"/"Вх" (outgoing/incoming link count) columns to the post & page
+ * Adds the "Out"/"In" (outgoing/incoming link count) columns to the post & page
  * list tables, populates them from post meta, and makes them sortable.
  *
  * Ported verbatim from the legacy cherrylink_stats_column.php (now a thin shim).
@@ -44,8 +44,8 @@ final class StatsColumn implements Registerable
      */
     public function columns(array $cols): array
     {
-        $cols['cherry_outgoing'] = \__('Исх', 'cherrylink');
-        $cols['cherry_income']   = \__('Вх', 'cherrylink');
+        $cols['cherry_outgoing'] = \__('Out', 'cherrylink');
+        $cols['cherry_income']   = \__('In', 'cherrylink');
 
         return $cols;
     }

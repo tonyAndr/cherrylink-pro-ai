@@ -13,7 +13,7 @@ export default function Toast({ toast, onUndo, onClose }) {
             <span>{toast.message}</span>
             {toast.undo && (
                 <button type="button" onClick={onUndo}>
-                    {__('Отменить', 'cherrylink')}
+                    {__('Undo', 'cherrylink')}
                 </button>
             )}
         </div>

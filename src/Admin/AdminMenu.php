@@ -68,7 +68,7 @@ final class AdminMenu implements Registerable
     public function menu(): void
     {
         $cap = 'cherrylink_settings';
-        // The icon is a data URI so the menu needs no extra request; WordPress recolours it.
+        // The icon is a data URI so the menu needs no extra request; WordPress recolors it.
         $icon = 'data:image/svg+xml;base64,' . \base64_encode(
             '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><g fill="#a7aaad"><circle cx="6" cy="14" r="4"/><circle cx="14.500" cy="13" r="3.500"/><path d="M6 10c0-4 2-6 6-8l1 1c-3 1-4 3-4 7zM11 9c1-3 3-5 5-5l.5 1c-2 .5-3 2-3.500 4.500z"/></g></svg>'
         );
@@ -125,19 +125,19 @@ final class AdminMenu implements Registerable
         }
         $dir = Plugin::instance()->dir();
         $url = Plugin::instance()->url();
-        if (! \file_exists($dir . 'js/cherry-admin.js')) {
+        if (! \file_exists($dir . 'js/cherry-app.js')) {
             return; // bundle not built yet
         }
-        $asset = \file_exists($dir . 'js/cherry-admin.asset.php') ? (array) include $dir . 'js/cherry-admin.asset.php' : [];
+        $asset = \file_exists($dir . 'js/cherry-app.asset.php') ? (array) include $dir . 'js/cherry-app.asset.php' : [];
         $deps  = (array) ($asset['dependencies'] ?? ['wp-element', 'wp-components', 'wp-i18n']);
-        $ver   = (string) ($asset['version'] ?? PluginMeta::assetVer('js/cherry-admin.js'));
+        $ver   = (string) ($asset['version'] ?? PluginMeta::assetVer('js/cherry-app.js'));
 
-        \wp_register_script('cherrylink-admin', $url . 'js/cherry-admin.js', $deps, $ver, true);
+        \wp_register_script('cherrylink-admin', $url . 'js/cherry-app.js', $deps, $ver, true);
         \wp_set_script_translations('cherrylink-admin', 'cherrylink', $dir . 'languages');
         \wp_add_inline_script('cherrylink-admin', 'window.cherrylinkAdmin = ' . \wp_json_encode($this->bootstrap()) . ';', 'before');
         \wp_enqueue_script('cherrylink-admin');
-        if (\file_exists($dir . 'js/cherry-admin.css')) {
-            \wp_enqueue_style('cherrylink-admin', $url . 'js/cherry-admin.css', ['wp-components'], $ver);
+        if (\file_exists($dir . 'js/cherry-app.css')) {
+            \wp_enqueue_style('cherrylink-admin', $url . 'js/cherry-app.css', ['wp-components'], $ver);
         }
     }
 
@@ -177,7 +177,7 @@ final class AdminMenu implements Registerable
 
     /**
      * Stream the settings file to the current administrator (never a static file in the
-     * plugin directory: the export includes the licence key).
+     * plugin directory: the export includes the license key).
      */
     public function exportOptions(): void
     {

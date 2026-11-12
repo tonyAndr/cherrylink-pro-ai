@@ -118,7 +118,7 @@ function Form({ onReload }) {
                 {license.error && <Notice tone="danger">{license.error}</Notice>}
                 {license.post_limit && state.counts.total > license.post_limit && (
                     <p className="cl-muted">{sprintf(
-                        /* translators: 1: learned posts, 2: all posts. "Learned" = post analysed for suggestions; counts toward the plan limit. */
+                        /* translators: 1: learned posts, 2: all posts. "Learned" = post analyzed for suggestions; counts toward the plan limit. */
                         __('%1$s of %2$s posts learned. Posts beyond the limit keep link health and their own suggestions, but other posts won\'t suggest links to them.', 'cherrylink'),
                         (state.counts.learned ?? license.post_limit).toLocaleString(), state.counts.total.toLocaleString())}</p>
                 )}

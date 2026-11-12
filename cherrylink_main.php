@@ -3,7 +3,7 @@
 /*
 Plugin Name: CherryLink – AI Internal Linking
 Plugin URI: http://seocherry.ru/
-Description: Плагин для автоматической внутренней перелинковки на основе семантического поиска (AI). Находит релевантные статьи и предлагает анкорные фразы с помощью векторных эмбеддингов.
+Description: A plugin for automatic internal linking based on semantic search (AI). It finds relevant posts and suggests anchor phrases using vector embeddings.
 Version: 1.2.1
 Author: Anton SeoCherry.ru
 Author URI: http://seocherry.ru/

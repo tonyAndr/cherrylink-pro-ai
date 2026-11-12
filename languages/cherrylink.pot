@@ -3,31 +3,35 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: CherryLink – AI Internal Linking 1.2.1\n"
-"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/plugin\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/app\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-12T09:50:41+00:00\n"
+"POT-Creation-Date: 2026-11-12T13:34:03+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"X-Generator: WP-CLI 2.7.1\n"
+"X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: cherrylink\n"
 
 #. Plugin Name of the plugin
+#: cherrylink_main.php
 msgid "CherryLink – AI Internal Linking"
 msgstr ""
 
 #. Plugin URI of the plugin
 #. Author URI of the plugin
+#: cherrylink_main.php
 msgid "http://seocherry.ru/"
 msgstr ""
 
 #. Description of the plugin
-msgid "Плагин для автоматической внутренней перелинковки на основе семантического поиска (AI). Находит релевантные статьи и предлагает анкорные фразы с помощью векторных эмбеддингов."
+#: cherrylink_main.php
+msgid "A plugin for automatic internal linking based on semantic search (AI). It finds relevant posts and suggests anchor phrases using vector embeddings."
 msgstr ""
 
 #. Author of the plugin
+#: cherrylink_main.php
 msgid "Anton SeoCherry.ru"
 msgstr ""
 
@@ -35,1637 +39,1576 @@ msgstr ""
 msgid "Deactivate CherryLink Pro AI first. Two CherryLink plugins cannot run together."
 msgstr ""
 
-#: src/Admin/Notices.php:80
-msgid "установлен!"
+#: src/Admin/AdminApi.php:75
+msgid "Could not reach the CherryLink server. Try again in a moment."
 msgstr ""
 
-#: src/Admin/Notices.php:83
-msgid "Для начала работы с ним %s."
+#: src/Admin/AdminApi.php:88
+msgid "Invalid settings."
 msgstr ""
 
-#: src/Admin/Notices.php:84
-msgid "необходимо просканировать ваш сайт"
+#: src/Admin/AdminApi.php:104
+#: src/Admin/AdminApi.php:429
+msgid "Enter a license key."
 msgstr ""
 
-#: src/Admin/Notices.php:92
-msgid "сканирование не завершено!"
+#: src/Admin/AdminApi.php:119
+msgid "Unknown action."
 msgstr ""
 
-#: src/Admin/Notices.php:95
-msgid "Плагин может работать некорректно или не видеть все записи, %s."
+#: src/Admin/AdminApi.php:131
+msgid "Could not delete the site data on the CherryLink server. Check the connection and try again."
 msgstr ""
 
-#: src/Admin/Notices.php:96
-msgid "необходимо завершить сканирование"
+#: src/Admin/AdminApi.php:149
+msgid "Could not import: choose a .txt file exported from CherryLink."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:53
-msgid "Настройки CherryLink"
+#: src/Admin/AdminApi.php:425
+msgid "Could not reach the license server. Try again later or contact support."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:54
-msgid "Настройки"
+#: src/Admin/AdminApi.php:427
+msgid "The key is being checked in the background. Refresh in a few seconds."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:63
-msgid "CherryLink Options"
+#: src/Admin/AdminApi.php:431
+msgid "Could not schedule the key check. Try again."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:64
-msgid "CherryLink Pro"
+#: src/Admin/AdminApi.php:433
+msgid "This key is bound to another domain."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:74
-msgid "Основные"
+#: src/Admin/AdminApi.php:435
+msgid "This key has expired."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:75
-msgid "Сканирование сайта"
+#: src/Admin/AdminApi.php:437
+msgid "This key is not valid."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:76
-msgid "Для экспертов"
-msgstr ""
-
-#: src/Admin/SettingsPage.php:77
-msgid "Статистика"
-msgstr ""
-
-#: src/Admin/SettingsPage.php:141
-msgid "Не удалось подтвердить домен: сервер CherryLink не смог открыть адрес сайта по HTTPS. Сайт должен быть доступен из интернета; для закрытых сайтов введите ключ вручную."
+#: src/Admin/AdminApi.php:455
+msgid "Could not verify the domain: the CherryLink server could not open your site over HTTPS. The site must be reachable from the internet; for private sites enter a key manually."
 msgstr ""
 
 #. translators: %d: seconds to wait
-#: src/Admin/SettingsPage.php:145
-msgid "Слишком много попыток подключения. Повторите через %d с."
+#: src/Admin/AdminApi.php:459
+#, php-format
+msgid "Too many connection attempts. Try again in %d s."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:146
-msgid "Слишком много попыток подключения. Повторите позже."
+#: src/Admin/AdminApi.php:460
+msgid "Too many connection attempts. Try again later."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:148
-msgid "Домен сайта не подходит для подключения (нужен публичный домен, не IP-адрес и не localhost)."
+#: src/Admin/AdminApi.php:462
+msgid "This domain cannot be connected (a public domain is required, not an IP address or localhost)."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:150
-msgid "Для этого домена подключение недоступно. Введите ключ вручную или обратитесь в поддержку."
+#: src/Admin/AdminApi.php:464
+msgid "Connecting is not available for this domain. Enter a key manually or contact support."
 msgstr ""
 
-#: src/Admin/SettingsPage.php:152
-msgid "Сервер подключения временно недоступен. Повторите попытку позже."
+#: src/Admin/AdminApi.php:466
+msgid "The connection service is temporarily unavailable. Try again later."
 msgstr ""
 
-#. translators: %s: plan name (free, pro)
-#: src/Admin/SettingsPage.php:165
-msgid "Тариф: %s"
+#: src/Admin/AdminMenu.php:58
+#: src/Admin/AdminMenu.php:79
+#: js/cherry-app.js:27
+msgid "Settings"
 msgstr ""
 
-#. translators: 1: indexed posts, 2: total posts
-#: src/Admin/SettingsPage.php:171
-msgid "проиндексировано %1$s из %2$s"
+#: src/Admin/AdminMenu.php:75
+#: js/cherry-gutenberg.js:2
+msgid "CherryLink"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:214
-msgid "Настройки Vector API сохранены"
+#: src/Admin/AdminMenu.php:76
+msgid "Dashboard"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:245
-#: src/Admin/SettingsPage.php:255
-msgid "Проверка ключа запланирована. Статус обновится после фоновой проверки."
+#: src/Admin/AdminMenu.php:77
+#: js/cherry-app.js:11
+#: js/cherry-app.js:23
+msgid "Link health"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:246
-#: src/Admin/SettingsPage.php:256
-#: src/Admin/SettingsPage.php:339
-msgid "Не удалось запланировать проверку ключа. Повторите попытку вручную."
+#: src/Admin/AdminMenu.php:78
+#: js/cherry-app.js:24
+msgid "Index"
 msgstr ""
 
-#: src/Admin/SettingsPage.php:278
-msgid "Ключ сброшен"
-msgstr ""
-
-#: src/Admin/SettingsPage.php:291
-msgid "Лицензия активирована"
-msgstr ""
-
-#: src/Admin/SettingsPage.php:294
-#: templates/notices/license-inactive.php:15
-msgid "Введите ключ лицензии"
-msgstr ""
-
-#. translators: %s: link to seocherry.ru
-#: src/Admin/SettingsPage.php:297
-msgid "Получите ключ у нас на сайте: [%s]."
-msgstr ""
-
-#: src/Admin/SettingsPage.php:320
-#: templates/admin/partials/license-card.php:51
-msgid "Проверить ключ повторно"
-msgstr ""
-
-#: src/Admin/SettingsPage.php:333
-msgid "Нет связи с сервером. Попробуйте позже или обратитесь в тех. поддержку."
-msgstr ""
-
-#: src/Admin/SettingsPage.php:335
-msgid "Проверка ключа выполняется в фоне. Обновите страницу через несколько секунд."
-msgstr ""
-
-#: src/Admin/SettingsPage.php:337
-msgid "Введите ключ лицензии для проверки."
-msgstr ""
-
-#: src/Admin/SettingsPage.php:341
-msgid "Ключ привязан к другому домену, активация невозможна."
-msgstr ""
-
-#: src/Admin/SettingsPage.php:343
-msgid "Срок действия ключа истек."
-msgstr ""
-
-#: src/Admin/SettingsPage.php:345
-msgid "Неверно указан ключ."
-msgstr ""
-
-#: src/Admin/SettingsPage.php:385
-msgid "Настройки импортированы."
-msgstr ""
-
-#: src/Admin/SettingsPage.php:387
-msgid "Не удалось импортировать..."
-msgstr ""
-
-#: src/Admin/SettingsPage.php:395
-#: src/Admin/SettingsPage.php:452
-msgid "Настройки обновлены."
-msgstr ""
-
-#: src/Admin/SettingsPage.php:418
-#: src/Support/Connect.php:77
-msgid "Недостаточно прав."
-msgstr ""
-
-#: src/Admin/SettingsPage.php:460
-msgid "Настройки плагина сброшены."
-msgstr ""
-
-#: src/Admin/SettingsPage.php:462
-msgid "Операция завершилась с ошибкой."
-msgstr ""
-
-#: src/Admin/SettingsPage.php:469
-msgid "Настройки сброшены."
-msgstr ""
-
-#: src/Admin/SettingsPage.php:483
-msgid "Данные сайта удалены из API. Выполните полную переиндексацию."
-msgstr ""
-
-#: src/Admin/SettingsPage.php:485
-msgid "Не удалось удалить данные из API. Проверьте подключение к Cherry Vector API."
-msgstr ""
-
-#: src/Admin/SettingsPage.php:500
-msgid "Дополнительные поля сохранены."
+#: src/Admin/AdminMenu.php:185
+#: src/Support/Connect.php:88
+msgid "Insufficient permissions."
 msgstr ""
 
 #: src/Admin/StatsColumn.php:47
-msgid "Исх"
+msgid "Out"
 msgstr ""
 
 #: src/Admin/StatsColumn.php:48
-msgid "Вх"
-msgstr ""
-
-#: src/Csv/CsvService.php:69
-msgid "Тип"
-msgstr ""
-
-#: src/Csv/CsvService.php:70
-msgid "Рубрики_источника"
-msgstr ""
-
-#: src/Csv/CsvService.php:70
-msgid "Рубрики_цели"
-msgstr ""
-
-#: src/Csv/CsvService.php:71
-#: src/Csv/CsvService.php:72
-msgid "URL_источника"
-msgstr ""
-
-#: src/Csv/CsvService.php:71
-#: src/Csv/CsvService.php:72
-msgid "URL_цели"
-msgstr ""
-
-#: src/Csv/CsvService.php:73
-#: templates/admin/statistics-subpage.php:58
-#: templates/admin/statistics-subpage.php:152
-#: js/cherry-admin-csv.js:404
-msgid "Анкор"
-msgstr ""
-
-#: src/Csv/CsvService.php:74
-msgid "Исходящих_ссылок"
-msgstr ""
-
-#: src/Csv/CsvService.php:75
-msgid "Входящих_ссылок"
-msgstr ""
-
-#: src/Debug/Debugger.php:71
-msgid "(ID записи не указан)"
+msgid "In"
 msgstr ""
 
 #: src/Indexing/AsyncBulkScan.php:282
-msgid "Лицензия неактивна — синхронизация недоступна."
+msgid "The license is inactive — synchronization is unavailable."
 msgstr ""
 
 #: src/Indexing/AsyncBulkScan.php:340
-msgid "Асинхронная индексация недоступна. Загрузка возобновится автоматически."
+msgid "Asynchronous indexing is unavailable. Uploading will resume automatically."
 msgstr ""
 
 #: src/Indexing/AsyncBulkScan.php:350
-msgid "Планирование задерживается, попробуем снова автоматически."
+msgid "Scheduling is delayed; we will retry automatically."
 msgstr ""
 
 #: src/Indexing/AsyncBulkScan.php:363
-msgid "Приостановлено. Загрузка продолжится после «Продолжить»."
+msgid "Paused. Uploading will continue after “Resume”."
 msgstr ""
 
 #: src/Indexing/AsyncBulkScan.php:402
-msgid "Остановка сканирования…"
+msgid "Stopping the scan…"
 msgstr ""
 
 #: src/Indexing/AsyncBulkScan.php:434
-#: src/Indexing/SyncService.php:274
-msgid "Остановлено пользователем"
+#: src/Indexing/SyncService.php:278
+msgid "Stopped by user"
 msgstr ""
 
 #: src/Indexing/AsyncBulkScan.php:564
-msgid "Сканирование завершено"
+msgid "Scan completed"
 msgstr ""
 
 #: src/Indexing/AsyncBulkScan.php:833
-msgid "Загружено. Идёт обработка на сервере."
+msgid "Uploaded. Processing on the server."
 msgstr ""
 
 #: src/Indexing/AsyncBulkScan.php:856
-msgid "Индексация завершена"
+msgid "Indexing completed"
 msgstr ""
 
 #: src/Indexing/AsyncBulkScan.php:857
-msgid "Индексация завершена с ошибками"
+msgid "Indexing completed with errors"
 msgstr ""
 
 #. translators: 1: applied vectors, 2: total items, 3: pending items
 #: src/Indexing/AsyncBulkScan.php:873
-msgid "Обработка на сервере: %1$d из %2$d, в очереди %3$d."
+#, php-format
+msgid "Processing on the server: %1$d of %2$d, %3$d queued."
 msgstr ""
 
 #. translators: 1: <time> element with the formatted scan date, 2: upserted count, 3: deleted count
 #: src/Indexing/IndexHooks.php:287
-msgid "Последнее сканирование: %1$s (обновлено: %2$d, удалено: %3$d)."
+#, php-format
+msgid "Last scan: %1$s (updated: %2$d, removed: %3$d)."
 msgstr ""
 
 #: src/Indexing/IndexHooks.php:295
-msgid "Сканирование не завершено"
+msgid "Scan not complete"
 msgstr ""
 
 #: src/Indexing/IndexHooks.php:298
-msgid "Все хорошо"
+msgid "All good"
 msgstr ""
 
 #: src/Indexing/IndexHooks.php:301
-msgid "Нужно просканировать сайт"
+msgid "You need to scan the site"
 msgstr ""
 
 #: src/Indexing/IndexHooks.php:344
 #: src/Indexing/IndexHooks.php:345
-msgid " загрузка данных…"
+msgid " loading data…"
 msgstr ""
 
 #: src/Indexing/IndexHooks.php:414
 #: src/Indexing/IndexHooks.php:422
-msgid " не удалось получить данные (нет связи с сервером)."
+msgid " failed to retrieve data (no connection to the server)."
 msgstr ""
 
 #. translators: %d: number of indexed articles
 #: src/Indexing/IndexHooks.php:418
-msgid " проиндексировано %d статей в Vector API."
+#, php-format
+msgid " %d articles indexed in the Vector API."
 msgstr ""
 
 #: src/Indexing/IndexHooks.php:419
-msgid " статьи не проиндексированы, запустите сканирование."
+msgid " articles are not indexed, run a scan."
 msgstr ""
 
 #. translators: %d: number of links found
 #: src/Indexing/IndexHooks.php:426
-msgid " найдено %d ссылок в записях и страницах."
+#, php-format
+msgid " %d links found in posts and pages."
 msgstr ""
 
 #: src/Indexing/IndexHooks.php:427
-msgid " ссылки не найдены."
+msgid " no links found."
 msgstr ""
 
-#: src/Indexing/SyncService.php:199
-msgid "Лицензия неактивна — синхронизация недоступна. Введите ключ лицензии."
+#: src/Indexing/SyncService.php:203
+msgid "License inactive — synchronization is unavailable. Enter your license key."
 msgstr ""
 
-#: src/Indexing/SyncService.php:256
-msgid "Не удалось запланировать сканирование. Попробуйте снова."
+#: src/Indexing/SyncService.php:260
+msgid "Could not schedule the scan. Please try again."
 msgstr ""
 
-#: src/Indexing/SyncService.php:541
-msgid "Изменений не найдено"
+#: src/Indexing/SyncService.php:621
+msgid "No changes found"
 msgstr ""
 
 #: src/Support/CapabilitiesRefresh.php:61
 msgid "Every five minutes (CherryLink)"
 msgstr ""
 
-#: src/Support/Options.php:160
-msgid "Ничего не найдено..."
-msgstr ""
-
-#: templates/admin/expert-subpage.php:24
-msgid "Опции редактора"
-msgstr ""
-
-#: templates/admin/expert-subpage.php:25
-msgid "Разметка ссылок"
-msgstr ""
-
-#: templates/admin/expert-subpage.php:29
-#: templates/admin/expert-subpage.php:265
-#: templates/admin/expert-subpage.php:286
-msgid "Сохранить настройки"
-msgstr ""
-
-#: templates/admin/expert-subpage.php:35
-msgid "Настройки работы в редакторе WP"
-msgstr ""
-
-#: templates/admin/expert-subpage.php:39
-msgid "Количество ссылок :"
-msgstr ""
-
-#: templates/admin/expert-subpage.php:51
-msgid "Тип контента:"
-msgstr ""
-
-#: templates/admin/expert-subpage.php:56
-msgid "Записи"
-msgstr ""
-
-#: templates/admin/expert-subpage.php:56
-msgid "Страницы"
-msgstr ""
-
-#: templates/admin/expert-subpage.php:90
-msgid "Только ссылки из той же рубрики?"
-msgstr ""
-
-#: templates/admin/expert-subpage.php:93
-#: templates/admin/expert-subpage.php:148
-#: templates/admin/expert-subpage.php:189
-msgid "Нет"
-msgstr ""
-
-#: templates/admin/expert-subpage.php:94
-#: templates/admin/expert-subpage.php:149
-#: templates/admin/expert-subpage.php:190
-msgid "Да"
-msgstr ""
-
-#: templates/admin/expert-subpage.php:102
-msgid "Опубликованы"
-msgstr ""
-
-#: templates/admin/expert-subpage.php:103
-msgid "Личные"
-msgstr ""
-
-#: templates/admin/expert-subpage.php:104
-msgid "Черновик"
-msgstr ""
-
-#: templates/admin/expert-subpage.php:105
-msgid "Запланированные"
-msgstr ""
-
-#: templates/admin/expert-subpage.php:109
-msgid "Статус записей:"
-msgstr ""
-
-#: templates/admin/expert-subpage.php:136
-msgid "Показать еще..."
-msgstr ""
-
-#: templates/admin/expert-subpage.php:145
-msgid "Показать на панели фильтр ссылок по рубрике"
-msgstr ""
-
-#: templates/admin/expert-subpage.php:168
-msgid "Включить в список произвольные типы записей?"
-msgstr ""
-
-#: templates/admin/expert-subpage.php:172
-msgid "Тип записи"
-msgstr ""
-
-#: templates/admin/expert-subpage.php:172
-msgid "Показать"
-msgstr ""
-
-#: templates/admin/expert-subpage.php:185
-msgid "Максимальное число входящих ссылок"
-msgstr ""
-
-#: templates/admin/expert-subpage.php:187
-msgid "Скрыть?"
-msgstr ""
-
-#: templates/admin/expert-subpage.php:192
-msgid "Количество ссылок"
-msgstr ""
-
-#: templates/admin/expert-subpage.php:203
-msgid "Пояснение к фильтрам авторов и рубрик:"
-msgstr ""
-
-#: templates/admin/expert-subpage.php:204
-msgid "Ниже вы можете скрыть записи определенных авторов и рубрик. Чтобы видеть все записи, снимите все галочки."
-msgstr ""
-
-#: templates/admin/expert-subpage.php:207
-msgid "Скрыть записи по автору:"
-msgstr ""
-
-#: templates/admin/expert-subpage.php:214
-msgid "Имя юзера"
-msgstr ""
-
-#: templates/admin/expert-subpage.php:214
-#: templates/admin/expert-subpage.php:235
-#: templates/notices/connect-prompt.php:14
-#: js/cherry-classic.js:1
-#: js/cherry-gutenberg.js:1
-msgid "Скрыть"
-msgstr ""
-
-#: templates/admin/expert-subpage.php:229
-msgid "Скрыть записи из рубрик:"
-msgstr ""
-
-#: templates/admin/expert-subpage.php:235
-#: js/cherry-classic.js:1
-#: js/cherry-gutenberg.js:1
-msgid "Рубрика"
-msgstr ""
-
-#: templates/admin/expert-subpage.php:269
-msgid "Настройки ссылок"
-msgstr ""
-
-#: templates/admin/expert-subpage.php:275
-msgid "Относительные ссылки"
-msgstr ""
-
-#: templates/admin/expert-subpage.php:278
-msgid "Полный путь (http://domain.ru/page.html)"
-msgstr ""
-
-#: templates/admin/expert-subpage.php:279
-msgid "Без протокола (//domain.ru/page.html)"
-msgstr ""
-
-#: templates/admin/expert-subpage.php:280
-msgid "Без домена (/page.html)"
-msgstr ""
-
-#: templates/admin/expert-subpage.php:290
-msgid "Соединение с сервером"
-msgstr ""
-
-#: templates/admin/expert-subpage.php:291
-msgid "Если основной сервер недоступен (например, из-за блокировки провайдером), включите альтернативный маршрут подключения и сохраните настройки."
-msgstr ""
-
-#: templates/admin/expert-subpage.php:293
-msgid "Альтернативный сервер:"
-msgstr ""
-
-#: templates/admin/expert-subpage.php:295
-msgid "Выключен"
-msgstr ""
-
-#: templates/admin/expert-subpage.php:296
-msgid "Включён"
-msgstr ""
-
-#: templates/admin/expert-subpage.php:298
-#: templates/admin/main-subpage.php:42
-#: templates/admin/partials/license-card.php:41
-#: templates/admin/partials/vector-api-card.php:29
-msgid "Сохранить"
-msgstr ""
-
-#: templates/admin/expert-subpage.php:303
-msgid "Отладка"
-msgstr ""
-
-#: templates/admin/expert-subpage.php:306
-msgid "Служебный блок для отладки ошибок."
-msgstr ""
-
-#: templates/admin/expert-subpage.php:310
-msgid "ID записи"
-msgstr ""
-
-#: templates/admin/expert-subpage.php:311
-msgid "Проверить"
-msgstr ""
-
-#: templates/admin/expert-subpage.php:314
-msgid "Информация для разработчиков"
-msgstr ""
-
-#: templates/admin/expert-subpage.php:323
-msgid "Прочие настройки"
-msgstr ""
-
-#: templates/admin/expert-subpage.php:325
-msgid "Очистить данные сайта в API (потребуется переиндексация)"
-msgstr ""
-
-#: templates/admin/expert-subpage.php:325
-msgid "Удалить все векторы и граф ссылок для этого сайта из API?"
-msgstr ""
-
-#: templates/admin/expert-subpage.php:326
-msgid "Вернуть настройки по умолчанию"
-msgstr ""
-
-#: templates/admin/main-subpage.php:20
-msgid "Справочные материалы"
-msgstr ""
-
-#: templates/admin/main-subpage.php:22
-msgid "Тарифы и получение ключа"
-msgstr ""
-
-#: templates/admin/main-subpage.php:23
-msgid "Настройки плагина"
-msgstr ""
-
-#: templates/admin/main-subpage.php:24
-msgid "Работа в редакторе WP"
-msgstr ""
-
-#: templates/admin/main-subpage.php:25
-msgid "Видео-инструкции"
-msgstr ""
-
-#: templates/admin/main-subpage.php:26
-msgid "Полезные материалы про перелинковку"
-msgstr ""
-
-#: templates/admin/main-subpage.php:35
-msgid "Отчёты о плагине"
-msgstr ""
-
-#: templates/admin/main-subpage.php:39
-msgid "Отправлять анонимные отчёты об активации и обновлении плагина (версия плагина, PHP и WordPress). По умолчанию выключено."
-msgstr ""
-
-#: templates/admin/main-subpage.php:50
-msgid "Экспорт и импорт настроек"
-msgstr ""
-
-#: templates/admin/main-subpage.php:51
-msgid "Для переноса настроек между сайтами, скачайте файл настроек"
-msgstr ""
-
-#: templates/admin/main-subpage.php:51
-msgid "и импортируйте его на другом сайте."
-msgstr ""
-
-#: templates/admin/main-subpage.php:52
-msgid "Скачать файл настроек"
-msgstr ""
-
-#: templates/admin/main-subpage.php:56
-msgid "Для импорта настроек плагина загрузите текстовый файл"
-msgstr ""
-
-#: templates/admin/main-subpage.php:56
-msgid ", полученный при экспорте настроек."
-msgstr ""
-
-#: templates/admin/main-subpage.php:61
-msgid "Импортировать настройки"
-msgstr ""
-
-#: templates/admin/partials/index-progress.php:12
-#: templates/notices/scan-prompt.php:23
-msgid "Начать сканирование"
-msgstr ""
-
-#: templates/admin/partials/index-progress.php:13
-msgid "Остановить"
-msgstr ""
-
-#: templates/admin/partials/license-card.php:20
-msgid "Действует лицензия на текущий домен, ключ скрыт в целях безопасности."
-msgstr ""
-
-#: templates/admin/partials/license-card.php:22
-#: js/cherry-classic.js:1
-#: js/cherry-gutenberg.js:1
-msgid "Расширить"
-msgstr ""
-
-#: templates/admin/partials/license-card.php:25
-msgid "Сбросить лицензию"
-msgstr ""
-
-#: templates/admin/partials/license-card.php:30
-msgid "Ваш ключ:"
-msgstr ""
-
-#: templates/admin/partials/readiness-card.php:15
-msgid "Готовность к работе"
-msgstr ""
-
-#: templates/admin/partials/readiness-card.php:24
-msgid "Проверьте сайт"
-msgstr ""
-
-#: templates/admin/partials/readiness-card.php:25
-msgid "Сканировать сайт"
-msgstr ""
-
-#: templates/admin/partials/readiness-card.php:25
-msgid "Пересканировать"
-msgstr ""
-
-#: templates/admin/partials/readiness-card.php:33
-msgid "Состояние сервера"
-msgstr ""
-
-#: templates/admin/partials/readiness-card.php:33
-msgid "не проверено"
-msgstr ""
-
-#: templates/admin/partials/readiness-card.php:35
-msgid "Нажмите «Проверить связь», чтобы проверить соединение с сервером CherryLink."
-msgstr ""
-
-#: templates/admin/partials/readiness-card.php:37
-#: js/cherry-admin-index.js:336
-msgid "Проверить связь"
-msgstr ""
-
-#: templates/admin/partials/tooltip.php:10
-msgid "Перейти к справке"
-msgstr ""
-
-#: templates/admin/partials/vector-api-card.php:14
-msgid "URL и ключ доступа к вашему Cherry Vector API."
-msgstr ""
-
-#. translators: 1: ADMIN_KEY (code), 2: .env (code)
-#: templates/admin/partials/vector-api-card.php:17
-msgid "Ключ должен совпадать с %1$s в %2$s на сервере."
-msgstr ""
-
-#: templates/admin/scan-subpage.php:25
-msgid "Настройка сканирования"
-msgstr ""
-
-#: templates/admin/scan-subpage.php:32
-msgid "Дополнительные поля для индексирования (по одному на строку):"
-msgstr ""
-
-#: templates/admin/scan-subpage.php:33
-msgid "Ключи пользовательских полей (ACF, meta и др.), содержимое которых будет добавлено к тексту статьи при индексировании."
-msgstr ""
-
-#: templates/admin/scan-subpage.php:38
-msgid "Сохранить поля"
-msgstr ""
-
-#: templates/admin/settings-page.php:18
-msgid "CherryLink Pro AI 🍒"
-msgstr ""
-
-#: templates/admin/statistics-subpage.php:13
-msgid "Поиск проблем с перелинковкой"
-msgstr ""
-
-#: templates/admin/statistics-subpage.php:14
-msgid "Нажмите на кнопку \"Проверить перелинковку\", чтобы найти записи, в которых:"
-msgstr ""
-
-#: templates/admin/statistics-subpage.php:16
-msgid "Есть повторяющиеся ссылки;"
-msgstr ""
-
-#: templates/admin/statistics-subpage.php:17
-msgid "Нет входящих ссылок;"
-msgstr ""
-
-#: templates/admin/statistics-subpage.php:18
-msgid "Нет исходящих ссылок."
-msgstr ""
-
-#: templates/admin/statistics-subpage.php:26
-msgid "Опции поиска"
-msgstr ""
-
-#: templates/admin/statistics-subpage.php:32
-#: templates/admin/statistics-subpage.php:121
-msgid "Типы публикаций"
-msgstr ""
-
-#: templates/admin/statistics-subpage.php:42
-msgid "Статус публикаций"
-msgstr ""
-
-#: templates/admin/statistics-subpage.php:52
-#: templates/admin/statistics-subpage.php:132
-msgid "Поля данных"
-msgstr ""
-
-#: templates/admin/statistics-subpage.php:53
-#: templates/admin/statistics-subpage.php:139
-msgid "ID источника"
-msgstr ""
-
-#: templates/admin/statistics-subpage.php:54
-#: templates/admin/statistics-subpage.php:140
-msgid "Тип источника"
-msgstr ""
-
-#: templates/admin/statistics-subpage.php:55
-#: templates/admin/statistics-subpage.php:141
-#: js/cherry-classic.js:1
-#: js/cherry-gutenberg.js:1
-msgid "Рубрики"
-msgstr ""
-
-#: templates/admin/statistics-subpage.php:56
-#: templates/admin/statistics-subpage.php:142
-#: templates/admin/statistics-subpage.php:150
-msgid "URL источника"
-msgstr ""
-
-#: templates/admin/statistics-subpage.php:57
-#: templates/admin/statistics-subpage.php:143
-#: templates/admin/statistics-subpage.php:149
-msgid "URL цели"
-msgstr ""
-
-#: templates/admin/statistics-subpage.php:59
-#: templates/admin/statistics-subpage.php:153
-msgid "Кол-во исходящих ссылок"
-msgstr ""
-
-#: templates/admin/statistics-subpage.php:60
-#: templates/admin/statistics-subpage.php:154
-msgid "Кол-во входящих ссылок"
-msgstr ""
-
-#: templates/admin/statistics-subpage.php:61
-#: templates/admin/statistics-subpage.php:155
-msgid "Дублировать поля (id, тип, ...)"
-msgstr ""
-
-#: templates/admin/statistics-subpage.php:65
-msgid "Проверить перелинковку"
-msgstr ""
-
-#: templates/admin/statistics-subpage.php:73
-msgid "Найдены проблемы с перелинковкой"
-msgstr ""
-
-#: templates/admin/statistics-subpage.php:105
-msgid "Экспорт перелинковки в .CSV"
-msgstr ""
-
-#: templates/admin/statistics-subpage.php:116
-msgid "Типы записей"
-msgstr ""
-
-#: templates/admin/statistics-subpage.php:133
-msgid "Ориентация ссылок"
-msgstr ""
-
-#: templates/admin/statistics-subpage.php:135
-#: js/cherry-classic.js:1
-#: js/cherry-gutenberg.js:1
-msgid "Исходящие"
-msgstr ""
-
-#: templates/admin/statistics-subpage.php:136
-#: js/cherry-classic.js:1
-#: js/cherry-gutenberg.js:1
-msgid "Входящие"
-msgstr ""
-
-#: templates/admin/statistics-subpage.php:146
-msgid "ID цели"
-msgstr ""
-
-#: templates/admin/statistics-subpage.php:147
-msgid "Тип цели"
-msgstr ""
-
-#: templates/admin/statistics-subpage.php:148
-msgid "Рубрики цели"
-msgstr ""
-
-#: templates/admin/statistics-subpage.php:159
-msgid "Скачать схему в .CSV"
-msgstr ""
-
-#: templates/admin/wizard.php:28
-msgid "Шаг 1 из 3. Подключите CherryLink"
-msgstr ""
-
-#: templates/admin/wizard.php:29
-msgid "Для подбора ссылок плагин отправляет на серверы CherryLink (ЕС) заголовки, текст и адреса ваших записей. Данные используются только для расчёта ссылок. Пока вы не нажмёте «Подключить», плагин ничего никуда не отправляет."
-msgstr ""
-
-#: templates/admin/wizard.php:31
-msgid "Условия использования"
-msgstr ""
-
-#: templates/admin/wizard.php:32
-msgid "Политика конфиденциальности"
-msgstr ""
-
-#: templates/admin/wizard.php:37
-#: templates/notices/connect-prompt.php:13
-msgid "Подключить"
-msgstr ""
-
-#: templates/admin/wizard.php:38
-msgid "У меня уже есть ключ"
-msgstr ""
-
-#: templates/admin/wizard.php:43
-msgid "Шаг 2 из 3. Индексация"
-msgstr ""
-
-#: templates/admin/wizard.php:44
-msgid "Типы записей для индексации:"
-msgstr ""
-
-#: templates/admin/wizard.php:45
-msgid "изменить"
-msgstr ""
-
-#: templates/admin/wizard.php:47
-msgid "Далее"
-msgstr ""
-
-#: templates/admin/wizard.php:51
-msgid "Шаг 3 из 3. Готово"
-msgstr ""
-
-#. translators: %s: number of indexed posts
-#: templates/admin/wizard.php:56
-msgid "Проиндексировано записей: %s"
-msgstr ""
-
-#: templates/admin/wizard.php:59
-msgid "Откройте любую запись в редакторе: панель CherryLink предложит ссылки."
-msgstr ""
-
-#: templates/admin/wizard.php:60
-msgid "Перейти к настройкам"
+#: src/Support/Options.php:162
+msgid "Nothing found..."
 msgstr ""
 
 #: templates/notices/connect-prompt.php:12
-msgid "подключите CherryLink, чтобы начать."
+msgid "connect CherryLink to get started."
+msgstr ""
+
+#: templates/notices/connect-prompt.php:13
+#: js/cherry-app.js:1
+msgid "Connect"
+msgstr ""
+
+#: templates/notices/connect-prompt.php:14
+#: js/cherry-classic.js:2
+#: js/cherry-gutenberg.js:2
+msgid "Hide"
 msgstr ""
 
 #: templates/notices/license-inactive.php:12
-msgid "лицензия неактивна — индексация и сканирование приостановлены, ссылки не обновляются."
+msgid "license inactive — indexing and scanning are paused, links are not being updated."
 msgstr ""
 
 #: templates/notices/license-inactive.php:12
-msgid "Индекс перелинковки не синхронизирован"
+msgid "The internal linking index is not synchronized"
 msgstr ""
 
 #. translators: %s: human-readable date since which changes have not been indexed
 #: templates/notices/license-inactive.php:14
-msgid "(изменения с %s не проиндексированы). Активируйте ключ и запустите сканирование, чтобы восстановить синхронизацию."
+#, php-format
+msgid "(changes since %s are not indexed). Activate your key and run a scan to restore synchronization."
 msgstr ""
 
-#: templates/notices/scan-prompt.php:21
-msgid "Перейдите в настройки плагина на вкладку %1$s, и нажмите на кнопку \"%2$s\"."
+#: templates/notices/license-inactive.php:15
+msgid "Enter your license key"
 msgstr ""
 
-#: templates/notices/scan-prompt.php:22
-msgid "Сканирование"
+#: js/cherry-app.js:1
+msgid "Cancel"
 msgstr ""
 
-#: js/cherry-admin-csv.js:67
-#: js/cherry-admin-csv.js:82
-#: js/cherry-admin-csv.js:335
-msgid "Найти доноров"
+#: js/cherry-app.js:1
+#: js/cherry-app.js:6
+msgid "Analyze site"
 msgstr ""
 
-#: js/cherry-admin-csv.js:71
-msgid "Загрузка..."
+#: js/cherry-app.js:1
+msgid "Done"
 msgstr ""
 
-#: js/cherry-admin-csv.js:78
-msgid "Скрыть доноров"
+#: js/cherry-app.js:1
+msgid "Setup steps"
 msgstr ""
 
-#: js/cherry-admin-csv.js:83
-msgid "Не удалось получить рекомендации."
+#: js/cherry-app.js:1
+msgid "This key was not accepted."
 msgstr ""
 
-#: js/cherry-admin-csv.js:222
-msgid "Проверено записей"
+#: js/cherry-app.js:1
+#: js/cherry-app.js:27
+#: js/cherry-classic.js:2
+#: js/cherry-gutenberg.js:2
+msgid "Connect CherryLink"
 msgstr ""
 
-#: js/cherry-admin-csv.js:223
-msgid "Всего ссылок"
+#: js/cherry-app.js:1
+msgid "CherryLink compares your posts on its servers to suggest internal links and check link health. Connecting creates a free key bound to this site. Nothing is sent until you click Connect."
 msgstr ""
 
-#: js/cherry-admin-csv.js:224
-msgid "Без входящих"
+#: js/cherry-app.js:1
+msgid "What is sent"
 msgstr ""
 
-#: js/cherry-admin-csv.js:225
-msgid "Без исходящих"
+#: js/cherry-app.js:1
+msgid "Post titles, text and URLs of the post types you choose, plus your plugin, PHP and WordPress versions for compatibility. Stored on servers in the EU."
 msgstr ""
 
-#: js/cherry-admin-csv.js:226
-msgid "Повторы ссылок"
+#: js/cherry-app.js:1
+msgid "What is not"
 msgstr ""
 
-#: js/cherry-admin-csv.js:227
-msgid "Битые ссылки"
+#: js/cherry-app.js:1
+msgid "No users, emails, comments or drafts. Data is deleted when you remove the index or after 180 days of inactivity."
 msgstr ""
 
-#: js/cherry-admin-csv.js:228
-msgid "Ссылки на себя"
+#: js/cherry-app.js:1
+msgid "Free plan"
 msgstr ""
 
-#: js/cherry-admin-csv.js:233
-msgid "Перелинковка не обнаружена."
+#: js/cherry-app.js:1
+msgid "Suggestions from your 1,000 most recently updated posts. Link health check for the whole site. No credits, no expiry."
 msgstr ""
 
-#: js/cherry-admin-csv.js:234
-msgid "Проблем с текущей перелинковкой не найдено."
+#: js/cherry-app.js:1
+msgid "Checking your key…"
 msgstr ""
 
-#: js/cherry-admin-csv.js:248
-msgid "В редактор"
+#: js/cherry-app.js:1
+msgid "Connect and get a free key"
 msgstr ""
 
-#: js/cherry-admin-csv.js:254
-msgid "Подходящих доноров не найдено."
+#: js/cherry-app.js:1
+msgid "I already have a key"
 msgstr ""
 
-#: js/cherry-admin-csv.js:258
-msgid "якорь: «<strong>%s</strong>»"
+#: js/cherry-app.js:1
+#: js/cherry-app.js:22
+msgid "License key"
 msgstr ""
 
-#: js/cherry-admin-csv.js:259
-msgid "подходящий анкор не найден"
+#: js/cherry-app.js:1
+#: js/cherry-app.js:22
+msgid "Use this key"
 msgstr ""
 
-#: js/cherry-admin-csv.js:265
-msgid "Открыть донор"
+#: js/cherry-app.js:1
+msgid "By connecting you agree to the"
 msgstr ""
 
-#: js/cherry-admin-csv.js:270
-msgid "Откуда можно сослаться на эту статью:"
+#: js/cherry-app.js:1
+msgid "Terms of Use"
 msgstr ""
 
-#. translators: %d: number of posts with repeated links
-#: js/cherry-admin-csv.js:324
-msgid "Найдены повторы (%d)"
+#: js/cherry-app.js:1
+msgid "and"
 msgstr ""
 
-#: js/cherry-admin-csv.js:325
-#: js/cherry-admin-csv.js:339
-#: js/cherry-admin-csv.js:356
-#: js/cherry-admin-csv.js:381
-#: js/cherry-admin-csv.js:404
-msgid "Запись"
+#: js/cherry-app.js:1
+#: js/cherry-app.js:22
+msgid "Privacy Policy"
 msgstr ""
 
-#: js/cherry-admin-csv.js:325
-msgid "Ссылается на (количество)"
+#: js/cherry-app.js:1
+msgid "Comparing your posts"
 msgstr ""
 
-#: js/cherry-admin-csv.js:325
-#: js/cherry-admin-csv.js:339
-#: js/cherry-admin-csv.js:356
-#: js/cherry-admin-csv.js:381
-#: js/cherry-admin-csv.js:404
-msgid "Действия"
+#: js/cherry-app.js:1
+msgid "Preparing"
 msgstr ""
 
-#. translators: %d: number of posts without incoming links
-#: js/cherry-admin-csv.js:338
-msgid "Статьи без входящих ссылок (%d)"
+#: js/cherry-app.js:1
+msgid "Sending posts"
 msgstr ""
 
-#: js/cherry-admin-csv.js:341
-#: js/cherry-admin-csv.js:358
-#: js/cherry-admin-csv.js:383
-#: js/cherry-admin-csv.js:406
-msgid "Показано только 50 первых результатов."
+#: js/cherry-app.js:1
+msgid "Learning your posts"
 msgstr ""
 
-#: js/cherry-admin-csv.js:347
-msgid "Повторы ссылок не обнаружены"
+#: js/cherry-app.js:1
+msgid "Mapping links"
 msgstr ""
 
-#. translators: %d: number of posts with no outgoing links
-#: js/cherry-admin-csv.js:355
-msgid "Статьи, которые никуда не ссылаются (%d)"
+#: js/cherry-app.js:1
+msgid "Cleaning up"
 msgstr ""
 
-#. translators: %d: number of posts with broken links
-#: js/cherry-admin-csv.js:380
-msgid "Статьи cо сломанными ссылками (%d)"
+#: js/cherry-app.js:1
+msgid "Working"
 msgstr ""
 
-#: js/cherry-admin-csv.js:381
-msgid "Нерабочие ссылки (анкор)"
+#. translators: 1: posts learned so far, 2: posts to learn in this scan
+#: js/cherry-app.js:2
+#, js-format
+msgid "%1$s / %2$s posts learned"
 msgstr ""
 
-#. translators: %d: number of posts that link to themselves
-#: js/cherry-admin-csv.js:403
-msgid "Статьи, которые ссылаются на себя (%d)"
+#. translators: %s: number of posts whose links were read
+#: js/cherry-app.js:3
+#, js-format
+msgid "%s post mapped so far"
+msgid_plural "%s posts mapped so far"
+msgstr[0] ""
+msgstr[1] ""
+
+#: js/cherry-app.js:3
+msgid "The server is busy; retrying shortly."
 msgstr ""
 
-#: js/cherry-admin-csv.js:426
-#: js/cherry-admin-csv.js:428
-msgid "Что-то пошло не так, возникла ошибка при обработке запроса: <strong>%s</strong>."
+#: js/cherry-app.js:3
+msgid "Analyze your site"
 msgstr ""
 
-#: js/cherry-admin-index.js:59
-msgid "Запуск фонового сканирования…"
+#: js/cherry-app.js:3
+msgid "Connected · Free"
 msgstr ""
 
-#: js/cherry-admin-index.js:93
-msgid "Остановка…"
+#: js/cherry-app.js:3
+msgid "Connected"
 msgstr ""
 
-#: js/cherry-admin-index.js:133
-msgid "Ожидание сервера… (можно закрыть страницу)"
+#: js/cherry-app.js:3
+msgid "The analysis stopped with an error."
 msgstr ""
 
-#: js/cherry-admin-index.js:140
-msgid "Загрузка на сервер"
+#: js/cherry-app.js:3
+msgid "CherryLink reads your posts once to learn what each one is about, and maps every internal link to find orphan pages and broken links. After that it keeps up automatically whenever you save."
 msgstr ""
 
-#: js/cherry-admin-index.js:146
-msgid "Обработка на сервере"
+#: js/cherry-app.js:3
+msgid "Content to analyze"
 msgstr ""
 
-#: js/cherry-admin-index.js:149
-msgid "Ожидание завершения обработки"
+#. translators: %s: number of posts found
+#: js/cherry-app.js:4
+#, js-format
+msgid "%s post found."
+msgid_plural "%s posts found."
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: 1: free plan learned-post limit, 2: total posts found. "Learned" = analyzed for suggestions; "checked" = links read for link health.
+#: js/cherry-app.js:5
+#, js-format
+msgid "The free plan gives suggestions from your %1$s most recently updated posts (learned). Link health covers all %2$s: it only reads the links already in your posts, so no learning is needed."
 msgstr ""
+
+#. translators: %s: number of posts found
+#: js/cherry-app.js:6
+#, js-format
+msgid "%s post found. All of them will be learned for suggestions and checked for link health."
+msgid_plural "%s posts found. All of them will be learned for suggestions and checked for link health."
+msgstr[0] ""
+msgstr[1] ""
 
-#: js/cherry-admin-index.js:152
-msgid "Подготовка сканирования"
+#: js/cherry-app.js:6
+msgid "Skip, I'll do it later"
 msgstr ""
 
-#. translators: 1: phase label, 2: done count, 3: total count
-#: js/cherry-admin-index.js:158
-#: js/cherry-admin-index.js:214
-msgid "%1$s: %2$d из %3$d… (можно закрыть страницу)"
+#: js/cherry-app.js:6
+msgid "Skipping goes straight to the dashboard. You can start the analysis there or from CherryLink › Index."
 msgstr ""
 
-#. translators: %s: phase label
-#: js/cherry-admin-index.js:161
-#: js/cherry-admin-index.js:217
-msgid "%s… (можно закрыть страницу)"
+#: js/cherry-app.js:6
+msgid "Analysis started. It runs in the background on your server's scheduler, so you don't have to wait here."
 msgstr ""
 
-#: js/cherry-admin-index.js:174
-msgid "Приостановлено."
+#: js/cherry-app.js:6
+#: js/cherry-app.js:7
+msgid "See results"
 msgstr ""
 
-#: js/cherry-admin-index.js:175
-msgid "Продолжить"
+#: js/cherry-app.js:6
+msgid "Continue to dashboard"
 msgstr ""
 
-#. translators: 1: uploaded count, 2: deleted count
-#: js/cherry-admin-index.js:185
-msgid "Индексация завершена. Загружено: %1$d, удалено: %2$d."
+#: js/cherry-app.js:6
+#: js/cherry-app.js:26
+msgid "Stop"
 msgstr ""
 
-#: js/cherry-admin-index.js:185
-#: js/cherry-admin-index.js:188
-#: js/cherry-admin-index.js:229
-msgid "Сканировать снова"
+#: js/cherry-app.js:6
+msgid "\"See results\" unlocks when the analysis finishes. If you leave, the dashboard shows the progress."
 msgstr ""
 
-#. translators: 1: applied vectors, 2: total items
-#: js/cherry-admin-index.js:188
-msgid "Индексация завершена с ошибками: обработано %1$d из %2$d."
+#: js/cherry-app.js:6
+msgid "✓ Analysis complete"
 msgstr ""
 
-#. translators: %d: accepted count
-#: js/cherry-admin-index.js:194
-msgid "Остановлено. Загружено: %d."
+#. translators: 1: posts learned (analyzed for suggestions), 2: posts checked (links read for link health)
+#: js/cherry-app.js:7
+#, js-format
+msgid "%1$s posts learned · %2$s posts checked"
 msgstr ""
 
-#. translators: %s: error message
-#: js/cherry-admin-index.js:199
-#: js/cherry-admin-index.js:239
-msgid "Ошибка: %s."
+#: js/cherry-app.js:7
+#, js-format
+msgid "%s s"
 msgstr ""
 
-#: js/cherry-admin-index.js:199
-#: js/cherry-admin-index.js:239
-msgid "неизвестно"
+#: js/cherry-app.js:7
+#: js/cherry-app.js:16
+msgid "Orphan pages"
 msgstr ""
 
-#: js/cherry-admin-index.js:206
-msgid "Индексация"
+#: js/cherry-app.js:7
+msgid "No other post links to them, so readers and search engines rarely find them."
 msgstr ""
 
-#: js/cherry-admin-index.js:207
-msgid "Индексация изменённых"
+#: js/cherry-app.js:7
+#: js/cherry-app.js:8
+#: js/cherry-app.js:16
+msgid "Broken links"
 msgstr ""
 
-#: js/cherry-admin-index.js:208
-msgid "Построение карты ссылок"
+#: js/cherry-app.js:7
+msgid "Internal links that point to pages that no longer exist."
 msgstr ""
 
-#: js/cherry-admin-index.js:209
-msgid "Удаление устаревших"
+#: js/cherry-app.js:7
+#: js/cherry-app.js:8
+msgid "No outgoing links"
 msgstr ""
 
-#: js/cherry-admin-index.js:210
-msgid "Получение списка статей"
+#: js/cherry-app.js:7
+msgid "Posts that link nowhere. Each one is an easy place to add links."
 msgstr ""
 
-#. translators: 1: updated count, 2: deleted count
-#: js/cherry-admin-index.js:229
-msgid "Сканирование завершено! Обновлено: %1$d, удалено: %2$d."
+#: js/cherry-app.js:7
+msgid "Your site is ready"
 msgstr ""
 
-#. translators: %d: number of partially indexed items
-#: js/cherry-admin-index.js:234
-msgid "Остановлено. Частично проиндексировано: %d."
+#. translators: 1: posts learned (analyzed for suggestions; counts toward the plan limit), 2: posts checked (links read for link health; whole site, no limit)
+#: js/cherry-app.js:8
+#, js-format
+msgid "%1$s posts learned, %2$s posts checked. Here is what CherryLink found."
 msgstr ""
 
-#: js/cherry-admin-index.js:250
-msgid "Очередь не обрабатывается: планировщик WP-Cron не запускается. Проверьте cron или запустите wp action-scheduler run."
+#: js/cherry-app.js:8
+#: js/cherry-app.js:24
+msgid "Reading your links…"
 msgstr ""
 
-#: js/cherry-admin-index.js:276
-msgid "мс"
+#: js/cherry-app.js:8
+msgid "Go to dashboard"
 msgstr ""
 
-#: js/cherry-admin-index.js:276
-msgid "ОШИБКА (%s)"
+#: js/cherry-app.js:8
+msgid "Review link issues"
 msgstr ""
 
-#: js/cherry-admin-index.js:278
-msgid "значение:"
+#: js/cherry-app.js:8
+msgid "Free"
 msgstr ""
 
-#: js/cherry-admin-index.js:285
-#: js/cherry-admin-index.js:319
-msgid "проверка…"
+#: js/cherry-app.js:8
+msgid "Pro"
 msgstr ""
 
-#: js/cherry-admin-index.js:289
-msgid "нет ответа"
+#: js/cherry-app.js:8
+msgid "Legacy"
 msgstr ""
 
-#: js/cherry-admin-index.js:290
-msgid "Не удалось получить данные о состоянии сервера."
+#: js/cherry-app.js:8
+msgid "Unknown plan"
 msgstr ""
 
-#: js/cherry-admin-index.js:298
-msgid "нет связи с сервером"
+#: js/cherry-app.js:8
+#: js/cherry-app.js:16
+msgid "Repeated links"
 msgstr ""
 
-#: js/cherry-admin-index.js:299
-msgid "связь медленная"
+#: js/cherry-app.js:8
+#: js/cherry-app.js:16
+msgid "Links to itself"
 msgstr ""
 
-#: js/cherry-admin-index.js:300
-msgid "связь в норме"
+#. translators: 1: posts learned (analyzed for suggestions; counts toward the plan limit), 2: total posts on the site
+#: js/cherry-app.js:9
+#, js-format
+msgid "%1$s / %2$s learned"
 msgstr ""
 
-#: js/cherry-admin-index.js:303
-msgid "Доступность сервера"
+#. translators: %s: posts learned (analyzed for suggestions)
+#: js/cherry-app.js:10
+#, js-format
+msgid "%s learned"
 msgstr ""
 
-#: js/cherry-admin-index.js:304
-msgid "Чтение индекса статей"
+#: js/cherry-app.js:10
+#: js/cherry-app.js:23
+#: js/cherry-classic.js:1
+#: js/cherry-gutenberg.js:1
+msgid "Upgrade"
 msgstr ""
 
-#: js/cherry-admin-index.js:305
-msgid "Чтение карты ссылок"
+#: js/cherry-app.js:10
+msgid "Analysis is running in the background."
 msgstr ""
 
-#. translators: %s: read-timeout in seconds
-#: js/cherry-admin-index.js:308
-msgid "Внимание:"
+#: js/cherry-app.js:10
+msgid "See progress"
 msgstr ""
 
-#: js/cherry-admin-index.js:309
-msgid "ответы приходят дольше 3 секунд. На медленном канале плагин может показывать «0» и подсказки могут не грузиться (таймаут чтения — %s с)."
+#: js/cherry-app.js:10
+msgid "Biggest opportunity"
 msgstr ""
 
-#: js/cherry-admin-index.js:318
-msgid "Проверяем…"
+#: js/cherry-app.js:10
+msgid "pages nobody links to"
 msgstr ""
 
-#: js/cherry-admin-index.js:353
-msgid "Что-то пошло не так при сканировании. Проверьте консоль браузера (F12), чтобы узнать больше."
+#: js/cherry-app.js:10
+msgid "Orphan pages are hard for readers and search engines to find from other posts. Each one is a good place to add an internal link."
 msgstr ""
 
-#: js/cherry-admin.js:26
-msgid "Шаблоны восстановлены, не забудьте сохранить настройки"
+#: js/cherry-app.js:10
+msgid "Easiest wins: orphans that are learned"
 msgstr ""
 
-#: js/cherry-admin.js:53
-msgid "Обновляем, подождите..."
+#: js/cherry-app.js:10
+msgid "Add links →"
 msgstr ""
 
-#: js/cherry-admin.js:61
-msgid "Произошла ошибка при обновлении: %s"
+#. translators: %s: number of orphan pages
+#: js/cherry-app.js:11
+#, js-format
+msgid "See all %s orphan pages"
 msgstr ""
 
-#: js/cherry-admin.js:63
-msgid "Обновление прошло успешно."
+#. translators: 1: internal links, 2: posts checked (links read for link health; whole site, no limit)
+#: js/cherry-app.js:12
+#, js-format
+msgid "%1$s internal links across %2$s posts"
 msgstr ""
 
-#: js/cherry-admin.js:94
-msgid "Идет загрузка..."
+#. translators: %s: date and time of the last link health check
+#: js/cherry-app.js:13
+#, js-format
+msgid "Checked %s."
 msgstr ""
 
-#: js/cherry-admin.js:115
-msgid "(ID записи не указан — проверка подбора ссылок пропущена)"
+#: js/cherry-app.js:13
+msgid "Open link health"
 msgstr ""
 
-#: js/cherry-admin.js:166
-msgid "(проверка связи не выполнена)"
+#: js/cherry-app.js:13
+msgid "Plan"
 msgstr ""
 
-#: js/cherry-classic.js:1
-#: js/cherry-gutenberg.js:1
-msgid "Нет входящих · %d статьи могут сослаться"
+#. translators: 1: posts learned (analyzed for suggestions; counts toward the plan limit), 2: total posts on the site
+#: js/cherry-app.js:14
+#, js-format
+msgid "%1$s of %2$s posts learned."
 msgstr ""
 
-#: js/cherry-classic.js:1
-#: js/cherry-gutenberg.js:1
-msgid "Нет входящих ссылок"
+#. translators: %s: plan limit of learned posts
+#: js/cherry-app.js:15
+#, js-format
+msgid "Suggestions come from your newest %s; the rest are still covered by link health."
 msgstr ""
 
-#: js/cherry-classic.js:1
-#: js/cherry-gutenberg.js:1
-msgid "Мало исходящих · нужно %s"
+#. translators: %s: posts learned
+#: js/cherry-app.js:16
+#, js-format
+msgid "%s post learned."
+msgid_plural "%s posts learned."
+msgstr[0] ""
+msgstr[1] ""
+
+#: js/cherry-app.js:16
+msgid "How the limit works"
 msgstr ""
 
-#: js/cherry-classic.js:1
-#: js/cherry-gutenberg.js:1
-msgid "Больше одной ссылки на ~100 слов мешает читать и выглядит как спам."
+#: js/cherry-app.js:16
+msgid "No other post links to these pages. Find related posts that could link to them, then add the link from the editor panel."
 msgstr ""
 
-#: js/cherry-classic.js:1
-#: js/cherry-gutenberg.js:1
-msgid "Много ссылок"
+#: js/cherry-app.js:16
+msgid "Internal links in these posts point to pages that no longer exist."
 msgstr ""
 
-#: js/cherry-classic.js:1
-#: js/cherry-gutenberg.js:1
-msgid "Мало входящих"
+#: js/cherry-app.js:16
+msgid "No outgoing"
 msgstr ""
 
-#: js/cherry-classic.js:1
-#: js/cherry-gutenberg.js:1
-msgid "Ссылок достаточно"
+#: js/cherry-app.js:16
+msgid "These posts do not link to any other post."
 msgstr ""
 
-#: js/cherry-classic.js:1
-#: js/cherry-gutenberg.js:1
-msgid "Рекомендуется %1$s исходящих для %2$d слов"
+#: js/cherry-app.js:16
+msgid "These posts link to the same page more than once."
 msgstr ""
 
-#: js/cherry-classic.js:1
-#: js/cherry-gutenberg.js:1
-msgid "Исходящих"
+#: js/cherry-app.js:16
+msgid "These posts contain a link to their own address."
 msgstr ""
 
-#: js/cherry-classic.js:1
-#: js/cherry-gutenberg.js:1
-msgid "Входящих"
+#: js/cherry-app.js:16
+msgid "Looking for related posts…"
 msgstr ""
 
-#: js/cherry-classic.js:1
-#: js/cherry-gutenberg.js:1
-msgid "Проиндексировано %1$s из %2$s"
+#: js/cherry-app.js:16
+msgid "Could not load related posts. Try again."
 msgstr ""
 
-#: js/cherry-classic.js:1
-#: js/cherry-gutenberg.js:1
-msgid "Найти статьи по теме…"
+#. translators: %s: suggested link text inside the related post
+#: js/cherry-app.js:17
+#, js-format
+msgid "suggested link text: “%s”"
 msgstr ""
 
-#: js/cherry-classic.js:1
-#: js/cherry-gutenberg.js:1
-msgid "Найти статьи по теме"
+#: js/cherry-app.js:17
+#: js/cherry-classic.js:2
+#: js/cherry-gutenberg.js:2
+msgid "Edit"
 msgstr ""
 
-#: js/cherry-classic.js:1
-#: js/cherry-gutenberg.js:1
-msgid "Все рубрики"
+#: js/cherry-app.js:17
+msgid "No related posts found."
 msgstr ""
 
-#: js/cherry-classic.js:1
-#: js/cherry-gutenberg.js:1
-msgid "Выделите текст в статье и нажмите «Вставить» или выберите готовую фразу."
+#. translators: 1: list name (authors or categories), 2: how many are hidden
+#: js/cherry-app.js:18
+#, js-format
+msgid "%1$s (%2$s hidden)"
 msgstr ""
 
-#: js/cherry-classic.js:1
-#: js/cherry-gutenberg.js:1
-msgid "Повторить"
+#: js/cherry-app.js:18
+msgid "A check is already running. Try again in a moment."
 msgstr ""
 
-#: js/cherry-classic.js:1
-#: js/cherry-gutenberg.js:1
-msgid "Ничего не найдено."
+#: js/cherry-app.js:18
+msgid "Connection is working."
 msgstr ""
 
-#: js/cherry-classic.js:1
-#: js/cherry-gutenberg.js:1
-msgid "исх"
+#: js/cherry-app.js:18
+msgid "Could not reach the CherryLink server."
 msgstr ""
 
-#: js/cherry-classic.js:1
-#: js/cherry-gutenberg.js:1
-msgid "вх"
+#: js/cherry-app.js:18
+msgid "checking…"
 msgstr ""
 
-#: js/cherry-classic.js:1
-#: js/cherry-gutenberg.js:1
-msgid "ссылка есть"
+#: js/cherry-app.js:18
+msgid "connected"
 msgstr ""
 
-#: js/cherry-classic.js:1
-#: js/cherry-gutenberg.js:1
-msgid "Сделать выделенный текст ссылкой на эту статью"
+#: js/cherry-app.js:18
+msgid "problem"
 msgstr ""
 
-#: js/cherry-classic.js:1
-#: js/cherry-gutenberg.js:1
-msgid "Вставить"
+#: js/cherry-app.js:18
+msgid "not connected"
 msgstr ""
 
-#: js/cherry-classic.js:1
-#: js/cherry-gutenberg.js:1
-msgid "Открыть"
+#: js/cherry-app.js:18
+msgid "Settings sections"
 msgstr ""
 
-#: js/cherry-classic.js:1
-#: js/cherry-gutenberg.js:1
-msgid "Редактировать"
+#: js/cherry-app.js:18
+msgid "License"
 msgstr ""
 
-#: js/cherry-classic.js:1
-#: js/cherry-gutenberg.js:1
-msgid "Показать ещё"
+#: js/cherry-app.js:18
+#: js/cherry-app.js:22
+msgid "Editor panel"
 msgstr ""
 
-#: js/cherry-classic.js:1
-#: js/cherry-gutenberg.js:1
-msgid "Релевантность %1$d%% (сходство %2$s)"
+#: js/cherry-app.js:18
+#: js/cherry-app.js:22
+msgid "Link markup"
 msgstr ""
 
-#: js/cherry-classic.js:1
-#: js/cherry-gutenberg.js:1
-msgid "Скрытые подсказки (%d)"
+#: js/cherry-app.js:18
+#: js/cherry-app.js:22
+msgid "Privacy"
 msgstr ""
 
-#: js/cherry-classic.js:1
-#: js/cherry-gutenberg.js:1
-msgid "Вернуть"
+#: js/cherry-app.js:18
+msgid "Import / export"
 msgstr ""
 
-#: js/cherry-classic.js:1
-#: js/cherry-gutenberg.js:1
-msgid "Добавлено"
+#: js/cherry-app.js:18
+#: js/cherry-app.js:22
+msgid "Troubleshooting"
 msgstr ""
 
-#: js/cherry-classic.js:1
-#: js/cherry-gutenberg.js:1
-msgid "Отменить"
+#. translators: %s: masked license key
+#: js/cherry-app.js:19
+#, js-format
+msgid "Key %s"
 msgstr ""
 
-#: js/cherry-classic.js:1
-#: js/cherry-gutenberg.js:1
-msgid "Фразы из вашего текста, которые подходят для ссылки. Наведите, чтобы увидеть фразу в тексте."
+#. translators: %s: site domain
+#: js/cherry-app.js:20
+#, js-format
+msgid "bound to %s"
 msgstr ""
 
-#: js/cherry-classic.js:1
-#: js/cherry-gutenberg.js:1
-msgid "Подсказок больше нет. Можно выбрать статью вручную во вкладке «Все статьи»."
+#. translators: %s: expiry date
+#: js/cherry-app.js:21
+#, js-format
+msgid "expires %s"
 msgstr ""
 
-#: js/cherry-classic.js:1
-#: js/cherry-gutenberg.js:1
-msgid "Вставить ссылку"
+#: js/cherry-app.js:21
+msgid "never expires"
 msgstr ""
 
-#: js/cherry-classic.js:1
-#: js/cherry-gutenberg.js:1
-msgid "Другая статья (%1$d/%2$d)"
+#. translators: 1: learned posts, 2: all posts. "Learned" = post analyzed for suggestions; counts toward the plan limit.
+#: js/cherry-app.js:22
+#, js-format
+msgid "%1$s of %2$s posts learned. Posts beyond the limit keep link health and their own suggestions, but other posts won't suggest links to them."
 msgstr ""
 
-#: js/cherry-classic.js:1
-#: js/cherry-gutenberg.js:1
-msgid "Сделать выделенный текст ссылкой на эту рубрику"
+#: js/cherry-app.js:22
+#: js/cherry-app.js:26
+msgid "Upgrade to Pro"
 msgstr ""
 
-#: js/cherry-classic.js:1
-#: js/cherry-gutenberg.js:1
-msgid "на сайте"
+#: js/cherry-app.js:22
+msgid "Use a different key"
 msgstr ""
 
-#: js/cherry-classic.js:1
-#: js/cherry-gutenberg.js:1
-msgid "Рубрики не найдены"
+#: js/cherry-app.js:22
+msgid "Disconnect site"
 msgstr ""
 
-#: js/cherry-classic.js:1
-#: js/cherry-gutenberg.js:1
-msgid "Статьи, которые могут ссылаться на эту. «Вставить ссылку» добавит её прямо в ту статью, без открытия редактора."
+#: js/cherry-app.js:22
+msgid "Posts per page"
 msgstr ""
 
-#: js/cherry-classic.js:1
-#: js/cherry-gutenberg.js:1
-msgid "Подходящих статей не нашлось."
+#: js/cherry-app.js:22
+msgid "Category filter"
 msgstr ""
 
-#: js/cherry-classic.js:1
-#: js/cherry-gutenberg.js:1
-msgid "Подходящей фразы не нашлось. Откройте статью и выделите текст вручную."
+#: js/cherry-app.js:22
+msgid "Show a category filter in the panel"
 msgstr ""
 
-#: js/cherry-classic.js:1
-#: js/cherry-gutenberg.js:1
-msgid "Статью сейчас редактирует"
+#: js/cherry-app.js:22
+msgid "Suggest only posts from the same category"
 msgstr ""
 
-#: js/cherry-classic.js:1
-#: js/cherry-gutenberg.js:1
-msgid "У вас нет прав на редактирование этой статьи."
+#: js/cherry-app.js:22
+msgid "Hide from suggestions"
 msgstr ""
 
-#: js/cherry-classic.js:1
-#: js/cherry-gutenberg.js:1
-msgid "Ссылка добавлена"
+#: js/cherry-app.js:22
+msgid "Authors"
 msgstr ""
 
-#: js/cherry-classic.js:1
-#: js/cherry-gutenberg.js:1
-msgid "Открыть в редакторе в новой вкладке"
+#: js/cherry-app.js:22
+#: js/cherry-classic.js:2
+#: js/cherry-gutenberg.js:2
+msgid "Categories"
 msgstr ""
 
-#: js/cherry-classic.js:1
-#: js/cherry-gutenberg.js:1
-msgid "Назад"
+#: js/cherry-app.js:22
+msgid "Applies to links you insert from now on. Links already in your posts are not changed."
 msgstr ""
 
-#: js/cherry-classic.js:1
-#: js/cherry-gutenberg.js:1
-msgid "В тексте пока нет ссылок."
+#: js/cherry-app.js:22
+msgid "URL format"
 msgstr ""
 
-#: js/cherry-classic.js:1
-#: js/cherry-gutenberg.js:1
-msgid "Другие статьи пока не ссылаются на эту."
+#: js/cherry-app.js:22
+msgid "Full (https://example.com/page/)"
 msgstr ""
 
-#: js/cherry-classic.js:1
-#: js/cherry-gutenberg.js:1
-msgid "Выделите текст в статье для вставки ссылки"
+#: js/cherry-app.js:22
+msgid "Without protocol (//example.com/page/)"
 msgstr ""
 
-#: js/cherry-classic.js:1
-#: js/cherry-gutenberg.js:1
-msgid "Выделите текст вне существующей ссылки"
+#: js/cherry-app.js:22
+msgid "Relative (/page/)"
 msgstr ""
 
-#: js/cherry-classic.js:1
-#: js/cherry-gutenberg.js:1
-msgid "Фраза не найдена в тексте статьи"
+#: js/cherry-app.js:22
+msgid "Title attribute"
 msgstr ""
 
-#: js/cherry-classic.js:1
-#: js/cherry-gutenberg.js:1
-msgid "Этот блок не поддерживает вставку ссылок"
+#: js/cherry-app.js:22
+msgid "Add the target post title as a tooltip (title=\"…\")"
 msgstr ""
 
-#: js/cherry-classic.js:1
-#: js/cherry-gutenberg.js:1
-msgid "Нет соединения с сервером"
+#: js/cherry-app.js:22
+msgid "New tab"
 msgstr ""
 
-#: js/cherry-classic.js:1
-#: js/cherry-gutenberg.js:1
-msgid "Не удалось получить данные. Попробуйте ещё раз."
+#: js/cherry-app.js:22
+msgid "Open inserted links in a new tab (adds rel=\"noopener\")"
 msgstr ""
 
-#: js/cherry-classic.js:1
-#: js/cherry-gutenberg.js:1
-msgid "Ссылка вставлена"
+#: js/cherry-app.js:22
+msgid "CSS class"
 msgstr ""
 
-#: js/cherry-classic.js:1
-#: js/cherry-gutenberg.js:1
-msgid "ТЕКСТ_ССЫЛКИ"
+#: js/cherry-app.js:22
+msgid "e.g. related-link (optional)"
 msgstr ""
 
-#: js/cherry-classic.js:1
-#: js/cherry-gutenberg.js:1
-msgid "Закрыть"
+#: js/cherry-app.js:22
+msgid "Preview"
 msgstr ""
 
-#: js/cherry-classic.js:1
-#: js/cherry-gutenberg.js:1
-msgid "CherryLink ещё не подключён. Подключите плагин, чтобы получать подсказки ссылок."
+#: js/cherry-app.js:22
+msgid "While connected, CherryLink receives your posts' titles, text and URLs, plus plugin, PHP and WordPress versions for compatibility."
+msgstr ""
+
+#: js/cherry-app.js:22
+msgid "To stop all data transfer, remove the site data on the Index page and disconnect."
+msgstr ""
+
+#: js/cherry-app.js:22
+msgid "Import / export settings"
+msgstr ""
+
+#: js/cherry-app.js:22
+msgid "Download settings"
+msgstr ""
+
+#: js/cherry-app.js:22
+msgid "Settings file"
+msgstr ""
+
+#: js/cherry-app.js:22
+msgid "Choose a file first."
+msgstr ""
+
+#: js/cherry-app.js:22
+msgid "Settings imported."
+msgstr ""
+
+#: js/cherry-app.js:22
+msgid "Import file"
+msgstr ""
+
+#: js/cherry-app.js:22
+msgid "Connection: backup route (the direct route was blocked)"
+msgstr ""
+
+#: js/cherry-app.js:22
+msgid "Connection: direct · switches to a backup route automatically if blocked"
+msgstr ""
+
+#: js/cherry-app.js:22
+msgid "Check connection"
+msgstr ""
+
+#: js/cherry-app.js:22
+msgid "Reset settings"
+msgstr ""
+
+#: js/cherry-app.js:22
+msgid "Settings saved."
+msgstr ""
+
+#: js/cherry-app.js:22
+msgid "Save changes"
+msgstr ""
+
+#: js/cherry-app.js:22
+msgid "Disconnect this site?"
+msgstr ""
+
+#: js/cherry-app.js:22
+msgid "Suggestions and link health stop until you connect again. Data already on CherryLink servers stays until you remove it on the Index page."
+msgstr ""
+
+#: js/cherry-app.js:22
+msgid "Disconnect"
+msgstr ""
+
+#: js/cherry-app.js:22
+msgid "Reset settings?"
+msgstr ""
+
+#: js/cherry-app.js:22
+msgid "All CherryLink settings return to their defaults. Your license stays connected."
+msgstr ""
+
+#: js/cherry-app.js:22
+msgid "Settings reset to defaults."
+msgstr ""
+
+#. translators: 1: date and time, 2: posts checked (links read for link health; whole site, no limit)
+#: js/cherry-app.js:23
+#, js-format
+msgid "Checked %1$s · %2$s posts"
+msgstr ""
+
+#: js/cherry-app.js:23
+msgid "Checking…"
+msgstr ""
+
+#: js/cherry-app.js:23
+msgid "Check again"
+msgstr ""
+
+#: js/cherry-app.js:23
+msgid "Export CSV"
+msgstr ""
+
+#: js/cherry-app.js:23
+msgid "Issue type"
+msgstr ""
+
+#: js/cherry-app.js:23
+msgid "Type"
+msgstr ""
+
+#: js/cherry-app.js:23
+msgid "All types"
+msgstr ""
+
+#: js/cherry-app.js:23
+msgid "Search posts"
+msgstr ""
+
+#: js/cherry-app.js:23
+msgid "Post"
+msgstr ""
+
+#: js/cherry-app.js:23
+msgid "Related posts"
+msgstr ""
+
+#: js/cherry-app.js:23
+msgid "Details"
+msgstr ""
+
+#: js/cherry-app.js:23
+msgid "Actions"
+msgstr ""
+
+#: js/cherry-app.js:23
+msgid "Nothing found here."
+msgstr ""
+
+#: js/cherry-app.js:23
+msgid "(no title)"
+msgstr ""
+
+#: js/cherry-app.js:23
+msgid "Not suggested in other posts: outside the free limit."
+msgstr ""
+
+#: js/cherry-app.js:23
+msgid "Find donors"
+msgstr ""
+
+#. translators: 1: first row number, 2: last row number, 3: total rows
+#: js/cherry-app.js:24
+#, js-format
+msgid "Showing %1$s–%2$s of %3$s"
+msgstr ""
+
+#: js/cherry-app.js:24
+msgid "‹ Previous"
+msgstr ""
+
+#: js/cherry-app.js:24
+msgid "Next ›"
+msgstr ""
+
+#: js/cherry-app.js:24
+msgid "Scanning…"
+msgstr ""
+
+#: js/cherry-app.js:24
+msgid "Error"
+msgstr ""
+
+#: js/cherry-app.js:24
+msgid "Stopped"
+msgstr ""
+
+#: js/cherry-app.js:24
+msgid "Up to date"
+msgstr ""
+
+#: js/cherry-app.js:24
+msgid "Ready"
+msgstr ""
+
+#: js/cherry-app.js:24
+msgid "What is indexed"
+msgstr ""
+
+#: js/cherry-app.js:24
+msgid "What CherryLink knows about your site"
+msgstr ""
+
+#: js/cherry-app.js:24
+msgid "posts on the site"
+msgstr ""
+
+#: js/cherry-app.js:24
+msgid "Published posts of the content types you chose"
+msgstr ""
+
+#: js/cherry-app.js:24
+msgid "learned for suggestions"
+msgstr ""
+
+#. translators: %s: plan limit of learned posts
+#: js/cherry-app.js:25
+#, js-format
+msgid "Free limit: newest %s by last update"
+msgstr ""
+
+#: js/cherry-app.js:25
+msgid "No limit on your plan"
+msgstr ""
+
+#: js/cherry-app.js:25
+msgid "checked for link health"
+msgstr ""
+
+#: js/cherry-app.js:25
+msgid "Always the whole site"
+msgstr ""
+
+#: js/cherry-app.js:25
+msgid "Learned = analyzed for suggestions; counts toward the plan limit. Checked = links read for link health; whole site, no limit."
+msgstr ""
+
+#. translators: %s: plan limit of learned posts
+#: js/cherry-app.js:26
+#, js-format
+msgid "Why only %s?"
+msgstr ""
+
+#: js/cherry-app.js:26
+msgid "Learning a post means computing what it is about on our servers, which costs real computing time. The free plan covers the posts you updated most recently, which is usually where links matter most. Posts beyond the limit keep link health and their own suggestions, but other posts won't suggest links to them. When you update an older post, it takes the place of the oldest learned one."
+msgstr ""
+
+#: js/cherry-app.js:26
+msgid "Sync"
+msgstr ""
+
+#: js/cherry-app.js:26
+msgid "Posts are updated automatically when you save, publish or delete them. Run a scan after importing content or changing what is indexed. Only changed posts are sent."
+msgstr ""
+
+#: js/cherry-app.js:26
+msgid "Scan site now"
+msgstr ""
+
+#. translators: 1: date and time (UTC), 2: posts updated, 3: posts removed
+#: js/cherry-app.js:27
+#, js-format
+msgid "Last scan: %1$s UTC · %2$s posts updated · %3$s removed"
+msgstr ""
+
+#: js/cherry-app.js:27
+msgid "What to index"
+msgstr ""
+
+#: js/cherry-app.js:27
+msgid "Content types"
+msgstr ""
+
+#: js/cherry-app.js:27
+msgid "Extra fields to include"
+msgstr ""
+
+#: js/cherry-app.js:27
+msgid "Custom field keys (ACF, meta) added to the post text, one per line."
+msgstr ""
+
+#: js/cherry-app.js:27
+msgid "Saved. Run a scan to apply the change."
+msgstr ""
+
+#: js/cherry-app.js:27
+msgid "Save"
+msgstr ""
+
+#: js/cherry-app.js:27
+msgid "Remove data"
+msgstr ""
+
+#: js/cherry-app.js:27
+msgid "Remove site data from CherryLink servers"
+msgstr ""
+
+#: js/cherry-app.js:27
+msgid "Deletes the learned posts and the link map for this site. Links already in your posts are not touched. You can scan again at any time."
+msgstr ""
+
+#: js/cherry-app.js:27
+msgid "Remove site data?"
+msgstr ""
+
+#: js/cherry-app.js:27
+msgid "This deletes the learned posts and link map for this site from CherryLink servers. Your posts are not changed."
+msgstr ""
+
+#: js/cherry-app.js:27
+msgid "Site data removed."
+msgstr ""
+
+#: js/cherry-app.js:27
+msgid "Connect CherryLink first"
+msgstr ""
+
+#: js/cherry-app.js:27
+msgid "This page needs a connected site."
 msgstr ""
 
 #: js/cherry-classic.js:1
 #: js/cherry-gutenberg.js:1
-msgid "Подключить CherryLink"
-msgstr ""
+#, js-format
+msgid "No incoming links · %d post could link here"
+msgid_plural "No incoming links · %d posts could link here"
+msgstr[0] ""
+msgstr[1] ""
 
 #: js/cherry-classic.js:1
 #: js/cherry-gutenberg.js:1
-msgid "Подсказки"
+msgid "No incoming links"
 msgstr ""
 
 #: js/cherry-classic.js:1
 #: js/cherry-gutenberg.js:1
-msgid "Все статьи"
+#, js-format
+msgid "Too few outgoing links · need %s"
 msgstr ""
 
 #: js/cherry-classic.js:1
 #: js/cherry-gutenberg.js:1
-msgid "Что показывать"
+msgid "More than one link per ~100 words hurts readability and looks like spam."
 msgstr ""
 
 #: js/cherry-classic.js:1
 #: js/cherry-gutenberg.js:1
-msgid "Статьи"
+msgid "Too many links"
 msgstr ""
 
 #: js/cherry-classic.js:1
 #: js/cherry-gutenberg.js:1
-msgid "Ссылка добавлена в «%s»"
+msgid "Few incoming links"
 msgstr ""
 
 #: js/cherry-classic.js:1
 #: js/cherry-gutenberg.js:1
-msgid "Ссылка убрана"
+msgid "Enough links"
 msgstr ""
 
 #: js/cherry-classic.js:1
 #: js/cherry-gutenberg.js:1
-msgid "Статья уже изменилась, отменить автоматически нельзя"
+#, js-format
+msgid "Recommended: %1$s outgoing links for %2$d words"
 msgstr ""
 
 #: js/cherry-classic.js:1
 #: js/cherry-gutenberg.js:1
-msgid "Подсказки по текущему тексту"
+msgid "Outgoing"
 msgstr ""
 
 #: js/cherry-classic.js:1
 #: js/cherry-gutenberg.js:1
-msgid "Подсказки пересчитаны по текущему тексту"
+msgid "Incoming"
 msgstr ""
 
 #: js/cherry-classic.js:1
 #: js/cherry-gutenberg.js:1
-msgid "Обновить"
+#, js-format
+msgid "Indexed %1$s of %2$s"
 msgstr ""
 
-#: js/cherry-gutenberg.js:1
-msgid "CherryLink"
+#. translators: %s: plan post limit. "Learned" = post analyzed for suggestions; counts toward the plan limit.
+#: js/cherry-classic.js:2
+#: js/cherry-gutenberg.js:2
+#, js-format
+msgid "This post is outside your %s learned posts, so other posts won't suggest links to it. Its own suggestions and link health still work. Updating it makes it one of your newest posts, so it gets learned."
+msgstr ""
+
+#: js/cherry-classic.js:2
+#: js/cherry-gutenberg.js:2
+msgid "Upgrade to learn every post"
+msgstr ""
+
+#: js/cherry-classic.js:2
+#: js/cherry-gutenberg.js:2
+msgid "Find related posts…"
+msgstr ""
+
+#: js/cherry-classic.js:2
+#: js/cherry-gutenberg.js:2
+msgid "Find related posts"
+msgstr ""
+
+#: js/cherry-classic.js:2
+#: js/cherry-gutenberg.js:2
+msgid "Category"
+msgstr ""
+
+#: js/cherry-classic.js:2
+#: js/cherry-gutenberg.js:2
+msgid "All categories"
+msgstr ""
+
+#: js/cherry-classic.js:2
+#: js/cherry-gutenberg.js:2
+msgid "Select text in the post and click “Insert”, or pick a ready-made phrase."
+msgstr ""
+
+#: js/cherry-classic.js:2
+#: js/cherry-gutenberg.js:2
+msgid "Retry"
+msgstr ""
+
+#: js/cherry-classic.js:2
+#: js/cherry-gutenberg.js:2
+msgid "Nothing found."
+msgstr ""
+
+#: js/cherry-classic.js:2
+#: js/cherry-gutenberg.js:2
+msgid "out"
+msgstr ""
+
+#: js/cherry-classic.js:2
+#: js/cherry-gutenberg.js:2
+msgid "in"
+msgstr ""
+
+#: js/cherry-classic.js:2
+#: js/cherry-gutenberg.js:2
+msgid "link exists"
+msgstr ""
+
+#: js/cherry-classic.js:2
+#: js/cherry-gutenberg.js:2
+msgid "Turn the selected text into a link to this post"
+msgstr ""
+
+#: js/cherry-classic.js:2
+#: js/cherry-gutenberg.js:2
+msgid "Insert"
+msgstr ""
+
+#: js/cherry-classic.js:2
+#: js/cherry-gutenberg.js:2
+msgid "Open"
+msgstr ""
+
+#: js/cherry-classic.js:2
+#: js/cherry-gutenberg.js:2
+msgid "Show more"
+msgstr ""
+
+#: js/cherry-classic.js:2
+#: js/cherry-gutenberg.js:2
+#, js-format
+msgid "Relevance %1$d%% (similarity %2$s)"
+msgstr ""
+
+#: js/cherry-classic.js:2
+#: js/cherry-gutenberg.js:2
+#, js-format
+msgid "Hidden suggestions (%d)"
+msgstr ""
+
+#: js/cherry-classic.js:2
+#: js/cherry-gutenberg.js:2
+msgid "Restore"
+msgstr ""
+
+#: js/cherry-classic.js:2
+#: js/cherry-gutenberg.js:2
+msgid "Added"
+msgstr ""
+
+#: js/cherry-classic.js:2
+#: js/cherry-gutenberg.js:2
+msgid "Undo"
+msgstr ""
+
+#: js/cherry-classic.js:2
+#: js/cherry-gutenberg.js:2
+msgid "Phrases from your text that fit a link. Hover to see the phrase in the text."
+msgstr ""
+
+#: js/cherry-classic.js:2
+#: js/cherry-gutenberg.js:2
+msgid "No more suggestions. You can pick a post manually in the “All posts” tab."
+msgstr ""
+
+#: js/cherry-classic.js:2
+#: js/cherry-gutenberg.js:2
+msgid "Insert link"
+msgstr ""
+
+#: js/cherry-classic.js:2
+#: js/cherry-gutenberg.js:2
+#, js-format
+msgid "Another post (%1$d/%2$d)"
+msgstr ""
+
+#: js/cherry-classic.js:2
+#: js/cherry-gutenberg.js:2
+msgid "Turn the selected text into a link to this category"
+msgstr ""
+
+#: js/cherry-classic.js:2
+#: js/cherry-gutenberg.js:2
+msgid "on the site"
+msgstr ""
+
+#: js/cherry-classic.js:2
+#: js/cherry-gutenberg.js:2
+msgid "No categories found"
+msgstr ""
+
+#: js/cherry-classic.js:2
+#: js/cherry-gutenberg.js:2
+msgid "Posts that could link to this one. “Insert link” adds it directly to that post, without opening the editor."
+msgstr ""
+
+#: js/cherry-classic.js:2
+#: js/cherry-gutenberg.js:2
+msgid "No suitable posts found."
+msgstr ""
+
+#: js/cherry-classic.js:2
+#: js/cherry-gutenberg.js:2
+msgid "No suitable phrase found. Open the post and select the text manually."
+msgstr ""
+
+#: js/cherry-classic.js:2
+#: js/cherry-gutenberg.js:2
+msgid "Currently being edited by"
+msgstr ""
+
+#: js/cherry-classic.js:2
+#: js/cherry-gutenberg.js:2
+msgid "You do not have permission to edit this post."
+msgstr ""
+
+#: js/cherry-classic.js:2
+#: js/cherry-gutenberg.js:2
+msgid "Link added"
+msgstr ""
+
+#: js/cherry-classic.js:2
+#: js/cherry-gutenberg.js:2
+msgid "Open in the editor in a new tab"
+msgstr ""
+
+#: js/cherry-classic.js:2
+#: js/cherry-gutenberg.js:2
+msgid "Back"
+msgstr ""
+
+#: js/cherry-classic.js:2
+#: js/cherry-gutenberg.js:2
+msgid "Outgoing links"
+msgstr ""
+
+#: js/cherry-classic.js:2
+#: js/cherry-gutenberg.js:2
+msgid "There are no links in the text yet."
+msgstr ""
+
+#: js/cherry-classic.js:2
+#: js/cherry-gutenberg.js:2
+msgid "Incoming links"
+msgstr ""
+
+#: js/cherry-classic.js:2
+#: js/cherry-gutenberg.js:2
+msgid "No other posts link to this one yet."
+msgstr ""
+
+#: js/cherry-classic.js:2
+#: js/cherry-gutenberg.js:2
+msgid "Select text in the post to insert a link"
+msgstr ""
+
+#: js/cherry-classic.js:2
+#: js/cherry-gutenberg.js:2
+msgid "Select text outside an existing link"
+msgstr ""
+
+#: js/cherry-classic.js:2
+#: js/cherry-gutenberg.js:2
+msgid "The phrase was not found in the article text"
+msgstr ""
+
+#: js/cherry-classic.js:2
+#: js/cherry-gutenberg.js:2
+msgid "This block does not support inserting links"
+msgstr ""
+
+#: js/cherry-classic.js:2
+#: js/cherry-gutenberg.js:2
+msgid "No connection to the server"
+msgstr ""
+
+#: js/cherry-classic.js:2
+#: js/cherry-gutenberg.js:2
+msgid "Could not load data. Try again."
+msgstr ""
+
+#: js/cherry-classic.js:2
+#: js/cherry-gutenberg.js:2
+msgid "Link inserted"
+msgstr ""
+
+#: js/cherry-classic.js:2
+#: js/cherry-gutenberg.js:2
+msgid "LINK_TEXT"
+msgstr ""
+
+#: js/cherry-classic.js:2
+#: js/cherry-gutenberg.js:2
+msgid "Close"
+msgstr ""
+
+#: js/cherry-classic.js:2
+#: js/cherry-gutenberg.js:2
+msgid "CherryLink is not connected yet. Connect the plugin to get link suggestions."
+msgstr ""
+
+#: js/cherry-classic.js:2
+#: js/cherry-gutenberg.js:2
+msgid "Suggestions"
+msgstr ""
+
+#: js/cherry-classic.js:2
+#: js/cherry-gutenberg.js:2
+msgid "All posts"
+msgstr ""
+
+#: js/cherry-classic.js:2
+#: js/cherry-gutenberg.js:2
+msgid "What to show"
+msgstr ""
+
+#: js/cherry-classic.js:2
+#: js/cherry-gutenberg.js:2
+msgid "Posts"
+msgstr ""
+
+#: js/cherry-classic.js:2
+#: js/cherry-gutenberg.js:2
+#, js-format
+msgid "Link added to “%s”"
+msgstr ""
+
+#: js/cherry-classic.js:2
+#: js/cherry-gutenberg.js:2
+msgid "Link removed"
+msgstr ""
+
+#: js/cherry-classic.js:2
+#: js/cherry-gutenberg.js:2
+msgid "The post has changed since, so this cannot be undone automatically"
+msgstr ""
+
+#: js/cherry-classic.js:2
+#: js/cherry-gutenberg.js:2
+msgid "Suggestions for the current text"
+msgstr ""
+
+#: js/cherry-classic.js:2
+#: js/cherry-gutenberg.js:2
+msgid "Suggestions refreshed for the current text"
+msgstr ""
+
+#: js/cherry-classic.js:2
+#: js/cherry-gutenberg.js:2
+msgid "Refresh"
 msgstr ""

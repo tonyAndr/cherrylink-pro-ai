@@ -186,7 +186,7 @@ final class License implements Registerable
         }
     }
 
-    /** Forget the key and its validation state (the old "remove licence" action). */
+    /** Forget the key and its validation state (the old "remove license" action). */
     public function disconnect(): void
     {
         $options = $this->options->main();

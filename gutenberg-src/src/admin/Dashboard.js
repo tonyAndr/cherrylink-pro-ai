@@ -25,10 +25,10 @@ export default function Dashboard() {
                     <Badge tone={license.plan === 'free' ? 'accent' : 'ok'}>{planName(license.plan)}</Badge>
                     <span>{limit
                         ? sprintf(
-                            /* translators: 1: posts learned (analysed for suggestions; counts toward the plan limit), 2: total posts on the site */
+                            /* translators: 1: posts learned (analyzed for suggestions; counts toward the plan limit), 2: total posts on the site */
                             __('%1$s / %2$s learned', 'cherrylink'), num(counts.learned), num(counts.total))
                         : sprintf(
-                            /* translators: %s: posts learned (analysed for suggestions) */
+                            /* translators: %s: posts learned (analyzed for suggestions) */
                             __('%s learned', 'cherrylink'), num(counts.learned))}</span>
                     {license.plan === 'free' && <Link href={urls.upgrade} target="_blank" rel="noreferrer">{__('Upgrade', 'cherrylink')}</Link>}
                 </span>
@@ -78,7 +78,7 @@ export default function Dashboard() {
                     {limit ? (
                         <>
                             <strong>{sprintf(
-                                /* translators: 1: posts learned (analysed for suggestions; counts toward the plan limit), 2: total posts on the site */
+                                /* translators: 1: posts learned (analyzed for suggestions; counts toward the plan limit), 2: total posts on the site */
                                 __('%1$s of %2$s posts learned.', 'cherrylink'), num(counts.learned), num(counts.total))}</strong>{' '}
                             {sprintf(
                                 /* translators: %s: plan limit of learned posts */

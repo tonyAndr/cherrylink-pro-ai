@@ -7,7 +7,7 @@ Design reference (static HTML boards, read for layout/copy):
 
 ## Shape
 
-- One React app (`gutenberg-src/src/admin/`, entry `src/admin/index.js`, bundle `js/cherry-admin.{js,css,asset.php}`)
+- One React app (`gutenberg-src/src/admin/`, entry `src/admin/index.js`, bundle `js/cherry-app.{js,css,asset.php}`)
   built with the same webpack config as the editor bundles; `@wordpress/components`, `@wordpress/element`,
   `@wordpress/i18n` (externals). No Tailwind, no jQuery.
 - PHP prints one mount `<div id="cherrylink-admin" data-page="…"></div>` per page and
@@ -22,7 +22,7 @@ Design reference (static HTML boards, read for layout/copy):
   to `admin.php?page=cherrylink`, preserving `cl_connect`/`cl_retry`. Plugin-row "Settings" link, notices,
   `Connect::settingsUrl()` and panel config URLs point to the new pages.
 - English source strings. Every plan term carries a translator comment:
-  "learned" = post analysed for suggestions, counts toward the plan limit; "checked"/"mapped" = post whose
+  "learned" = post analyzed for suggestions, counts toward the plan limit; "checked"/"mapped" = post whose
   links were read for link health (whole site, no limit).
 
 ## Bootstrap `window.cherrylinkAdmin`
@@ -46,7 +46,7 @@ Design reference (static HTML boards, read for layout/copy):
 | `cherrylink_admin_license` | `op`=`set_key`(+`key`)/`recheck`/`disconnect` | `{state}`; set_key/recheck schedule the background validation (existing License flow); disconnect = old `remove_license` |
 | `cherrylink_admin_remove_data` | – | `{state}`; old `truncate_all` (delete docs + links in API), clears link-health cache |
 | `cherrylink_admin_import_settings` | multipart `file` (.txt from export) | `{state}`; through the same whitelist + link-markup migration |
-| `cherrylink_admin_reset_settings` | – | `{state}` (`Options::fill(null)`, keeps licence) |
+| `cherrylink_admin_reset_settings` | – | `{state}` (`Options::fill(null)`, keeps license) |
 | `cherrylink_admin_setup_done` | – | `{}` sets `cherrylink_setup_done` |
 
 Reused unchanged: `linkate_sync_start|status|cancel|tick` (scan), `linkate_orphan_donors` (Find donors),
@@ -67,7 +67,7 @@ Reused unchanged: `linkate_sync_start|status|cancel|tick` (scan), `linkate_orpha
 ```
 `settings` is typed JSON (real bools, ints, `excluded_authors`/`excluded_cats` as int[], `post_types` as string[]);
 `save_settings` accepts the same typed shape (partial objects allowed). `authors` = users who can publish
-(max 500); `categories` = `Editor\PanelConfig::categories()`. `js/cherry-admin.css` is enqueued with the script.
+(max 500); `categories` = `Editor\PanelConfig::categories()`. `js/cherry-app.css` is enqueued with the script.
 `learned` = capabilities plan `indexed` → readiness `index_rows`; `checked` = link-health `posts_checked`;
 `links` = readiness `scheme_rows`. Never cache formatted text.
 

@@ -39,7 +39,7 @@ final class CfOptionsTest extends TestCase
         return [
             'limit_ajax'         => 50,
             'divider'            => '',
-            'none_text'          => 'Ничего не найдено...',
+            'none_text'          => 'Nothing found...',
             'excluded_cats'      => '',
             'excluded_authors'   => '',
             'show_customs'       => '',

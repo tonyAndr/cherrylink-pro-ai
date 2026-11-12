@@ -12,12 +12,12 @@ export default function OpportunityList({
     const hiddenBlock = hiddenList.length ? (
         <>
             <button type="button" className="cl-btn cl-ghost" onClick={onToggleHidden} aria-expanded={showHidden}>
-                <IconChevron open={showHidden} /> {sprintf(__('Скрытые подсказки (%d)', 'cherrylink'), hiddenList.length)}
+                <IconChevron open={showHidden} /> {sprintf(__('Hidden suggestions (%d)', 'cherrylink'), hiddenList.length)}
             </button>
             {showHidden && hiddenList.map((h) => (
                 <div key={h.key} className="cl-done cl-muted">
                     <span>«{h.phrase}» → {h.title}</span>
-                    <button type="button" className="cl-btn" onClick={() => onRestore(h.key)}>{__('Вернуть', 'cherrylink')}</button>
+                    <button type="button" className="cl-btn" onClick={() => onRestore(h.key)}>{__('Restore', 'cherrylink')}</button>
                 </div>
             ))}
         </>
@@ -27,14 +27,14 @@ export default function OpportunityList({
         <>
             {lastInsert && (
                 <div className="cl-done">
-                    <span>{__('Добавлено', 'cherrylink')}: «{lastInsert.text}» → {lastInsert.title}</span>
-                    <button type="button" className="cl-btn" onClick={onUndo}>{__('Отменить', 'cherrylink')}</button>
+                    <span>{__('Added', 'cherrylink')}: «{lastInsert.text}» → {lastInsert.title}</span>
+                    <button type="button" className="cl-btn" onClick={onUndo}>{__('Undo', 'cherrylink')}</button>
                 </div>
             )}
             {loading && !items.length ? null : !items.length ? (
-                <div className="cl-empty">{__('Подсказок больше нет. Можно выбрать статью вручную во вкладке «Все статьи».', 'cherrylink')}</div>
+                <div className="cl-empty">{__('No more suggestions. You can pick a post manually in the “All posts” tab.', 'cherrylink')}</div>
             ) : (
-                <p className="cl-hint">{__('Фразы из вашего текста, которые подходят для ссылки. Наведите, чтобы увидеть фразу в тексте.', 'cherrylink')}</p>
+                <p className="cl-hint">{__('Phrases from your text that fit a link. Hover to see the phrase in the text.', 'cherrylink')}</p>
             )}
             {items.map((o) => {
                 const phrase = o.suggestion.phrase;
@@ -54,13 +54,13 @@ export default function OpportunityList({
                         <Context text={sug.context} />
                         <div className="cl-target"><span className="cl-arrow">→</span><span className="cl-t">{t.title}</span><Rel score={t.score} top={top} /></div>
                         <div className="cl-actions">
-                            <button type="button" className="cl-btn cl-primary" onClick={() => onInsert(t, sug)}>{__('Вставить ссылку', 'cherrylink')}</button>
+                            <button type="button" className="cl-btn cl-primary" onClick={() => onInsert(t, sug)}>{__('Insert link', 'cherrylink')}</button>
                             {o.targets.length > 1 && (
                                 <button type="button" className="cl-btn" onClick={() => onAlt(phrase)}>
-                                    {sprintf(__('Другая статья (%1$d/%2$d)', 'cherrylink'), idx + 1, o.targets.length)}
+                                    {sprintf(__('Another post (%1$d/%2$d)', 'cherrylink'), idx + 1, o.targets.length)}
                                 </button>
                             )}
-                            <button type="button" className="cl-btn cl-ghost" onClick={() => onHide(hiddenKey(t.post_id, phrase), t, phrase)}>{__('Скрыть', 'cherrylink')}</button>
+                            <button type="button" className="cl-btn cl-ghost" onClick={() => onHide(hiddenKey(t.post_id, phrase), t, phrase)}>{__('Hide', 'cherrylink')}</button>
                         </div>
                     </div>
                 );

@@ -907,7 +907,7 @@ class Client implements ReportClient
     }
 
     /**
-     * Full link-graph health analysis — powers "Поиск проблем с перелинковкой".
+     * Full link-graph health analysis — powers "Find internal linking problems".
      */
     public function get_link_problems(): ?array
     {

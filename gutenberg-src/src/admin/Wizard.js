@@ -176,7 +176,7 @@ function Analyze({ onDone }) {
                                     /* translators: %s: number of posts found */
                                     _n('%s post found.', '%s posts found.', found, 'cherrylink'), num(found))}</strong>{' '}
                                 {sprintf(
-                                    /* translators: 1: free plan learned-post limit, 2: total posts found. "Learned" = analysed for suggestions; "checked" = links read for link health. */
+                                    /* translators: 1: free plan learned-post limit, 2: total posts found. "Learned" = analyzed for suggestions; "checked" = links read for link health. */
                                     __('The free plan gives suggestions from your %1$s most recently updated posts (learned). Link health covers all %2$s: it only reads the links already in your posts, so no learning is needed.', 'cherrylink'), num(limit), num(found))}
                             </>
                         ) : sprintf(
@@ -206,7 +206,7 @@ function Analyze({ onDone }) {
                 <>
                     <div className="cl-row"><span className="cl-ok">{__('✓ Analysis complete', 'cherrylink')}</span>
                         <span className="cl-muted">{sprintf(
-                            /* translators: 1: posts learned (analysed for suggestions), 2: posts checked (links read for link health) */
+                            /* translators: 1: posts learned (analyzed for suggestions), 2: posts checked (links read for link health) */
                             __('%1$s posts learned · %2$s posts checked', 'cherrylink'), num(state.counts.learned), num(state.counts.checked))}{secsTaken !== null && ` · ${sprintf(__('%s s', 'cherrylink'), secsTaken)}`}</span></div>
                     <div className="cl-row"><Btn onClick={onDone}>{__('See results', 'cherrylink')}</Btn></div>
                 </>
@@ -239,7 +239,7 @@ function Done() {
             <div className="cl-stack">
                 <h1>{__('Your site is ready', 'cherrylink')}</h1>
                 <p className="cl-muted">{sprintf(
-                    /* translators: 1: posts learned (analysed for suggestions; counts toward the plan limit), 2: posts checked (links read for link health; whole site, no limit) */
+                    /* translators: 1: posts learned (analyzed for suggestions; counts toward the plan limit), 2: posts checked (links read for link health; whole site, no limit) */
                     __('%1$s posts learned, %2$s posts checked. Here is what CherryLink found.', 'cherrylink'), num(state.counts.learned), num(s ? s.posts_checked ?? state.counts.checked : state.counts.checked))}</p>
             </div>
             {(err || error) && <Notice tone="danger">{err || error}</Notice>}

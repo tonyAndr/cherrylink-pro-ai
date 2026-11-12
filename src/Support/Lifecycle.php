@@ -94,7 +94,7 @@ final class Lifecycle implements Registerable
      * Deactivation: unschedule our cron events and cancel our queued background work.
      *
      * WordPress keeps scheduled events in the options table across deactivation, so
-     * without this the capability refresh, the two recovery sweeps and the licence
+     * without this the capability refresh, the two recovery sweeps and the license
      * check keep firing with no callbacks registered.
      */
     public function deactivate(): void

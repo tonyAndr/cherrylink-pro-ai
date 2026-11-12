@@ -9,8 +9,8 @@
 
 defined('ABSPATH') || exit;
 ?>
-<div class="notice notice-warning"><p><strong>CherryLink Pro</strong>: <?php esc_html_e('лицензия неактивна — индексация и сканирование приостановлены, ссылки не обновляются.', 'cherrylink'); ?><?php if ($dirty) : ?> <strong><?php esc_html_e('Индекс перелинковки не синхронизирован', 'cherrylink'); ?></strong> <?php
+<div class="notice notice-warning"><p><strong>CherryLink Pro</strong>: <?php esc_html_e('license inactive — indexing and scanning are paused, links are not being updated.', 'cherrylink'); ?><?php if ($dirty) : ?> <strong><?php esc_html_e('The internal linking index is not synchronized', 'cherrylink'); ?></strong> <?php
     /* translators: %s: human-readable date since which changes have not been indexed */
-    printf(esc_html__('(изменения с %s не проиндексированы). Активируйте ключ и запустите сканирование, чтобы восстановить синхронизацию.', 'cherrylink'), esc_html($since));
-?><?php else : ?> <a href="<?php echo esc_url($settings_url); ?>"><?php esc_html_e('Введите ключ лицензии', 'cherrylink'); ?></a>.<?php endif; ?></p></div>
+    printf(esc_html__('(changes since %s are not indexed). Activate your key and run a scan to restore synchronization.', 'cherrylink'), esc_html($since));
+?><?php else : ?> <a href="<?php echo esc_url($settings_url); ?>"><?php esc_html_e('Enter your license key', 'cherrylink'); ?></a>.<?php endif; ?></p></div>
 <?php

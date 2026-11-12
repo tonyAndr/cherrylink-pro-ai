@@ -49,7 +49,7 @@ export default function IndexPage() {
                         __('Free limit: newest %s by last update', 'cherrylink'), num(limit)) : __('No limit on your plan', 'cherrylink')}</span></div>
                     <div className="cl-tile"><span className="cl-big">{num(counts.checked)}</span><strong>{__('checked for link health', 'cherrylink')}</strong><span className="cl-muted">{__('Always the whole site', 'cherrylink')}</span></div>
                 </div>
-                <p className="cl-muted">{__('Learned = analysed for suggestions; counts toward the plan limit. Checked = links read for link health; whole site, no limit.', 'cherrylink')}</p>
+                <p className="cl-muted">{__('Learned = analyzed for suggestions; counts toward the plan limit. Checked = links read for link health; whole site, no limit.', 'cherrylink')}</p>
                 {limit && (
                     <div className="cl-accent-box cl-between">
                         <div className="cl-stack">

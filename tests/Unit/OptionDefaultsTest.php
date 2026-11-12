@@ -45,7 +45,7 @@ final class OptionDefaultsTest extends TestCase
             'divider'                     => '',
             'show_private'                => 'false',
             'show_pages'                  => 'true',
-            'none_text'                   => 'Ничего не найдено...',
+            'none_text'                   => 'Nothing found...',
             'excluded_cats'               => '',
             'excluded_authors'            => '',
             'show_customs'                => '',

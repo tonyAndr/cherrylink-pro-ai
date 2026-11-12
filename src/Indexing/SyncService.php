@@ -200,7 +200,7 @@ final class SyncService implements Registerable
         if (! $this->license->isLicensed()) {
             return $this->setState([
                 'status'  => 'error',
-                'message' => \__('Лицензия неактивна — синхронизация недоступна. Введите ключ лицензии.', 'cherrylink'),
+                'message' => \__('License inactive — synchronization is unavailable. Enter your license key.', 'cherrylink'),
             ]);
         }
         if (! \function_exists('as_enqueue_async_action')) {
@@ -257,7 +257,7 @@ final class SyncService implements Registerable
             \update_option('linkate_posts_meta', $meta);
             return $this->setState([
                 'status' => 'error',
-                'message' => \__('Не удалось запланировать сканирование. Попробуйте снова.', 'cherrylink'),
+                'message' => \__('Could not schedule the scan. Please try again.', 'cherrylink'),
             ]);
         }
         return $this->getState();
@@ -275,7 +275,7 @@ final class SyncService implements Registerable
         }
 
         // Flag first so any worker already mid-flight aborts and stops rescheduling.
-        $state = $this->setState(['status' => 'cancelled', 'message' => \__('Остановлено пользователем', 'cherrylink')]);
+        $state = $this->setState(['status' => 'cancelled', 'message' => \__('Stopped by user', 'cherrylink')]);
 
         // Then drop pending queued actions. as_unschedule_all_actions() with empty args only
         // matches argument-less actions, so cancel each pending action by ID instead.
@@ -618,7 +618,7 @@ final class SyncService implements Registerable
                 'links'        => 0,
                 'deleted'      => 0,
                 'force_full'   => $force_full,
-                'message'      => \__('Изменений не найдено', 'cherrylink'),
+                'message'      => \__('No changes found', 'cherrylink'),
             ]));
             return;
         }

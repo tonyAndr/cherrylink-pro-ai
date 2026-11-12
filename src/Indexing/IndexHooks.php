@@ -125,7 +125,7 @@ final class IndexHooks implements Registerable
 
         // Background readiness refresh — hits the API + updates the cache.
         \add_action('wp_ajax_linkate_index_status_data', [$this, 'ajaxStatusData']);
-        // Server connectivity diagnostics for the "Состояние сервера" card.
+        // Server connectivity diagnostics for the "Server status" card.
         \add_action('wp_ajax_cherrylink_server_status', [$this, 'ajaxServerStatus']);
     }
 
@@ -224,7 +224,7 @@ final class IndexHooks implements Registerable
     public function ajaxStatusData(): void
     {
         Security::verify('edit_posts');
-        // The manual "Проверить связь" path sends force=1. It must not be short-circuited
+        // The manual "Test connection" path sends force=1. It must not be short-circuited
         // by the 30-second negative cache; an administrator expects a real probe.
         // phpcs:ignore WordPress.Security.NonceVerification.Missing -- gated by Security::verify()
         $force = !empty($_POST['force']);
@@ -261,7 +261,7 @@ final class IndexHooks implements Registerable
 
     // ── Readiness status payload (shared by settings render + AJAX refresh) ────
     //
-    // Single source of truth for the "Готовность к работе" card: doc count, link
+    // Single source of truth for the "Readiness" card: doc count, link
     // count, the process badge, and the last-scan summary.
 
     /**
@@ -284,7 +284,7 @@ final class IndexHooks implements Registerable
             $time_html = "<time class=\"cl-localtime\" datetime=\"{$iso}\">{$when}</time>";
             $last_scan_text = ' ' . \sprintf(
                 /* translators: 1: <time> element with the formatted scan date, 2: upserted count, 3: deleted count */
-                \esc_html__('Последнее сканирование: %1$s (обновлено: %2$d, удалено: %3$d).', 'cherrylink'),
+                \esc_html__('Last scan: %1$s (updated: %2$d, removed: %3$d).', 'cherrylink'),
                 $time_html,
                 $up,
                 $del
@@ -292,13 +292,13 @@ final class IndexHooks implements Registerable
         }
         switch ($meta['indexing_process'] ?? 'VALUE_NOT_EXIST') {
             case 'IN_PROGRESS':
-                $badge = '<code class="bad-index">[' . \esc_html__('Сканирование не завершено', 'cherrylink') . ']</code>';
+                $badge = '<code class="bad-index">[' . \esc_html__('Scan not complete', 'cherrylink') . ']</code>';
                 break;
             case 'DONE':
-                $badge = '<code class="good-index">[' . \esc_html__('Все хорошо', 'cherrylink') . ']</code>';
+                $badge = '<code class="good-index">[' . \esc_html__('All good', 'cherrylink') . ']</code>';
                 break;
             case 'VALUE_NOT_EXIST':
-                $badge = '<code class="bad-index">[' . \esc_html__('Нужно просканировать сайт', 'cherrylink') . ']</code>';
+                $badge = '<code class="bad-index">[' . \esc_html__('You need to scan the site', 'cherrylink') . ']</code>';
                 break;
             default:
                 $badge = '';
@@ -312,7 +312,7 @@ final class IndexHooks implements Registerable
      * pages render instantly and navigation never blocks on a slow/unreachable server.
      * Pass $refresh=true (the background AJAX) to hit the API, refresh the cache, and detect
      * reachability. Counts are null when the API can't be reached, so the card says
-     * "нет связи" instead of falsely reporting an empty index of 0.
+     * "no connection" instead of falsely reporting an empty index of 0.
      *
      * @return array<string,mixed>
      */
@@ -341,8 +341,8 @@ final class IndexHooks implements Registerable
             return \array_merge($local, [
                 'index_rows'         => null,
                 'scheme_rows'        => null,
-                'index_status_text'  => \esc_html__(' загрузка данных…', 'cherrylink'),
-                'scheme_status_text' => \esc_html__(' загрузка данных…', 'cherrylink'),
+                'index_status_text'  => \esc_html__(' loading data…', 'cherrylink'),
+                'scheme_status_text' => \esc_html__(' loading data…', 'cherrylink'),
                 'reachable'          => null,
                 'checked_gmt'        => '',
                 'stale'              => true,
@@ -411,20 +411,20 @@ final class IndexHooks implements Registerable
     private static function statusTexts(?int $index_rows, ?int $scheme_rows): array
     {
         if ($index_rows === null) {
-            $index_status_text = \esc_html__(' не удалось получить данные (нет связи с сервером).', 'cherrylink');
+            $index_status_text = \esc_html__(' failed to retrieve data (no connection to the server).', 'cherrylink');
         } else {
             $index_status_text = $index_rows > 0
                 /* translators: %d: number of indexed articles */
-                ? \sprintf(\esc_html__(' проиндексировано %d статей в Vector API.', 'cherrylink'), $index_rows)
-                : \esc_html__(' статьи не проиндексированы, запустите сканирование.', 'cherrylink');
+                ? \sprintf(\esc_html__(' %d articles indexed in the Vector API.', 'cherrylink'), $index_rows)
+                : \esc_html__(' articles are not indexed, run a scan.', 'cherrylink');
         }
         if ($scheme_rows === null) {
-            $scheme_status_text = \esc_html__(' не удалось получить данные (нет связи с сервером).', 'cherrylink');
+            $scheme_status_text = \esc_html__(' failed to retrieve data (no connection to the server).', 'cherrylink');
         } else {
             $scheme_status_text = $scheme_rows
                 /* translators: %d: number of links found */
-                ? \sprintf(\esc_html__(' найдено %d ссылок в записях и страницах.', 'cherrylink'), $scheme_rows)
-                : \esc_html__(' ссылки не найдены.', 'cherrylink');
+                ? \sprintf(\esc_html__(' %d links found in posts and pages.', 'cherrylink'), $scheme_rows)
+                : \esc_html__(' no links found.', 'cherrylink');
         }
         return ['index_status_text' => $index_status_text, 'scheme_status_text' => $scheme_status_text];
     }

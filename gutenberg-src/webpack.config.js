@@ -23,7 +23,7 @@ class CopyToJsPlugin {
             const src = path.resolve( __dirname, 'build' );
             const dest = path.resolve( __dirname, '../js' );
             const copyMap = {};
-            for ( const name of [ 'cherry-gutenberg', 'cherry-classic', 'cherry-admin' ] ) {
+            for ( const name of [ 'cherry-gutenberg', 'cherry-classic', 'cherry-app' ] ) {
                 for ( const ext of [ 'js', 'asset.php', 'css' ] ) {
                     copyMap[ `${ name }.${ ext }` ] = `${ name }.${ ext }`;
                 }
@@ -45,7 +45,7 @@ module.exports = {
     entry: {
         'cherry-gutenberg': path.resolve( __dirname, 'src/index.js' ),
         'cherry-classic': path.resolve( __dirname, 'src/classic.js' ),
-        'cherry-admin': path.resolve( __dirname, 'src/admin/index.js' ),
+        'cherry-app': path.resolve( __dirname, 'src/admin/index.js' ),
     },
     output: {
         ...defaultConfig.output,

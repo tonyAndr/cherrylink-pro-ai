@@ -7,7 +7,7 @@
         "test": "wp-scripts test-unit-jest",
         "start": "wp-scripts start --mode development",
         "build": "wp-scripts build",
-        "postbuild": "cp build/cherry-gutenberg.js build/cherry-gutenberg.asset.php build/cherry-classic.js build/cherry-classic.asset.php build/cherry-admin.js build/cherry-admin.asset.php ../js/"
+        "postbuild": "cp build/cherry-gutenberg.js build/cherry-gutenberg.asset.php build/cherry-classic.js build/cherry-classic.asset.php build/cherry-app.js build/cherry-app.asset.php ../js/"
     },
     "author": "Anton SeoCherry.ru",
     "license": "ISC",

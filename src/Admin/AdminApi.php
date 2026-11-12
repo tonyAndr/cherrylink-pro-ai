@@ -101,7 +101,7 @@ final class AdminApi implements Registerable
                 // phpcs:ignore WordPress.Security.NonceVerification.Missing -- gated by guard()
                 $key = \trim(\sanitize_text_field(\wp_unslash($_POST['key'] ?? '')));
                 if ($key === '') {
-                    $this->fail(\__('Enter a licence key.', 'cherrylink'));
+                    $this->fail(\__('Enter a license key.', 'cherrylink'));
                 }
                 $previous = (string) $this->options->get('hash_field', '');
                 $this->options->set('hash_field', $key);
@@ -156,7 +156,7 @@ final class AdminApi implements Registerable
     public function ajaxResetSettings(): void
     {
         $this->guard();
-        Options::fill(null); // keeps the licence key
+        Options::fill(null); // keeps the license key
         \wp_send_json_success(['state' => $this->state()]);
     }
 
@@ -342,7 +342,7 @@ final class AdminApi implements Registerable
             $counts = (array) \wp_count_posts($name);
             $count   = (int) ($counts['publish'] ?? 0);
             $enabled = $name === 'post' || \in_array($name, $settings['post_types'], true);
-            $total  += $enabled ? $count : 0; // only analysed types count toward the site total
+            $total  += $enabled ? $count : 0; // only analyzed types count toward the site total
             $types[] = [
                 'name'    => $name,
                 'label'   => $obj ? (string) $obj->labels->name : $name,
@@ -422,11 +422,11 @@ final class AdminApi implements Registerable
     {
         switch ($reason) {
             case 'no_connection':
-                return \__('Could not reach the licence server. Try again later or contact support.', 'cherrylink');
+                return \__('Could not reach the license server. Try again later or contact support.', 'cherrylink');
             case 'pending':
                 return \__('The key is being checked in the background. Refresh in a few seconds.', 'cherrylink');
             case 'missing_key':
-                return \__('Enter a licence key.', 'cherrylink');
+                return \__('Enter a license key.', 'cherrylink');
             case 'validation_schedule_failed':
                 return \__('Could not schedule the key check. Try again.', 'cherrylink');
             case 'bad_domain':
@@ -560,7 +560,7 @@ final class AdminApi implements Registerable
                 'type_label'  => $obj ? (string) $obj->labels->singular_name : '',
                 'url'         => $url,
                 'edit_url'    => $post_id ? \admin_url('post.php?action=edit&post=' . $post_id) : '',
-                // learned = analysed for suggestions (counts toward the plan limit); unlimited plans learn everything.
+                // learned = analyzed for suggestions (counts toward the plan limit); unlimited plans learn everything.
                 'learned'     => $eligible && ($cutoff === null || (string) $post->post_modified_gmt >= $cutoff),
                 'orphan'      => $orphan,
                 'no_outgoing' => $no_outgoing,

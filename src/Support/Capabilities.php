@@ -218,7 +218,7 @@ final class Capabilities
 
     /**
      * Drop the snapshot AND the durable tenant mode. Used only when the tenant
-     * identity changes (different licence/site) so a previous tenant's mode cannot
+     * identity changes (different license/site) so a previous tenant's mode cannot
      * leak into the new one.
      */
     public function forgetTenant(): void

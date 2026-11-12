@@ -78,7 +78,7 @@ without changing runtime behavior. See the staged plan in
 | Gutenberg JS | `js/cherry-gutenberg.js` (**built** from `gutenberg-src/` — do not hand-edit) |
 | Panel spec | `specs/unified-panel.md` |
 | Styles | panel CSS is bundled (`js/cherry-*.css`); `css/cherry-main.css` = media-button icon only |
-| Translations | `languages/` (`.pot` master, `cherrylink-en_US.{po,mo}`, JS `.json`) |
+| Translations | `languages/` (`.pot` master, `cherrylink-ru_RU.{po,mo}`, JS `.json`) |
 
 ## Request isolation checkpoint
 
@@ -156,12 +156,26 @@ invisible to the mocked suite).
 
 ## i18n
 
-Text domain `cherrylink`, `Domain Path: /languages`. PHP strings wrapped in
-`__()/esc_html__()/…`; hand-written JS uses `wp.i18n` with
-`wp_set_script_translations()`; Gutenberg src uses `@wordpress/i18n`. Regenerate
-the catalog after adding strings: `wp i18n make-pot . languages/cherrylink.pot
---domain=cherrylink --exclude=vendor,node_modules,gutenberg-src,tests,dev,build,.github`
-(scans PHP + the built `js/` bundle), then `wp i18n make-json <po> --no-purge`.
+Text domain `cherrylink`, `Domain Path: /languages`. **English is the source
+language**: every msgid is English; never put non-English text in `__()` or JS
+`__()`. Russian lives in the `languages/cherrylink-ru_RU.po` catalogue
+(3 plural forms; `.mo` and `cherrylink-ru_RU-<md5>.json` are compiled from it and
+committed). PHP strings use `__()/esc_html__()/…`; hand-written JS uses `wp.i18n`
+with `wp_set_script_translations()`; Gutenberg src uses `@wordpress/i18n`.
+After adding strings, rebuild the bundles (`cd gutenberg-src && npm run build`),
+then from `plugin/` (wp-cli in Docker works without a WP install):
+
+```bash
+wp i18n make-pot . languages/cherrylink.pot --domain=cherrylink \
+  --exclude=vendor,node_modules,gutenberg-src,tests,dev,build,.github,wp-dev,updater,env-info
+wp i18n update-po languages/cherrylink.pot languages/cherrylink-ru_RU.po   # then translate new entries
+wp i18n make-mo languages/cherrylink-ru_RU.po languages/
+wp i18n make-json languages/cherrylink-ru_RU.po --no-purge
+```
+
+(make-pot scans PHP plus the built `js/` bundles.) Don't name a bundle `*min.js` (e.g. `cherry-admin.js`):
+wp-cli's unescaped `.min` regex mangles the source path and the JSON gets the wrong hash.
+Keep the ru_RU po free of untranslated/fuzzy entries.
 Never cache locale-formatted text (e.g. status snapshots store raw counts and
 format per-request — see `IndexHooks::statusTexts()`).
 
@@ -205,7 +219,7 @@ The API runtime constants + the alt-server hook live in `\CherryLink\Api\Relay`.
 - Auth key priority: saved license key (`hash_field`) → `CHERRY_VECTOR_API_KEY` constant → `vector_api_key` setting. The explicit key is a fallback for license-less/local installs; a leftover admin key must not shadow the license. **Never ship the server ADMIN_KEY in plugin code.**
 - Headers sent: `X-License-Key`, `X-Site-Domain`
 - Errors: logged via `\CherryLink\Support\Logger`
-- Alt-server relay: `Api\Relay::resolveAltRoute()` (the `http_api_curl` hook) reroutes requests to `CL_ALT_API_*` when the "Для экспертов" toggle is on (blocked-provider workaround).
+- Alt-server relay: `Api\Relay::resolveAltRoute()` (the `http_api_curl` hook) reroutes requests to `CL_ALT_API_*` when the "For experts" toggle is on (blocked-provider workaround).
 
 ---
 

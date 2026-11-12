@@ -80,7 +80,8 @@ The shareable validation vocabulary lives in `api/plugin_report_schema.py`.
 - Manual wp-dev check must show zero `/v1/client-events` calls during activation
   and an ordinary admin load, then exactly one batched call from cron.
 
-## Opt-in (free mode)
+## Connected sites only (free mode)
 
-Reports are **off by default** (`lifecycle_reports` main option, checkbox on the settings page). While off,
-`recordActivation`, `sweep` and `send` do nothing and any queued events are dropped. See `connect-and-plans.md`.
+Reports run only while the site is connected (`PluginReports::enabled()` = `License::isConnected()`). Before
+Connect, `recordActivation` and `sweep` do nothing and `send` drops anything queued. The 1.2 `lifecycle_reports`
+opt-in option is removed by `Lifecycle::maybeMigrateOptions`. See `connect-and-plans.md`.

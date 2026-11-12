@@ -1,4 +1,4 @@
-import { __, sprintf } from '@wordpress/i18n';
+import { __, _n, sprintf } from '@wordpress/i18n';
 
 export const countWords = (text) => (String(text || '').match(/[\p{L}\p{N}]+/gu) || []).length;
 
@@ -29,41 +29,41 @@ export default function Strip({ out, inc, words, donorCount, plan, postLearned, 
     if (status === 'orphan') {
         chip = donorCount > 0 ? (
             <button type="button" className="cl-chip cl-warn" onClick={onGoIncoming}>
-                {sprintf(__('Нет входящих · %d статьи могут сослаться', 'cherrylink'), donorCount)}
+                {sprintf(_n('No incoming links · %d post could link here', 'No incoming links · %d posts could link here', donorCount, 'cherrylink'), donorCount)}
             </button>
-        ) : <span className="cl-chip cl-warn cl-static">{__('Нет входящих ссылок', 'cherrylink')}</span>;
+        ) : <span className="cl-chip cl-warn cl-static">{__('No incoming links', 'cherrylink')}</span>;
     } else if (status === 'few-out') {
-        chip = <button type="button" className="cl-chip cl-warn" onClick={onGoSuggestions}>{sprintf(__('Мало исходящих · нужно %s', 'cherrylink'), range)}</button>;
+        chip = <button type="button" className="cl-chip cl-warn" onClick={onGoSuggestions}>{sprintf(__('Too few outgoing links · need %s', 'cherrylink'), range)}</button>;
     } else if (status === 'many-out') {
-        chip = <span className="cl-chip cl-warn cl-static" title={__('Больше одной ссылки на ~100 слов мешает читать и выглядит как спам.', 'cherrylink')}>{__('Много ссылок', 'cherrylink')}</span>;
+        chip = <span className="cl-chip cl-warn cl-static" title={__('More than one link per ~100 words hurts readability and looks like spam.', 'cherrylink')}>{__('Too many links', 'cherrylink')}</span>;
     } else if (status === 'few-in') {
-        chip = <button type="button" className="cl-chip cl-soft" onClick={onGoIncoming}>{__('Мало входящих', 'cherrylink')}</button>;
+        chip = <button type="button" className="cl-chip cl-soft" onClick={onGoIncoming}>{__('Few incoming links', 'cherrylink')}</button>;
     } else if (out > 0) {
-        chip = <span className="cl-chip cl-ok">{__('Ссылок достаточно', 'cherrylink')}</span>;
+        chip = <span className="cl-chip cl-ok">{__('Enough links', 'cherrylink')}</span>;
     }
     return (
         <div className="cl-strip">
             <span className="cl-count">
                 <button type="button" className="cl-countbtn" onClick={() => onLinks('out')}
-                    title={rec ? sprintf(__('Рекомендуется %1$s исходящих для %2$d слов', 'cherrylink'), range, words) : undefined}>
-                    {__('Исходящих', 'cherrylink')} <b>{out}</b>{rec && <span className="cl-rec">/{range}</span>}
+                    title={rec ? sprintf(__('Recommended: %1$s outgoing links for %2$d words', 'cherrylink'), range, words) : undefined}>
+                    {__('Outgoing', 'cherrylink')} <b>{out}</b>{rec && <span className="cl-rec">/{range}</span>}
                 </button>
                 {' · '}
                 <button type="button" className="cl-countbtn" onClick={() => onLinks('in')}>
-                    {__('Входящих', 'cherrylink')} <b>{inc}</b>
+                    {__('Incoming', 'cherrylink')} <b>{inc}</b>
                 </button>
             </span>
             {chip}
             {planLimited(plan) && (
                 <span className="cl-plan">
-                    {sprintf(__('Проиндексировано %1$s из %2$s', 'cherrylink'), fmt(plan.indexed == null ? plan.post_limit : plan.indexed), fmt(plan.total))}
-                    {upgradeUrl && <> · <a href={upgradeUrl} target="_blank" rel="noopener noreferrer">{__('Расширить', 'cherrylink')}</a></>}
+                    {sprintf(__('Indexed %1$s of %2$s', 'cherrylink'), fmt(plan.indexed == null ? plan.post_limit : plan.indexed), fmt(plan.total))}
+                    {upgradeUrl && <> · <a href={upgradeUrl} target="_blank" rel="noopener noreferrer">{__('Upgrade', 'cherrylink')}</a></>}
                 </span>
             )}
             {planLimited(plan) && postLearned === false && (
                 <p className="cl-plan-note">
                     {sprintf(
-                        /* translators: %s: plan post limit. "Learned" = post analysed for suggestions; counts toward the plan limit. */
+                        /* translators: %s: plan post limit. "Learned" = post analyzed for suggestions; counts toward the plan limit. */
                         __('This post is outside your %s learned posts, so other posts won\'t suggest links to it. Its own suggestions and link health still work. Updating it makes it one of your newest posts, so it gets learned.', 'cherrylink'),
                         fmt(plan.post_limit))}
                     {upgradeUrl && <> <a href={upgradeUrl} target="_blank" rel="noopener noreferrer">{__('Upgrade to learn every post', 'cherrylink')}</a></>}

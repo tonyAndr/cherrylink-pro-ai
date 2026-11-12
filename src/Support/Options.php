@@ -151,7 +151,7 @@ final class Options
             $options['show_private'] = 'false';
         }
         if (! isset($options['show_pages'])) {
-            $options['show_pages'] = 'true'; // pages are analysed by default (2.x)
+            $options['show_pages'] = 'true'; // pages are analyzed by default (2.x)
         }
         // show_static is now show_pages
         if (isset($options['show_static'])) {
@@ -159,7 +159,7 @@ final class Options
             unset($options['show_static']);
         }
         if (! isset($options['none_text'])) {
-            $options['none_text'] = \__('Ничего не найдено...', 'cherrylink');
+            $options['none_text'] = \__('Nothing found...', 'cherrylink');
         }
         if (! isset($options['excluded_cats'])) {
             $options['excluded_cats'] = '';

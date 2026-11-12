@@ -5,9 +5,9 @@ import { normalizeUrl } from './opportunities';
 export default function LinksView({ links, incoming, titleByUrl, section, onBack, onReveal }) {
     return (
         <>
-            <button type="button" className="cl-btn cl-ghost cl-back" onClick={onBack}><IconBack /> {__('Назад', 'cherrylink')}</button>
-            <div className="cl-section-label" id="cl-out">{__('Исходящие', 'cherrylink')} <span className="cl-n">{links.length}</span></div>
-            {!links.length && <div className="cl-empty">{__('В тексте пока нет ссылок.', 'cherrylink')}</div>}
+            <button type="button" className="cl-btn cl-ghost cl-back" onClick={onBack}><IconBack /> {__('Back', 'cherrylink')}</button>
+            <div className="cl-section-label" id="cl-out">{__('Outgoing links', 'cherrylink')} <span className="cl-n">{links.length}</span></div>
+            {!links.length && <div className="cl-empty">{__('There are no links in the text yet.', 'cherrylink')}</div>}
             {links.map((l, i) => (
                 <button type="button" key={`${l.url}${i}`} className="cl-row cl-linkrow" onClick={() => onReveal(l.ref)}>
                     <div className="cl-minw">
@@ -17,9 +17,9 @@ export default function LinksView({ links, incoming, titleByUrl, section, onBack
                 </button>
             ))}
             <div className="cl-section-label" id="cl-in" ref={(el) => { if (el && section === 'in' && el.scrollIntoView) el.scrollIntoView({ block: 'start' }); }}>
-                {__('Входящие', 'cherrylink')} <span className="cl-n">{incoming.length}</span>
+                {__('Incoming links', 'cherrylink')} <span className="cl-n">{incoming.length}</span>
             </div>
-            {!incoming.length && <div className="cl-empty">{__('Другие статьи пока не ссылаются на эту.', 'cherrylink')}</div>}
+            {!incoming.length && <div className="cl-empty">{__('No other posts link to this one yet.', 'cherrylink')}</div>}
             {incoming.map((s, i) => (
                 <div className="cl-row" key={`${s.source_id}${i}`}>
                     <div className="cl-minw">
@@ -27,8 +27,8 @@ export default function LinksView({ links, incoming, titleByUrl, section, onBack
                         {s.anchor && <div className="cl-meta cl-clip">← <span className="cl-anchor-text">{s.anchor}</span></div>}
                     </div>
                     <div className="cl-rowact">
-                        {s.source_url && <a className="cl-iconlink" href={s.source_url} target="_blank" rel="noopener noreferrer" aria-label={__('Открыть', 'cherrylink')}><IconExternal /></a>}
-                        {s.edit_url && <a className="cl-iconlink" href={s.edit_url} target="_blank" rel="noopener noreferrer" aria-label={__('Редактировать', 'cherrylink')}><IconEdit /></a>}
+                        {s.source_url && <a className="cl-iconlink" href={s.source_url} target="_blank" rel="noopener noreferrer" aria-label={__('Open', 'cherrylink')}><IconExternal /></a>}
+                        {s.edit_url && <a className="cl-iconlink" href={s.edit_url} target="_blank" rel="noopener noreferrer" aria-label={__('Edit', 'cherrylink')}><IconEdit /></a>}
                     </div>
                 </div>
             ))}

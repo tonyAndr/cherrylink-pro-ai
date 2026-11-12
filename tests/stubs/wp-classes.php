@@ -45,6 +45,11 @@ if (!class_exists('WP_Error')) {
             return $this->code;
         }
 
+        public function get_error_message()
+        {
+            return (string) $this->message;
+        }
+
         public function get_error_data()
         {
             return $this->data;

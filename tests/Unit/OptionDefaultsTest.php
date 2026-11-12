@@ -44,7 +44,7 @@ final class OptionDefaultsTest extends TestCase
             'limit_ajax'                  => 50,
             'divider'                     => '',
             'show_private'                => 'false',
-            'show_pages'                  => 'false',
+            'show_pages'                  => 'true',
             'none_text'                   => 'Ничего не найдено...',
             'excluded_cats'               => '',
             'excluded_authors'            => '',
@@ -64,8 +64,9 @@ final class OptionDefaultsTest extends TestCase
             'vector_api_url'              => '',
             'vector_api_key'              => '',
             'vector_custom_fields'        => '',
-            'use_alt_server'              => 'false',
-            'lifecycle_reports'           => 'false',
+            'link_title_attr'             => 'true',
+            'link_new_tab'                => 'false',
+            'link_class'                  => '',
         ];
 
         foreach ($expected as $key => $value) {
@@ -85,26 +86,6 @@ final class OptionDefaultsTest extends TestCase
     }
 
     /**
-     * Template defaults are stored base64(urlencode(html)); assert they decode
-     * back to the exact markup rather than transcribing brittle encoded blobs.
-     */
-    public function testFreshInstallTemplateDefaultsDecode(): void
-    {
-        $opts = Options::fill([]);
-
-        $decode = static function (string $stored): string {
-            return urldecode(base64_decode($stored));
-        };
-
-        $this->assertSame('<a href="{url}" title="{title}">', $decode($opts['link_before']));
-        $this->assertSame('</a>', $decode($opts['link_after']));
-        $this->assertSame('<a href="{url}" title="{title}">', $decode($opts['term_before']));
-        $this->assertSame('</a>', $decode($opts['term_after']));
-        $this->assertStringContainsString('{imagesrc}', $decode($opts['link_temp_alt']));
-        $this->assertStringContainsString('{title}', $decode($opts['term_temp_alt']));
-    }
-
-    /**
      * The full key set must stay stable — a refactor that drops or renames a
      * default option would break saved-settings compatibility.
      */
@@ -117,11 +98,10 @@ final class OptionDefaultsTest extends TestCase
         $expectedKeys = [
             'anons_len', 'consider_max_incoming_links', 'debug_enabled', 'divider',
             'excluded_authors', 'excluded_cats', 'hash_field', 'limit_ajax',
-            'link_after', 'link_before', 'link_temp_alt', 'linkate_scheme_exists',
+            'link_class', 'link_new_tab', 'link_title_attr', 'linkate_scheme_exists',
             'match_cat', 'max_incoming_links', 'multilink', 'no_selection_action',
             'none_text', 'relative_links', 'show_cat_filter', 'show_customs',
             'show_pages', 'show_private', 'status', 'template_image_size',
-            'term_after', 'term_before', 'term_temp_alt', 'use_alt_server', 'lifecycle_reports',
             'vector_api_key', 'vector_api_url', 'vector_custom_fields',
         ];
         sort($expectedKeys);

@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace CherryLink\Editor;
 
+use CherryLink\Admin\AdminApi;
 use CherryLink\Ajax\Security;
 use CherryLink\Indexing\IndexHelpers;
 use CherryLink\Indexing\IndexHooks;
 use CherryLink\Support\Capabilities;
 use CherryLink\Support\Connect;
 use CherryLink\Support\Options;
+use CherryLink\Support\Urls;
 
 /**
  * The `cherrylinkPanel` bootstrap object shared by the Gutenberg and Classic hosts.
@@ -37,8 +39,9 @@ final class PanelConfig
             ],
             'licensed'  => ! empty($options->meta()['key_valid']),
             'connectUrl' => Connect::settingsUrl(),
-            'upgradeUrl' => Connect::UPGRADE_URL,
-            'plan'      => self::plan($options),
+            'upgradeUrl' => Urls::UPGRADE,
+            'plan'      => $plan = self::plan($options),
+            'postLearned' => $is_term ? null : self::postLearned($object_id, $plan),
             'editUrlBase' => \admin_url('post.php?action=edit&post='),
         ];
         if ($is_term && $taxonomy !== '') {
@@ -83,6 +86,26 @@ final class PanelConfig
             'indexed'    => $indexed === null ? null : (int) $indexed,
             'total'      => (int) $total,
         ];
+    }
+
+    /**
+     * Whether this post is inside the plan's learned set (newest `post_limit` by modified),
+     * so other posts can be suggested links to it. Null when the plan does not cut the index.
+     *
+     * @param array{name:string,post_limit:int|null,indexed:int|null,total:int}|null $plan
+     */
+    public static function postLearned(int $post_id, ?array $plan): ?bool
+    {
+        if ($plan === null || $plan['post_limit'] === null || $plan['total'] <= $plan['post_limit']) {
+            return null;
+        }
+        $cutoff = AdminApi::learnedCutoff($plan['post_limit']);
+        $post   = \get_post($post_id);
+        if ($cutoff === null || ! $post) {
+            return null;
+        }
+
+        return \strcmp((string) $post->post_modified_gmt, $cutoff) >= 0;
     }
 
     /** Inline script defining window.cherrylinkPanel; attach 'before' the bundle. */

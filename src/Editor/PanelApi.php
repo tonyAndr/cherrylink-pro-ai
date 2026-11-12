@@ -160,7 +160,7 @@ final class PanelApi implements Registerable
             return;
         }
 
-        $markup = $this->markupFor($content, $target);
+        $markup = $this->markupFor($target);
         $new    = ContentLinker::link($content, $phrase, $block, $markup['open'], $markup['close']);
         if ($new === null) {
             $this->fail('phrase_not_found', 'Phrase not found', 422);
@@ -247,22 +247,18 @@ final class PanelApi implements Registerable
     }
 
     /**
-     * Link markup for a donor: plain anchor in block-serialized content, link templates otherwise.
+     * Link markup for a donor (same builder for classic and block-serialized content).
      *
      * @param \WP_Post|\stdClass $target
      * @return array{open:string,close:string}
      */
-    private function markupFor(string $donor_content, $target): array
+    private function markupFor($target): array
     {
-        $result = new \stdClass();
-        foreach (['ID', 'post_title', 'post_author', 'post_date', 'post_excerpt', 'post_content'] as $f) {
-            $result->$f = $target->$f ?? '';
-        }
-        $result->suggestions = '';
-        if (\strpos($donor_content, '<!-- wp:') !== false) {
-            return LinkMarkup::plain(LinkFields::url('linkate-posts', $result), \html_entity_decode((string) \get_the_title((int) $result->ID), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
-        }
-        return LinkMarkup::forPost((array) \get_option('linkate-posts', []), $result);
+        $result     = new \stdClass();
+        $result->ID = (int) $target->ID;
+        $title      = \html_entity_decode((string) \get_the_title($result->ID), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+        return LinkMarkup::build(LinkFields::url('linkate-posts', $result), $title, (array) \get_option('linkate-posts', []));
     }
 
     private function undoKey(int $donor_id, string $token): string
@@ -285,7 +281,7 @@ final class PanelApi implements Registerable
             }
             $url    = (string) ($n['url'] ?? '');
             $title  = \html_entity_decode((string) ($n['name'] ?? ''), ENT_QUOTES | ENT_HTML5, 'UTF-8');
-            $markup = LinkMarkup::forTerm($main, $url, $title, (string) ($n['taxonomy'] ?? ''));
+            $markup = LinkMarkup::build($url, $title, $main);
             $out[]  = [
                 'is_divider'  => false,
                 'title'       => $title,

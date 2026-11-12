@@ -6,7 +6,6 @@ namespace CherryLink\Admin;
 
 use CherryLink\Contracts\Registerable;
 use CherryLink\Support\Connect;
-use CherryLink\Support\PluginMeta;
 use CherryLink\Support\View;
 
 /**
@@ -22,7 +21,6 @@ final class Notices implements Registerable
 
     public function register(): void
     {
-        \add_action('admin_notices', [$this, 'scanPrompt']);
         \add_action('admin_notices', [$this, 'connectPrompt']);
         \add_action('admin_init', [$this, 'maybeDismiss']);
     }
@@ -55,49 +53,5 @@ final class Notices implements Registerable
         \update_user_meta(\get_current_user_id(), self::DISMISS_META, 1);
         \wp_safe_redirect(\admin_url('plugins.php'));
         exit;
-    }
-
-    public function scanPrompt(): void
-    {
-        // Guideline 11: only on CherryLink's own screen, and never before connecting
-        // (the setup wizard covers that case).
-        $screen = \function_exists('get_current_screen') ? \get_current_screen() : null;
-        if ($screen === null || ! PluginMeta::isSettingsPage()) {
-            return;
-        }
-        $meta   = \get_option('linkate_posts_meta', []);
-        if (empty($meta['key_valid'])) {
-            return;
-        }
-        $status = ! empty($meta['indexing_process']) ? $meta['indexing_process'] : 'VALUE_NOT_EXIST';
-
-        $scan_url = \admin_url('options-general.php?page=cherrylink-pro&subpage=scan');
-        $view     = new View();
-
-        // Fresh activation — show once, then clear the transient.
-        if (\get_transient('cherry-manual-indexation-needed')) {
-            $html = $view->render('notices/scan-prompt', [
-                'line1'    => '<strong>CherryLink Pro</strong> ' . \esc_html__('установлен!', 'cherrylink'),
-                /* translators: %s: bold "you need to scan your site" phrase */
-                'line2'    => \sprintf(
-                    \esc_html__('Для начала работы с ним %s.', 'cherrylink'),
-                    '<strong>' . \esc_html__('необходимо просканировать ваш сайт', 'cherrylink') . '</strong>'
-                ),
-                'scan_url' => $scan_url,
-            ]);
-            echo $html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- View renders an escaped template
-            \delete_transient('cherry-manual-indexation-needed');
-        } elseif ($status === 'VALUE_NOT_EXIST' || $status === 'IN_PROGRESS') {
-            $html = $view->render('notices/scan-prompt', [
-                'line1'    => '<strong>CherryLink Pro</strong>: ' . \esc_html__('сканирование не завершено!', 'cherrylink'),
-                /* translators: %s: bold "you need to finish scanning" phrase */
-                'line2'    => \sprintf(
-                    \esc_html__('Плагин может работать некорректно или не видеть все записи, %s.', 'cherrylink'),
-                    '<strong>' . \esc_html__('необходимо завершить сканирование', 'cherrylink') . '</strong>'
-                ),
-                'scan_url' => $scan_url,
-            ]);
-            echo $html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- View renders an escaped template
-        }
     }
 }

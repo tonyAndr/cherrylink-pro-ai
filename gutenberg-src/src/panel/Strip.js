@@ -22,7 +22,7 @@ const fmt = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '\u00a0');
 /** Shown only when the plan limit actually cuts the index: more posts than the plan allows. */
 export const planLimited = (plan) => !!(plan && plan.post_limit && plan.total > plan.post_limit);
 
-export default function Strip({ out, inc, words, donorCount, plan, upgradeUrl, onLinks, onGoIncoming, onGoSuggestions }) {
+export default function Strip({ out, inc, words, donorCount, plan, postLearned, upgradeUrl, onLinks, onGoIncoming, onGoSuggestions }) {
     const { rec, status } = linkAdvice(words, out, inc);
     const range = rec && (rec.min === rec.max ? String(rec.min) : `${rec.min}–${rec.max}`);
     let chip = null;
@@ -59,6 +59,15 @@ export default function Strip({ out, inc, words, donorCount, plan, upgradeUrl, o
                     {sprintf(__('Проиндексировано %1$s из %2$s', 'cherrylink'), fmt(plan.indexed == null ? plan.post_limit : plan.indexed), fmt(plan.total))}
                     {upgradeUrl && <> · <a href={upgradeUrl} target="_blank" rel="noopener noreferrer">{__('Расширить', 'cherrylink')}</a></>}
                 </span>
+            )}
+            {planLimited(plan) && postLearned === false && (
+                <p className="cl-plan-note">
+                    {sprintf(
+                        /* translators: %s: plan post limit. "Learned" = post analysed for suggestions; counts toward the plan limit. */
+                        __('This post is outside your %s learned posts, so other posts won\'t suggest links to it. Its own suggestions and link health still work. Updating it makes it one of your newest posts, so it gets learned.', 'cherrylink'),
+                        fmt(plan.post_limit))}
+                    {upgradeUrl && <> <a href={upgradeUrl} target="_blank" rel="noopener noreferrer">{__('Upgrade to learn every post', 'cherrylink')}</a></>}
+                </p>
             )}
         </div>
     );

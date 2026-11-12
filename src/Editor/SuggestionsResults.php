@@ -92,7 +92,11 @@ final class SuggestionsResults
         foreach ($results as $result) {
             $id      = (int) $result->ID;
             $api_row = $api_map[$id] ?? [];
-            $markup  = LinkMarkup::forPost($link_options, $result, $option_key);
+            $markup  = LinkMarkup::build(
+                LinkFields::url($option_key, $result),
+                \html_entity_decode((string) \get_the_title($id), ENT_QUOTES | ENT_HTML5, 'UTF-8'),
+                $link_options
+            );
             $sugg    = [];
             foreach ((array) ($api_row['suggestions'] ?? []) as $s) {
                 $sugg[] = [

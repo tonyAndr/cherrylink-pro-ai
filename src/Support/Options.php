@@ -139,6 +139,8 @@ final class Options
             $options['hash_field'] = $hash_field;
         }
 
+        $options = \CherryLink\Editor\LinkMarkup::migrate($options); // old link templates -> link_title_attr/new_tab/class
+
         if (! isset($options['limit_ajax'])) {
             $options['limit_ajax'] = 50; // since 1.4.0
         }
@@ -149,7 +151,7 @@ final class Options
             $options['show_private'] = 'false';
         }
         if (! isset($options['show_pages'])) {
-            $options['show_pages'] = 'false';
+            $options['show_pages'] = 'true'; // pages are analysed by default (2.x)
         }
         // show_static is now show_pages
         if (isset($options['show_static'])) {
@@ -186,23 +188,15 @@ final class Options
             $options['status']['draft']   = 'false';
             $options['status']['future']  = 'false';
         }
-        if (! isset($options['link_before'])) {
-            $options['link_before'] = \base64_encode(\urlencode('<a href="{url}" title="{title}">'));
+        // Link markup (insert-time only): title attribute on, same tab, no class.
+        if (! isset($options['link_title_attr'])) {
+            $options['link_title_attr'] = 'true';
         }
-        if (! isset($options['link_after'])) {
-            $options['link_after'] = \base64_encode(\urlencode('</a>'));
+        if (! isset($options['link_new_tab'])) {
+            $options['link_new_tab'] = 'false';
         }
-        if (! isset($options['link_temp_alt'])) {
-            $options['link_temp_alt'] = \base64_encode(\urlencode("<div style=\"padding:10px;margin:10px;border-top:1px solid lightgrey;border-bottom:1px solid lightgrey;\"><span style=\"color:lightgrey;font-size:smaller;\">Читайте также</span><div style=\"position:relative;max-width: 660px;margin: 0 auto;padding: 0 20px 20px 20px;display:flex;flex-wrap: wrap;\"><div style=\"width: 35%; min-width: 180px; height: auto; box-sizing: border-box;padding-right: 5%;\"><img src=\"{imagesrc}\" style=\"width:100%;\"></div><div style=\"width: 60%; min-width: 180px; height: auto; box-sizing: border-box;\"><strong>{title}</strong><br>{anons}</div><a target=\"_blank\" href=\"{url}\"><span style=\"position:absolute;width:100%;height:100%;top:0;left: 0;z-index: 1;\">&nbsp;</span></a></div></div>")); // phpcs:ignore Generic.Files.LineLength
-        }
-        if (! isset($options['term_temp_alt'])) {
-            $options['term_temp_alt'] = \base64_encode(\urlencode("<div style=\"padding:10px;margin:10px;border-top:1px solid lightgrey;border-bottom:1px solid lightgrey;\">Больше интересной информации по данной теме вы найдете в разделе нашего сайта \"<a href=\"{url}\"><strong>{title}</strong></a>\".</div>")); // phpcs:ignore Generic.Files.LineLength
-        }
-        if (! isset($options['term_before'])) {
-            $options['term_before'] = \base64_encode(\urlencode('<a href="{url}" title="{title}">'));
-        }
-        if (! isset($options['term_after'])) {
-            $options['term_after'] = \base64_encode(\urlencode('</a>'));
+        if (! isset($options['link_class'])) {
+            $options['link_class'] = '';
         }
         $options['no_selection_action'] = 'placeholder'; // always use placeholder, not configurable
         if (! isset($options['hash_field'])) {
@@ -241,12 +235,6 @@ final class Options
         }
         if (! isset($options['vector_custom_fields'])) {
             $options['vector_custom_fields'] = '';
-        }
-        if (! isset($options['lifecycle_reports'])) {
-            $options['lifecycle_reports'] = 'false'; // opt-in plugin lifecycle reports (WordPress.org)
-        }
-        if (! isset($options['use_alt_server'])) {
-            $options['use_alt_server'] = 'false'; // alternative connection route
         }
 
         \update_option(self::MAIN, $options);

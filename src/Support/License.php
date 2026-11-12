@@ -22,7 +22,7 @@ use CherryLink\Contracts\Registerable;
 final class License implements Registerable
 {
     public const VALIDATION_HOOK = 'clpro_license_validation_hook';
-    public const DEFAULT_LICENSING_URL = 'https://seocherry.ru/cherrylink-pro-licensing/';
+    public const DEFAULT_LICENSING_URL = 'https://cherrylink.apov.dev/cherrylink-pro-licensing/';
     private const MAX_ATTEMPTS = 3;
 
     /** @var Options */
@@ -182,6 +182,29 @@ final class License implements Registerable
         $this->options->saveMeta($meta);
         if (\function_exists('wp_clear_scheduled_hook')) {
             // The key-change hook queued a validation we no longer need.
+            \wp_clear_scheduled_hook(self::VALIDATION_HOOK);
+        }
+    }
+
+    /** Forget the key and its validation state (the old "remove licence" action). */
+    public function disconnect(): void
+    {
+        $options = $this->options->main();
+        $meta    = $this->options->meta();
+        $meta['key_valid']  = false;
+        $meta['expires_at'] = '';
+        $options['hash_field'] = '';
+        unset($options['activations_left']);
+        unset(
+            $meta['validation_key_hash'],
+            $meta['validation_status'],
+            $meta['validation_attempt'],
+            $meta['validation_next_gmt'],
+            $meta['key_error_reason']
+        );
+        $this->options->saveMain($options);
+        $this->options->saveMeta($meta);
+        if (\function_exists('wp_clear_scheduled_hook')) {
             \wp_clear_scheduled_hook(self::VALIDATION_HOOK);
         }
     }
@@ -476,7 +499,7 @@ final class License implements Registerable
         $html  = (new View())->render('notices/license-inactive', [
             'dirty'        => $dirty,
             'since'        => $dirty ? \get_date_from_gmt($this->options->indexDirtySince()) : '',
-            'settings_url' => \admin_url('options-general.php?page=cherrylink-pro&subpage=main'),
+            'settings_url' => \admin_url('admin.php?page=cherrylink-settings'),
         ]);
         // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- View renders pre-escaped template output
         echo $html;

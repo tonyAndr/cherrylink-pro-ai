@@ -156,7 +156,7 @@ final class FreeModeTest extends TestCase
 
     public function testCallHomeUsesTheOverridableLicensingBase(): void
     {
-        $this->assertSame('https://seocherry.ru/cherrylink-pro-licensing/', License::licensingUrl());
+        $this->assertSame('https://cherrylink.apov.dev/cherrylink-pro-licensing/', License::licensingUrl());
     }
 
     public function testCallHomeMakesNoRequestWithoutAKey(): void
@@ -232,7 +232,7 @@ final class FreeModeTest extends TestCase
         $result = $connect->connect();
 
         $this->assertTrue($result['ok']);
-        $this->assertSame('https://seocherry.ru/cherrylink-pro-licensing/connect', $this->posts[0][0]);
+        $this->assertSame('https://cherrylink.apov.dev/cherrylink-pro-licensing/connect', $this->posts[0][0]);
         $body = json_decode($this->posts[0][1]['body'], true);
         $this->assertSame('mysite.example', $body['domain']);
         $this->assertSame(['nonce' => $body['nonce']], $seen, 'proof route served the nonce during the call');
@@ -369,10 +369,11 @@ final class FreeModeTest extends TestCase
         $this->assertSame('error', $service->start()['status']);
     }
 
-    public function testConnectedFreeKeyPlusOptInEnablesReports(): void
+    public function testConnectedFreeKeyEnablesReports(): void
     {
         $this->assertFalse(PluginReports::enabled());
-        $this->store['linkate-posts']['lifecycle_reports'] = 'true';
-        $this->assertTrue(PluginReports::enabled());
+        $this->store['linkate-posts'] = ['hash_field' => 'k'];
+        $this->store['linkate_posts_meta'] = ['key_valid' => true, 'expires_at' => '', 'plan' => 'free'];
+        $this->assertTrue(PluginReports::enabled()); // connected: no opt-in flag any more
     }
 }

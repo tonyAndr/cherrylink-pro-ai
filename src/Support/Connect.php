@@ -23,11 +23,6 @@ final class Connect implements Registerable
     public const ACTION          = 'cherrylink_connect';
     public const PROOF_ACTION    = 'cherrylink_connect_proof';
 
-    // Placeholders until the public site exists (see FREE-PRO-PLAN-2026-11-12.md, step 6).
-    public const TERMS_URL   = 'https://cherrylink.app/terms/';
-    public const PRIVACY_URL = 'https://cherrylink.app/privacy/';
-    public const UPGRADE_URL = 'https://cherrylink.app/pricing/';
-
     /** @var License */
     private $license;
 
@@ -80,10 +75,10 @@ final class Connect implements Registerable
         }
     }
 
-    /** Settings-page URL (the wizard lives there). */
+    /** Dashboard URL (the setup wizard lives there until connected). */
     public static function settingsUrl(): string
     {
-        return \admin_url('options-general.php?page=cherrylink-pro');
+        return \admin_url('admin.php?page=cherrylink');
     }
 
     /** admin-post handler: nonce + capability, run connect, redirect back with the outcome. */

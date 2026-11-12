@@ -42,11 +42,13 @@ final class PluginMeta
         return $mtime ? (string) $mtime : self::version();
     }
 
-    /** True on the CherryLink settings admin screen. */
+    /** True on any of the four CherryLink admin pages (top-level menu + its submenus). */
     public static function isSettingsPage(): bool
     {
         $screen = \get_current_screen();
 
-        return $screen !== null && $screen->id === 'settings_page_cherrylink-pro';
+        // Submenu screen ids are "<translated menu title>_page_<slug>", hence the wildcard prefix.
+        return $screen !== null
+            && (bool) \preg_match('/^(toplevel_page_cherrylink|.+_page_cherrylink-(links|index|settings))$/', (string) $screen->id);
     }
 }

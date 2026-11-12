@@ -26,6 +26,8 @@
 .cl-countbtn:hover { text-decoration: underline; }
 .cl-plan { flex-basis: 100%; font-size: 12px; color: var(--cl-muted); }
 .cl-plan a { color: var(--cl-accent); font-weight: 600; }
+.cl-plan-note { flex-basis: 100%; margin: 4px 0 0; font-size: 12px; line-height: 1.5; color: var(--cl-muted); background: var(--cl-soft, #fdf2f4); border-radius: 6px; padding: 6px 8px; }
+.cl-plan-note a { color: var(--cl-accent); font-weight: 600; }
 .cl-chip { border: 1px solid transparent; border-radius: 999px; padding: 3px 10px; font-weight: 600; font-size: 12px; cursor: pointer; }
 .cl-chip.cl-warn { background: var(--cl-warn-soft); color: var(--cl-warn); border-color: #f1d7a8; }
 .cl-chip.cl-soft { background: var(--cl-surface); color: var(--cl-warn); border-color: #f1d7a8; }

@@ -17,3 +17,4 @@ export const SelectControl = ({ value, options, onChange }) =>
     </select>;
 export const PluginSidebar = ({ children }) => <div data-testid="plugin-sidebar">{children}</div>;
 export const PluginSidebarMoreMenuItem = ({ children }) => <div>{children}</div>;
+export const Modal = ({ title, children }) => <div role="dialog" aria-label={title}>{children}</div>;

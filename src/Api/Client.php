@@ -40,6 +40,9 @@ class Client implements ReportClient
     /** @var string */
     private $base_url;
 
+    /** @var string API base URL on the direct route. */
+    private $direct_base;
+
     /** @var string */
     private $license_key;
 
@@ -49,11 +52,66 @@ class Client implements ReportClient
     /** @var Logger */
     private $logger;
 
-    /** Is the alternative-server route toggled on in settings? */
+    /** Transient set after a direct-route transport failure; while present requests use the relay. */
+    public const RELAY_TRANSIENT = 'cherrylink_relay_until';
+
+    /** Is the relay route active (a recent direct-route transport failure)? */
     public static function alt_enabled(): bool
     {
-        $options = \get_option('linkate-posts', []);
-        return isset($options['use_alt_server']) && $options['use_alt_server'] === 'true';
+        return (bool) \get_transient(self::RELAY_TRANSIENT);
+    }
+
+    /** Current route for the settings screen. */
+    public static function route(): string
+    {
+        return self::alt_enabled() ? 'relay' : 'direct';
+    }
+
+    /**
+     * Same hostname on the relay port (TLS unchanged; Api\Relay pins the connect address).
+     * Only https API URLs can be relayed, so local/dev http endpoints never flip route.
+     */
+    private function relay_base(): ?string
+    {
+        $parts = \wp_parse_url($this->direct_base);
+        if (empty($parts['host']) || ($parts['scheme'] ?? '') !== 'https') {
+            return null;
+        }
+
+        return 'https://' . $parts['host'] . ':' . CL_ALT_API_PORT;
+    }
+
+    /**
+     * wp_remote_request against the API with automatic relay fallback: a transport failure
+     * (WP_Error, no HTTP status) on the direct route flips the 24 h relay transient and the
+     * request is retried once through the relay within the remaining time budget. HTTP errors
+     * (any status) never trigger the fallback.
+     *
+     * @param array<string,mixed> $args
+     * @return array<string,mixed>|\WP_Error
+     */
+    private function send(string $path, array $args)
+    {
+        $response = \wp_remote_request($this->base_url . $path, $args);
+        $relay    = $this->relay_base();
+        if (! \is_wp_error($response) || $this->base_url === $relay || $relay === null) {
+            return $response;
+        }
+        // A timeout after bytes arrived is a slow server, not a blocked route.
+        if (\preg_match('/with [1-9]\d* (out of \d+ )?bytes received/', $response->get_error_message())) {
+            return $response;
+        }
+        \set_transient(self::RELAY_TRANSIENT, \time() + 86400, 86400);
+        $this->base_url = $relay;
+        if ($this->deadline !== null) {
+            $remaining = $this->deadline - ($this->clock)();
+            if ($remaining <= 0) {
+                return $response;
+            }
+            $args['timeout'] = \min($args['timeout'], $remaining);
+        }
+
+        return \wp_remote_request($this->base_url . $path, $args);
     }
 
     public function __construct(
@@ -70,14 +128,11 @@ class Client implements ReportClient
         };
         $this->deadline = null;
         $this->logger   = $logger ?? new Logger();
-        $this->base_url = \rtrim(CHERRY_VECTOR_API_URL, '/');
-        // When the alternative route is on, hit the relay port on the SAME hostname (so TLS is
+        $this->direct_base = $this->base_url = \rtrim(CHERRY_VECTOR_API_URL, '/');
+        // While the relay transient is active, hit the relay port on the SAME hostname (so TLS is
         // unchanged); the http_api_curl hook redirects the connection to the relay IP.
-        if (self::alt_enabled()) {
-            $host = \wp_parse_url($this->base_url, PHP_URL_HOST);
-            if ($host) {
-                $this->base_url = 'https://' . $host . ':' . CL_ALT_API_PORT;
-            }
+        if (self::alt_enabled() && $this->relay_base() !== null) {
+            $this->base_url = (string) $this->relay_base();
         }
         $options        = \get_option('linkate-posts', []);
         // Prefer the saved customer license. An old explicit API key (wp-config
@@ -840,16 +895,6 @@ class Client implements ReportClient
     }
 
     /**
-     * Paginated link stats for CSV/JSON export.
-     * $direction: 'forward' or 'backward'
-     */
-    public function get_links_stats(string $direction, int $offset, int $limit): ?array
-    {
-        $path = '/v1/links/stats?direction=' . $direction . '&offset=' . $offset . '&limit=' . $limit;
-        return $this->request('GET', $path, [], 120);
-    }
-
-    /**
      * Total link count for this client (replaces SELECT COUNT(*) from linkate_scheme).
      */
     public function get_links_count(): ?int
@@ -966,7 +1011,7 @@ class Client implements ReportClient
             $args['headers']['X-Site-Domain'] = $this->domain;
         }
         $start    = \microtime(true);
-        $response = \wp_remote_request($this->base_url . $path, $args);
+        $response = $this->send($path, $args);
         $ms       = (int) \round((\microtime(true) - $start) * 1000);
 
         if (\is_wp_error($response)) {
@@ -1062,7 +1107,7 @@ class Client implements ReportClient
             $args['body'] = \wp_json_encode($body);
         }
 
-        $response = \wp_remote_request($this->base_url . $path, $args);
+        $response = $this->send($path, $args);
 
         if (\is_wp_error($response)) {
             $error = $response->get_error_message();

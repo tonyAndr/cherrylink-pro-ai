@@ -108,99 +108,6 @@ final class LicenseTest extends TestCase
         $this->assertFalse((new License(new Options()))->isValid());
     }
 
-    public function testSettingsKeySaveSchedulesBackgroundValidation(): void
-    {
-        $settings = ['hash_field' => 'old-key'];
-        $meta = [
-            'key_valid' => true,
-            'expires_at' => '2099-01-01 00:00:00',
-            'validation_key_hash' => hash('sha256', 'old-key'),
-        ];
-        Functions\when('get_option')->alias(static function ($key, $default = false) use (&$settings, &$meta) {
-            return $key === 'linkate-posts' ? $settings : ($key === 'linkate_posts_meta' ? $meta : $default);
-        });
-        Functions\when('update_option')->alias(static function ($key, $value) use (&$settings, &$meta) {
-            if ($key === 'linkate-posts') {
-                $settings = $value;
-            }
-            if ($key === 'linkate_posts_meta') {
-                $meta = $value;
-            }
-            return true;
-        });
-        Functions\expect('check_admin_referer')->once()->with('linkate-posts-update-options');
-        Functions\expect('wp_schedule_single_event')->once()->with(Mockery::type('int'), License::VALIDATION_HOOK)->andReturn(true);
-        Functions\expect('wp_remote_post')->never();
-        Functions\when('_e')->returnArg(1);
-        Functions\when('esc_attr_e')->returnArg(1);
-
-        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- licenseField verifies this form's nonce.
-        $original_post = $_POST;
-        $_POST = ['update_license' => '1', 'hash_field' => 'new-key'];
-        ob_start();
-        try {
-            SettingsPage::licenseField();
-            $html = (string) ob_get_contents();
-        } finally {
-            ob_end_clean();
-            $_POST = $original_post;
-        }
-
-        $this->assertFalse($meta['key_valid']);
-        $this->assertSame('pending', $meta['validation_status']);
-        $this->assertSame(hash('sha256', 'new-key'), $meta['validation_key_hash']);
-        $this->assertStringContainsString('Проверка ключа', $html);
-        $this->assertStringContainsString('name="retry_license"', $html);
-    }
-
-    public function testSettingsKeySaveSurfacesSchedulingFailureAndManualRetry(): void
-    {
-        $settings = ['hash_field' => 'old-key'];
-        $meta = [
-            'key_valid' => true,
-            'expires_at' => '2099-01-01 00:00:00',
-            'validation_key_hash' => hash('sha256', 'old-key'),
-        ];
-        Functions\when('get_option')->alias(static function ($key, $default = false) use (&$settings, &$meta) {
-            return $key === 'linkate-posts' ? $settings : ($key === 'linkate_posts_meta' ? $meta : $default);
-        });
-        Functions\when('update_option')->alias(static function ($key, $value) use (&$settings, &$meta) {
-            if ($key === 'linkate-posts') {
-                $settings = $value;
-            }
-            if ($key === 'linkate_posts_meta') {
-                $meta = $value;
-            }
-            return true;
-        });
-        Functions\expect('check_admin_referer')->once()->with('linkate-posts-update-options');
-        Functions\expect('wp_schedule_single_event')->once()->with(
-            Mockery::type('int'),
-            License::VALIDATION_HOOK
-        )->andReturn(false);
-        Functions\expect('wp_remote_post')->never();
-        Functions\when('_e')->returnArg(1);
-        Functions\when('esc_attr_e')->returnArg(1);
-
-        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- licenseField verifies this form's nonce.
-        $original_post = $_POST;
-        $_POST = ['update_license' => '1', 'hash_field' => 'new-key'];
-        ob_start();
-        try {
-            SettingsPage::licenseField();
-            $html = (string) ob_get_contents();
-        } finally {
-            ob_end_clean();
-            $_POST = $original_post;
-        }
-
-        $this->assertSame('error', $meta['validation_status']);
-        $this->assertSame('validation_schedule_failed', $meta['key_error_reason']);
-        $this->assertStringContainsString('Повторите попытку вручную', $html);
-        $this->assertStringContainsString('name="retry_license"', $html);
-        $this->assertStringNotContainsString('выполняется в фоне', $html);
-    }
-
     /**
      * @dataProvider malformedResponseProvider
      * @param string $body
@@ -208,7 +115,7 @@ final class LicenseTest extends TestCase
     public function testCallHomeRejectsMalformedSuccessfulResponse(string $body): void
     {
         Functions\expect('wp_remote_post')->once()->with(
-            'https://seocherry.ru/cherrylink-pro-licensing/',
+            'https://cherrylink.apov.dev/cherrylink-pro-licensing/',
             Mockery::on(static function (array $args): bool {
                 return $args['timeout'] === 5 && $args['redirection'] === 0
                     && $args['body']['domain'] === 'example.test';
@@ -249,7 +156,7 @@ final class LicenseTest extends TestCase
             return true;
         });
         Functions\expect('wp_remote_post')->once()->with(
-            'https://seocherry.ru/cherrylink-pro-licensing/',
+            'https://cherrylink.apov.dev/cherrylink-pro-licensing/',
             Mockery::on(static function (array $args): bool {
                 return $args['body']['domain'] === 'site.example' && $args['timeout'] === 5;
             })

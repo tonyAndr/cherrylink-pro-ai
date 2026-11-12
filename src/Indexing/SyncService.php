@@ -545,6 +545,7 @@ final class SyncService implements Registerable
                     'post_id'      => $id,
                     'modified_gmt' => $eligible[$id],
                     'content_hash' => $api->content_hash($post), // same hash the upsert sends
+                    'url'          => (string) \get_permalink($id), // lets the server resolve link targets to post ids
                 ];
             }
         }

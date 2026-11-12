@@ -16,11 +16,7 @@ class IndexHelpers
 
     public function __construct()
     {
-        $types                   = \get_post_types(['public' => true, '_builtin' => false], 'objects');
-        $this->allowed_post_types = ['post', 'page'];
-        foreach ($types as $type) {
-            $this->allowed_post_types[] = $type->name;
-        }
+        $this->allowed_post_types = self::get_allowed_types_list();
     }
 
     /**
@@ -48,9 +44,28 @@ class IndexHelpers
      */
     public static function get_allowed_types_list(): array
     {
-        $types = \get_post_types(['public' => true, '_builtin' => false], 'objects');
-        $list  = ['post', 'page'];
-        foreach ($types as $type) {
+        // The content types chosen in the admin (post always; pages and custom types opt-in)
+        // decide what is indexed, counted against the plan, and suggested in the editor.
+        $options = (array) \get_option('linkate-posts', []);
+        $customs = \array_filter(\array_map('trim', \explode(',', (string) ($options['show_customs'] ?? ''))));
+        $list    = ['post'];
+        foreach (self::get_public_types_list() as $type) {
+            if (($type === 'page' && ($options['show_pages'] ?? 'false') === 'true') || \in_array($type, $customs, true)) {
+                $list[] = $type;
+            }
+        }
+        return $list;
+    }
+
+    /**
+     * Every public content type the site has (post, page, custom types), enabled or not.
+     *
+     * @return string[]
+     */
+    public static function get_public_types_list(): array
+    {
+        $list = ['post', 'page'];
+        foreach (\get_post_types(['public' => true, '_builtin' => false], 'objects') as $type) {
             $list[] = $type->name;
         }
         return $list;

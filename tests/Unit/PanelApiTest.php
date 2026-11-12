@@ -47,8 +47,6 @@ final class PanelApiTest extends TestCase
         Functions\when('is_wp_error')->justReturn(false);
         Functions\when('wp_generate_password')->justReturn('tok1234567890abcdef1234');
         Functions\when('get_option')->justReturn([
-            'link_before'    => \base64_encode(\urlencode('<a href="{url}" title="{title}">')),
-            'link_after'     => \base64_encode(\urlencode('</a>')),
             'relative_links' => 'no_domain',
         ]);
         Functions\when('get_permalink')->alias(static function ($id) {
@@ -313,11 +311,7 @@ final class PanelApiTest extends TestCase
     public function testTermsDecoratesTreeWithMarkup(): void
     {
         Functions\when('get_terms')->justReturn([]);
-        Functions\when('get_option')->justReturn([
-            'term_before' => \base64_encode(\urlencode('<a href="{url}" title="{title}">')),
-            'term_after'  => \base64_encode(\urlencode('</a>')),
-            'multilink'   => 'checked',
-        ]);
+        Functions\when('get_option')->justReturn(['multilink' => 'checked']);
         $api = new PanelApi(new Options());
         // Tree decoration is private; exercise through reflection with a known tree.
         $m = new \ReflectionMethod(PanelApi::class, 'decorateTerms');
@@ -327,11 +321,11 @@ final class PanelApiTest extends TestCase
             ['is_divider' => 'no', 'name' => 'News &amp; Co', 'url' => 'https://site.test/news/', 'taxonomy' => 'category', 'post_count' => 4, 'children' => [
                 ['is_divider' => 'no', 'name' => 'Sub', 'url' => 'https://site.test/news/sub/', 'taxonomy' => 'category', 'post_count' => 1, 'children' => []],
             ]],
-        ], ['term_before' => \base64_encode(\urlencode('<a href="{url}" title="{title}">')), 'term_after' => \base64_encode(\urlencode('</a>'))]);
+        ], []);
         $this->assertTrue($out[0]['is_divider']);
         $this->assertSame('Categories', $out[0]['title']);
         $this->assertSame('News & Co', $out[1]['title']);
-        $this->assertSame('<a href="https://site.test/news/" title="News &amp; Co">', $out[1]['open']);
+        $this->assertSame('<a href="https://site.test/news/" title="News & Co">', $out[1]['open']);
         $this->assertSame('</a>', $out[1]['close']);
         $this->assertSame('Sub', $out[1]['children'][0]['title']);
     }

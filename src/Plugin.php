@@ -82,29 +82,29 @@ final class Plugin
         $capabilities = new \CherryLink\Support\Capabilities();
         $async_scan   = new \CherryLink\Indexing\AsyncBulkScan($this->options, $license, $capabilities);
         $reports      = new \CherryLink\Support\PluginReports($license);
+        $sync         = new \CherryLink\Indexing\SyncService($this->options, $license, null, $async_scan);
+        $admin_api    = new \CherryLink\Admin\AdminApi($this->options, $license, $sync);
 
         $this->services = [
             new \CherryLink\Api\Relay(),
             new \CherryLink\Admin\StatsColumn(),
-            new \CherryLink\Admin\AdminAssets($this->options),
             new \CherryLink\Admin\Notices(),
             new \CherryLink\Support\Connect($license),
             new \CherryLink\Editor\GutenbergAssets($this->options),
             new \CherryLink\Indexing\IndexHooks($this->options, $license),
-            new \CherryLink\Indexing\SyncService($this->options, $license, null, $async_scan),
+            $sync,
             $async_scan,
             new \CherryLink\Indexing\Outbox\Delivery(null, null, null, new \CherryLink\Support\Capabilities()),
             new \CherryLink\Support\CapabilitiesRefresh($license, $capabilities),
             $reports,
             new \CherryLink\Terms\TermsService(),
             new \CherryLink\Statistics\StatisticsService(),
-            new \CherryLink\Csv\CsvService(),
             new \CherryLink\Editor\ClassicPanel($this->options),
             new \CherryLink\Editor\PanelApi($this->options),
-            new \CherryLink\Debug\Debugger(),
             $license,
             new \CherryLink\Support\Lifecycle($license, $capabilities, $reports),
-            new \CherryLink\Admin\SettingsPage(),
+            $admin_api,
+            new \CherryLink\Admin\AdminMenu($admin_api),
         ];
 
         foreach ($this->services as $service) {

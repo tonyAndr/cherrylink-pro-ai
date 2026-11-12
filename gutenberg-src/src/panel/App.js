@@ -303,7 +303,7 @@ export default function App({ adapter, config, onClose, headProps }) {
         <div className="cl-panel">
             {head}
             <Strip out={links.length} inc={inc} words={words} donorCount={donorCount} onGoSuggestions={() => { setView(null); setTab('opp'); }}
-                plan={config.plan} upgradeUrl={config.upgradeUrl}
+                plan={config.plan} postLearned={config.postLearned} upgradeUrl={config.upgradeUrl}
                 onLinks={(section) => setView({ section })} onGoIncoming={() => { setView(null); setTab('in'); }} />
             <Tabs tabs={tabs} current={view ? '' : tab} onChange={(t) => { setView(null); setTab(t); }} />
             <div className="cl-body">{body}</div>

@@ -45,12 +45,10 @@ final class PluginReports implements Registerable
         };
     }
 
-    /** Opt-in setting (main options, default off): nothing is queued or sent while off. */
+    /** Reports run only while the site is connected (a validated key is on file); nothing is queued or sent otherwise. */
     public static function enabled(): bool
     {
-        $options = \get_option(Options::MAIN, []);
-
-        return \is_array($options) && ($options['lifecycle_reports'] ?? 'false') === 'true';
+        return (new License(new Options()))->isConnected();
     }
 
     public function register(): void

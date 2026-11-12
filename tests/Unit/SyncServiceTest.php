@@ -438,6 +438,9 @@ final class SyncServiceTest extends TestCase
     private function eligible(array $rows): void
     {
         Functions\when('get_post_types')->justReturn([]);
+        Functions\when('get_permalink')->alias(static function ($id) {
+            return 'https://site.test/p' . $id . '/';
+        });
         Functions\when('get_post')->alias(static function ($id) {
             $p = new \WP_Post();
             $p->ID = (int) $id;
@@ -489,8 +492,8 @@ final class SyncServiceTest extends TestCase
             return 'hash-' . $post->ID;
         });
         $api->shouldReceive('fetch_sync_plan_result')->once()->with([
-            ['post_id' => 1, 'modified_gmt' => '2026-01-01 00:00:00', 'content_hash' => 'hash-1'],
-            ['post_id' => 2, 'modified_gmt' => '2026-01-02 00:00:00', 'content_hash' => 'hash-2'],
+            ['post_id' => 1, 'modified_gmt' => '2026-01-01 00:00:00', 'content_hash' => 'hash-1', 'url' => 'https://site.test/p1/'],
+            ['post_id' => 2, 'modified_gmt' => '2026-01-02 00:00:00', 'content_hash' => 'hash-2', 'url' => 'https://site.test/p2/'],
         ])->andReturn($this->planResult([
             'index' => [2], 'links' => [1, 2], 'drop_vectors' => [7, 9], 'drop_links' => [9],
         ]));

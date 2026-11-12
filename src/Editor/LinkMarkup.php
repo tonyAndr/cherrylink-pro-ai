@@ -5,56 +5,72 @@ declare(strict_types=1);
 namespace CherryLink\Editor;
 
 /**
- * Renders the open/close link markup of the unified panel from the stored link
- * templates (link_before / link_after / term_before / term_after: base64(urlencode(html))
- * with {tags}) plus the relative-link setting (via LinkFields::url).
+ * The single link-markup builder (posts, terms, Gutenberg content): href, optional title,
+ * optional new tab, optional class, driven by three settings. No free-form templates.
  */
 final class LinkMarkup
 {
-    private const TAGS = ['url', 'title', 'categorynames', 'date', 'author', 'postid', 'imagesrc', 'anons'];
+    /** Keys of the removed template settings, dropped by migrate(). */
+    private const LEGACY = ['link_before', 'link_after', 'term_before', 'term_after', 'link_temp_alt', 'term_temp_alt'];
 
     /**
+     * @param string              $url     final href (relative-link format already applied by the caller)
+     * @param string              $title   plain (unescaped) title
      * @param array<string,mixed> $options linkate-posts options
-     * @param \stdClass           $result  post-like object (ID, post_title, post_author, post_date, post_excerpt, post_content)
      * @return array{open:string,close:string}
      */
-    public static function forPost(array $options, $result, string $option_key = 'linkate-posts'): array
+    public static function build(string $url, string $title, array $options): array
     {
-        $before = self::decode($options['link_before'] ?? '');
-        $after  = self::decode($options['link_after'] ?? '');
-        $values = [];
-        foreach ([$before, $after] as $tpl) {
-            foreach (self::TAGS as $tag) {
-                if (! isset($values[$tag]) && \strpos($tpl, '{' . $tag . '}') !== false) {
-                    $values[$tag] = self::value($tag, $option_key, $result);
+        $open = '<a href="' . \esc_url($url) . '"';
+        if (($options['link_title_attr'] ?? 'true') !== 'false' && $title !== '') {
+            $open .= ' title="' . \esc_attr($title) . '"';
+        }
+        if (($options['link_new_tab'] ?? 'false') === 'true') {
+            $open .= ' target="_blank" rel="noopener"';
+        }
+        $class = \trim((string) ($options['link_class'] ?? ''));
+        if ($class !== '') {
+            $open .= ' class="' . \esc_attr($class) . '"';
+        }
+
+        return ['open' => $open . '>', 'close' => '</a>'];
+    }
+
+    /**
+     * Convert the old base64(urlencode(html)) link templates into the three new settings
+     * and drop every removed key. Explicit new settings are never overwritten.
+     *
+     * @param array<string,mixed> $options
+     * @return array<string,mixed>
+     */
+    public static function migrate(array $options): array
+    {
+        $tpl = self::decode($options['link_before'] ?? '') ?: self::decode($options['term_before'] ?? '');
+        if ($tpl !== '') {
+            if (! isset($options['link_title_attr'])) {
+                $options['link_title_attr'] = \strpos($tpl, 'title=') !== false ? 'true' : 'false';
+            }
+            if (! isset($options['link_new_tab'])) {
+                $options['link_new_tab'] = \strpos($tpl, 'target="_blank"') !== false ? 'true' : 'false';
+            }
+            if (! isset($options['link_class'])) {
+                $tokens = [];
+                if (\preg_match('/class="([^"]*)"/', $tpl, $m)) {
+                    foreach ((array) \preg_split('/\s+/', \trim($m[1])) as $token) {
+                        $token = \sanitize_html_class((string) $token);
+                        if ($token !== '') {
+                            $tokens[] = $token;
+                        }
+                    }
                 }
+                $options['link_class'] = \implode(' ', $tokens);
             }
         }
-        return ['open' => self::fill($before, $values), 'close' => self::fill($after, $values)];
-    }
+        foreach (self::LEGACY as $key) {
+            unset($options[$key]);
+        }
 
-    /**
-     * @param array<string,mixed> $options
-     * @return array{open:string,close:string}
-     */
-    public static function forTerm(array $options, string $url, string $title, string $taxonomy): array
-    {
-        $values = [
-            'url'      => $url,
-            'title'    => \htmlspecialchars($title, ENT_QUOTES, 'UTF-8'),
-            'taxonomy' => $taxonomy,
-        ];
-        return [
-            'open'  => self::fill(self::decode($options['term_before'] ?? ''), $values),
-            'close' => self::fill(self::decode($options['term_after'] ?? ''), $values),
-        ];
-    }
-
-    /** Plain anchor for Gutenberg-serialized content (no templates). */
-    public static function plain(string $url, string $title): array
-    {
-        $open = '<a href="' . \esc_url($url) . '"' . ($title !== '' ? ' title="' . \esc_attr($title) . '"' : '') . '>';
-        return ['open' => $open, 'close' => '</a>'];
+        return $options;
     }
 
     /** @param mixed $stored */
@@ -64,40 +80,7 @@ final class LinkMarkup
             return '';
         }
         $raw = \base64_decode($stored, true);
+
         return $raw === false ? '' : \urldecode($raw);
-    }
-
-    /** @param array<string,string> $values */
-    private static function fill(string $tpl, array $values): string
-    {
-        $map = [];
-        foreach ($values as $k => $v) {
-            $map['{' . $k . '}'] = $v;
-        }
-        return \strtr($tpl, $map);
-    }
-
-    /** @param \stdClass $result */
-    private static function value(string $tag, string $option_key, $result): string
-    {
-        switch ($tag) {
-            case 'url':
-                return LinkFields::url($option_key, $result);
-            case 'title':
-                return LinkFields::title($option_key, $result);
-            case 'categorynames':
-                return LinkFields::categoryNames($option_key, $result);
-            case 'date':
-                return LinkFields::date($option_key, $result);
-            case 'author':
-                return LinkFields::author($option_key, $result);
-            case 'postid':
-                return (string) LinkFields::postId($option_key, $result);
-            case 'imagesrc':
-                return LinkFields::imageSrc($option_key, $result);
-            case 'anons':
-                return LinkFields::anons($option_key, $result);
-        }
-        return '';
     }
 }

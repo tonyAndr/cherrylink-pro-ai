@@ -34,6 +34,15 @@ describe('Strip plan line', () => {
         expect(screen.getByText('Расширить')).toHaveAttribute('href', 'https://example.test/up');
     });
 
+    it('explains why a post outside the limit is not suggested elsewhere', () => {
+        const plan = { post_limit: 1000, indexed: 1000, total: 2340 };
+        const { rerender } = render(<Strip {...base} plan={plan} postLearned={false} upgradeUrl="https://example.test/up" />);
+        expect(screen.getByText(/other posts won't suggest links to it/)).toBeInTheDocument();
+        expect(screen.getByText('Upgrade to learn every post')).toHaveAttribute('href', 'https://example.test/up');
+        rerender(<Strip {...base} plan={plan} postLearned={true} upgradeUrl="https://example.test/up" />);
+        expect(screen.queryByText(/other posts won't suggest links to it/)).toBeNull();
+    });
+
     it('renders nothing extra without a limit', () => {
         render(<Strip {...base} plan={null} />);
         expect(screen.queryByText(/Проиндексировано/)).toBeNull();

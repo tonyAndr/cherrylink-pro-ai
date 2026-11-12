@@ -19,6 +19,9 @@ use PHPUnit\Framework\TestCase;
  */
 final class ApiClientTest extends TestCase
 {
+    /** @var array<string,mixed> */
+    private $transients = [];
+
     /** @var array<string,mixed> Captured args of the last wp_remote_request() call. */
     private $captured = [];
 
@@ -45,6 +48,14 @@ final class ApiClientTest extends TestCase
         });
         Functions\when('wp_json_encode')->alias(static function ($data) {
             return json_encode($data);
+        });
+        $this->transients = [];
+        Functions\when('get_transient')->alias(function ($key) {
+            return $this->transients[$key] ?? false;
+        });
+        Functions\when('set_transient')->alias(function ($key, $value) {
+            $this->transients[$key] = $value;
+            return true;
         });
     }
 
@@ -167,21 +178,94 @@ final class ApiClientTest extends TestCase
         $this->addToAssertionCount(1); // the ->never() expectation is the assertion
     }
 
-    public function testAltServerRewritesToRelayPortOnSameHost(): void
+    public function testActiveRelayTransientRewritesToRelayPortOnSameHost(): void
     {
-        Functions\when('get_option')->justReturn([
-            'hash_field'     => 'LICENSE123',
-            'use_alt_server' => 'true',
-        ]);
+        Functions\when('get_option')->justReturn(['hash_field' => 'LICENSE123']);
+        $this->transients['cherrylink_relay_until'] = time() + 3600;
         $this->mockHttp(['count' => 7]);
 
         (new Client())->get_count();
 
-        // Same hostname, relay port — so TLS/SNI/cert are unchanged; only the port differs.
-        $this->assertSame(
+        // Same hostname, relay port: TLS/SNI/cert are unchanged; only the port differs.
+        $this->assertSame('https://seocherry.apov.dev:9443/v1/documents/count', $this->captured['url']);
+        $this->assertSame('relay', Client::route());
+    }
+
+    public function testTransportErrorOnDirectRouteSetsTransientAndRetriesOnceViaRelay(): void
+    {
+        Functions\when('get_option')->justReturn(['hash_field' => 'LICENSE123']);
+        $urls = [];
+        Functions\when('is_wp_error')->alias(static function ($v) {
+            return $v instanceof \WP_Error;
+        });
+        Functions\when('wp_remote_request')->alias(static function ($url) use (&$urls) {
+            $urls[] = $url;
+            return count($urls) === 1 ? new \WP_Error() : ['sentinel' => true];
+        });
+        Functions\when('wp_remote_retrieve_response_code')->justReturn(200);
+        Functions\when('wp_remote_retrieve_body')->justReturn('{"count":3}');
+        Functions\when('wp_remote_retrieve_headers')->justReturn([]);
+
+        $this->assertSame(3, (new Client())->get_count());
+
+        $this->assertSame([
+            'https://seocherry.apov.dev/v1/documents/count',
             'https://seocherry.apov.dev:9443/v1/documents/count',
-            $this->captured['url']
-        );
+        ], $urls);
+        $this->assertArrayHasKey('cherrylink_relay_until', $this->transients);
+    }
+
+    public function testReadTimeoutAfterBytesDoesNotFallBack(): void
+    {
+        Functions\when('get_option')->justReturn(['hash_field' => 'LICENSE123']);
+        $calls = 0;
+        Functions\when('is_wp_error')->alias(static function ($v) {
+            return $v instanceof \WP_Error;
+        });
+        Functions\when('wp_remote_request')->alias(static function () use (&$calls) {
+            $calls++;
+            return new class extends \WP_Error {
+                public function get_error_message(): string
+                {
+                    return 'cURL error 28: Operation timed out after 5001 milliseconds with 120 out of 900 bytes received';
+                }
+            };
+        });
+
+        $this->assertNull((new Client())->get_count());
+        $this->assertSame(1, $calls);
+        $this->assertSame([], $this->transients);
+    }
+
+    public function testHttpErrorNeverFallsBackToRelay(): void
+    {
+        Functions\when('get_option')->justReturn(['hash_field' => 'LICENSE123']);
+        $this->mockHttp('{"error":"boom"}', 500);
+
+        $this->assertNull((new Client())->get_count());
+        $this->assertSame([], $this->transients);
+    }
+
+    public function testRelayFailureDoesNotRetryAgain(): void
+    {
+        Functions\when('get_option')->justReturn(['hash_field' => 'LICENSE123']);
+        $this->transients['cherrylink_relay_until'] = time() + 3600;
+        $calls = 0;
+        Functions\when('is_wp_error')->alias(static function ($v) {
+            return $v instanceof \WP_Error;
+        });
+        Functions\when('wp_remote_request')->alias(static function () use (&$calls) {
+            $calls++;
+            return new class extends \WP_Error {
+                public function get_error_message(): string
+                {
+                    return 'down';
+                }
+            };
+        });
+
+        $this->assertNull((new Client())->get_count());
+        $this->assertSame(1, $calls);
     }
 
     public function testNonSuccessStatusMapsToNull(): void
@@ -382,6 +466,7 @@ final class ApiClientTest extends TestCase
     {
         Functions\when('get_option')->justReturn(['hash_field' => 'LICENSE123']);
         $calls = 0;
+        $this->transients['cherrylink_relay_until'] = time() + 3600; // already relayed: no second attempt
         $this->mockHttp('', 0, true);
         Functions\when('wp_remote_request')->alias(function ($url, $args) use (&$calls) {
             ++$calls;

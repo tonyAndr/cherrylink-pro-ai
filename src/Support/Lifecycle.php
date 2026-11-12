@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace CherryLink\Support;
 
 use CherryLink\Contracts\Registerable;
+use CherryLink\Editor\LinkMarkup;
 use CherryLink\Indexing\AsyncBulkScan;
-use CherryLink\Indexing\IndexHelpers;
 use CherryLink\Indexing\IndexHooks;
 use CherryLink\Indexing\Outbox\Delivery;
 use CherryLink\Indexing\Outbox\Schema;
@@ -25,9 +25,6 @@ use CherryLink\Support\Capabilities;
  */
 final class Lifecycle implements Registerable
 {
-    /** Above this indexable-post count, a fresh install prompts a manual scan. */
-    private const INITIAL_LIMIT = 100;
-
     /** @var License */
     private $license;
 
@@ -55,6 +52,7 @@ final class Lifecycle implements Registerable
         \add_action('upgrader_process_complete', [$this, 'onUpdate'], 10, 2);
         \add_action('plugins_loaded', [$this, 'maybeFinishUpdate']);
         \add_action('plugins_loaded', [$this, 'maybeInstallOutbox'], 20);
+        \add_action('plugins_loaded', [$this, 'maybeMigrateOptions'], 20);
     }
 
     public function loadTextdomain(): void
@@ -81,10 +79,6 @@ final class Lifecycle implements Registerable
             $meta['first_version'] = PluginMeta::version();
             $meta['first_install'] = \current_time('timestamp');
             \update_option('linkate_posts_meta', $meta);
-
-            if ((new IndexHelpers())->get_indexable_posts_count() > self::INITIAL_LIMIT) {
-                \set_transient('cherry-manual-indexation-needed', true, 20);
-            }
         }
 
         // Reporting is queue-only: no HTTP during activation. A failure here must
@@ -179,5 +173,26 @@ final class Lifecycle implements Registerable
     public function maybeInstallOutbox(): void
     {
         Schema::maybeInstall();
+    }
+
+    /**
+     * 2.x upgrade: replace the link templates with the three markup settings and drop the
+     * removed options (alternative-server toggle, opt-in reports flag). Runs once; the
+     * stored array is only touched while a legacy key is still present.
+     */
+    public function maybeMigrateOptions(): void
+    {
+        $options = \get_option(Options::MAIN, []);
+        if (! \is_array($options)) {
+            return;
+        }
+        $legacy = ['link_before', 'link_after', 'term_before', 'term_after', 'link_temp_alt', 'term_temp_alt', 'use_alt_server', 'lifecycle_reports'];
+        if (! \array_intersect($legacy, \array_keys($options))) {
+            return;
+        }
+        $options = LinkMarkup::migrate($options);
+        unset($options['use_alt_server'], $options['lifecycle_reports']);
+        \update_option(Options::MAIN, $options);
+        \delete_transient('cherrylink_relay_until');
     }
 }

@@ -26,11 +26,11 @@ without changing runtime behavior. See the staged plan in
 - **Bootstrap:** `src/Plugin.php` — defines the API runtime constants
   (`Api\Relay::defineConstants()`), constructs the shared `Options` + `License`,
   and registers services implementing `Contracts\Registerable` (each hooks itself
-  in `register()`): `Api\Relay`, `Admin\StatsColumn`, `Admin\AdminAssets`,
+  in `register()`): `Api\Relay`, `Admin\StatsColumn`, `Admin\AdminApi`, `Admin\AdminMenu`,
   `Admin\Notices`, `Editor\GutenbergAssets`, `Indexing\IndexHooks`,
   `Indexing\SyncService`, `Terms\TermsService`, `Statistics\StatisticsService`,
-  `Csv\CsvService`, `Editor\ClassicPanel`, `Debug\Debugger`, `Support\License`,
-  `Support\Lifecycle`, `Admin\SettingsPage`.
+  `Editor\ClassicPanel`, `Support\License`,
+  `Support\Lifecycle`.
 - **Views:** HTML lives in `templates/` rendered via `Support\View` (escaped).
   Templates reference namespaced classes by FQN (e.g. `\CherryLink\Support\Tailwind::$CARD`).
 - **No shims left.** The migration is complete — the plugin root contains exactly
@@ -60,7 +60,7 @@ without changing runtime behavior. See the staged plan in
 | Activation / update / textdomain lifecycle | `src/Support/Lifecycle.php` |
 | Plugin lifecycle report queue/sender | `src/Support/PluginReports.php` |
 | Runtime environment collector | `src/Support/Environment.php` (`specs/plugin-reports.md`) |
-| Settings-page asset enqueue + scan notices | `src/Admin/AdminAssets.php`, `src/Admin/Notices.php` |
+| Admin menu/pages + bundle enqueue + scan notices | `src/Admin/AdminMenu.php`, `src/Admin/Notices.php` (contract: `specs/admin-ui.md`) |
 | Post save/delete hooks + readiness payload | `src/Indexing/IndexHooks.php` |
 | Background scan (Action Scheduler worker) | `src/Indexing/SyncService.php` |
 | Incremental-sync diff (pure, tested) | `src/Indexing/IndexHelpers.php` (ex-`CL_Index_Helpers`) |
@@ -69,9 +69,9 @@ without changing runtime behavior. See the staged plan in
 | Suggestions pipeline (query→filter→structured rows) | `src/Editor/SuggestionsResults.php::rows()`, `Editor/LinkFields.php` |
 | Gutenberg sidebar enqueue | `src/Editor/GutenbergAssets.php` |
 | Stats / CSV / Terms services | `src/Statistics/`, `src/Csv/`, `src/Terms/` |
-| Settings page (menu, subpages, save handlers) | `src/Admin/SettingsPage.php`, `src/Admin/Subpages.php` |
+| Admin app AJAX (state, settings, licence, link health) | `src/Admin/AdminApi.php` (React app `gutenberg-src/src/admin/`) |
 | License validation / cron / capability | `src/Support/License.php` |
-| Debug panel AJAX probes | `src/Debug/Debugger.php` |
+| User-facing links | `src/Support/Urls.php` |
 | AJAX nonce+capability guard | `src/Ajax/Security.php` |
 | Templates (escaped HTML) | `templates/**` |
 | Classic editor / term panel JS | `js/cherry-classic.js` (**built** from `gutenberg-src/src/classic.js`) |

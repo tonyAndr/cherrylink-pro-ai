@@ -211,5 +211,5 @@ Contract: `api/specs/key-pages.md`; storage and admin side in `specs/admin-ui.md
   `{post_id, mode}` (`edit_posts` nonce + `edit_post` on the post + `edit_others_posts`; pins are site-wide),
   which stores the pin (`pin`; unmark = `clear` if pinned, else `demote`), refreshes and returns `{keyPage}`.
 - Suggestion rows carry `is_key`; PostList and OpportunityList show a "Key page" badge. Ranking lives in one
-  place, `SuggestionsResults::rows()`: API order is re-ranked by `score + 0.01` for key pages
+  place, `SuggestionsResults::rows()`: API order is re-ranked by `score + KeyPages::BOOST` (0.004 cosine ≈ 3 display points, a tie-breaker) for key pages
   (`KeyPages::rank`), the displayed relevance still uses the raw score.

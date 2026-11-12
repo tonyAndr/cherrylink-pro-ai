@@ -18,6 +18,9 @@ final class KeyPages
 
     private const MAX_PINS = 500;
 
+    /** Ranking tie-breaker in raw cosine; ~3 points of displayed relevance (0.82..0.95 band). */
+    public const BOOST = 0.004;
+
     /** @var Client|null */
     private $client;
 
@@ -181,8 +184,8 @@ final class KeyPages
         $ids  = \array_keys($scores);
         $pos  = \array_flip($ids);
         \usort($ids, static function ($a, $b) use ($scores, $keys, $pos): int {
-            $sa = $scores[$a] + (isset($keys[$a]) ? 0.01 : 0.0);
-            $sb = $scores[$b] + (isset($keys[$b]) ? 0.01 : 0.0);
+            $sa = $scores[$a] + (isset($keys[$a]) ? self::BOOST : 0.0);
+            $sb = $scores[$b] + (isset($keys[$b]) ? self::BOOST : 0.0);
 
             return $sa === $sb ? $pos[$a] <=> $pos[$b] : ($sa < $sb ? 1 : -1);
         });

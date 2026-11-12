@@ -167,11 +167,11 @@ final class KeyPagesTest extends TestCase
         $this->assertSame([], $keys->stored()['key_pages']);
     }
 
-    public function testRankBoostsKeyPagesByOneHundredthAndIsStable(): void
+    public function testRankBoostIsATieBreakerAndIsStable(): void
     {
-        $scores = [10 => 0.90, 11 => 0.895, 12 => 0.88, 13 => 0.88];
+        $scores = [10 => 0.90, 11 => 0.897, 12 => 0.88, 13 => 0.88];
         $this->assertSame([10, 11, 12, 13], KeyPages::rank($scores, []));
-        // 0.895 + 0.01 passes 0.90; 0.88 + 0.01 does not.
+        // 0.897 + 0.004 passes 0.90; 0.88 + 0.004 does not.
         $this->assertSame([11, 10, 12, 13], KeyPages::rank($scores, [11]));
         $this->assertSame([10, 11, 12, 13], KeyPages::rank($scores, [12]));
         // equal scores keep API order; a key page wins the tie.

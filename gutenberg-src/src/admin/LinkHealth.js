@@ -1,7 +1,7 @@
 import { useEffect, useState } from '@wordpress/element';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import { useAdmin, useLinkHealth, useSync } from './ctx';
-import { buildCsv, detailsFor, downloadCsv } from './csv';
+import { buildCsv, buildKeysCsv, detailsFor, downloadCsv } from './csv';
 import KeyPagesTab from './KeyPagesTab';
 import { Btn, Card, ExpiredNotice, Link, Notice, Title, num } from './ui';
 
@@ -135,7 +135,8 @@ export default function LinkHealth() {
                         /* translators: 1: date and time, 2: posts checked (links read for link health; whole site, no limit) */
                         __('Checked %1$s · %2$s posts', 'cherrylink'), new Date(data.checked_at).toLocaleString(), num(data.summary.posts_checked ?? state.counts.checked)) : ''}</span>
                     <Btn kind="outline" onClick={refresh} disabled={busy}>{busy ? __('Checking…', 'cherrylink') : __('Check again', 'cherrylink')}</Btn>
-                    <Btn kind="outline" disabled={!rows.length || tab === 'keys'} onClick={() => downloadCsv(`cherrylink-${tab}.csv`, buildCsv(tab, rows))}>{__('Export CSV', 'cherrylink')}</Btn>
+                    <Btn kind="outline" disabled={tab === 'keys' ? !(keys && keys.key_pages.length) : !rows.length}
+                        onClick={() => downloadCsv(`cherrylink-${tab}.csv`, tab === 'keys' ? buildKeysCsv(keys.key_pages) : buildCsv(tab, rows))}>{__('Export CSV', 'cherrylink')}</Btn>
                 </>
             }>{__('Link health', 'cherrylink')}</Title>
             {error && <Notice tone="danger">{error}</Notice>}

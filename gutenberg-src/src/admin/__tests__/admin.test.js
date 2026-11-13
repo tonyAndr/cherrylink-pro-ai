@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
 import App from '../App';
-import { buildCsv } from '../csv';
+import { buildCsv, buildKeysCsv } from '../csv';
 import { rowsFor } from '../LinkHealth';
 import { previewTag } from '../Settings';
 
@@ -190,6 +190,12 @@ describe('wizard', () => {
 });
 
 describe('helpers', () => {
+    it('buildKeysCsv lists group size and the posts not linking yet', () => {
+        const csv = buildKeysCsv([{ title: 'Hub', view_url: 'http://s.test/hub/', inbound: 3,
+            members: [{ title: 'A', links_to_key: true }, { title: 'B, c', links_to_key: false }] }]);
+        expect(csv.split('\r\n')[1]).toBe('Hub,http://s.test/hub/,3,3,"B, c"');
+    });
+
     it('buildCsv escapes quotes and commas and includes tab details', () => {
         const csv = buildCsv('broken', [health.rows[2]]);
         expect(csv).toContain('"http://s.test/gone/ (a, ""b"")"');

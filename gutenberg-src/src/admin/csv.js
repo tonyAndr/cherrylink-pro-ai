@@ -19,6 +19,17 @@ export function buildCsv(tab, rows) {
     return '﻿' + lines.join('\r\n');
 }
 
+/** Key pages: one row per hub with its group and the posts that do not link to it yet. */
+export function buildKeysCsv(pages) {
+    const lines = [['Key page', 'URL', 'Group size', 'Incoming links', 'Not linking yet'].map(esc).join(',')];
+    pages.forEach((p) => {
+        const members = p.members || [];
+        const missing = members.filter((m) => !m.links_to_key).map((m) => m.title).join('; ');
+        lines.push([p.title, p.view_url || p.url, members.length + 1, p.inbound ?? '', missing].map(esc).join(','));
+    });
+    return '\ufeff' + lines.join('\r\n');
+}
+
 export function downloadCsv(name, text) {
     const url = URL.createObjectURL(new Blob([text], { type: 'text/csv;charset=utf-8' }));
     const a = document.createElement('a');

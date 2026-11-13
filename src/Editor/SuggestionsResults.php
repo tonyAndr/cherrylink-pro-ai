@@ -204,7 +204,9 @@ final class SuggestionsResults
         $sql .= " ORDER BY FIELD(ID, $ids_in)";
         $sql .= ' LIMIT ' . (int) $offset . ', ' . ((int) $limit + 1);
 
+        // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $sql is assembled from plugin-controlled fragments, integer IDs and prepared pieces; live relevance query, not cacheable
         $results = (array) $wpdb->get_results($sql);
+        // phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $fetched = \count($results);
         $results = \array_slice($results, 0, $limit);
 
@@ -313,7 +315,9 @@ final class SuggestionsResults
                 WHERE post_status = 'publish' AND post_type IN ($ph) AND ID <> %d AND " . \implode(' AND ', $any) . "
                 ORDER BY in_title DESC, post_date DESC LIMIT 100";
         // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- placeholders built above
+        // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders, PluginCheck.Security.DirectDB.UnescapedDBParameter -- placeholders are built above; live search query
         $rows = (array) $wpdb->get_results($wpdb->prepare($sql, \array_merge($targs, $types, [$exclude_id], $args)));
+        // phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $out  = [];
         foreach ($rows as $r) {
             $out[(int) $r->ID] = ((int) $r->in_title) === 1 ? 'title' : 'text';

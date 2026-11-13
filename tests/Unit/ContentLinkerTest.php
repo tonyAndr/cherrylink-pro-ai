@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace CherryLink\Tests\Unit;
 
+use Brain\Monkey;
+use Brain\Monkey\Functions;
 use CherryLink\Editor\ContentLinker;
 use PHPUnit\Framework\TestCase;
 
@@ -14,6 +16,19 @@ final class ContentLinkerTest extends TestCase
 {
     private const OPEN  = '<a href="/x">';
     private const CLOSE = '</a>';
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        Monkey\setUp();
+        Functions\when('wp_parse_url')->alias('parse_url');
+    }
+
+    protected function tearDown(): void
+    {
+        Monkey\tearDown();
+        parent::tearDown();
+    }
 
     private function link(string $html, string $phrase, int $block = -1): ?string
     {

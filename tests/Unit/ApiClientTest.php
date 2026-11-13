@@ -29,6 +29,7 @@ final class ApiClientTest extends TestCase
     {
         parent::setUp();
         Monkey\setUp();
+        Functions\when('wp_strip_all_tags')->alias('strip_tags');
 
         // Runtime constants normally set by cherrylink_vector_api.php at include time.
         if (!defined('CHERRY_VECTOR_API_URL')) {

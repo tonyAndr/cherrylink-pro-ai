@@ -539,11 +539,13 @@ final class AdminApi implements Registerable
         global $wpdb;
         $allowed = IndexHelpers::get_allowed_types_list();
         $ph      = \implode(',', \array_fill(0, \count($allowed), '%s'));
+        // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders, PluginCheck.Security.DirectDB.UnescapedDBParameter -- only %s placeholders are interpolated; live read
         $cutoff  = $wpdb->get_var($wpdb->prepare(
             "SELECT post_modified_gmt FROM {$wpdb->posts} WHERE post_type IN ($ph) AND post_status = 'publish'
              ORDER BY post_modified_gmt DESC, ID DESC LIMIT 1 OFFSET %d",
             \array_merge($allowed, [$limit - 1])
         ));
+        // phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders, PluginCheck.Security.DirectDB.UnescapedDBParameter
 
         return $cutoff === null ? null : (string) $cutoff;
     }

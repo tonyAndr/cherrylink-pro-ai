@@ -98,7 +98,7 @@ final class ClassicPanel implements Registerable
         static $printed = false;
         $id      = $printed ? '' : ' id="cherrylink-panel-toggle"';
         $printed = true;
-        echo '<a' . $id . ' class="linkate-button cherrylink-panel-toggle button"><span class="wp-media-buttons-icon linkate-media-btn"></span>CherryLink Pro</a>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static markup
+        echo '<a' . $id . ' class="linkate-button cherrylink-panel-toggle button"><span class="wp-media-buttons-icon linkate-media-btn"></span>CherryLink</a>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static markup
     }
 
     public function isGutenbergEnabled(): bool

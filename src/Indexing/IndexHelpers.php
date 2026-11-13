@@ -26,8 +26,14 @@ class IndexHelpers
     {
         global $wpdb;
         /** @var \wpdb $wpdb */
-        $allowed_types = $this->get_allowed_types_sql();
-        return $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type IN ($allowed_types) AND post_status = 'publish'");
+        $types = self::get_allowed_types_list();
+        $ph    = implode(',', array_fill(0, count($types), '%s'));
+        // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders, PluginCheck.Security.DirectDB.UnescapedDBParameter -- only %s placeholders are interpolated; live count
+        return $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type IN ($ph) AND post_status = 'publish'",
+            $types
+        ));
+        // phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders, PluginCheck.Security.DirectDB.UnescapedDBParameter
     }
 
     public function get_allowed_types_sql(): string

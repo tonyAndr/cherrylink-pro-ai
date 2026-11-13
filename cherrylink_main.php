@@ -3,10 +3,12 @@
 /*
 Plugin Name: CherryLink – AI Internal Linking
 Plugin URI: https://cherrylink.app/
-Description: A plugin for automatic internal linking based on semantic search (AI). It finds relevant posts and suggests anchor phrases using vector embeddings.
-Version: 1.2.1
-Author: Anton SeoCherry.ru
+Description: AI internal linking for WordPress: find related posts, get anchor phrase suggestions in the editor, and audit your link structure.
+Version: 2.0.0
+Author: CherryLink
 Author URI: https://cherrylink.app/
+License: GPLv2 or later
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Requires at least: 5.6
 Requires PHP: 7.4
 Text Domain: cherrylink
@@ -44,8 +46,6 @@ require_once(CHERRYLINK_DIR . 'vendor/autoload.php');
 // provide template-helper globals, class aliases, and the API runtime constants/hook.
 \CherryLink\Plugin::boot(__FILE__);
 
-require(CHERRYLINK_DIR . '/env-info/W18T.class.php');
-
 // Action Scheduler — background job queue for the incremental sync (must load early).
 if (file_exists(CHERRYLINK_DIR . '/vendor/woocommerce/action-scheduler/action-scheduler.php')) {
     require_once(CHERRYLINK_DIR . '/vendor/woocommerce/action-scheduler/action-scheduler.php');
@@ -57,14 +57,14 @@ if (file_exists(CHERRYLINK_DIR . '/vendor/woocommerce/action-scheduler/action-sc
 // release asset. Clients then see the update in wp-admin like any WordPress.org plugin.
 if (file_exists(CHERRYLINK_DIR . '/updater/plugin-update-checker.php')) {
     require_once(CHERRYLINK_DIR . '/updater/plugin-update-checker.php');
-    $cl_update_checker = Puc_v4_Factory::buildUpdateChecker(
+    $cherrylink_update_checker = Puc_v4_Factory::buildUpdateChecker(
         'https://github.com/tonyAndr/cherrylink-pro-ai/',
         __FILE__,
         'cherrylink-pro-ai'
     );
     // Periodic checks belong in background cron/CLI, never dashboard navigation.
-    $cl_update_checker->addFilter('check_now', [\CherryLink\Support\UpdateChecks::class, 'allowScheduledCheck']);
+    $cherrylink_update_checker->addFilter('check_now', [\CherryLink\Support\UpdateChecks::class, 'allowScheduledCheck']);
     // Prefer the attached release-asset zip over GitHub's auto-generated source archive
     // (keeps dev files like gutenberg-src/ and node_modules out of client installs).
-    $cl_update_checker->getVcsApi()->enableReleaseAssets();
+    $cherrylink_update_checker->getVcsApi()->enableReleaseAssets();
 }

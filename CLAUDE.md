@@ -225,7 +225,7 @@ The API runtime constants + the alt-server hook live in `\CherryLink\Api\Relay`.
 
 ## Classic Editor UI
 
-`src/Editor/ClassicPanel.php` adds the "CherryLink Pro" media button (`#cherrylink-panel-toggle`)
+`src/Editor/ClassicPanel.php` adds the "CherryLink" media button (`#cherrylink-panel-toggle`)
 and enqueues `js/cherry-classic.{js,css}` on classic post/page and `term.php` screens. The panel
 DOM is rendered by React (`gutenberg-src/src/panel/`); there are no PHP panel templates. See
 `specs/unified-panel.md`.

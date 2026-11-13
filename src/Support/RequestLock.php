@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB.UnescapedDBParameter -- plugin-owned table/option names from $wpdb->prefix; values always go through $wpdb->prepare(); no object cache applies to queue/lock rows
+
 namespace CherryLink\Support;
 
 /** Short cross-request mutex. Expired/released tokens use compare-and-delete. */

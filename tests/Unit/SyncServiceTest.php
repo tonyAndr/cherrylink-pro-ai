@@ -48,6 +48,7 @@ final class SyncServiceTest extends TestCase
         parent::setUp();
         Monkey\setUp();
         Functions\when('wp_cache_delete')->justReturn(true);
+        Functions\when('wp_rand')->alias('mt_rand');
         Functions\when('get_transient')->justReturn(false); // capabilities cache is cold
         $this->cleared = [];
         Functions\when('wp_clear_scheduled_hook')->alias(function (string $hook): int {

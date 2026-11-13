@@ -1,15 +1,15 @@
-# Copyright (C) 2026 Anton SeoCherry.ru
-# This file is distributed under the same license as the CherryLink – AI Internal Linking plugin.
+# Copyright (C) 2026 CherryLink
+# This file is distributed under the GPLv2 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: CherryLink – AI Internal Linking 1.2.1\n"
-"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/app\n"
+"Project-Id-Version: CherryLink – AI Internal Linking 2.0.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/cherrylink\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-12T16:50:07+00:00\n"
+"POT-Creation-Date: 2026-11-13T08:37:39+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: cherrylink\n"
@@ -22,20 +22,22 @@ msgstr ""
 #. Plugin URI of the plugin
 #. Author URI of the plugin
 #: cherrylink_main.php
-msgid "http://seocherry.ru/"
+msgid "https://cherrylink.app/"
 msgstr ""
 
 #. Description of the plugin
 #: cherrylink_main.php
-msgid "A plugin for automatic internal linking based on semantic search (AI). It finds relevant posts and suggests anchor phrases using vector embeddings."
+msgid "AI internal linking for WordPress: find related posts, get anchor phrase suggestions in the editor, and audit your link structure."
 msgstr ""
 
 #. Author of the plugin
 #: cherrylink_main.php
-msgid "Anton SeoCherry.ru"
+#: src/Admin/AdminMenu.php:75
+#: js/cherry-gutenberg.js:3
+msgid "CherryLink"
 msgstr ""
 
-#: cherrylink_main.php:23
+#: cherrylink_main.php:25
 msgid "Deactivate CherryLink Pro AI first. Two CherryLink plugins cannot run together."
 msgstr ""
 
@@ -119,11 +121,6 @@ msgstr ""
 #: src/Admin/AdminMenu.php:79
 #: js/cherry-app.js:31
 msgid "Settings"
-msgstr ""
-
-#: src/Admin/AdminMenu.php:75
-#: js/cherry-gutenberg.js:3
-msgid "CherryLink"
 msgstr ""
 
 #: src/Admin/AdminMenu.php:76

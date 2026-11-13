@@ -67,6 +67,7 @@ final class Relay implements Registerable
         if (empty($parts['host']) || (int) ($parts['port'] ?? 0) !== CL_ALT_API_PORT) {
             return;
         }
+        // phpcs:ignore WordPress.WP.AlternativeFunctions.curl_curl_setopt -- inside the http_api_curl hook: the only way to pin the connect address (SNI/cert unchanged)
         \curl_setopt($handle, CURLOPT_RESOLVE, [$parts['host'] . ':' . CL_ALT_API_PORT . ':' . CL_ALT_API_IP]);
     }
 }

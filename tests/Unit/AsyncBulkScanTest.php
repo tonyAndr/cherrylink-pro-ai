@@ -72,6 +72,7 @@ final class AsyncBulkScanTest extends TestCase
     {
         parent::setUp();
         Monkey\setUp();
+        \Brain\Monkey\Functions\when('wp_rand')->alias('mt_rand');
         Functions\when('wp_cache_delete')->justReturn(true);
 
         $this->options   = [];

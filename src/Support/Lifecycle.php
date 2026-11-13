@@ -55,6 +55,7 @@ final class Lifecycle implements Registerable
         \add_action('plugins_loaded', [$this, 'maybeMigrateOptions'], 20);
     }
 
+    /** Bundled translations (ru_RU) until language packs exist on translate.wordpress.org. */
     public function loadTextdomain(): void
     {
         \load_plugin_textdomain(
@@ -86,6 +87,7 @@ final class Lifecycle implements Registerable
         try {
             $this->reports->recordActivation();
         } catch (\Throwable $error) {
+            // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- best-effort failure note; activation must not break
             \error_log('CherryLink: could not queue plugin report: ' . $error->getMessage());
         }
     }

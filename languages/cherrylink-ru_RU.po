@@ -19,25 +19,9 @@ msgstr ""
 msgid "CherryLink – AI Internal Linking"
 msgstr "CherryLink – AI Internal Linking"
 
-#. Plugin URI of the plugin
-#. Author URI of the plugin
-#: cherrylink_main.php
-msgid "http://seocherry.ru/"
-msgstr "http://seocherry.ru/"
-
-#. Description of the plugin
-#: cherrylink_main.php
-msgid "A plugin for automatic internal linking based on semantic search (AI). It finds relevant posts and suggests anchor phrases using vector embeddings."
-msgstr "Плагин для автоматической внутренней перелинковки на основе семантического поиска (AI). Находит релевантные статьи и предлагает анкорные фразы с помощью векторных эмбеддингов."
-
-#. Author of the plugin
-#: cherrylink_main.php
-msgid "Anton SeoCherry.ru"
-msgstr "Anton SeoCherry.ru"
-
-#: cherrylink_main.php:23
+#: cherrylink_main.php:25
 msgid "Deactivate CherryLink Pro AI first. Two CherryLink plugins cannot run together."
-msgstr "Deactivate CherryLink Pro AI first. Two CherryLink plugins cannot run together."
+msgstr "Сначала отключите CherryLink Pro AI. Два плагина CherryLink не могут работать одновременно."
 
 #: src/Admin/AdminApi.php:99
 msgid "Could not reach the CherryLink server. Try again in a moment."
@@ -121,6 +105,8 @@ msgstr "Сервис подключения временно недоступе�
 msgid "Settings"
 msgstr "Настройки"
 
+#. Author of the plugin
+#: cherrylink_main.php
 #: src/Admin/AdminMenu.php:75
 #: js/cherry-gutenberg.js:3
 msgid "CherryLink"
@@ -1785,3 +1771,14 @@ msgstr "Бесплатный тариф изучает %s последних о�
 #: js/cherry-app.js:22
 msgid "Find posts to link to"
 msgstr "Найти статьи, на которые можно сослаться"
+
+#. Plugin URI of the plugin
+#. Author URI of the plugin
+#: cherrylink_main.php
+msgid "https://cherrylink.app/"
+msgstr "https://cherrylink.app/"
+
+#. Description of the plugin
+#: cherrylink_main.php
+msgid "AI internal linking for WordPress: find related posts, get anchor phrase suggestions in the editor, and audit your link structure."
+msgstr "ИИ-перелинковка для WordPress: находит связанные записи, подсказывает анкоры прямо в редакторе и проверяет структуру внутренних ссылок."

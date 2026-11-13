@@ -139,7 +139,7 @@ final class ContentLinker
      */
     private static function scan(string $content): array
     {
-        $plain = \strip_tags($content) === $content;
+        $plain = \strip_tags($content) === $content; // phpcs:ignore WordPress.WP.AlternativeFunctions.strip_tags_strip_tags -- exact tag-presence test; wp_strip_all_tags() also trims/strips script text
         if ($plain) {
             return self::scanPlain($content);
         }
@@ -206,7 +206,7 @@ final class ContentLinker
     /** @return array<int,array{0:int,1:int,2:string}> [start, end, text] */
     private static function findBlocks(string $content): array
     {
-        if (\strip_tags($content) === $content) {
+        if (\strip_tags($content) === $content) { // phpcs:ignore WordPress.WP.AlternativeFunctions.strip_tags_strip_tags -- exact tag-presence test
             [, $blocks] = self::scanPlain($content);
             $out = [];
             foreach ($blocks as [$s, $e]) {
@@ -312,7 +312,7 @@ final class ContentLinker
         if ($url === '') {
             return null;
         }
-        $p = \parse_url($url);
+        $p = \wp_parse_url($url);
         if (! \is_array($p)) {
             return null;
         }

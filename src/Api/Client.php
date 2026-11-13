@@ -508,6 +508,7 @@ class Client implements ReportClient
         $allowed_types = IndexHelpers::get_allowed_types_list();
         $placeholders  = \implode(',', \array_fill(0, count($allowed_types), '%s'));
 
+        // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders, PluginCheck.Security.DirectDB.UnescapedDBParameter -- only %s placeholders are interpolated; batch scan read must be uncached
         $posts = $wpdb->get_results(
             $wpdb->prepare(
                 "SELECT ID, post_title, post_content, post_status
@@ -518,6 +519,7 @@ class Client implements ReportClient
                 \array_merge($allowed_types, [$batch_size, $offset])
             )
         );
+        // phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders, PluginCheck.Security.DirectDB.UnescapedDBParameter
 
         if (empty($posts)) {
             return ['indexed' => 0, 'errors' => 0, 'total' => 0];
@@ -1211,7 +1213,7 @@ class Client implements ReportClient
     {
         $error = 'HTTP ' . $code;
         if (\is_array($body) && isset($body['detail']) && \is_scalar($body['detail'])) {
-            $detail = \trim((string) \preg_replace('/\s+/', ' ', \strip_tags((string) $body['detail'])));
+            $detail = \trim((string) \preg_replace('/\s+/', ' ', \wp_strip_all_tags((string) $body['detail'])));
             if ($detail !== '') {
                 $error .= ': ' . \substr($detail, 0, 160);
             }

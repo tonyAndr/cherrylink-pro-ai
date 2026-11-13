@@ -42,6 +42,14 @@ class CopyToJsPlugin {
 module.exports = {
     ...defaultConfig,
     module: { ...defaultConfig.module, rules },
+    resolve: {
+        ...defaultConfig.resolve,
+        alias: {
+            ...( ( defaultConfig.resolve || {} ).alias || {} ),
+            // See src/jsx-runtime.js: avoids inlining the react/jsx-runtime package.
+            'react/jsx-runtime$': path.resolve( __dirname, 'src/jsx-runtime.js' ),
+        },
+    },
     entry: {
         'cherry-gutenberg': path.resolve( __dirname, 'src/index.js' ),
         'cherry-classic': path.resolve( __dirname, 'src/classic.js' ),
@@ -53,8 +61,9 @@ module.exports = {
         path: path.resolve( process.cwd(), 'build' ),
     },
     plugins: [
-        // Replace the default DependencyExtractionWebpackPlugin so we can bundle
-        // react/jsx-runtime inline — WP 6.5 doesn't register react-jsx-runtime.
+        // Replace the default DependencyExtractionWebpackPlugin so react/jsx-runtime
+        // is bundled (as our wp.element shim via the alias above) instead of
+        // externalized — WP < 6.6 doesn't register react-jsx-runtime.
         ...( defaultConfig.plugins || [] ).filter(
             p => !( p instanceof DependencyExtractionWebpackPlugin )
         ),

@@ -1,198 +1,135 @@
-=== CherryLink Pro ===
-Tags: seo, links
+=== CherryLink – AI Internal Linking ===
+Contributors: TODO_WPORG_USERNAME
+Tags: internal links, internal linking, seo, links, link building
 Requires at least: 5.6
 Tested up to: 7.1
-Stable tag: 1.2.1
 Requires PHP: 7.4
+Stable tag: 2.0.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-CherryLink - плагин для ручной перелинковки статей в WordPress. Простая и качественная перелинковка стала проще и быстрее.
-
-Требования: WordPress 5.6+ и PHP 7.4+.
+Find related posts and anchor phrases while you write, and audit your site's internal links. AI-powered, in the Block and Classic editors.
 
 == Description ==
 
-Плагин для упрощения ручной внутренней перелинковки прямо в редакторе статьи. Вставка ссылки в 1 клик, список релевантных статей, подсказки анкоров и статистика входящих/исходящих ссылок.
+CherryLink helps you build internal links without leaving the editor. It uses semantic (AI) search to find the posts on your site that are most relevant to what you are writing, suggests anchor phrases inside your text, and inserts the link in one click. A link health dashboard shows where your internal linking is weak.
 
-Некоторые фичи:
-* Показывает ссылки релевантные тексту — гибкие настройки алгоритма, стоп-слова, фильтры (по категории, дате и многому другому);
-* Вставка ссылки вокруг выделенного текста в 1 клик;
-* Находит в тексте подходящие анкоры;
-* Статистика ссылок, навигация по уже вставленным в тексте;
-* Работает в режиме HTML и RichText в классическом редакторе и в новом Gutenberg;
-* Автоматическая перелинковка с помощью блока «Похожих статей» (при этом ссылки, которые есть в тексте, не повторяются);
-* Быстрый фильтр для поиска нужной ссылки по ключевому слову, наличию в тексте, категории;
-* Работает при редактировании стандартных записей, страниц, произвольных типов записей;
-* Экспорт перелинковки в файл CSV;
-* При удалении плагина перелинковка не пропадет.
+**In the editor (Block editor and Classic editor)**
 
-    **CherryLink работает с классическим редактором (TinyMCE) и Gutenberg. Различные интерактивные PageBuilder’ы не поддерживаются.**
+* A sidebar panel lists related posts and pages for the content you are writing, ranked by meaning rather than by keyword overlap.
+* For each result, CherryLink suggests anchor phrases that already exist in your text. Click to insert the link.
+* An "All posts" search lets you find any post by keyword and link to it.
+* Works with posts, pages and custom post types.
 
+**Link health dashboard**
 
-Здесь оставлю важные ссылки:
+* Orphan posts (no incoming links) and posts with no outgoing links, with suggestions for fixing them.
+* Broken internal links, repeated links and self links.
+* Automatically detected key pages: the pages your site's content points to most, plus "underlinked" pages that deserve more links. You can pin or demote pages.
+* CSV export of link data.
 
-Страница плагина [CherryLink](https://cherrylink.app/ "Сайт плагина")
+**Setup**
 
+A short Connect wizard creates a free, domain-bound key with one click. No email and no payment details are required.
 
-Чат в телеграме [Техподдержка](https://t.me/seovishnya "Обсуждение работы плагинов")
+**Free plan**
+
+The free plan indexes your full site up to 1,000 posts. If your site has more, the 1,000 most recently modified posts are indexed and the link health dashboard still covers every post. Nothing expires and editor actions are never metered. Larger sites can move to a paid plan at https://cherrylink.app/pricing/ without reinstalling the plugin.
+
+**Languages**
+
+Search is multilingual and works with any language. The plugin interface is available in English and Russian. Polylang and WPML post languages are respected.
+
+== External services ==
+
+CherryLink relies on a hosted service operated by the plugin authors. The plugin does not work without it, because the semantic search index lives there. **Nothing is sent until an administrator clicks "Connect" in the CherryLink setup screen** (or enters a license key).
+
+**1. CherryLink licensing service**
+URL: https://api.cherrylink.app/cherrylink-pro-licensing/
+
+* When: when an administrator clicks Connect, and afterwards periodically (and when a key is saved) to check that the key is valid and which plan limits apply.
+* What is sent: your site's domain name and the license key. During Connect, the service also fetches a one-time proof token from your site (a public URL on your own site that exists for about ten minutes) to confirm that you own the domain.
+
+**2. CherryLink indexing API**
+URL: https://api.cherrylink.app
+
+* When: after you connect. When posts are published or updated, when a scan is started, when you open the editor panel and search for related posts, and when the link health dashboard is refreshed.
+* What is sent: for each indexed published post, its ID, title, plain-text content, URL, modified date, language and category/term names, and the links it contains. Your license key authenticates each request. Search requests send the text of the post being edited. Unpublished drafts are not indexed.
+* Lifecycle reports: after connecting, the plugin sends a small, infrequent report when it is activated or updated: the plugin version, WordPress and PHP versions, database version, web server, operating system, theme name and version, site locale and whether multisite is on. No post content, user data or IP-based tracking is included.
+
+**3. Alternative route (relay)**
+If api.cherrylink.app cannot be reached directly (for example it is blocked by your network), the plugin automatically retries the same HTTPS requests through a relay server at 31.129.48.202, port 9443. The relay passes the encrypted traffic through to the same API; the TLS connection and certificate are still validated against api.cherrylink.app. The relay is used only after a failed direct connection and only for the requests listed above.
+
+Terms of service: https://cherrylink.app/terms/
+Privacy policy: https://cherrylink.app/privacy/
+
+You can remove all data stored on the service for your site with the "remove site data" action on the CherryLink Indexing screen, and uninstalling the plugin removes its settings from your database.
 
 == Installation ==
 
-1. Залейте файлы плагина в  `/wp-content/plugins/cherrylink-pro-ai` на вашем хостинге, или установить прямо из админки WP.
-2. Активируйте на странице плагинов в админке WP
-3. Перейдите в Настройки->CherryLink для изменения опций плагина
-4. Введите лицензионный ключ в соответствующее поле в сайдбаре
+1. Install and activate CherryLink from the Plugins screen, or upload the plugin to `/wp-content/plugins/cherrylink/`.
+2. Open CherryLink in the admin menu and click Connect. Reading the External services section above first is recommended.
+3. Start the first scan from the Indexing tab. The scan runs in the background; keep WP-Cron (or a server cron) enabled so it can progress.
+4. Open any post in the Block or Classic editor and use the CherryLink panel.
 
 == Frequently Asked Questions ==
 
-= Установил плагин, что дальше? =
+= Is CherryLink free? =
 
-Активируйте плагин приобретенным ключем в его настройках, после чего в редакторе статей появится кнопка "Перелинковка" (Classic Editor) или кнопка с иконкой вишни (Gutenberg). Эти кнопки открывают панель CherryLink с релевантными ссылками.
+Yes. The free plan covers a full-site index of up to 1,000 posts, with no expiry and no limit on how often you use the editor suggestions. Paid plans are for larger sites and multiple sites.
 
-Если на сайте много записей, то перед началом работы нужно будет создать индекс в настройках плагина на вкладке "Индекс ссылок". Если индекс не создан, то вы увидите соответствующее уведомление в админке в верхней части экрана.
+= What happens if my site has more than 1,000 posts? =
 
-= Активация плагина после установки занимает много времени, почему? =
+The 1,000 most recently modified posts are indexed and available for suggestions. The link health dashboard still analyzes every post. When you edit an older post it moves into the indexed set.
 
-При первой активации плагин сканирует все записи на сайте и создает таблицу в БД, где хранятся все данные, необходимые для подбора релевантных ссылок.
+= What data leaves my site? =
 
-Автоматическое создание индекса страниц происходит при установке только в том случае, если на сайте не больше 200 записей. В противном случае вы увидите уведомление о просьбе создать индекс самостоятельно.
+Only after you connect: the content of your published posts (for the search index), the text of the post you are editing when you ask for suggestions, your domain, and a small plugin/environment report. See the External services section for details and links to the privacy policy.
 
-= Плагин сам делает перелинковку? =
+= Which languages are supported? =
 
-CherryLink - это инструмент, который позволяет ускорить перелинковку, но он не сделает ее за вас. 
+Search works in many languages. The interface is available in English and Russian.
 
-Есть 2 вида/инструмента перелинковки, которые поддерживает плагин:
-1. Ручная вставка ссылок из панели перелинковки во время редактирования статьи;
-2. Автоматическая перелинковка с помощью блока ссылок.
+= Does it work with page builders? =
 
-Первый инструмент найдет вам все максимально релевантные статьи, покажет статистику входищих и исходящих ссылок, использованные анкоры и даст возможность вставить ссылки в 1 клик в текст статьи с любым HTML шаблоном.
+CherryLink works in the Block editor (Gutenberg) and the Classic editor (TinyMCE and text mode). Interactive page builders are not supported in the editor panel.
 
-Второй инструмент — блок ссылок Gutenberg: он выводит подборку похожих статей рядом с записью. Ссылки блока не сохраняются в тексте записи.
+= Will my links disappear if I deactivate or uninstall the plugin? =
 
-= Есть ли поддержка Gutenberg? =
+No. Links are ordinary links inside your content and stay in place.
 
-Да, CherryLink поддерживает классический редактор и Gutenberg (WordPress 5.0+).
+= Indexing seems stuck. =
 
-= Не находит релевантные статьи, что делать? =
+The background scan relies on WP-Cron. If your site has WP-Cron disabled, set up a server cron that calls wp-cron.php, or run `wp action-scheduler run`.
 
-Проверьте настройки фильтрации и алгоритма релевантности плагина (см. руководство, ссылка выше), затем сделайте реиндексацию (Индекс ссылок - Пересоздать индекс). Если не поможет или остались вопросы - обратитесь к разработчику.
+= Where can I get support? =
 
-= Если удалить плагин ссылки пропадут? =
+Use the plugin support forum on WordPress.org, or see https://cherrylink.app/docs/.
 
-Нет, ссылки останутся в текстах записей. При вставке ссылки из плагина, она добавляется в контент записи в виде HTML кода с необходимыми аттрибутами. 
+== Screenshots ==
 
-При удалении плагина очищаются и удаляются только служебные таблицы из базы данных, которые были созданы во время создания индекса и используются при поиске релевантных ссылок. Тексты записей, вставленные ссылки и все, что к плагину не относится, останется на своем месте.
+1. The CherryLink sidebar in the Block editor: related posts with suggested anchor phrases.
+2. The same panel in the Classic editor.
+3. The "All posts" search for linking to any post by keyword.
+4. The link health dashboard: orphans, posts without outgoing links, broken, repeated and self links.
+5. Key pages with the CSV export, and the Connect setup wizard.
 
-= Как правильно настроить плагин? =
+== Source code ==
 
-После установки плагина обязательно проверьте, что индекс перелинковки создан корректно, и пересоздайте его если что-то не так.
-Остальные настройки можно не трогать, если вы не знаете зачем они нужны. Выше есть ссылка на руководство, из которого можно понять зачем нужно большинство настроек и что с ними делать.
-Основные моменты, на которые мы бы рекомендовали обратить внимание: 
-* Шаблоны ссылок - укажите сразу нужную разметку и информацию, классы элементов и так далее. Изменение шаблонов не затрагивают уже проставленные ссылки.
-* Чтобы получать больше подсказок-фраз для анкоров, включите в качестве источников слов не только Title, но и Content. Выберите опцию "Дополнять друг друга" и пересоздайте индекс ссылок. 
+The editor and admin interface JavaScript in `js/` is compiled from the readable source in the public repository: https://github.com/tonyAndr/cherrylink-pro-ai (directory `gutenberg-src/`, build with `npm install && npm run build`).
 
-== ChangeLog ==
+== Changelog ==
 
-= 1.2.1 (11/11/2026) =
-* Кнопка «Проверить связь» теперь принудительно проверяет сервер и сразу обновляет карточку готовности, не оставляя закэшированную ошибку связи; обновление плагина также сбрасывает старый статус.
-* Исправлен HTTP 403 при сканировании на сайтах, где в настройках остался администраторский API-ключ: теперь используется ключ лицензии. Ошибки API показываются с причиной и записываются в журнал.
-* Обновлено описание совместимости: классический редактор и Gutenberg; PageBuilder’ы не поддерживаются. Указаны требования WordPress 5.6+ и PHP 7.4+.
+= 2.0.0 =
+* New WordPress.org release under the name CherryLink.
+* Free plan: full-site index up to 1,000 posts, activated with a one-click Connect wizard (no email).
+* New link health dashboard: orphans, posts without outgoing links, broken, repeated and self links, key pages, CSV export.
+* "All posts" search in the editor panel; one unified panel for the Block and Classic editors.
+* Interface strings are now English with a Russian translation.
+* The built-in GitHub updater is removed; updates come from WordPress.org.
+* Requires deactivating the older "CherryLink Pro AI" plugin first; the two cannot run together.
 
-= 1.2.0 (11/11/2026) =
-* Страница настроек больше не ждёт сервер: карточка готовности берётся из кэша и обновляется в фоне, проверка состояния сервера запускается только по кнопке, сохранение ключа лицензии ставит проверку в очередь вместо ожидания ответа.
-* В редакторе снова корректно показывается список релевантных статей и статистика входящих/исходящих ссылок; исправлена ошибка PHP 8, из-за которой панель перелинковки в редакторе не загружалась.
-* Исправлено: список рекомендаций был пустым при значениях настроек по умолчанию (запрос к API превышал допустимый лимит).
-* Фоновое сканирование стало надёжнее: два параллельных запуска больше не перезаписывают прогресс друг друга, а если WP-Cron не обрабатывает очередь, панель сканирования теперь прямо об этом сообщает.
-* Переключатель языка сайта применяется к карточкам плагина сразу; добавлен английский перевод (en_US).
-* Счётчики входящих/исходящих у рекомендаций в редакторе берутся с сервера сразу после сохранения статьи.
-* Настройки теперь выгружаются через защищённую ссылку (файл настроек больше не лежит в папке плагина).
-* Внутреннее: код переведён на пространства имён и автозагрузку (PSR-4) с модульными тестами и статическим анализом. При активации создаются служебные таблицы для будущей асинхронной индексации (сейчас не используются, поведение плагина не меняется).
-* Плагин сообщает серверу об активации и обновлении версии вместе с краткой информацией о среде сайта; отправка выполняется в фоне и не задерживает админку.
+== Upgrade Notice ==
 
-= 1.1.1 (30/07/2026) =
-* Обновлён адрес альтернативного сервера подключения.
-
-= 1.1.0 (30/07/2026) =
-* Добавлен альтернативный сервер подключения в разделе «Для экспертов» — на случай недоступности основного сервера (например, блокировки провайдером).
-* Карточка «Состояние сервера» теперь показывается только на вкладке «Основные».
-
-= 1.0.10 (30/07/2026) =
-* Страница настроек больше не «зависает»: данные готовности кэшируются и обновляются в фоне, без блокирующих обращений к серверу при каждой загрузке.
-* Если сервер недоступен, вместо «0 статей» показывается честный статус «нет связи с сервером».
-* В блоке «Отладка» поле «ID записи» стало необязательным, а кнопка «Проверить» дополнительно проверяет соединение с нужными серверами (для диагностики).
-* Карточка «Состояние сервера»: убрана техническая информация о сервере, выровнены отступы.
-
-= 1.0.9 (30/07/2026) =
-* На странице настроек добавлена карточка «Состояние сервера»: показывает доступность и скорость связи с сервером CherryLink, с кнопкой повторной проверки (без перезагрузки). Полные данные диагностики выводятся в консоль браузера для отправки в поддержку.
-
-= 1.0.8 (17/07/2026) =
-* Время последнего сканирования на странице настроек теперь показывается в часовом поясе браузера, а не сервера.
-* Внутренняя чистка: удалены неиспользуемые опции и мёртвый код (устаревшие настройки автоблока/лицензирования, неиспользуемые параметры подсказок, самописный аналог plugin_basename заменён на функцию ядра WordPress).
-
-= 1.0.7 (16/07/2026) =
-* Исправлен фильтр по рубрикам в классическом редакторе: при включённой опции список ссылок больше не пропадает (пустой белый блок).
-* Внутренняя чистка: полностью удалён неиспользуемый блок SEO-заголовков (источник SEO-title из Yoast/RankMath/AIO, тег {title_seo}, выбор шаблона заголовка) — он был отключён от интерфейса и ни на что не влиял. На работу плагина не влияет.
-
-= 1.0.6 (16/07/2026) =
-* Упрощён и ускорён вывод карточек ссылок (единый рендер вместо динамической подстановки тегов).
-* Внутренняя чистка: удалены неиспользуемые фильтры и настройки (фильтры по меткам/автору/произвольному полю/сортировке, списки «только из рубрик/авторов», фильтр по возрасту, ручное исключение по ID и др.) и связанный мёртвый код. На работу плагина не влияет.
-
-= 1.0.5 (15/07/2026) =
-* Внутренняя чистка: удалён мёртвый код — устаревшие стоп-слова и стемминг, остатки блока релевантных ссылок (CRB) и неиспользуемые теги вывода. На работу плагина не влияет.
-
-= 1.0.4 (15/07/2026) =
-* Проверка автоматических обновлений
-
-= 1.0.3 (15/07/2026) =
-* Автоматические обновления плагина из репозитория (без ручной загрузки zip)
-* После сканирования карточка готовности обновляется на месте, без перезагрузки страницы; кнопка повторного запуска скрывается по завершении
-* Ключ лицензии теперь единственный ключ авторизации: он же используется для доступа к Vector API (отдельный API-ключ больше не нужен)
-* Внутренняя чистка: удалён неиспользуемый код (устаревшее сканирование схемы ссылок, старый режим блока релевантных ссылок)
-
-= 1.0.2 (13/07/2026) =
-* Индексация и сканирование требуют активной лицензии; при её отсутствии показывается уведомление о рассинхронизации индекса (только на странице настроек)
-* Сканирование продвигается прямо со страницы настроек, не дожидаясь посетителей сайта или cron (с откатом на cron при закрытии страницы)
-
-= 1.0.1 (11/07/2026) =
-* Совместимость с WordPress 5.6+ и PHP 7.4+ (Action Scheduler понижен до 3.6.x; убраны функции PHP 8.0)
-* Исправлен фатальный сбой при сохранении записи на PHP 7.x
-
-= 1.0.0 (11/07/2026) =
-* Семантический поиск релевантных статей на базе ИИ (векторные эмбеддинги) вместо полнотекстового поиска
-* Подсказки анкоров по запросу: релевантные фразы подбираются под конкретную целевую статью
-* Инкрементальное сканирование сайта в фоне: переиндексируются только изменённые записи
-* Страница статистики переработана: карточки-показатели, поиск проблем перелинковки
-* Поиск «доноров» для статей без входящих ссылок — рекомендации, откуда сослаться, с готовым анкором
-* Индексация произвольных полей (в т.ч. ACF/массивы)
-
-= 0.9.9 (04/02/2025) =
-* Исправления интерфейса
-* Исправления сканирования сломанных ссылок
-
-= 0.9.8 (23/10/2024) =
-* Исправление интеграции с RankMath
-* Добавлен поиск ошибок по произвольным типам записей
-
-= 0.9.7 (11/09/2024) =
-* Дополнительные проверки для отладки ошибок
-* Проверка совместимости с PHP 8.3
-* Обновлены deprecated методы для парсинга HTML
-
-= 0.9.6 (10/09/2024) =
-* Добавлены инструменты для отладки ошибок
-
-= 0.9.5 (22/07/2024) =
-* Исправление подсказок
-* Проверка совместимости с WP 6.6
-
-= 0.9.4 (04/04/2024) =
-* Изменение системы лицензирования
-* Исправления ошибок
-
-= 0.9.2 (13/03/2024) =
-* Улучшения интерфейса
-* Исправления ошибок
-
-= 0.9 (12/03/2024) =
-* Превью версия
+= 2.0.0 =
+First WordPress.org release. Deactivate the older "CherryLink Pro AI" plugin before activating this one.

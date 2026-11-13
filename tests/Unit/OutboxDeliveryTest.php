@@ -45,6 +45,7 @@ final class OutboxDeliveryTest extends TestCase
     {
         parent::setUp();
         Monkey\setUp();
+        \Brain\Monkey\Functions\when('wp_rand')->alias('mt_rand');
         $this->rows = [];
         $this->acknowledged = [];
         $this->released = [];

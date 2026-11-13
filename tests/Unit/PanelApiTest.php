@@ -57,6 +57,7 @@ final class PanelApiTest extends TestCase
         });
         Functions\when('apply_filters')->returnArg(2);
         Functions\when('wp_strip_all_tags')->alias('strip_tags');
+        Functions\when('wp_parse_url')->alias('parse_url');
         Functions\when('get_post')->alias(function ($id) {
             if (! isset($this->posts[$id])) {
                 return null;

@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB.UnescapedDBParameter -- plugin-owned table/option names from $wpdb->prefix; values always go through $wpdb->prepare(); no object cache applies to queue/lock rows
+
 namespace CherryLink\Indexing\Outbox;
 
 /**
@@ -449,7 +451,7 @@ class Repository
 
         $exponent = \max(0, $attempt - 1);
         $base     = \min(self::MAX_RETRY_DELAY, self::BASE_RETRY_DELAY * (2 ** $exponent));
-        $jitter   = $jitter ?? \mt_rand(0, \min(5, self::MAX_RETRY_DELAY - $base));
+        $jitter   = $jitter ?? \wp_rand(0, \min(5, self::MAX_RETRY_DELAY - $base));
 
         return \min(self::MAX_RETRY_DELAY, $base + \max(0, $jitter));
     }

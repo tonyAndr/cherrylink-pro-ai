@@ -78,7 +78,7 @@ final class LinkFields
         }
         $excerpt        = \preg_replace(' (\[.*?\])', '', $value);
         $excerpt        = \strip_shortcodes($excerpt);
-        $excerpt        = \strip_tags($excerpt);
+        $excerpt        = \wp_strip_all_tags($excerpt);
         $excerpt        = \mb_substr($excerpt, 0, $limit);
         $next_space_pos = \mb_strripos($excerpt, ' ');
         if ($next_space_pos) {
@@ -180,7 +180,7 @@ final class LinkFields
     public static function unparseUrl(string $url, string $opt): string
     {
         $url        = \trim($url);
-        $parsed_url = \parse_url($url);
+        $parsed_url = \wp_parse_url($url);
         if ($parsed_url === false) {
             return '';
         }

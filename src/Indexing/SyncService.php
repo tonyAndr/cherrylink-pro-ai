@@ -509,11 +509,13 @@ final class SyncService implements Registerable
         global $wpdb;
         $allowed = IndexHelpers::get_allowed_types_list();
         $ph      = \implode(',', \array_fill(0, \count($allowed), '%s'));
+        // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders, PluginCheck.Security.DirectDB.UnescapedDBParameter -- only %s placeholders are interpolated; full-inventory snapshot must be uncached
         $rows    = $wpdb->get_results($wpdb->prepare(
             "SELECT ID, post_modified_gmt FROM {$wpdb->posts}
              WHERE post_type IN ($ph) AND post_status = 'publish'",
             $allowed
         ));
+        // phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders, PluginCheck.Security.DirectDB.UnescapedDBParameter
         $current_modified = [];
         foreach ((array) $rows as $r) {
             $current_modified[(int) $r->ID] = (string) $r->post_modified_gmt;
@@ -795,7 +797,7 @@ final class SyncService implements Registerable
 
         $exponent = \max(0, $attempt - 1);
         $base     = \min(self::MAX_RETRY_DELAY, self::BASE_RETRY_DELAY * (2 ** $exponent));
-        $jitter   = $jitter ?? \mt_rand(0, \min(5, self::MAX_RETRY_DELAY - $base));
+        $jitter   = $jitter ?? \wp_rand(0, \min(5, self::MAX_RETRY_DELAY - $base));
 
         return \min(self::MAX_RETRY_DELAY, $base + \max(0, $jitter));
     }

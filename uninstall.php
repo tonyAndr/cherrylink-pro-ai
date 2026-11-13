@@ -9,7 +9,7 @@
 if (defined('ABSPATH') && defined('WP_UNINSTALL_PLUGIN')) {
 	global $wpdb;
 
-	$options = [
+	$cherrylink_options = [
 		// Settings + licence state.
 		'linkate-posts',
 		'linkate_posts',
@@ -37,19 +37,19 @@ if (defined('ABSPATH') && defined('WP_UNINSTALL_PLUGIN')) {
 		// Schema version marker.
 		'cherrylink_db_version',
 	];
-	foreach ($options as $option) {
-		delete_option($option);
+	foreach ($cherrylink_options as $cherrylink_option) {
+		delete_option($cherrylink_option);
 	}
 
-	$transients = [
+	$cherrylink_transients = [
 		'cherrylink_capabilities',
 		'cl_status_cache',
 		'cl_server_status_cache',
 		'cherry-manual-indexation-needed',
 		'cherrylink_updated',
 	];
-	foreach ($transients as $transient) {
-		delete_transient($transient);
+	foreach ($cherrylink_transients as $cherrylink_transient) {
+		delete_transient($cherrylink_transient);
 	}
 
 	// Remove the durable async-indexing outbox (tables + rows).

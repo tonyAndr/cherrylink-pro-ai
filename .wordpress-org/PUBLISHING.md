@@ -11,7 +11,10 @@ The banner, icon and screenshots are in this folder; they go to SVN `assets/`, n
    to `github.com/tonyAndr/cherrylink-pro-ai`, and reviewers check that the
    `gutenberg-src/` there matches the built JS. Pushing a branch does not release anything
    to 1.x users; only a version tag does.
-4. Build the zip: `dev/build-org-zip.sh` → `dist/cherrylink.zip`.
+4. Deploy the free-plan backend first, because reviewers will click Connect. That means control
+   `feature/free-plan`, API `feature/free-plan`, and the Traefik route
+   `/cherrylink-pro-licensing/connect`. Ask Claude to do it.
+5. Build the zip: `dev/build-org-zip.sh` → `dist/cherrylink.zip`.
 
 ## 2. Submit
 

@@ -24,3 +24,4 @@ phpstan.neon.dist export-ignore
 # editable .pot/.po catalogs are dev/translator-only.
 languages/*.pot   export-ignore
 languages/*.po    export-ignore
+.wordpress-org   export-ignore

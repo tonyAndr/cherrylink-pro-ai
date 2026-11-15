@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1544" height="500" viewBox="0 0 1544 500">
+<rect width="1544" height="500" fill="#faf7f5"/>
+<g stroke="#ecd9d3" stroke-width="3" fill="none">
+<path d="M760 120 L930 70 L1060 190 L900 300 L760 120 M1060 190 L1180 110 M900 300 L1010 420 L1060 190 M760 120 L640 230 L900 300"/>
+</g>
+<g fill="#e7c9c1"><circle cx="760" cy="120" r="12"/><circle cx="930" cy="70" r="9"/><circle cx="1060" cy="190" r="14"/><circle cx="900" cy="300" r="11"/><circle cx="1180" cy="110" r="8"/><circle cx="1010" cy="420" r="9"/><circle cx="640" cy="230" r="8"/></g>
+<g transform="translate(1150 40) scale(14)">
+<path d="M14 3c0 6-4 9-7 12M14 3c2 5 5 8 8 11" fill="none" stroke="#3f6212" stroke-width="1.6" stroke-linecap="round"/>
+<path d="M14 3c2-1.6 4.6-1.6 6.4 0c-2 1.4-4.4 1.4-6.4 0z" fill="#65a30d"/>
+<circle cx="8" cy="19" r="5" fill="#9f1239"/><circle cx="20" cy="18" r="5" fill="#be123c"/>
+<circle cx="6.3" cy="17.3" r="1.2" fill="#fff" opacity=".45"/><circle cx="18.3" cy="16.3" r="1.2" fill="#fff" opacity=".45"/>
+</g>
+<text x="80" y="150" font-family="Noto Sans, DejaVu Sans, sans-serif" font-size="58" font-weight="700" fill="#292524">Internal links,</text>
+<text x="80" y="222" font-family="Noto Sans, DejaVu Sans, sans-serif" font-size="58" font-weight="700" fill="#9f1239">suggested while you write.</text>
+<text x="80" y="284" font-family="Noto Sans, DejaVu Sans, sans-serif" font-size="28" fill="#57534e">Related posts, ready link text and link health for WordPress.</text>
+</svg>

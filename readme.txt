@@ -108,11 +108,12 @@ Use the plugin support forum on WordPress.org, or see https://cherrylink.app/doc
 
 == Screenshots ==
 
-1. The CherryLink sidebar in the Block editor: related posts with suggested anchor phrases.
+1. The CherryLink sidebar in the Block editor: phrases from your text with the post they should link to.
 2. The same panel in the Classic editor.
-3. The "All posts" search for linking to any post by keyword.
-4. The link health dashboard: orphans, posts without outgoing links, broken, repeated and self links.
-5. Key pages with the CSV export, and the Connect setup wizard.
+3. "All posts" search: find any post by keyword and insert a link to it.
+4. The dashboard: orphan pages, link health and how many posts are learned.
+5. Key pages: the main page of each topic and the posts that don't link to it yet.
+6. The Connect wizard: one click creates a free key for the site.
 
 == Source code ==
 

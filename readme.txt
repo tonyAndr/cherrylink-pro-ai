@@ -117,7 +117,7 @@ Use the plugin support forum on WordPress.org, or see https://cherrylink.app/doc
 
 == Source code ==
 
-The editor and admin interface JavaScript in `js/` is compiled from the readable source in the public repository: https://github.com/tonyAndr/cherrylink-pro-ai (directory `gutenberg-src/`, build with `npm install && npm run build`).
+The editor and admin interface JavaScript in `js/` is compiled from the readable source in the public repository: https://github.com/tonyAndr/cherrylink-pro-ai/tree/feature/free-mode/gutenberg-src (directory `gutenberg-src/`, build with `npm install && npm run build`).
 
 == Changelog ==
 

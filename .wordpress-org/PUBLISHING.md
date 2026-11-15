@@ -7,13 +7,8 @@ The banner, icon and screenshots are in this folder; they go to SVN `assets/`, n
 
 1. Log in or register at https://login.wordpress.org.
 2. ~~Username in `readme.txt`~~ done (`tonyandr`).
-3. Make the source public: push this branch to GitHub. The readme's "Source code" section links
-   to `github.com/tonyAndr/cherrylink-pro-ai`, and reviewers check that the
-   `gutenberg-src/` there matches the built JS. Pushing a branch does not release anything
-   to 1.x users; only a version tag does.
-4. Deploy the free-plan backend first, because reviewers will click Connect. That means control
-   `feature/free-plan`, API `feature/free-plan`, and the Traefik route
-   `/cherrylink-pro-licensing/connect`. Ask Claude to do it.
+3. ~~Push the source~~ done (`feature/free-mode`; the readme links there).
+4. ~~Deploy the free-plan backend~~ done 2026-11-15.
 5. Build the zip: `dev/build-org-zip.sh` → `dist/cherrylink.zip`.
 
 ## 2. Submit

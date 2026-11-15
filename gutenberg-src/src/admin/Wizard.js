@@ -240,7 +240,7 @@ function Done() {
                 <h1>{__('Your site is ready', 'cherrylink')}</h1>
                 <p className="cl-muted">{sprintf(
                     /* translators: 1: posts learned (analyzed for suggestions; counts toward the plan limit), 2: posts checked (links read for link health; whole site, no limit) */
-                    __('%1$s posts learned, %2$s posts checked. Here is what CherryLink found.', 'cherrylink'), num(state.counts.learned), num(s ? s.posts_checked ?? state.counts.checked : state.counts.checked))}</p>
+                    __('%1$s posts learned, %2$s posts checked. Here is what CherryLink found.', 'cherrylink'), num(state.counts.learned), num((s && s.posts_checked) ?? state.counts.checked ?? state.counts.total))}</p>
             </div>
             {(err || error) && <Notice tone="danger">{err || error}</Notice>}
             {busy && <p className="cl-muted">{__('Reading your links…', 'cherrylink')}</p>}

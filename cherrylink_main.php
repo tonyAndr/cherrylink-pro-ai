@@ -6,7 +6,6 @@ Plugin URI: https://cherrylink.app/
 Description: AI internal linking for WordPress: find related posts, get anchor phrase suggestions in the editor, and audit your link structure.
 Version: 2.0.0
 Author: CherryLink
-Author URI: https://cherrylink.app/
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Requires at least: 5.6

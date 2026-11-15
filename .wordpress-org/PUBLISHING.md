@@ -6,7 +6,7 @@ The banner, icon and screenshots are in this folder; they go to SVN `assets/`, n
 ## 1. Before you submit (once)
 
 1. Log in or register at https://login.wordpress.org.
-2. In `readme.txt`, replace `TODO_WPORG_USERNAME` with your WordPress.org username (or send it to Claude).
+2. ~~Username in `readme.txt`~~ done (`tonyandr`).
 3. Make the source public: push this branch to GitHub. The readme's "Source code" section links
    to `github.com/tonyAndr/cherrylink-pro-ai`, and reviewers check that the
    `gutenberg-src/` there matches the built JS. Pushing a branch does not release anything

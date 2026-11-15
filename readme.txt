@@ -1,5 +1,5 @@
 === CherryLink – AI Internal Linking ===
-Contributors: TODO_WPORG_USERNAME
+Contributors: tonyandr
 Tags: internal links, internal linking, seo, links, link building
 Requires at least: 5.6
 Tested up to: 7.1

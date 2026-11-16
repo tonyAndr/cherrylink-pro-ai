@@ -3,7 +3,7 @@
 # Copy the built zip and .wordpress-org/ assets into a WordPress.org SVN checkout and tag the
 # version. Commits nothing: it prints the commit command for you to run.
 #
-#   dev/svn-release.sh ~/cherrylink-svn
+#   dev/svn-release.sh ~/cherrylink-ai-svn
 #
 set -euo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -12,9 +12,9 @@ VER="$(sed -n 's/^[ *]*Version: *//p' "$REPO/cherrylink_main.php" | tr -d '\r')"
 
 "$REPO/dev/build-org-zip.sh"
 TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
-unzip -q "$REPO/dist/cherrylink.zip" -d "$TMP"
+unzip -q "$REPO/dist/cherrylink-ai.zip" -d "$TMP"
 
-rsync -a --delete --exclude .svn "$TMP/cherrylink/" "$SVN/trunk/"
+rsync -a --delete --exclude .svn "$TMP/cherrylink-ai/" "$SVN/trunk/"
 mkdir -p "$SVN/assets"
 cp "$REPO"/.wordpress-org/*.png "$SVN/assets/"
 cd "$SVN"

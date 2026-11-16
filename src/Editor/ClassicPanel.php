@@ -83,7 +83,7 @@ final class ClassicPanel implements Registerable
 
         \wp_register_script('cherrylink-classic', CHERRYLINK_DIR_URL . 'js/cherry-classic.js', $deps, $ver, true);
         \wp_add_inline_script('cherrylink-classic', PanelConfig::inlineScript($config), 'before');
-        \wp_set_script_translations('cherrylink-classic', 'cherrylink', CHERRYLINK_DIR . 'languages');
+        \wp_set_script_translations('cherrylink-classic', 'cherrylink-ai', CHERRYLINK_DIR . 'languages');
         \wp_enqueue_script('cherrylink-classic');
         \wp_enqueue_style('cherrylink-css-main', CHERRYLINK_DIR_URL . 'css/cherry-main.css', [], PluginMeta::assetVer('css/cherry-main.css'));
         if (\file_exists(CHERRYLINK_DIR . 'js/cherry-classic.css')) {

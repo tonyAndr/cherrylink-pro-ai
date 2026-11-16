@@ -16,7 +16,7 @@ function CherryLinkSidebar() {
     const { PluginSidebar, PluginSidebarMoreMenuItem } = getPluginSidebarComponents();
     adapter = adapter || createGutenbergAdapter();
     const config = window.cherrylinkPanel;
-    const title = __('CherryLink', 'cherrylink');
+    const title = __('CherryLink', 'cherrylink-ai');
     return (
         <>
             <PluginSidebarMoreMenuItem target="cherrylink-sidebar">{title}</PluginSidebarMoreMenuItem>

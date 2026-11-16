@@ -60,7 +60,7 @@ final class GutenbergAssets implements Registerable
             'url'   => 'admin-ajax.php',
             'nonce' => Security::nonce(),
         ]);
-        \wp_set_script_translations('cherrylink-gutenberg', 'cherrylink', CHERRYLINK_DIR . 'languages');
+        \wp_set_script_translations('cherrylink-gutenberg', 'cherrylink-ai', CHERRYLINK_DIR . 'languages');
         \wp_enqueue_script('cherrylink-gutenberg');
 
         \wp_enqueue_style(

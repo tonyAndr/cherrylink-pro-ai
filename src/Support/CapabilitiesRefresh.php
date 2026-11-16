@@ -58,7 +58,7 @@ final class CapabilitiesRefresh implements Registerable
         if (! isset($schedules[self::SCHEDULE])) {
             $schedules[self::SCHEDULE] = [
                 'interval' => self::INTERVAL,
-                'display'  => \__('Every five minutes (CherryLink)', 'cherrylink'),
+                'display'  => \__('Every five minutes (CherryLink)', 'cherrylink-ai'),
             ];
         }
 

@@ -96,7 +96,7 @@ final class AdminApi implements Registerable
         }
         $result = $this->refreshHealth();
         if ($result === null) {
-            $this->fail(\__('Could not reach the CherryLink server. Try again in a moment.', 'cherrylink'));
+            $this->fail(\__('Could not reach the CherryLink server. Try again in a moment.', 'cherrylink-ai'));
         }
         \wp_send_json_success($result);
     }
@@ -111,7 +111,7 @@ final class AdminApi implements Registerable
         // phpcs:enable
         $keys = new KeyPages(); // refresh() uses a background-context client
         if (! $keys->setMode($post_id, $mode)) {
-            $this->fail(\__('Unknown action.', 'cherrylink'));
+            $this->fail(\__('Unknown action.', 'cherrylink-ai'));
         }
         $keys->refresh();
         \wp_send_json_success(['keys' => $keys->payload()]);
@@ -123,7 +123,7 @@ final class AdminApi implements Registerable
         // phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- gated by guard(); decoded then sanitized key by key
         $raw = \json_decode((string) \wp_unslash($_POST['settings'] ?? ''), true);
         if (! \is_array($raw)) {
-            $this->fail(\__('Invalid settings.', 'cherrylink'));
+            $this->fail(\__('Invalid settings.', 'cherrylink-ai'));
         }
         $this->saveSettings($raw);
         \wp_send_json_success(['state' => $this->state()]);
@@ -139,7 +139,7 @@ final class AdminApi implements Registerable
                 // phpcs:ignore WordPress.Security.NonceVerification.Missing -- gated by guard()
                 $key = \trim(\sanitize_text_field(\wp_unslash($_POST['key'] ?? '')));
                 if ($key === '') {
-                    $this->fail(\__('Enter a license key.', 'cherrylink'));
+                    $this->fail(\__('Enter a license key.', 'cherrylink-ai'));
                 }
                 $previous = (string) $this->options->get('hash_field', '');
                 $this->options->set('hash_field', $key);
@@ -154,7 +154,7 @@ final class AdminApi implements Registerable
                 IndexHooks::clearStatusCaches();
                 break;
             default:
-                $this->fail(\__('Unknown action.', 'cherrylink'));
+                $this->fail(\__('Unknown action.', 'cherrylink-ai'));
         }
         \wp_send_json_success(['state' => $this->state()]);
     }
@@ -166,7 +166,7 @@ final class AdminApi implements Registerable
         $ok_docs  = $api->delete_all_documents();
         $ok_links = $api->delete_all_links();
         if (! $ok_docs || ! $ok_links) {
-            $this->fail(\__('Could not delete the site data on the CherryLink server. Check the connection and try again.', 'cherrylink'));
+            $this->fail(\__('Could not delete the site data on the CherryLink server. Check the connection and try again.', 'cherrylink-ai'));
         }
         $meta = $this->options->meta();
         unset($meta['indexing_process']);
@@ -185,7 +185,7 @@ final class AdminApi implements Registerable
         $valid = \is_array($file) && \strtolower((string) \pathinfo($name, PATHINFO_EXTENSION)) === 'txt'
             && \is_uploaded_file((string) $file['tmp_name']) && (int) ($file['size'] ?? 0) <= self::MAX_IMPORT_BYTES;
         if (! $valid || ! \is_array($file)) {
-            $this->fail(\__('Could not import: choose a .txt file exported from CherryLink.', 'cherrylink'));
+            $this->fail(\__('Could not import: choose a .txt file exported from CherryLink.', 'cherrylink-ai'));
         }
         \parse_str((string) \file_get_contents((string) $file['tmp_name']), $parsed);
         $this->saveSettings(self::importToSettings($parsed));
@@ -462,19 +462,19 @@ final class AdminApi implements Registerable
     {
         switch ($reason) {
             case 'no_connection':
-                return \__('Could not reach the license server. Try again later or contact support.', 'cherrylink');
+                return \__('Could not reach the license server. Try again later or contact support.', 'cherrylink-ai');
             case 'pending':
-                return \__('The key is being checked in the background. Refresh in a few seconds.', 'cherrylink');
+                return \__('The key is being checked in the background. Refresh in a few seconds.', 'cherrylink-ai');
             case 'missing_key':
-                return \__('Enter a license key.', 'cherrylink');
+                return \__('Enter a license key.', 'cherrylink-ai');
             case 'validation_schedule_failed':
-                return \__('Could not schedule the key check. Try again.', 'cherrylink');
+                return \__('Could not schedule the key check. Try again.', 'cherrylink-ai');
             case 'bad_domain':
-                return \__('This key is bound to another domain.', 'cherrylink');
+                return \__('This key is bound to another domain.', 'cherrylink-ai');
             case 'key_expired':
-                return \__('This key has expired.', 'cherrylink');
+                return \__('This key has expired.', 'cherrylink-ai');
             case 'wrong_key':
-                return \__('This key is not valid.', 'cherrylink');
+                return \__('This key is not valid.', 'cherrylink-ai');
             default:
                 return '';
         }
@@ -492,18 +492,18 @@ final class AdminApi implements Registerable
             case 'ok':
                 return '';
             case 'domain_proof_failed':
-                return \__('Could not verify the domain: the CherryLink server could not open your site over HTTPS. The site must be reachable from the internet; for private sites enter a key manually.', 'cherrylink');
+                return \__('Could not verify the domain: the CherryLink server could not open your site over HTTPS. The site must be reachable from the internet; for private sites enter a key manually.', 'cherrylink-ai');
             case 'rate_limited':
                 return $wait > 0
                     /* translators: %d: seconds to wait */
-                    ? \sprintf(\__('Too many connection attempts. Try again in %d s.', 'cherrylink'), $wait)
-                    : \__('Too many connection attempts. Try again later.', 'cherrylink');
+                    ? \sprintf(\__('Too many connection attempts. Try again in %d s.', 'cherrylink-ai'), $wait)
+                    : \__('Too many connection attempts. Try again later.', 'cherrylink-ai');
             case 'invalid_domain':
-                return \__('This domain cannot be connected (a public domain is required, not an IP address or localhost).', 'cherrylink');
+                return \__('This domain cannot be connected (a public domain is required, not an IP address or localhost).', 'cherrylink-ai');
             case 'subscription_not_eligible':
-                return \__('Connecting is not available for this domain. Enter a key manually or contact support.', 'cherrylink');
+                return \__('Connecting is not available for this domain. Enter a key manually or contact support.', 'cherrylink-ai');
             default:
-                return \__('The connection service is temporarily unavailable. Try again later.', 'cherrylink');
+                return \__('The connection service is temporarily unavailable. Try again later.', 'cherrylink-ai');
         }
     }
 

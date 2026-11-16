@@ -23,9 +23,9 @@ export default function App({ boot }) {
     } else if (!state.connected) {
         body = (
             <Card>
-                <Title>{__('Connect CherryLink first', 'cherrylink')}</Title>
-                <p>{__('This page needs a connected site.', 'cherrylink')}</p>
-                <Link kind="btn" href={boot.urls.dashboard}>{__('Connect CherryLink', 'cherrylink')}</Link>
+                <Title>{__('Connect CherryLink first', 'cherrylink-ai')}</Title>
+                <p>{__('This page needs a connected site.', 'cherrylink-ai')}</p>
+                <Link kind="btn" href={boot.urls.dashboard}>{__('Connect CherryLink', 'cherrylink-ai')}</Link>
             </Card>
         );
     } else {

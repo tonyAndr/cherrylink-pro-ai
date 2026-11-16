@@ -9,12 +9,12 @@ The banner, icon and screenshots are in this folder; they go to SVN `assets/`, n
 2. ~~Username in `readme.txt`~~ done (`tonyandr`).
 3. ~~Push the source~~ done (`feature/free-mode`; the readme links there).
 4. ~~Deploy the free-plan backend~~ done 2026-11-15.
-5. Build the zip: `dev/build-org-zip.sh` → `dist/cherrylink.zip`.
+5. Build the zip: `dev/build-org-zip.sh` → `dist/cherrylink-ai.zip`.
 
 ## 2. Submit
 
 1. Go to https://wordpress.org/plugins/developers/add/.
-2. Upload `dist/cherrylink.zip`, tick the checkboxes and submit. The slug will be `cherrylink`.
+2. Upload `dist/cherrylink-ai.zip`, tick the checkboxes and submit. The slug `cherrylink` was taken (reserved by an old off-directory install base), so the slug assigned by WordPress.org is `cherrylink-ai`; the text domain and zip folder match it.
 3. Wait for the review email. This usually takes 1 to 3 weeks. If the reviewers ask for changes,
    forward the email to Claude, then reply to it with a fixed zip.
 
@@ -23,12 +23,12 @@ The banner, icon and screenshots are in this folder; they go to SVN `assets/`, n
 1. Install SVN (`sudo dnf install subversion`). Set your SVN password under
    https://profiles.wordpress.org/ → Account & Security.
 2. Check out the repository:
-   `svn co https://plugins.svn.wordpress.org/cherrylink ~/cherrylink-svn`
+   `svn co https://plugins.svn.wordpress.org/cherrylink-ai ~/cherrylink-ai-svn`
 3. Copy the files in and tag the version:
-   `dev/svn-release.sh ~/cherrylink-svn`
+   `dev/svn-release.sh ~/cherrylink-ai-svn`
 4. Commit, using the command the script prints:
-   `cd ~/cherrylink-svn && svn ci -m "Release 2.0.0" --username YOUR_USERNAME`
-5. The page https://wordpress.org/plugins/cherrylink/ updates within about 15 minutes.
+   `cd ~/cherrylink-ai-svn && svn ci -m "Release 2.0.0" --username YOUR_USERNAME`
+5. The page https://wordpress.org/plugins/cherrylink-ai/ updates within about 15 minutes.
 
 ## Later releases
 

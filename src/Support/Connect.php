@@ -85,7 +85,7 @@ final class Connect implements Registerable
     public function handleAdminPost(): void
     {
         if (! \current_user_can('cherrylink_settings')) {
-            \wp_die(\esc_html__('Insufficient permissions.', 'cherrylink'), '', ['response' => 403]);
+            \wp_die(\esc_html__('Insufficient permissions.', 'cherrylink-ai'), '', ['response' => 403]);
         }
         \check_admin_referer(self::ACTION);
 

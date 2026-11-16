@@ -34,7 +34,7 @@ export const Confirm = ({ title, text, action, onConfirm, onCancel, busy }) => (
         <p>{text}</p>
         <div className="cl-row">
             <Btn kind="danger" onClick={onConfirm} disabled={busy}>{action}</Btn>
-            <Btn kind="ghost" onClick={onCancel}>{__('Cancel', 'cherrylink')}</Btn>
+            <Btn kind="ghost" onClick={onCancel}>{__('Cancel', 'cherrylink-ai')}</Btn>
         </div>
     </Modal>
 );
@@ -45,9 +45,9 @@ export const num = (n) => (n === null || n === undefined ? '—' : Number(n).toL
 export const ExpiredNotice = ({ onStart, busy }) => (
     <Notice tone="warn">
         <div className="cl-stack">
-            <strong>{__('Your site data was removed', 'cherrylink')}</strong>
-            <span>{__('CherryLink deletes the data of free sites after 180 days without contact. Analyze the site again to get suggestions and link health back. It takes about a minute for 1,000 posts.', 'cherrylink')}</span>
-            <div><Btn onClick={onStart} disabled={busy}>{__('Analyze site', 'cherrylink')}</Btn></div>
+            <strong>{__('Your site data was removed', 'cherrylink-ai')}</strong>
+            <span>{__('CherryLink deletes the data of free sites after 180 days without contact. Analyze the site again to get suggestions and link health back. It takes about a minute for 1,000 posts.', 'cherrylink-ai')}</span>
+            <div><Btn onClick={onStart} disabled={busy}>{__('Analyze site', 'cherrylink-ai')}</Btn></div>
         </div>
     </Notice>
 );

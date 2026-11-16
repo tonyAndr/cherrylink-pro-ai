@@ -59,7 +59,7 @@ final class Lifecycle implements Registerable
     public function loadTextdomain(): void
     {
         \load_plugin_textdomain(
-            'cherrylink',
+            'cherrylink-ai',
             false,
             \dirname(\plugin_basename(Plugin::instance()->file())) . '/languages'
         );

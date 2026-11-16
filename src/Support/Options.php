@@ -159,7 +159,7 @@ final class Options
             unset($options['show_static']);
         }
         if (! isset($options['none_text'])) {
-            $options['none_text'] = \__('Nothing found...', 'cherrylink');
+            $options['none_text'] = \__('Nothing found...', 'cherrylink-ai');
         }
         if (! isset($options['excluded_cats'])) {
             $options['excluded_cats'] = '';

@@ -67,7 +67,7 @@ You can remove all data stored on the service for your site with the "remove sit
 
 == Installation ==
 
-1. Install and activate CherryLink from the Plugins screen, or upload the plugin to `/wp-content/plugins/cherrylink/`.
+1. Install and activate CherryLink from the Plugins screen, or upload the plugin to `/wp-content/plugins/cherrylink-ai/`.
 2. Open CherryLink in the admin menu and click Connect. Reading the External services section above first is recommended.
 3. Start the first scan from the Indexing tab. The scan runs in the background; keep WP-Cron (or a server cron) enabled so it can progress.
 4. Open any post in the Block or Classic editor and use the CherryLink panel.

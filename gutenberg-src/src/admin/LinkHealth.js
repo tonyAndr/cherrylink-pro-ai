@@ -7,16 +7,16 @@ import { Btn, Card, ExpiredNotice, Link, Notice, Title, num } from './ui';
 
 const PER_PAGE = 25;
 export const TABS = [
-    { id: 'orphans', label: __('Orphan pages', 'cherrylink'), count: 'orphans', test: (r) => r.orphan,
-        help: __('No other post links to these pages. Find related posts that could link to them, then add the link from the editor panel.', 'cherrylink') },
-    { id: 'broken', label: __('Broken links', 'cherrylink'), count: 'broken', test: (r) => r.broken.length > 0,
-        help: __('Internal links in these posts point to pages that no longer exist.', 'cherrylink') },
-    { id: 'no_outgoing', label: __('No outgoing', 'cherrylink'), count: 'no_outgoing', test: (r) => r.no_outgoing,
-        help: __('These posts do not link to any other post.', 'cherrylink') },
-    { id: 'repeats', label: __('Repeated links', 'cherrylink'), count: 'repeats', test: (r) => r.repeats.length > 0,
-        help: __('These posts link to the same page more than once.', 'cherrylink') },
-    { id: 'self', label: __('Links to itself', 'cherrylink'), count: 'self_links', test: (r) => r.self.length > 0,
-        help: __('These posts contain a link to their own address.', 'cherrylink') },
+    { id: 'orphans', label: __('Orphan pages', 'cherrylink-ai'), count: 'orphans', test: (r) => r.orphan,
+        help: __('No other post links to these pages. Find related posts that could link to them, then add the link from the editor panel.', 'cherrylink-ai') },
+    { id: 'broken', label: __('Broken links', 'cherrylink-ai'), count: 'broken', test: (r) => r.broken.length > 0,
+        help: __('Internal links in these posts point to pages that no longer exist.', 'cherrylink-ai') },
+    { id: 'no_outgoing', label: __('No outgoing', 'cherrylink-ai'), count: 'no_outgoing', test: (r) => r.no_outgoing,
+        help: __('These posts do not link to any other post.', 'cherrylink-ai') },
+    { id: 'repeats', label: __('Repeated links', 'cherrylink-ai'), count: 'repeats', test: (r) => r.repeats.length > 0,
+        help: __('These posts link to the same page more than once.', 'cherrylink-ai') },
+    { id: 'self', label: __('Links to itself', 'cherrylink-ai'), count: 'self_links', test: (r) => r.self.length > 0,
+        help: __('These posts contain a link to their own address.', 'cherrylink-ai') },
 ];
 
 export const rowsFor = (tab, rows, type, q) => {
@@ -26,9 +26,9 @@ export const rowsFor = (tab, rows, type, q) => {
 };
 
 function Donors({ list }) {
-    if (list === 'loading') return <span className="cl-muted">{__('Looking for related posts…', 'cherrylink')}</span>;
-    if (list === 'error') return <Notice tone="danger">{__('Could not load related posts. Try again.', 'cherrylink')}</Notice>;
-    if (!list.length) return <span className="cl-muted">{__('No related posts found.', 'cherrylink')}</span>;
+    if (list === 'loading') return <span className="cl-muted">{__('Looking for related posts…', 'cherrylink-ai')}</span>;
+    if (list === 'error') return <Notice tone="danger">{__('Could not load related posts. Try again.', 'cherrylink-ai')}</Notice>;
+    if (!list.length) return <span className="cl-muted">{__('No related posts found.', 'cherrylink-ai')}</span>;
     return (
         <ul className="cl-donors">
             {list.map((d) => (
@@ -36,8 +36,8 @@ function Donors({ list }) {
                     <strong>{d.source_title}</strong>
                     {d.anchor && <span className="cl-muted"> {sprintf(
                         /* translators: %s: suggested link text inside the related post */
-                        __('suggested link text: “%s”', 'cherrylink'), d.anchor)}</span>}{' '}
-                    <a className="cl-link" href={d.edit_url}>{__('Edit', 'cherrylink')}</a>
+                        __('suggested link text: “%s”', 'cherrylink-ai'), d.anchor)}</span>}{' '}
+                    <a className="cl-link" href={d.edit_url}>{__('Edit', 'cherrylink-ai')}</a>
                 </li>
             ))}
         </ul>
@@ -99,7 +99,7 @@ export default function LinkHealth() {
     }, [data]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const cur = TABS.find((t) => t.id === tab) || TABS[0];
-    const title = (r) => r.title || __('(no title)', 'cherrylink');
+    const title = (r) => r.title || __('(no title)', 'cherrylink-ai');
     const orphanRow = (r) => {
         const out = tab === 'no_outgoing';
         const action = out ? 'linkate_post_targets' : 'linkate_orphan_donors';
@@ -110,17 +110,17 @@ export default function LinkHealth() {
                 <td>{r.type_label || r.type}</td>
                 <td>
                     {d && <Donors list={d} />}
-                    {(!d || d === 'error') && <button type="button" className="cl-textbtn" onClick={() => find(r.post_id, action)}>{out ? __('Find posts to link to', 'cherrylink') : __('Find posts that could link here', 'cherrylink')}</button>}
+                    {(!d || d === 'error') && <button type="button" className="cl-textbtn" onClick={() => find(r.post_id, action)}>{out ? __('Find posts to link to', 'cherrylink-ai') : __('Find posts that could link here', 'cherrylink-ai')}</button>}
                 </td>
             </tr>
         );
     };
-    const head = <thead><tr><th>{__('Post', 'cherrylink')}</th><th>{__('Type', 'cherrylink')}</th><th>{orphans || tab === 'no_outgoing' ? __('Related posts', 'cherrylink') : __('Details', 'cherrylink')}</th></tr></thead>;
+    const head = <thead><tr><th>{__('Post', 'cherrylink-ai')}</th><th>{__('Type', 'cherrylink-ai')}</th><th>{orphans || tab === 'no_outgoing' ? __('Related posts', 'cherrylink-ai') : __('Details', 'cherrylink-ai')}</th></tr></thead>;
 
     if (expired) {
         return (
             <>
-                <Title>{__('Link health', 'cherrylink')}</Title>
+                <Title>{__('Link health', 'cherrylink-ai')}</Title>
                 {scanError && <Notice tone="danger">{scanError}</Notice>}
                 <ExpiredNotice onStart={startScan} />
             </>
@@ -133,18 +133,18 @@ export default function LinkHealth() {
                 <>
                     <span className="cl-muted cl-grow">{data && data.checked_at ? sprintf(
                         /* translators: 1: date and time, 2: posts checked (links read for link health; whole site, no limit) */
-                        __('Checked %1$s · %2$s posts', 'cherrylink'), new Date(data.checked_at).toLocaleString(), num(data.summary.posts_checked ?? state.counts.checked)) : ''}</span>
-                    <Btn kind="outline" onClick={refresh} disabled={busy}>{busy ? __('Checking…', 'cherrylink') : __('Check again', 'cherrylink')}</Btn>
+                        __('Checked %1$s · %2$s posts', 'cherrylink-ai'), new Date(data.checked_at).toLocaleString(), num(data.summary.posts_checked ?? state.counts.checked)) : ''}</span>
+                    <Btn kind="outline" onClick={refresh} disabled={busy}>{busy ? __('Checking…', 'cherrylink-ai') : __('Check again', 'cherrylink-ai')}</Btn>
                     <Btn kind="outline" disabled={tab === 'keys' ? !(keys && keys.key_pages.length) : !rows.length}
-                        onClick={() => downloadCsv(`cherrylink-${tab}.csv`, tab === 'keys' ? buildKeysCsv(keys.key_pages) : buildCsv(tab, rows))}>{__('Export CSV', 'cherrylink')}</Btn>
+                        onClick={() => downloadCsv(`cherrylink-${tab}.csv`, tab === 'keys' ? buildKeysCsv(keys.key_pages) : buildCsv(tab, rows))}>{__('Export CSV', 'cherrylink-ai')}</Btn>
                 </>
-            }>{__('Link health', 'cherrylink')}</Title>
+            }>{__('Link health', 'cherrylink-ai')}</Title>
             {error && <Notice tone="danger">{error}</Notice>}
             {data && (
                 <>
-                    <div role="tablist" aria-label={__('Issue type', 'cherrylink')} className="cl-tabs">
+                    <div role="tablist" aria-label={__('Issue type', 'cherrylink-ai')} className="cl-tabs">
                         <button type="button" role="tab" aria-selected={tab === 'keys'} className={tab === 'keys' ? 'is-on' : ''}
-                            onClick={() => { setTab('keys'); setPage(1); }}>{__('Key pages', 'cherrylink')} <span className="cl-count">{num(keys ? keys.key_pages.length : 0)}</span></button>
+                            onClick={() => { setTab('keys'); setPage(1); }}>{__('Key pages', 'cherrylink-ai')} <span className="cl-count">{num(keys ? keys.key_pages.length : 0)}</span></button>
                         {TABS.map((t) => (
                             <button key={t.id} type="button" role="tab" aria-selected={tab === t.id} className={tab === t.id ? 'is-on' : ''}
                                 onClick={() => { setTab(t.id); setPage(1); }}>{t.label} <span className="cl-count">{num(data.summary[t.count])}</span></button>
@@ -153,33 +153,33 @@ export default function LinkHealth() {
                     {tab === 'keys' ? <KeyPagesTab keys={keys} busyId={pinBusy} onPin={pin} /> : <>
                     <p className="cl-muted">{cur.help}</p>
                     <div className="cl-filters">
-                        <label htmlFor="cl-type" className="screen-reader-text">{__('Type', 'cherrylink')}</label>
+                        <label htmlFor="cl-type" className="screen-reader-text">{__('Type', 'cherrylink-ai')}</label>
                         <select id="cl-type" className="cl-input" value={type} onChange={(e) => { setType(e.target.value); setPage(1); }}>
-                            <option value="">{__('All types', 'cherrylink')}</option>
+                            <option value="">{__('All types', 'cherrylink-ai')}</option>
                             {types.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
                         </select>
-                        <label htmlFor="cl-q" className="screen-reader-text">{__('Search posts', 'cherrylink')}</label>
-                        <input id="cl-q" type="search" className="cl-input" value={q} placeholder={__('Search posts', 'cherrylink')} onChange={(e) => { setQ(e.target.value); setPage(1); }} />
+                        <label htmlFor="cl-q" className="screen-reader-text">{__('Search posts', 'cherrylink-ai')}</label>
+                        <input id="cl-q" type="search" className="cl-input" value={q} placeholder={__('Search posts', 'cherrylink-ai')} onChange={(e) => { setQ(e.target.value); setPage(1); }} />
                     </div>
                     {focus && <>
-                        <h3 className="cl-eyebrow">{__('Selected page', 'cherrylink')}</h3>
+                        <h3 className="cl-eyebrow">{__('Selected page', 'cherrylink-ai')}</h3>
                         <div className="cl-tablewrap"><table className="cl-table">{head}<tbody>{orphanRow(focus)}</tbody></table></div>
                     </>}
                     {orphans && (focus || locked.length > 0) && <h3 className="cl-eyebrow">{sprintf(
                         /* translators: %s: number of orphan pages that can get links now */
-                        __('Ready to fix (%s)', 'cherrylink'), num(list.length))}</h3>}
+                        __('Ready to fix (%s)', 'cherrylink-ai'), num(list.length))}</h3>}
                     <div className="cl-tablewrap">
                         <table className="cl-table">
                             {head}
                             <tbody>
-                                {!shown.length && <tr><td colSpan={3}>{__('Nothing found here.', 'cherrylink')}</td></tr>}
+                                {!shown.length && <tr><td colSpan={3}>{__('Nothing found here.', 'cherrylink-ai')}</td></tr>}
                                 {shown.map((r) => orphans || tab === 'no_outgoing' ? orphanRow(r) : (
                                     <tr key={r.post_id}>
                                         <td><a className="cl-link" href={r.edit_url}>{title(r)}</a></td>
                                         <td>{r.type_label || r.type}</td>
                                         <td>
                                             {detailsFor(tab, r)}
-                                            {!r.learned && limit && <span className="cl-muted">{__('Not suggested in other posts: outside the free limit.', 'cherrylink')} <a className="cl-link" href={urls.upgrade} target="_blank" rel="noreferrer">{__('Upgrade', 'cherrylink')}</a></span>}
+                                            {!r.learned && limit && <span className="cl-muted">{__('Not suggested in other posts: outside the free limit.', 'cherrylink-ai')} <a className="cl-link" href={urls.upgrade} target="_blank" rel="noreferrer">{__('Upgrade', 'cherrylink-ai')}</a></span>}
                                         </td>
                                     </tr>
                                 ))}
@@ -189,16 +189,16 @@ export default function LinkHealth() {
                     <div className="cl-between">
                         <span className="cl-muted">{list.length ? sprintf(
                             /* translators: 1: first row number, 2: last row number, 3: total rows */
-                            __('Showing %1$s–%2$s of %3$s', 'cherrylink'), num((page - 1) * PER_PAGE + 1), num(Math.min(page * PER_PAGE, list.length)), num(list.length)) : ''}</span>
+                            __('Showing %1$s–%2$s of %3$s', 'cherrylink-ai'), num((page - 1) * PER_PAGE + 1), num(Math.min(page * PER_PAGE, list.length)), num(list.length)) : ''}</span>
                         <span className="cl-row">
-                            <Btn kind="ghost" disabled={page <= 1} onClick={() => setPage(page - 1)}>{__('‹ Previous', 'cherrylink')}</Btn>
-                            <Btn kind="ghost" disabled={page >= pages} onClick={() => setPage(page + 1)}>{__('Next ›', 'cherrylink')}</Btn>
+                            <Btn kind="ghost" disabled={page <= 1} onClick={() => setPage(page - 1)}>{__('‹ Previous', 'cherrylink-ai')}</Btn>
+                            <Btn kind="ghost" disabled={page >= pages} onClick={() => setPage(page + 1)}>{__('Next ›', 'cherrylink-ai')}</Btn>
                         </span>
                     </div>
                     {locked.length > 0 && <>
                         <h3 className="cl-eyebrow">{sprintf(
                             /* translators: %s: number of orphan pages outside the plan limit */
-                            __('Not learned on your plan (%s)', 'cherrylink'), num(locked.length))}</h3>
+                            __('Not learned on your plan (%s)', 'cherrylink-ai'), num(locked.length))}</h3>
                         <div className="cl-locked">
                             {/* ponytail: a blurred preview of the first rows; the full list is in Export CSV */}
                             <div className="cl-tablewrap" aria-hidden="true"><table className="cl-table"><tbody>
@@ -207,18 +207,18 @@ export default function LinkHealth() {
                             <div className="cl-locked-over">
                                 <strong>{sprintf(
                                     /* translators: %s: number of orphan pages outside the plan limit */
-                                    _n('%s orphan page is outside your plan', '%s orphan pages are outside your plan', locked.length, 'cherrylink'), num(locked.length))}</strong>
+                                    _n('%s orphan page is outside your plan', '%s orphan pages are outside your plan', locked.length, 'cherrylink-ai'), num(locked.length))}</strong>
                                 <span className="cl-muted">{sprintf(
                                     /* translators: %s: plan limit of learned posts */
-                                    __('The free plan learns your %s most recently updated posts. Upgrade to find links for these pages too.', 'cherrylink'), num(limit))}</span>
-                                <Link kind="btn" href={urls.upgrade} target="_blank" rel="noreferrer">{__('Upgrade', 'cherrylink')}</Link>
+                                    __('The free plan learns your %s most recently updated posts. Upgrade to find links for these pages too.', 'cherrylink-ai'), num(limit))}</span>
+                                <Link kind="btn" href={urls.upgrade} target="_blank" rel="noreferrer">{__('Upgrade', 'cherrylink-ai')}</Link>
                             </div>
                         </div>
                     </>}
                     </>}
                 </>
             )}
-            {!data && busy && <Card><p className="cl-muted">{__('Reading your links…', 'cherrylink')}</p></Card>}
+            {!data && busy && <Card><p className="cl-muted">{__('Reading your links…', 'cherrylink-ai')}</p></Card>}
         </>
     );
 }

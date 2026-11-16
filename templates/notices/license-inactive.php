@@ -9,8 +9,8 @@
 
 defined('ABSPATH') || exit;
 ?>
-<div class="notice notice-warning"><p><strong>CherryLink</strong>: <?php esc_html_e('license inactive — indexing and scanning are paused, links are not being updated.', 'cherrylink'); ?><?php if ($dirty) : ?> <strong><?php esc_html_e('The internal linking index is not synchronized', 'cherrylink'); ?></strong> <?php
+<div class="notice notice-warning"><p><strong>CherryLink</strong>: <?php esc_html_e('license inactive — indexing and scanning are paused, links are not being updated.', 'cherrylink-ai'); ?><?php if ($dirty) : ?> <strong><?php esc_html_e('The internal linking index is not synchronized', 'cherrylink-ai'); ?></strong> <?php
     /* translators: %s: human-readable date since which changes have not been indexed */
-    printf(esc_html__('(changes since %s are not indexed). Activate your key and run a scan to restore synchronization.', 'cherrylink'), esc_html($since));
-?><?php else : ?> <a href="<?php echo esc_url($settings_url); ?>"><?php esc_html_e('Enter your license key', 'cherrylink'); ?></a>.<?php endif; ?></p></div>
+    printf(esc_html__('(changes since %s are not indexed). Activate your key and run a scan to restore synchronization.', 'cherrylink-ai'), esc_html($since));
+?><?php else : ?> <a href="<?php echo esc_url($settings_url); ?>"><?php esc_html_e('Enter your license key', 'cherrylink-ai'); ?></a>.<?php endif; ?></p></div>
 <?php

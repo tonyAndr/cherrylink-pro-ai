@@ -55,7 +55,7 @@ final class AdminMenu implements Registerable
     public function actionLinks($links): array
     {
         \array_unshift($links, '<a href="' . \esc_url(self::url('cherrylink-settings')) . '">'
-            . \esc_html__('Settings', 'cherrylink') . '</a>');
+            . \esc_html__('Settings', 'cherrylink-ai') . '</a>');
 
         return $links;
     }
@@ -72,11 +72,11 @@ final class AdminMenu implements Registerable
         $icon = 'data:image/svg+xml;base64,' . \base64_encode(
             '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><g fill="#a7aaad"><circle cx="6" cy="14" r="4"/><circle cx="14.500" cy="13" r="3.500"/><path d="M6 10c0-4 2-6 6-8l1 1c-3 1-4 3-4 7zM11 9c1-3 3-5 5-5l.5 1c-2 .5-3 2-3.500 4.500z"/></g></svg>'
         );
-        \add_menu_page(\__('CherryLink', 'cherrylink'), \__('CherryLink', 'cherrylink'), $cap, 'cherrylink', [$this, 'render'], $icon, 58);
-        \add_submenu_page('cherrylink', \__('Dashboard', 'cherrylink'), \__('Dashboard', 'cherrylink'), $cap, 'cherrylink', [$this, 'render']);
-        \add_submenu_page('cherrylink', \__('Link health', 'cherrylink'), \__('Link health', 'cherrylink'), $cap, 'cherrylink-links', [$this, 'render']);
-        \add_submenu_page('cherrylink', \__('Index', 'cherrylink'), \__('Index', 'cherrylink'), $cap, 'cherrylink-index', [$this, 'render']);
-        \add_submenu_page('cherrylink', \__('Settings', 'cherrylink'), \__('Settings', 'cherrylink'), $cap, 'cherrylink-settings', [$this, 'render']);
+        \add_menu_page(\__('CherryLink', 'cherrylink-ai'), \__('CherryLink', 'cherrylink-ai'), $cap, 'cherrylink', [$this, 'render'], $icon, 58);
+        \add_submenu_page('cherrylink', \__('Dashboard', 'cherrylink-ai'), \__('Dashboard', 'cherrylink-ai'), $cap, 'cherrylink', [$this, 'render']);
+        \add_submenu_page('cherrylink', \__('Link health', 'cherrylink-ai'), \__('Link health', 'cherrylink-ai'), $cap, 'cherrylink-links', [$this, 'render']);
+        \add_submenu_page('cherrylink', \__('Index', 'cherrylink-ai'), \__('Index', 'cherrylink-ai'), $cap, 'cherrylink-index', [$this, 'render']);
+        \add_submenu_page('cherrylink', \__('Settings', 'cherrylink-ai'), \__('Settings', 'cherrylink-ai'), $cap, 'cherrylink-settings', [$this, 'render']);
     }
 
     /**
@@ -133,7 +133,7 @@ final class AdminMenu implements Registerable
         $ver   = (string) ($asset['version'] ?? PluginMeta::assetVer('js/cherry-app.js'));
 
         \wp_register_script('cherrylink-admin', $url . 'js/cherry-app.js', $deps, $ver, true);
-        \wp_set_script_translations('cherrylink-admin', 'cherrylink', $dir . 'languages');
+        \wp_set_script_translations('cherrylink-admin', 'cherrylink-ai', $dir . 'languages');
         \wp_add_inline_script('cherrylink-admin', 'window.cherrylinkAdmin = ' . \wp_json_encode($this->bootstrap()) . ';', 'before');
         \wp_enqueue_script('cherrylink-admin');
         if (\file_exists($dir . 'js/cherry-app.css')) {
@@ -182,7 +182,7 @@ final class AdminMenu implements Registerable
     public function exportOptions(): void
     {
         if (! \current_user_can('cherrylink_settings')) {
-            \wp_die(\esc_html__('Insufficient permissions.', 'cherrylink'), '', ['response' => 403]);
+            \wp_die(\esc_html__('Insufficient permissions.', 'cherrylink-ai'), '', ['response' => 403]);
         }
         \check_admin_referer('cherrylink-export-options');
 

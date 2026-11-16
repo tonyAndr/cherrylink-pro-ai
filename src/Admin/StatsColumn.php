@@ -44,8 +44,8 @@ final class StatsColumn implements Registerable
      */
     public function columns(array $cols): array
     {
-        $cols['cherry_outgoing'] = \__('Out', 'cherrylink');
-        $cols['cherry_income']   = \__('In', 'cherrylink');
+        $cols['cherry_outgoing'] = \__('Out', 'cherrylink-ai');
+        $cols['cherry_income']   = \__('In', 'cherrylink-ai');
 
         return $cols;
     }

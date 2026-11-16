@@ -14,47 +14,47 @@ export default function PostList({
             <input
                 className="cl-search"
                 type="search"
-                placeholder={__('Find related posts…', 'cherrylink')}
-                aria-label={__('Find related posts', 'cherrylink')}
+                placeholder={__('Find related posts…', 'cherrylink-ai')}
+                aria-label={__('Find related posts', 'cherrylink-ai')}
                 value={query}
                 onChange={(e) => onQuery(e.target.value)}
             />
             {showCatFilter && categories.length > 0 && (
-                <select className="cl-search" value={category} onChange={(e) => onCategory(e.target.value)} aria-label={__('Category', 'cherrylink')}>
-                    <option value="">{__('All categories', 'cherrylink')}</option>
+                <select className="cl-search" value={category} onChange={(e) => onCategory(e.target.value)} aria-label={__('Category', 'cherrylink-ai')}>
+                    <option value="">{__('All categories', 'cherrylink-ai')}</option>
                     {categories.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
             )}
-            <p className="cl-hint">{__('Select text in the post and click “Insert”, or pick a ready-made phrase.', 'cherrylink')}</p>
+            <p className="cl-hint">{__('Select text in the post and click “Insert”, or pick a ready-made phrase.', 'cherrylink-ai')}</p>
             {status === 'error' && (
                 <div className="cl-empty">
                     <p>{error}</p>
-                    <button type="button" className="cl-btn" onClick={onRetry}>{__('Retry', 'cherrylink')}</button>
+                    <button type="button" className="cl-btn" onClick={onRetry}>{__('Retry', 'cherrylink-ai')}</button>
                 </div>
             )}
             {status === 'loading' && !rows.length && <Skeleton />}
-            {status === 'ready' && !rows.length && <div className="cl-empty">{__('Nothing found.', 'cherrylink')}</div>}
+            {status === 'ready' && !rows.length && <div className="cl-empty">{__('Nothing found.', 'cherrylink-ai')}</div>}
             {rows.map((r) => {
                 const linked = isRowLinked(r, links);
                 return (
                     <div className="cl-row" key={r.post_id}>
                         <div>
                             <div className="cl-t">{r.title}{r.is_key && <KeyBadge />}</div>
-                            <div className="cl-meta">↑ {r.out} {__('out', 'cherrylink')} · ↓ {r.in} {__('in', 'cherrylink')}{r.match === 'text' && <> · {__('word found in the text', 'cherrylink')}</>}</div>
+                            <div className="cl-meta">↑ {r.out} {__('out', 'cherrylink-ai')} · ↓ {r.in} {__('in', 'cherrylink-ai')}{r.match === 'text' && <> · {__('word found in the text', 'cherrylink-ai')}</>}</div>
                         </div>
                         <div className="cl-rowside">
                             <Rel score={r.score} top={top} />
                             <div className="cl-rowact">
                             {linked ? (
-                                <span className="cl-linked">✓ {__('link exists', 'cherrylink')}</span>
+                                <span className="cl-linked">✓ {__('link exists', 'cherrylink-ai')}</span>
                             ) : (
-                                <button type="button" className="cl-btn" title={__('Turn the selected text into a link to this post', 'cherrylink')} onMouseDown={keepSelection} onClick={() => onHere(r)}>{__('Insert', 'cherrylink')}</button>
+                                <button type="button" className="cl-btn" title={__('Turn the selected text into a link to this post', 'cherrylink-ai')} onMouseDown={keepSelection} onClick={() => onHere(r)}>{__('Insert', 'cherrylink-ai')}</button>
                             )}
                             {r.view_url && (
-                                <a className="cl-iconlink" href={r.view_url} target="_blank" rel="noopener noreferrer" title={__('Open', 'cherrylink')} aria-label={__('Open', 'cherrylink')}><IconExternal /></a>
+                                <a className="cl-iconlink" href={r.view_url} target="_blank" rel="noopener noreferrer" title={__('Open', 'cherrylink-ai')} aria-label={__('Open', 'cherrylink-ai')}><IconExternal /></a>
                             )}
                             {r.edit_url && (
-                                <a className="cl-iconlink" href={r.edit_url} target="_blank" rel="noopener noreferrer" title={__('Edit', 'cherrylink')} aria-label={__('Edit', 'cherrylink')}><IconEdit /></a>
+                                <a className="cl-iconlink" href={r.edit_url} target="_blank" rel="noopener noreferrer" title={__('Edit', 'cherrylink-ai')} aria-label={__('Edit', 'cherrylink-ai')}><IconEdit /></a>
                             )}
                             </div>
                         </div>
@@ -69,14 +69,14 @@ export default function PostList({
                 );
             })}
             {hasMore && status !== 'error' && (
-                <button type="button" className="cl-btn" onClick={onMore} disabled={status === 'loading'}>{__('Show more', 'cherrylink')}</button>
+                <button type="button" className="cl-btn" onClick={onMore} disabled={status === 'loading'}>{__('Show more', 'cherrylink-ai')}</button>
             )}
         </>
     );
 }
 
 /** Marks a suggestion that is a key (hub) page of its topic. */
-export const KeyBadge = () => <span className="cl-keybadge">{__('Key page', 'cherrylink')}</span>;
+export const KeyBadge = () => <span className="cl-keybadge">{__('Key page', 'cherrylink-ai')}</span>;
 
 export function Skeleton() {
     return (
@@ -92,7 +92,7 @@ export function Rel({ score, top }) {
     if (pct === null) return null;
     const tier = pct >= 60 ? 'hi' : pct >= 30 ? 'mid' : 'lo';
     return (
-        <span className={`cl-rel cl-rel-${tier}`} title={sprintf(__('Relevance %1$d%% (similarity %2$s)', 'cherrylink'), pct, score.toFixed(3))}>
+        <span className={`cl-rel cl-rel-${tier}`} title={sprintf(__('Relevance %1$d%% (similarity %2$s)', 'cherrylink-ai'), pct, score.toFixed(3))}>
             <b aria-hidden="true"><i style={{ width: `${pct}%` }} /></b>
             {pct}%
         </span>

@@ -78,7 +78,7 @@ without changing runtime behavior. See the staged plan in
 | Gutenberg JS | `js/cherry-gutenberg.js` (**built** from `gutenberg-src/` — do not hand-edit) |
 | Panel spec | `specs/unified-panel.md` |
 | Styles | panel CSS is bundled (`js/cherry-*.css`); `css/cherry-main.css` = media-button icon only |
-| Translations | `languages/` (`.pot` master, `cherrylink-ru_RU.{po,mo}`, JS `.json`) |
+| Translations | `languages/` (`.pot` master, `cherrylink-ai-ru_RU.{po,mo}`, JS `.json`) |
 
 ## Request isolation checkpoint
 
@@ -156,21 +156,21 @@ invisible to the mocked suite).
 
 ## i18n
 
-Text domain `cherrylink`, `Domain Path: /languages`. **English is the source
+Text domain `cherrylink-ai`, `Domain Path: /languages`. **English is the source
 language**: every msgid is English; never put non-English text in `__()` or JS
-`__()`. Russian lives in the `languages/cherrylink-ru_RU.po` catalogue
-(3 plural forms; `.mo` and `cherrylink-ru_RU-<md5>.json` are compiled from it and
+`__()`. Russian lives in the `languages/cherrylink-ai-ru_RU.po` catalogue
+(3 plural forms; `.mo` and `cherrylink-ai-ru_RU-<md5>.json` are compiled from it and
 committed). PHP strings use `__()/esc_html__()/…`; hand-written JS uses `wp.i18n`
 with `wp_set_script_translations()`; Gutenberg src uses `@wordpress/i18n`.
 After adding strings, rebuild the bundles (`cd gutenberg-src && npm run build`),
 then from `plugin/` (wp-cli in Docker works without a WP install):
 
 ```bash
-wp i18n make-pot . languages/cherrylink.pot --domain=cherrylink \
+wp i18n make-pot . languages/cherrylink-ai.pot --domain=cherrylink-ai \
   --exclude=vendor,node_modules,gutenberg-src,tests,dev,build,.github,wp-dev,updater,env-info
-wp i18n update-po languages/cherrylink.pot languages/cherrylink-ru_RU.po   # then translate new entries
-wp i18n make-mo languages/cherrylink-ru_RU.po languages/
-wp i18n make-json languages/cherrylink-ru_RU.po --no-purge
+wp i18n update-po languages/cherrylink-ai.pot languages/cherrylink-ai-ru_RU.po   # then translate new entries
+wp i18n make-mo languages/cherrylink-ai-ru_RU.po languages/
+wp i18n make-json languages/cherrylink-ai-ru_RU.po --no-purge
 ```
 
 (make-pot scans PHP plus the built `js/` bundles.) Don't name a bundle `*min.js` (e.g. `cherry-admin.js`):

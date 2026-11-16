@@ -279,7 +279,7 @@ class AsyncBulkScan implements Registerable
         if (! $this->license->isLicensed()) {
             return $this->setState([
                 'status'  => 'error',
-                'message' => \__('The license is inactive — synchronization is unavailable.', 'cherrylink'),
+                'message' => \__('The license is inactive — synchronization is unavailable.', 'cherrylink-ai'),
             ]);
         }
         if (! \function_exists('as_enqueue_async_action')) {
@@ -337,7 +337,7 @@ class AsyncBulkScan implements Registerable
             $this->setState([
                 'status'  => 'paused',
                 'waiting' => true,
-                'message' => \__('Asynchronous indexing is unavailable. Uploading will resume automatically.', 'cherrylink'),
+                'message' => \__('Asynchronous indexing is unavailable. Uploading will resume automatically.', 'cherrylink-ai'),
             ]);
             $this->scheduleLater(self::PROBE_SECONDS, 'probe', 0, 0);
 
@@ -347,7 +347,7 @@ class AsyncBulkScan implements Registerable
         if (! $this->enqueue('manifest', 0, 0)) {
             // The recovery sweep will restart the chain; keep the run resumable.
             return $this->setState([
-                'message' => \__('Scheduling is delayed; we will retry automatically.', 'cherrylink'),
+                'message' => \__('Scheduling is delayed; we will retry automatically.', 'cherrylink-ai'),
             ]);
         }
 
@@ -360,7 +360,7 @@ class AsyncBulkScan implements Registerable
         return $this->setState([
             'status'  => 'paused',
             'waiting' => false,
-            'message' => \__('Paused. Uploading will continue after “Resume”.', 'cherrylink'),
+            'message' => \__('Paused. Uploading will continue after “Resume”.', 'cherrylink-ai'),
         ]);
     }
 
@@ -399,7 +399,7 @@ class AsyncBulkScan implements Registerable
             'status' => 'running', 'phase' => 'cancel', 'cursor' => 0,
             'retry_attempt' => 0, 'waiting' => false,
             'restart_after_cancel' => $restart,
-            'message' => \__('Stopping the scan…', 'cherrylink'),
+            'message' => \__('Stopping the scan…', 'cherrylink-ai'),
         ]);
         $this->enqueue('cancel', 0, 0);
         return $state;
@@ -431,7 +431,7 @@ class AsyncBulkScan implements Registerable
         $meta = $this->options->meta();
         $meta['indexing_process'] = 'CANCELLED';
         $this->options->saveMeta($meta);
-        $this->setState(['status' => 'cancelled', 'message' => \__('Stopped by user', 'cherrylink')]);
+        $this->setState(['status' => 'cancelled', 'message' => \__('Stopped by user', 'cherrylink-ai')]);
     }
 
     // ── Recovery ────────────────────────────────────────────────────────────
@@ -561,7 +561,7 @@ class AsyncBulkScan implements Registerable
                     $this->phasePoll($state);
                     return;
                 default:
-                    $this->finish($state, 'done', \__('Scan completed', 'cherrylink'));
+                    $this->finish($state, 'done', \__('Scan completed', 'cherrylink-ai'));
                     return;
             }
         } catch (InventoryUnavailableException $error) {
@@ -830,7 +830,7 @@ class AsyncBulkScan implements Registerable
             'sealed'       => true,
             'poll_attempt' => 0,
             'next_poll_gmt' => '',
-            'message'      => \__('Uploaded. Processing on the server.', 'cherrylink'),
+            'message'      => \__('Uploaded. Processing on the server.', 'cherrylink-ai'),
         ]);
     }
 
@@ -853,8 +853,8 @@ class AsyncBulkScan implements Registerable
             $ok    = $runState === 'completed';
             $state = $this->setState(['progress' => $progress]);
             $this->finish($state, $ok ? 'done' : 'completed_with_errors', $ok
-                ? \__('Indexing completed', 'cherrylink')
-                : \__('Indexing completed with errors', 'cherrylink'));
+                ? \__('Indexing completed', 'cherrylink-ai')
+                : \__('Indexing completed with errors', 'cherrylink-ai'));
             return;
         }
 
@@ -870,7 +870,7 @@ class AsyncBulkScan implements Registerable
             'progress'      => $progress,
             'message'       => \sprintf(
                 /* translators: 1: applied vectors, 2: total items, 3: pending items */
-                \__('Processing on the server: %1$d of %2$d, %3$d queued.', 'cherrylink'),
+                \__('Processing on the server: %1$d of %2$d, %3$d queued.', 'cherrylink-ai'),
                 (int) ($progress['vectors_applied'] ?? 0),
                 (int) ($progress['items'] ?? 0),
                 (int) ($progress['vectors_pending'] ?? 0)

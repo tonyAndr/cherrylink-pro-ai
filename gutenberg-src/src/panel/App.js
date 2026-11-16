@@ -17,10 +17,10 @@ const SEARCH_DEBOUNCE_MS = 400;
 const EMPTY = { rows: [], hasMore: false, status: 'loading', error: '' };
 
 const REASONS = {
-    no_selection: () => __('Select text in the post to insert a link', 'cherrylink'),
-    inside_link: () => __('Select text outside an existing link', 'cherrylink'),
-    not_found: () => __('The phrase was not found in the article text', 'cherrylink'),
-    unsupported: () => __('This block does not support inserting links', 'cherrylink'),
+    no_selection: () => __('Select text in the post to insert a link', 'cherrylink-ai'),
+    inside_link: () => __('Select text outside an existing link', 'cherrylink-ai'),
+    not_found: () => __('The phrase was not found in the article text', 'cherrylink-ai'),
+    unsupported: () => __('This block does not support inserting links', 'cherrylink-ai'),
 };
 
 const flattenCategories = (terms) =>
@@ -156,7 +156,7 @@ export default function App({ adapter, config, onClose, headProps }) {
         if (res.ok) {
             setLastInsert({ ref: res.ref, text, title });
             refreshLinks();
-            say(__('Link inserted', 'cherrylink'), true);
+            say(__('Link inserted', 'cherrylink-ai'), true);
         } else {
             say((REASONS[res.reason] || REASONS.unsupported)());
         }
@@ -172,7 +172,7 @@ export default function App({ adapter, config, onClose, headProps }) {
         const res = adapter.applyLinkToSelection(toLink(row));
         const action = opts.noSelectionAction;
         if (!res.ok && res.reason === 'no_selection' && config.host === 'classic' && adapter.insertAtCaret && ['title', 'h1', 'placeholder', 'empty'].includes(action)) {
-            const t = action === 'placeholder' ? __('LINK_TEXT', 'cherrylink') : action === 'empty' ? '&nbsp;' : row.title;
+            const t = action === 'placeholder' ? __('LINK_TEXT', 'cherrylink-ai') : action === 'empty' ? '&nbsp;' : row.title;
             afterApply(adapter.insertAtCaret(toLink(row), t), t, row.title);
             return;
         }
@@ -198,7 +198,7 @@ export default function App({ adapter, config, onClose, headProps }) {
                 donor_id: d.donor_id, target_id: config.postId, phrase: d.suggestion.phrase, block_index: d.suggestion.block_index,
             });
             setDonorDone((m) => ({ ...m, [d.donor_id]: { token: res.undo_token } }));
-            say(sprintf(__('Link added to “%s”', 'cherrylink'), d.title));
+            say(sprintf(__('Link added to “%s”', 'cherrylink-ai'), d.title));
         } catch (e) {
             say(e.message);
         }
@@ -210,9 +210,9 @@ export default function App({ adapter, config, onClose, headProps }) {
         try {
             await api('cherrylink_panel_donor_undo', { donor_id: d.donor_id, undo_token: donorDone[d.donor_id].token });
             setDonorDone((m) => { const n = { ...m }; delete n[d.donor_id]; return n; });
-            say(__('Link removed', 'cherrylink'));
+            say(__('Link removed', 'cherrylink-ai'));
         } catch (e) {
-            say(e.code === 'changed' ? __('The post has changed since, so this cannot be undone automatically', 'cherrylink') : e.message);
+            say(e.code === 'changed' ? __('The post has changed since, so this cannot be undone automatically', 'cherrylink-ai') : e.message);
         }
         setDonorBusy((b) => ({ ...b, [d.donor_id]: false }));
     };
@@ -222,7 +222,7 @@ export default function App({ adapter, config, onClose, headProps }) {
         try {
             const res = await api('cherrylink_panel_key_pin', { post_id: config.postId, mode });
             setKeyPage(res.keyPage || null);
-            say(mode === 'pin' ? __('Marked as a key page', 'cherrylink') : __('Key page choice saved', 'cherrylink'));
+            say(mode === 'pin' ? __('Marked as a key page', 'cherrylink-ai') : __('Key page choice saved', 'cherrylink-ai'));
             loadBase();
         } catch (e) {
             say(e.message);
@@ -234,7 +234,7 @@ export default function App({ adapter, config, onClose, headProps }) {
         loadBase();
         if (filtering) fetchRows('filt', { append: false, q: dq, cat: category, offset: 0 });
         refreshLinks();
-        say(__('Suggestions refreshed for the current text', 'cherrylink'));
+        say(__('Suggestions refreshed for the current text', 'cherrylink-ai'));
     };
 
     const more = () => {
@@ -248,7 +248,7 @@ export default function App({ adapter, config, onClose, headProps }) {
             <Logo />
             <span className="cl-brand">CherryLink</span>
             {onClose && (
-                <button type="button" className="cl-btn cl-ghost cl-close" onClick={onClose} aria-label={__('Close', 'cherrylink')}><IconClose /></button>
+                <button type="button" className="cl-btn cl-ghost cl-close" onClick={onClose} aria-label={__('Close', 'cherrylink-ai')}><IconClose /></button>
             )}
         </div>
     );
@@ -259,8 +259,8 @@ export default function App({ adapter, config, onClose, headProps }) {
                 {head}
                 <div className="cl-body">
                     <div className="cl-empty">
-                        <p>{__('CherryLink is not connected yet. Connect the plugin to get link suggestions.', 'cherrylink')}</p>
-                        <a className="cl-btn cl-primary" href={config.connectUrl}>{__('Connect CherryLink', 'cherrylink')}</a>
+                        <p>{__('CherryLink is not connected yet. Connect the plugin to get link suggestions.', 'cherrylink-ai')}</p>
+                        <a className="cl-btn cl-primary" href={config.connectUrl}>{__('Connect CherryLink', 'cherrylink-ai')}</a>
                     </div>
                 </div>
             </div>
@@ -268,9 +268,9 @@ export default function App({ adapter, config, onClose, headProps }) {
     }
 
     const tabs = [
-        { id: 'opp', label: __('Suggestions', 'cherrylink'), badge: items.length || '' },
-        { id: 'all', label: __('All posts', 'cherrylink') },
-        ...(isTerm ? [] : [{ id: 'in', label: __('Incoming links', 'cherrylink') }]),
+        { id: 'opp', label: __('Suggestions', 'cherrylink-ai'), badge: items.length || '' },
+        { id: 'all', label: __('All posts', 'cherrylink-ai') },
+        ...(isTerm ? [] : [{ id: 'in', label: __('Incoming links', 'cherrylink-ai') }]),
     ];
     const categories = flattenCategories(terms.items);
 
@@ -282,7 +282,7 @@ export default function App({ adapter, config, onClose, headProps }) {
         );
     } else if (tab === 'opp') {
         body = base.status === 'error' ? (
-            <div className="cl-empty"><p>{base.error}</p><button type="button" className="cl-btn" onClick={loadBase}>{__('Retry', 'cherrylink')}</button></div>
+            <div className="cl-empty"><p>{base.error}</p><button type="button" className="cl-btn" onClick={loadBase}>{__('Retry', 'cherrylink-ai')}</button></div>
         ) : base.status === 'loading' && !base.rows.length ? <Skeleton /> : (
             <OpportunityList items={items} loading={base.status === 'loading'} hiddenList={hidden} showHidden={showHidden} altIndex={altIndex} lastInsert={lastInsert}
                 onInsert={insertPhrase} onAlt={(p) => setAltIndex((a) => ({ ...a, [p.toLowerCase()]: (a[p.toLowerCase()] || 0) + 1 }))}
@@ -292,9 +292,9 @@ export default function App({ adapter, config, onClose, headProps }) {
     } else if (tab === 'all') {
         body = (
             <>
-                <div className="cl-seg" role="group" aria-label={__('What to show', 'cherrylink')}>
-                    <button type="button" aria-pressed={mode === 'posts'} onClick={() => setMode('posts')}>{__('Posts', 'cherrylink')}</button>
-                    <button type="button" aria-pressed={mode === 'terms'} onClick={() => setMode('terms')}>{__('Categories', 'cherrylink')}</button>
+                <div className="cl-seg" role="group" aria-label={__('What to show', 'cherrylink-ai')}>
+                    <button type="button" aria-pressed={mode === 'posts'} onClick={() => setMode('posts')}>{__('Posts', 'cherrylink-ai')}</button>
+                    <button type="button" aria-pressed={mode === 'terms'} onClick={() => setMode('terms')}>{__('Categories', 'cherrylink-ai')}</button>
                 </div>
                 {mode === 'posts' ? (
                     <PostList rows={listData.rows} links={links} status={listData.status} error={listData.error} hasMore={listData.hasMore}
@@ -325,8 +325,8 @@ export default function App({ adapter, config, onClose, headProps }) {
             <Tabs tabs={tabs} current={view ? '' : tab} onChange={(t) => { setView(null); setTab(t); }} />
             <div className="cl-body">{body}</div>
             <div className="cl-foot">
-                <span>{__('Suggestions for the current text', 'cherrylink')}</span>
-                <button type="button" className="cl-btn cl-ghost" onClick={refreshAll}>{__('Refresh', 'cherrylink')}</button>
+                <span>{__('Suggestions for the current text', 'cherrylink-ai')}</span>
+                <button type="button" className="cl-btn cl-ghost" onClick={refreshAll}>{__('Refresh', 'cherrylink-ai')}</button>
             </div>
             <Toast toast={toast} onUndo={undoInsert} onClose={() => setToast(null)} />
         </div>

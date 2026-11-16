@@ -284,7 +284,7 @@ final class IndexHooks implements Registerable
             $time_html = "<time class=\"cl-localtime\" datetime=\"{$iso}\">{$when}</time>";
             $last_scan_text = ' ' . \sprintf(
                 /* translators: 1: <time> element with the formatted scan date, 2: upserted count, 3: deleted count */
-                \esc_html__('Last scan: %1$s (updated: %2$d, removed: %3$d).', 'cherrylink'),
+                \esc_html__('Last scan: %1$s (updated: %2$d, removed: %3$d).', 'cherrylink-ai'),
                 $time_html,
                 $up,
                 $del
@@ -292,13 +292,13 @@ final class IndexHooks implements Registerable
         }
         switch ($meta['indexing_process'] ?? 'VALUE_NOT_EXIST') {
             case 'IN_PROGRESS':
-                $badge = '<code class="bad-index">[' . \esc_html__('Scan not complete', 'cherrylink') . ']</code>';
+                $badge = '<code class="bad-index">[' . \esc_html__('Scan not complete', 'cherrylink-ai') . ']</code>';
                 break;
             case 'DONE':
-                $badge = '<code class="good-index">[' . \esc_html__('All good', 'cherrylink') . ']</code>';
+                $badge = '<code class="good-index">[' . \esc_html__('All good', 'cherrylink-ai') . ']</code>';
                 break;
             case 'VALUE_NOT_EXIST':
-                $badge = '<code class="bad-index">[' . \esc_html__('You need to scan the site', 'cherrylink') . ']</code>';
+                $badge = '<code class="bad-index">[' . \esc_html__('You need to scan the site', 'cherrylink-ai') . ']</code>';
                 break;
             default:
                 $badge = '';
@@ -341,8 +341,8 @@ final class IndexHooks implements Registerable
             return \array_merge($local, [
                 'index_rows'         => null,
                 'scheme_rows'        => null,
-                'index_status_text'  => \esc_html__(' loading data…', 'cherrylink'),
-                'scheme_status_text' => \esc_html__(' loading data…', 'cherrylink'),
+                'index_status_text'  => \esc_html__(' loading data…', 'cherrylink-ai'),
+                'scheme_status_text' => \esc_html__(' loading data…', 'cherrylink-ai'),
                 'reachable'          => null,
                 'checked_gmt'        => '',
                 'stale'              => true,
@@ -411,20 +411,20 @@ final class IndexHooks implements Registerable
     private static function statusTexts(?int $index_rows, ?int $scheme_rows): array
     {
         if ($index_rows === null) {
-            $index_status_text = \esc_html__(' failed to retrieve data (no connection to the server).', 'cherrylink');
+            $index_status_text = \esc_html__(' failed to retrieve data (no connection to the server).', 'cherrylink-ai');
         } else {
             $index_status_text = $index_rows > 0
                 /* translators: %d: number of indexed articles */
-                ? \sprintf(\esc_html__(' %d articles indexed in the Vector API.', 'cherrylink'), $index_rows)
-                : \esc_html__(' articles are not indexed, run a scan.', 'cherrylink');
+                ? \sprintf(\esc_html__(' %d articles indexed in the Vector API.', 'cherrylink-ai'), $index_rows)
+                : \esc_html__(' articles are not indexed, run a scan.', 'cherrylink-ai');
         }
         if ($scheme_rows === null) {
-            $scheme_status_text = \esc_html__(' failed to retrieve data (no connection to the server).', 'cherrylink');
+            $scheme_status_text = \esc_html__(' failed to retrieve data (no connection to the server).', 'cherrylink-ai');
         } else {
             $scheme_status_text = $scheme_rows
                 /* translators: %d: number of links found */
-                ? \sprintf(\esc_html__(' %d links found in posts and pages.', 'cherrylink'), $scheme_rows)
-                : \esc_html__(' no links found.', 'cherrylink');
+                ? \sprintf(\esc_html__(' %d links found in posts and pages.', 'cherrylink-ai'), $scheme_rows)
+                : \esc_html__(' no links found.', 'cherrylink-ai');
         }
         return ['index_status_text' => $index_status_text, 'scheme_status_text' => $scheme_status_text];
     }

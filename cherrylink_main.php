@@ -10,7 +10,7 @@ License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Requires at least: 5.6
 Requires PHP: 7.4
-Text Domain: cherrylink
+Text Domain: cherrylink-ai
 Domain Path: /languages
 */
 
@@ -21,7 +21,7 @@ defined('ABSPATH') || exit;
 if (defined('CHERRYLINK_DIR')) {
     add_action('admin_notices', static function () {
         echo '<div class="notice notice-error"><p><strong>CherryLink</strong>: '
-            . esc_html__('Deactivate CherryLink Pro AI first. Two CherryLink plugins cannot run together.', 'cherrylink')
+            . esc_html__('Deactivate CherryLink Pro AI first. Two CherryLink plugins cannot run together.', 'cherrylink-ai')
             . '</p></div>';
     });
     return;

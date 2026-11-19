@@ -274,6 +274,6 @@ final class AsyncClientTest extends TestCase
         $this->assertTrue(AsyncClient::isRetryable(['status' => 429, 'error' => 'HTTP 429']));
         $this->assertTrue(AsyncClient::isRetryable(['status' => 503, 'error' => 'HTTP 503']));
         $this->assertTrue(AsyncClient::isRetryable(['status' => 0, 'error' => 'timeout']));
-        $this->assertFalse(AsyncClient::isRetryable(['status' => 0, 'error' => 'no license key configured']));
+        $this->assertFalse(AsyncClient::isRetryable(['status' => 0, 'error' => 'no API key configured']));
     }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace CherryLink\Editor;
 
+use CherryLink\Ajax\Input;
 use CherryLink\Contracts\Registerable;
 use CherryLink\Support\Logger;
 use CherryLink\Support\Options;
@@ -14,8 +15,7 @@ use CherryLink\Support\PluginMeta;
  * React panel) and the enqueue of the `js/cherry-classic.*` bundle on classic post/page
  * and term edit screens. buildSourceHtml() is called by the stats service and the panel API.
  *
- * register() reproduces the old file-scope gate: the panel only wires up in the
- * admin for a licensed site.
+ * The panel wires up in the admin whether or not the site is connected.
  */
 final class ClassicPanel implements Registerable
 {
@@ -71,10 +71,9 @@ final class ClassicPanel implements Registerable
         $ver        = ! empty($asset['version']) ? $asset['version'] : PluginMeta::assetVer('js/cherry-classic.js');
 
         if ($is_term) {
-            // phpcs:disable WordPress.Security.NonceVerification.Recommended -- read-only screen identification
-            $id       = isset($_GET['tag_ID']) ? (int) $_GET['tag_ID'] : 0;
-            $taxonomy = isset($_GET['taxonomy']) ? \sanitize_key(\wp_unslash($_GET['taxonomy'])) : '';
-            // phpcs:enable WordPress.Security.NonceVerification.Recommended
+            // Read-only screen identification.
+            $id       = (int) Input::get('tag_ID', 'uint', 0);
+            $taxonomy = (string) Input::get('taxonomy', 'key', '');
             $config = PanelConfig::build($this->options, 'classic', $id, true, $taxonomy);
         } else {
             $post   = \get_post();
@@ -98,7 +97,7 @@ final class ClassicPanel implements Registerable
         static $printed = false;
         $id      = $printed ? '' : ' id="cherrylink-panel-toggle"';
         $printed = true;
-        echo '<a' . $id . ' class="linkate-button cherrylink-panel-toggle button"><span class="wp-media-buttons-icon linkate-media-btn"></span>CherryLink</a>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static markup
+        echo '<a' . $id . ' class="cherrylink-button cherrylink-panel-toggle button"><span class="wp-media-buttons-icon cherrylink-media-btn"></span>CherryLink</a>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static markup
     }
 
     public function isGutenbergEnabled(): bool

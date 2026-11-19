@@ -53,7 +53,7 @@ final class CfOptionsTest extends TestCase
     {
         Functions\when('get_option')->justReturn($this->defaults());
 
-        $merged = Cf::setOptions('linkate-posts', []);
+        $merged = Cf::setOptions('cherrylink_options', []);
 
         $this->assertSame(50, $merged['limit_ajax']);
         $this->assertSame('', $merged['divider']);
@@ -65,7 +65,7 @@ final class CfOptionsTest extends TestCase
         $options['none_text'] = 'It\\\'s slashed';
         Functions\when('get_option')->justReturn($options);
 
-        $merged = Cf::setOptions('linkate-posts', []);
+        $merged = Cf::setOptions('cherrylink_options', []);
 
         $this->assertSame("It's slashed", $merged['none_text']);
     }
@@ -87,7 +87,7 @@ final class CfOptionsTest extends TestCase
     {
         Functions\when('get_option')->justReturn($this->defaults());
 
-        $merged = Cf::setOptions('linkate-posts', ['limit_ajax' => '25']);
+        $merged = Cf::setOptions('cherrylink_options', ['limit_ajax' => '25']);
 
         $this->assertSame('25', $merged['limit_ajax']);
     }
@@ -96,7 +96,7 @@ final class CfOptionsTest extends TestCase
     {
         Functions\when('get_option')->justReturn(false);
 
-        $merged = Cf::setOptions('linkate-posts', []);
+        $merged = Cf::setOptions('cherrylink_options', []);
 
         $this->assertArrayHasKey('limit_ajax', $merged);
         $this->assertNull($merged['limit_ajax']);

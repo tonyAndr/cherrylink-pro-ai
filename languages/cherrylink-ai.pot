@@ -3,41 +3,36 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: CherryLink – AI Internal Linking 2.0.0\n"
-"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/cherrylink\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/plugin\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-13T08:37:39+00:00\n"
+"POT-Creation-Date: 2026-11-19T23:34:06+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"X-Generator: WP-CLI 2.12.0\n"
+"X-Generator: WP-CLI 2.7.1\n"
 "X-Domain: cherrylink-ai\n"
 
 #. Plugin Name of the plugin
-#: cherrylink_main.php
 msgid "CherryLink – AI Internal Linking"
 msgstr ""
 
 #. Plugin URI of the plugin
-#. Author URI of the plugin
-#: cherrylink_main.php
 msgid "https://cherrylink.app/"
 msgstr ""
 
 #. Description of the plugin
-#: cherrylink_main.php
 msgid "AI internal linking for WordPress: find related posts, get anchor phrase suggestions in the editor, and audit your link structure."
 msgstr ""
 
 #. Author of the plugin
-#: cherrylink_main.php
 #: src/Admin/AdminMenu.php:75
 #: js/cherry-gutenberg.js:3
 msgid "CherryLink"
 msgstr ""
 
-#: cherrylink_main.php:25
+#: cherrylink_main.php:24
 msgid "Deactivate CherryLink Pro AI first. Two CherryLink plugins cannot run together."
 msgstr ""
 
@@ -45,75 +40,74 @@ msgstr ""
 msgid "Could not reach the CherryLink server. Try again in a moment."
 msgstr ""
 
-#: src/Admin/AdminApi.php:114
-#: src/Admin/AdminApi.php:157
+#: src/Admin/AdminApi.php:112
+#: src/Admin/AdminApi.php:154
 msgid "Unknown action."
 msgstr ""
 
-#: src/Admin/AdminApi.php:126
+#: src/Admin/AdminApi.php:125
 msgid "Invalid settings."
 msgstr ""
 
-#: src/Admin/AdminApi.php:142
-#: src/Admin/AdminApi.php:469
-msgid "Enter a license key."
+#: src/Admin/AdminApi.php:139
+#: src/Admin/AdminApi.php:466
+msgid "Enter an API key."
 msgstr ""
 
-#: src/Admin/AdminApi.php:169
+#: src/Admin/AdminApi.php:166
 msgid "Could not delete the site data on the CherryLink server. Check the connection and try again."
 msgstr ""
 
-#: src/Admin/AdminApi.php:188
+#: src/Admin/AdminApi.php:185
 msgid "Could not import: choose a .txt file exported from CherryLink."
 msgstr ""
 
-#: src/Admin/AdminApi.php:465
-msgid "Could not reach the license server. Try again later or contact support."
+#: src/Admin/AdminApi.php:462
+msgid "Could not reach the CherryLink server. Try again later or contact support."
 msgstr ""
 
-#: src/Admin/AdminApi.php:467
+#: src/Admin/AdminApi.php:464
 msgid "The key is being checked in the background. Refresh in a few seconds."
 msgstr ""
 
-#: src/Admin/AdminApi.php:471
+#: src/Admin/AdminApi.php:468
 msgid "Could not schedule the key check. Try again."
 msgstr ""
 
-#: src/Admin/AdminApi.php:473
+#: src/Admin/AdminApi.php:470
 msgid "This key is bound to another domain."
 msgstr ""
 
-#: src/Admin/AdminApi.php:475
+#: src/Admin/AdminApi.php:472
 msgid "This key has expired."
 msgstr ""
 
-#: src/Admin/AdminApi.php:477
+#: src/Admin/AdminApi.php:474
 msgid "This key is not valid."
 msgstr ""
 
-#: src/Admin/AdminApi.php:495
+#: src/Admin/AdminApi.php:491
 msgid "Could not verify the domain: the CherryLink server could not open your site over HTTPS. The site must be reachable from the internet; for private sites enter a key manually."
 msgstr ""
 
 #. translators: %d: seconds to wait
-#: src/Admin/AdminApi.php:499
-#, php-format
+#: src/Admin/AdminApi.php:495
 msgid "Too many connection attempts. Try again in %d s."
 msgstr ""
 
-#: src/Admin/AdminApi.php:500
+#: src/Admin/AdminApi.php:496
 msgid "Too many connection attempts. Try again later."
 msgstr ""
 
-#: src/Admin/AdminApi.php:502
+#: src/Admin/AdminApi.php:498
 msgid "This domain cannot be connected (a public domain is required, not an IP address or localhost)."
 msgstr ""
 
-#: src/Admin/AdminApi.php:504
+#: src/Admin/AdminApi.php:500
 msgid "Connecting is not available for this domain. Enter a key manually or contact support."
 msgstr ""
 
-#: src/Admin/AdminApi.php:506
+#: src/Admin/AdminApi.php:502
 msgid "The connection service is temporarily unavailable. Try again later."
 msgstr ""
 
@@ -139,7 +133,7 @@ msgstr ""
 msgid "Index"
 msgstr ""
 
-#: src/Admin/AdminMenu.php:185
+#: src/Admin/AdminMenu.php:151
 #: src/Support/Connect.php:88
 msgid "Insufficient permissions."
 msgstr ""
@@ -152,8 +146,12 @@ msgstr ""
 msgid "In"
 msgstr ""
 
+#: src/Editor/PanelApi.php:284
+msgid "Connect CherryLink to get suggestions."
+msgstr ""
+
 #: src/Indexing/AsyncBulkScan.php:282
-msgid "The license is inactive — synchronization is unavailable."
+msgid "Not connected — synchronization is unavailable."
 msgstr ""
 
 #: src/Indexing/AsyncBulkScan.php:340
@@ -173,7 +171,7 @@ msgid "Stopping the scan…"
 msgstr ""
 
 #: src/Indexing/AsyncBulkScan.php:434
-#: src/Indexing/SyncService.php:288
+#: src/Indexing/SyncService.php:285
 msgid "Stopped by user"
 msgstr ""
 
@@ -195,67 +193,63 @@ msgstr ""
 
 #. translators: 1: applied vectors, 2: total items, 3: pending items
 #: src/Indexing/AsyncBulkScan.php:873
-#, php-format
 msgid "Processing on the server: %1$d of %2$d, %3$d queued."
 msgstr ""
 
 #. translators: 1: <time> element with the formatted scan date, 2: upserted count, 3: deleted count
-#: src/Indexing/IndexHooks.php:287
-#, php-format
+#: src/Indexing/IndexHooks.php:286
 msgid "Last scan: %1$s (updated: %2$d, removed: %3$d)."
 msgstr ""
 
-#: src/Indexing/IndexHooks.php:295
+#: src/Indexing/IndexHooks.php:294
 msgid "Scan not complete"
 msgstr ""
 
-#: src/Indexing/IndexHooks.php:298
+#: src/Indexing/IndexHooks.php:297
 msgid "All good"
 msgstr ""
 
-#: src/Indexing/IndexHooks.php:301
+#: src/Indexing/IndexHooks.php:300
 msgid "You need to scan the site"
 msgstr ""
 
+#: src/Indexing/IndexHooks.php:343
 #: src/Indexing/IndexHooks.php:344
-#: src/Indexing/IndexHooks.php:345
 msgid " loading data…"
 msgstr ""
 
-#: src/Indexing/IndexHooks.php:414
-#: src/Indexing/IndexHooks.php:422
+#: src/Indexing/IndexHooks.php:413
+#: src/Indexing/IndexHooks.php:421
 msgid " failed to retrieve data (no connection to the server)."
 msgstr ""
 
 #. translators: %d: number of indexed articles
-#: src/Indexing/IndexHooks.php:418
-#, php-format
+#: src/Indexing/IndexHooks.php:417
 msgid " %d articles indexed in the Vector API."
 msgstr ""
 
-#: src/Indexing/IndexHooks.php:419
+#: src/Indexing/IndexHooks.php:418
 msgid " articles are not indexed, run a scan."
 msgstr ""
 
 #. translators: %d: number of links found
-#: src/Indexing/IndexHooks.php:426
-#, php-format
+#: src/Indexing/IndexHooks.php:425
 msgid " %d links found in posts and pages."
 msgstr ""
 
-#: src/Indexing/IndexHooks.php:427
+#: src/Indexing/IndexHooks.php:426
 msgid " no links found."
 msgstr ""
 
-#: src/Indexing/SyncService.php:213
-msgid "License inactive — synchronization is unavailable. Enter your license key."
+#: src/Indexing/SyncService.php:210
+msgid "Not connected — synchronization is unavailable. Connect CherryLink or enter your API key."
 msgstr ""
 
-#: src/Indexing/SyncService.php:270
+#: src/Indexing/SyncService.php:267
 msgid "Could not schedule the scan. Please try again."
 msgstr ""
 
-#: src/Indexing/SyncService.php:643
+#: src/Indexing/SyncService.php:642
 msgid "No changes found"
 msgstr ""
 
@@ -263,7 +257,7 @@ msgstr ""
 msgid "Every five minutes (CherryLink)"
 msgstr ""
 
-#: src/Support/Options.php:162
+#: src/Support/Options.php:153
 msgid "Nothing found..."
 msgstr ""
 
@@ -282,22 +276,21 @@ msgstr ""
 msgid "Hide"
 msgstr ""
 
-#: templates/notices/license-inactive.php:12
-msgid "license inactive — indexing and scanning are paused, links are not being updated."
+#: templates/notices/not-connected.php:12
+msgid "not connected — indexing and scanning are paused, links are not being updated."
 msgstr ""
 
-#: templates/notices/license-inactive.php:12
+#: templates/notices/not-connected.php:12
 msgid "The internal linking index is not synchronized"
 msgstr ""
 
 #. translators: %s: human-readable date since which changes have not been indexed
-#: templates/notices/license-inactive.php:14
-#, php-format
-msgid "(changes since %s are not indexed). Activate your key and run a scan to restore synchronization."
+#: templates/notices/not-connected.php:14
+msgid "(changes since %s are not indexed). Reconnect and run a scan to restore synchronization."
 msgstr ""
 
-#: templates/notices/license-inactive.php:15
-msgid "Enter your license key"
+#: templates/notices/not-connected.php:15
+msgid "Enter your API key"
 msgstr ""
 
 #: js/cherry-app.js:1
@@ -380,7 +373,7 @@ msgstr ""
 
 #: js/cherry-app.js:1
 #: js/cherry-app.js:22
-msgid "License key"
+msgid "API key"
 msgstr ""
 
 #: js/cherry-app.js:1
@@ -435,13 +428,11 @@ msgstr ""
 
 #. translators: 1: posts learned so far, 2: posts to learn in this scan
 #: js/cherry-app.js:2
-#, js-format
 msgid "%1$s / %2$s posts learned"
 msgstr ""
 
 #. translators: %s: number of posts whose links were read
 #: js/cherry-app.js:3
-#, js-format
 msgid "%s post mapped so far"
 msgid_plural "%s posts mapped so far"
 msgstr[0] ""
@@ -477,7 +468,6 @@ msgstr ""
 
 #. translators: %s: number of posts found
 #: js/cherry-app.js:4
-#, js-format
 msgid "%s post found."
 msgid_plural "%s posts found."
 msgstr[0] ""
@@ -485,13 +475,11 @@ msgstr[1] ""
 
 #. translators: 1: free plan learned-post limit, 2: total posts found. "Learned" = analyzed for suggestions; "checked" = links read for link health.
 #: js/cherry-app.js:5
-#, js-format
 msgid "The free plan gives suggestions from your %1$s most recently updated posts (learned). Link health covers all %2$s: it only reads the links already in your posts, so no learning is needed."
 msgstr ""
 
 #. translators: %s: number of posts found
 #: js/cherry-app.js:6
-#, js-format
 msgid "%s post found. All of them will be learned for suggestions and checked for link health."
 msgid_plural "%s posts found. All of them will be learned for suggestions and checked for link health."
 msgstr[0] ""
@@ -533,12 +521,10 @@ msgstr ""
 
 #. translators: 1: posts learned (analyzed for suggestions), 2: posts checked (links read for link health)
 #: js/cherry-app.js:7
-#, js-format
 msgid "%1$s posts learned · %2$s posts checked"
 msgstr ""
 
 #: js/cherry-app.js:7
-#, js-format
 msgid "%s s"
 msgstr ""
 
@@ -576,7 +562,6 @@ msgstr ""
 
 #. translators: 1: posts learned (analyzed for suggestions; counts toward the plan limit), 2: posts checked (links read for link health; whole site, no limit)
 #: js/cherry-app.js:8
-#, js-format
 msgid "%1$s posts learned, %2$s posts checked. Here is what CherryLink found."
 msgstr ""
 
@@ -621,13 +606,11 @@ msgstr ""
 
 #. translators: 1: posts learned (analyzed for suggestions; counts toward the plan limit), 2: total posts on the site
 #: js/cherry-app.js:9
-#, js-format
 msgid "%1$s / %2$s learned"
 msgstr ""
 
 #. translators: %s: posts learned (analyzed for suggestions)
 #: js/cherry-app.js:10
-#, js-format
 msgid "%s learned"
 msgstr ""
 
@@ -669,19 +652,16 @@ msgstr ""
 
 #. translators: %s: number of orphan pages
 #: js/cherry-app.js:11
-#, js-format
 msgid "See all %s orphan pages"
 msgstr ""
 
 #. translators: 1: internal links, 2: posts checked (links read for link health; whole site, no limit)
 #: js/cherry-app.js:12
-#, js-format
 msgid "%1$s internal links across %2$s posts"
 msgstr ""
 
 #. translators: %s: date and time of the last link health check
 #: js/cherry-app.js:13
-#, js-format
 msgid "Checked %s."
 msgstr ""
 
@@ -695,19 +675,16 @@ msgstr ""
 
 #. translators: 1: posts learned (analyzed for suggestions; counts toward the plan limit), 2: total posts on the site
 #: js/cherry-app.js:14
-#, js-format
 msgid "%1$s of %2$s posts learned."
 msgstr ""
 
 #. translators: %s: plan limit of learned posts
 #: js/cherry-app.js:15
-#, js-format
 msgid "Suggestions come from your newest %s; the rest are still covered by link health."
 msgstr ""
 
 #. translators: %s: posts learned
 #: js/cherry-app.js:16
-#, js-format
 msgid "%s post learned."
 msgid_plural "%s posts learned."
 msgstr[0] ""
@@ -765,7 +742,6 @@ msgid "Underlinked"
 msgstr ""
 
 #: js/cherry-app.js:16
-#, js-format
 msgid "%d post"
 msgid_plural "%d posts"
 msgstr[0] ""
@@ -838,7 +814,6 @@ msgstr ""
 
 #. translators: %s: suggested link text inside the related post
 #: js/cherry-app.js:17
-#, js-format
 msgid "suggested link text: “%s”"
 msgstr ""
 
@@ -848,7 +823,6 @@ msgstr ""
 
 #. translators: 1: list name (authors or categories), 2: how many are hidden
 #: js/cherry-app.js:18
-#, js-format
 msgid "%1$s (%2$s hidden)"
 msgstr ""
 
@@ -885,7 +859,7 @@ msgid "Settings sections"
 msgstr ""
 
 #: js/cherry-app.js:18
-msgid "License"
+msgid "Connection"
 msgstr ""
 
 #: js/cherry-app.js:18
@@ -912,21 +886,18 @@ msgstr ""
 msgid "Troubleshooting"
 msgstr ""
 
-#. translators: %s: masked license key
+#. translators: %s: masked API key
 #: js/cherry-app.js:19
-#, js-format
 msgid "Key %s"
 msgstr ""
 
 #. translators: %s: site domain
 #: js/cherry-app.js:20
-#, js-format
 msgid "bound to %s"
 msgstr ""
 
 #. translators: %s: expiry date
 #: js/cherry-app.js:21
-#, js-format
 msgid "expires %s"
 msgstr ""
 
@@ -936,7 +907,6 @@ msgstr ""
 
 #. translators: 1: learned posts, 2: all posts. "Learned" = post analyzed for suggestions; counts toward the plan limit.
 #: js/cherry-app.js:22
-#, js-format
 msgid "%1$s of %2$s posts learned. Posts beyond the limit keep link health and their own suggestions, but other posts won't suggest links to them."
 msgstr ""
 
@@ -1032,7 +1002,7 @@ msgid "Preview"
 msgstr ""
 
 #: js/cherry-app.js:22
-msgid "While connected, CherryLink receives your posts' titles, text and URLs, plus plugin, PHP and WordPress versions for compatibility."
+msgid "While connected, CherryLink receives your posts' titles, text and URLs."
 msgstr ""
 
 #: js/cherry-app.js:22
@@ -1104,7 +1074,7 @@ msgid "Reset settings?"
 msgstr ""
 
 #: js/cherry-app.js:22
-msgid "All CherryLink settings return to their defaults. Your license stays connected."
+msgid "All CherryLink settings return to their defaults. Your site stays connected."
 msgstr ""
 
 #: js/cherry-app.js:22
@@ -1138,7 +1108,6 @@ msgstr ""
 
 #. translators: 1: date and time, 2: posts checked (links read for link health; whole site, no limit)
 #: js/cherry-app.js:23
-#, js-format
 msgid "Checked %1$s · %2$s posts"
 msgstr ""
 
@@ -1176,7 +1145,6 @@ msgstr ""
 
 #. translators: %s: number of orphan pages that can get links now
 #: js/cherry-app.js:24
-#, js-format
 msgid "Ready to fix (%s)"
 msgstr ""
 
@@ -1190,7 +1158,6 @@ msgstr ""
 
 #. translators: 1: first row number, 2: last row number, 3: total rows
 #: js/cherry-app.js:25
-#, js-format
 msgid "Showing %1$s–%2$s of %3$s"
 msgstr ""
 
@@ -1204,13 +1171,11 @@ msgstr ""
 
 #. translators: %s: number of orphan pages outside the plan limit
 #: js/cherry-app.js:26
-#, js-format
 msgid "Not learned on your plan (%s)"
 msgstr ""
 
 #. translators: %s: number of orphan pages outside the plan limit
 #: js/cherry-app.js:27
-#, js-format
 msgid "%s orphan page is outside your plan"
 msgid_plural "%s orphan pages are outside your plan"
 msgstr[0] ""
@@ -1218,7 +1183,6 @@ msgstr[1] ""
 
 #. translators: %s: plan limit of learned posts
 #: js/cherry-app.js:28
-#, js-format
 msgid "The free plan learns your %s most recently updated posts. Upgrade to find links for these pages too."
 msgstr ""
 
@@ -1264,7 +1228,6 @@ msgstr ""
 
 #. translators: %s: plan limit of learned posts
 #: js/cherry-app.js:29
-#, js-format
 msgid "Free limit: newest %s by last update"
 msgstr ""
 
@@ -1286,7 +1249,6 @@ msgstr ""
 
 #. translators: %s: plan limit of learned posts
 #: js/cherry-app.js:30
-#, js-format
 msgid "Why only %s?"
 msgstr ""
 
@@ -1308,7 +1270,6 @@ msgstr ""
 
 #. translators: 1: date and time (UTC), 2: posts updated, 3: posts removed
 #: js/cherry-app.js:31
-#, js-format
 msgid "Last scan: %1$s UTC · %2$s posts updated · %3$s removed"
 msgstr ""
 
@@ -1370,7 +1331,6 @@ msgstr ""
 
 #: js/cherry-classic.js:1
 #: js/cherry-gutenberg.js:1
-#, js-format
 msgid "No incoming links · %d post could link here"
 msgid_plural "No incoming links · %d posts could link here"
 msgstr[0] ""
@@ -1383,7 +1343,6 @@ msgstr ""
 
 #: js/cherry-classic.js:1
 #: js/cherry-gutenberg.js:1
-#, js-format
 msgid "Too few outgoing links · need %s"
 msgstr ""
 
@@ -1409,7 +1368,6 @@ msgstr ""
 
 #: js/cherry-classic.js:1
 #: js/cherry-gutenberg.js:1
-#, js-format
 msgid "Key page · %d related post doesn't link here"
 msgid_plural "Key page · %d related posts don't link here"
 msgstr[0] ""
@@ -1418,13 +1376,11 @@ msgstr[1] ""
 #. translators: %s: title of the key page (hub article) this post should link to
 #: js/cherry-classic.js:2
 #: js/cherry-gutenberg.js:2
-#, js-format
 msgid "Doesn't link to key page “%s” yet"
 msgstr ""
 
 #: js/cherry-classic.js:2
 #: js/cherry-gutenberg.js:2
-#, js-format
 msgid "Recommended: %1$s outgoing links for %2$d words"
 msgstr ""
 
@@ -1455,7 +1411,6 @@ msgstr ""
 
 #: js/cherry-classic.js:2
 #: js/cherry-gutenberg.js:2
-#, js-format
 msgid "Indexed %1$s of %2$s"
 msgstr ""
 
@@ -1467,7 +1422,6 @@ msgstr ""
 #. translators: %s: plan post limit. "Learned" = post analyzed for suggestions; counts toward the plan limit.
 #: js/cherry-classic.js:3
 #: js/cherry-gutenberg.js:3
-#, js-format
 msgid "This post is outside your %s learned posts, so other posts won't suggest links to it. Its own suggestions and link health still work. Updating it makes it one of your newest posts, so it gets learned."
 msgstr ""
 
@@ -1553,13 +1507,11 @@ msgstr ""
 
 #: js/cherry-classic.js:3
 #: js/cherry-gutenberg.js:3
-#, js-format
 msgid "Relevance %1$d%% (similarity %2$s)"
 msgstr ""
 
 #: js/cherry-classic.js:3
 #: js/cherry-gutenberg.js:3
-#, js-format
 msgid "Hidden suggestions (%d)"
 msgstr ""
 
@@ -1590,7 +1542,6 @@ msgstr ""
 
 #: js/cherry-classic.js:3
 #: js/cherry-gutenberg.js:3
-#, js-format
 msgid "Another post (%1$d/%2$d)"
 msgstr ""
 
@@ -1736,7 +1687,6 @@ msgstr ""
 
 #: js/cherry-classic.js:3
 #: js/cherry-gutenberg.js:3
-#, js-format
 msgid "Link added to “%s”"
 msgstr ""
 

@@ -43,6 +43,13 @@ final class AdminUiTest extends TestCase
             return strtolower(preg_replace('/[^A-Za-z0-9_\-]/', '', (string) $k));
         });
         Functions\when('sanitize_textarea_field')->returnArg(1);
+        Functions\when('sanitize_text_field')->returnArg(1);
+        Functions\when('absint')->alias(static function ($v) {
+            return abs((int) $v);
+        });
+        Functions\when('rest_sanitize_boolean')->alias(static function ($v) {
+            return is_string($v) ? !in_array(strtolower($v), ['false', '0', ''], true) : (bool) $v;
+        });
         Functions\when('get_post_types')->justReturn([(object) ['name' => 'product']]);
         Functions\when('get_term_children')->alias(static function ($id) {
             return $id === 5 ? [6] : [];
@@ -145,18 +152,6 @@ final class AdminUiTest extends TestCase
         $this->assertSame('true', $out['link_title_attr']);
     }
 
-    // ── legacy URL redirect ───────────────────────────────────────────────
-
-    public function testLegacySettingsUrlRedirectsKeepingConnectParams(): void
-    {
-        $this->assertSame(
-            'https://site.test/wp-admin/admin.php?page=cherrylink&cl_connect=rate_limited&cl_retry=30',
-            AdminMenu::legacyTarget('options-general.php', ['page' => 'cherrylink-pro', 'cl_connect' => 'rate_limited', 'cl_retry' => '30', 'junk' => 1])
-        );
-        $this->assertNull(AdminMenu::legacyTarget('options-general.php', ['page' => 'other']));
-        $this->assertNull(AdminMenu::legacyTarget('admin.php', ['page' => 'cherrylink-pro']));
-    }
-
     // ── learned cutoff ────────────────────────────────────────────────────
 
     public function testLearnedCutoffUsesOneQueryAndNullMeansUnlimited(): void
@@ -202,7 +197,7 @@ final class AdminUiTest extends TestCase
 
     public function testStateExposesIndexExpiredFromTheCachedSnapshot(): void
     {
-        $this->store['linkate_posts_meta'] = ['key_valid' => true, 'plan' => 'free', 'post_limit' => 1000];
+        $this->store['cherrylink_state'] = ['key_valid' => true, 'plan' => 'free', 'post_limit' => 1000];
         Functions\when('get_transient')->alias(static function ($key) {
             return $key === \CherryLink\Support\Capabilities::CACHE_KEY
                 ? ['async' => false, 'plan' => ['name' => 'free', 'indexed' => 0, 'index_expired' => true]]
@@ -224,9 +219,9 @@ final class AdminUiTest extends TestCase
 
     public function testStatePayloadShape(): void
     {
-        $this->store['linkate-posts'] = ['hash_field' => 'clp_abcd1234', 'show_pages' => 'true', 'show_customs' => 'product',
+        $this->store['cherrylink_options'] = ['hash_field' => 'clp_abcd1234', 'show_pages' => 'true', 'show_customs' => 'product',
             'excluded_authors' => '2,3', 'limit_ajax' => '30', 'link_new_tab' => 'true'];
-        $this->store['linkate_posts_meta'] = ['key_valid' => true, 'expires_at' => '', 'plan' => 'free', 'post_limit' => 1000,
+        $this->store['cherrylink_state'] = ['key_valid' => true, 'expires_at' => '', 'plan' => 'free', 'post_limit' => 1000,
             'last_scan_gmt' => '2026-11-12 10:00:00', 'last_upserted' => 4, 'last_deleted' => 1];
         Functions\when('get_transient')->justReturn(false);
         Functions\when('get_post_type_object')->alias(static function ($n) {
@@ -245,11 +240,11 @@ final class AdminUiTest extends TestCase
         $state   = (new AdminApi($options, $license, new SyncService($options, $license)))->state();
 
         $this->assertTrue($state['connected']);
-        $this->assertSame('free', $state['license']['plan']);
-        $this->assertSame(1000, $state['license']['post_limit']);
-        $this->assertSame('clp_••••1234', $state['license']['key_masked']);
-        $this->assertSame('active', $state['license']['status']);
-        $this->assertSame('site.test', $state['license']['domain']);
+        $this->assertSame('free', $state['connection']['plan']);
+        $this->assertSame(1000, $state['connection']['post_limit']);
+        $this->assertSame('clp_••••1234', $state['connection']['key_masked']);
+        $this->assertSame('active', $state['connection']['status']);
+        $this->assertSame('site.test', $state['connection']['domain']);
         $this->assertSame(30, $state['settings']['limit_ajax']);
         $this->assertTrue($state['settings']['link_new_tab']);
         $this->assertTrue($state['settings']['link_title_attr']); // default on
@@ -271,11 +266,11 @@ final class AdminUiTest extends TestCase
     public function testIndexedTypesFollowTheChosenContentTypes(): void
     {
         Functions\when('get_post_types')->justReturn([(object) ['name' => 'product'], (object) ['name' => 'recipe']]);
-        $this->store['linkate-posts'] = ['show_pages' => 'false', 'show_customs' => 'recipe'];
+        $this->store['cherrylink_options'] = ['show_pages' => 'false', 'show_customs' => 'recipe'];
         $this->assertSame(['post', 'recipe'], \CherryLink\Indexing\IndexHelpers::get_allowed_types_list());
         $this->assertSame(['post', 'page', 'product', 'recipe'], \CherryLink\Indexing\IndexHelpers::get_public_types_list());
 
-        $this->store['linkate-posts'] = ['show_pages' => 'true', 'show_customs' => ''];
+        $this->store['cherrylink_options'] = ['show_pages' => 'true', 'show_customs' => ''];
         $this->assertSame(['post', 'page'], \CherryLink\Indexing\IndexHelpers::get_allowed_types_list());
     }
 }

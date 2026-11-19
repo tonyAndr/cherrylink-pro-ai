@@ -29,7 +29,7 @@ function Host({ config, adapter }) {
 
     useEffect(() => {
         const onClick = (e) => {
-            const t = e.target.closest && e.target.closest('#cherrylink-panel-toggle, .linkate-button');
+            const t = e.target.closest && e.target.closest('#cherrylink-panel-toggle, .cherrylink-button');
             if (!t) return;
             e.preventDefault();
             setOpen((o) => !o);
@@ -68,7 +68,7 @@ function boot() {
     const config = window.cherrylinkPanel;
     if (!config) return;
     // Term screens with a plain description textarea get no media buttons: add our own toggle.
-    if (!document.querySelector('#cherrylink-panel-toggle, .linkate-button')) {
+    if (!document.querySelector('#cherrylink-panel-toggle, .cherrylink-button')) {
         const field = document.getElementById(config.isTerm ? 'description' : 'content');
         if (field) {
             const btn = document.createElement('button');

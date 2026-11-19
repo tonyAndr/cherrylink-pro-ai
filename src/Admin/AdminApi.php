@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace CherryLink\Admin;
 
+use CherryLink\Ajax\Input;
 use CherryLink\Ajax\Security;
 use CherryLink\Api\Client;
 use CherryLink\Contracts\Registerable;
@@ -27,7 +28,7 @@ final class AdminApi implements Registerable
     public const SETUP_OPTION  = 'cherrylink_setup_done';
     public const HEALTH_HOOK   = 'cherrylink_refresh_health';
 
-    private const ACTIONS = ['state', 'link_health', 'key_pin', 'save_settings', 'license', 'remove_data', 'import_settings', 'reset_settings', 'setup_done'];
+    private const ACTIONS = ['state', 'link_health', 'key_pin', 'save_settings', 'connection', 'remove_data', 'import_settings', 'reset_settings', 'setup_done'];
     private const RELATIVE = ['full', 'no_proto', 'no_domain'];
     private const MAX_IMPORT_BYTES = 262144;
 
@@ -90,8 +91,7 @@ final class AdminApi implements Registerable
     public function ajaxLinkHealth(): void
     {
         $this->guard();
-        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- gated by guard()
-        if (empty($_POST['refresh'])) {
+        if (! Input::post('refresh', 'bool', false)) {
             \wp_send_json_success($this->cachedHealth() + ['keys' => (new KeyPages())->payload()]);
         }
         $result = $this->refreshHealth();
@@ -105,10 +105,8 @@ final class AdminApi implements Registerable
     public function ajaxKeyPin(): void
     {
         $this->guard();
-        // phpcs:disable WordPress.Security.NonceVerification.Missing -- gated by guard()
-        $post_id = isset($_POST['post_id']) ? \absint(\wp_unslash($_POST['post_id'])) : 0;
-        $mode    = isset($_POST['mode']) ? \sanitize_key(\wp_unslash($_POST['mode'])) : '';
-        // phpcs:enable
+        $post_id = (int) Input::post('post_id', 'uint', 0);
+        $mode    = (string) Input::post('mode', 'key', '');
         $keys = new KeyPages(); // refresh() uses a background-context client
         if (! $keys->setMode($post_id, $mode)) {
             $this->fail(\__('Unknown action.', 'cherrylink-ai'));
@@ -120,8 +118,9 @@ final class AdminApi implements Registerable
     public function ajaxSaveSettings(): void
     {
         $this->guard();
-        // phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- gated by guard(); decoded then sanitized key by key
-        $raw = \json_decode((string) \wp_unslash($_POST['settings'] ?? ''), true);
+        // The JSON string is sanitized as text first, then decoded; sanitizeSettings() whitelists
+        // the known keys and sanitizes each value by type.
+        $raw = \json_decode((string) Input::post('settings', 'textarea', ''), true);
         if (! \is_array($raw)) {
             $this->fail(\__('Invalid settings.', 'cherrylink-ai'));
         }
@@ -129,17 +128,15 @@ final class AdminApi implements Registerable
         \wp_send_json_success(['state' => $this->state()]);
     }
 
-    public function ajaxLicense(): void
+    public function ajaxConnection(): void
     {
         $this->guard();
-        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- gated by guard()
-        $op = isset($_POST['op']) ? \sanitize_key(\wp_unslash($_POST['op'])) : '';
+        $op = (string) Input::post('op', 'key', '');
         switch ($op) {
             case 'set_key':
-                // phpcs:ignore WordPress.Security.NonceVerification.Missing -- gated by guard()
-                $key = \trim(\sanitize_text_field(\wp_unslash($_POST['key'] ?? '')));
+                $key = \trim((string) Input::post('key', 'text', ''));
                 if ($key === '') {
-                    $this->fail(\__('Enter a license key.', 'cherrylink-ai'));
+                    $this->fail(\__('Enter an API key.', 'cherrylink-ai'));
                 }
                 $previous = (string) $this->options->get('hash_field', '');
                 $this->options->set('hash_field', $key);
@@ -250,13 +247,13 @@ final class AdminApi implements Registerable
     {
         $out  = [];
         $bool = static function ($v): string {
-            return \filter_var($v, FILTER_VALIDATE_BOOLEAN) ? 'true' : 'false';
+            return \rest_sanitize_boolean(\is_scalar($v) ? (string) $v : '') ? 'true' : 'false';
         };
-        if (isset($in['limit_ajax'])) {
-            $out['limit_ajax'] = \max(1, \min(100, (int) $in['limit_ajax']));
+        if (isset($in['limit_ajax']) && \is_scalar($in['limit_ajax'])) {
+            $out['limit_ajax'] = \max(1, \min(100, \absint($in['limit_ajax'])));
         }
-        if (isset($in['max_incoming_links'])) {
-            $out['max_incoming_links'] = \max(1, (int) $in['max_incoming_links']);
+        if (isset($in['max_incoming_links']) && \is_scalar($in['max_incoming_links'])) {
+            $out['max_incoming_links'] = \max(1, \absint($in['max_incoming_links']));
         }
         foreach (['show_cat_filter', 'match_cat', 'consider_max_incoming_links', 'link_title_attr', 'link_new_tab'] as $key) {
             if (isset($in[$key])) {
@@ -274,12 +271,12 @@ final class AdminApi implements Registerable
             }
             $out['excluded_cats'] = \implode(',', \array_unique($cats));
         }
-        if (isset($in['relative_links']) && \in_array($in['relative_links'], self::RELATIVE, true)) {
-            $out['relative_links'] = $in['relative_links'];
+        if (isset($in['relative_links']) && \is_scalar($in['relative_links']) && \in_array(\sanitize_key((string) $in['relative_links']), self::RELATIVE, true)) {
+            $out['relative_links'] = \sanitize_key((string) $in['relative_links']);
         }
-        if (isset($in['link_class'])) {
+        if (isset($in['link_class']) && \is_scalar($in['link_class'])) {
             $tokens = [];
-            foreach ((array) \preg_split('/\s+/', \trim((string) $in['link_class'])) as $token) {
+            foreach ((array) \preg_split('/\s+/', \trim(\sanitize_text_field((string) $in['link_class']))) as $token) {
                 $token = \sanitize_html_class((string) $token);
                 if ($token !== '') {
                     $tokens[] = $token;
@@ -293,7 +290,7 @@ final class AdminApi implements Registerable
             $out['show_pages']   = \in_array('page', $types, true) ? 'true' : 'false';
             $out['show_customs'] = \implode(',', \array_values(\array_intersect($types, $known)));
         }
-        if (isset($in['vector_custom_fields'])) {
+        if (isset($in['vector_custom_fields']) && \is_scalar($in['vector_custom_fields'])) {
             $out['vector_custom_fields'] = \sanitize_textarea_field((string) $in['vector_custom_fields']);
         }
 
@@ -394,7 +391,7 @@ final class AdminApi implements Registerable
             'connected'  => $connected,
             'has_key'    => $this->license->hasKey(),
             'setup_done' => (bool) \get_option(self::SETUP_OPTION, false),
-            'license'    => $this->licenseState($connected),
+            'connection' => $this->connectionState($connected),
             'counts'     => [
                 'total'   => $total,
                 'types'   => $types,
@@ -430,7 +427,7 @@ final class AdminApi implements Registerable
     }
 
     /** @return array<string,mixed> */
-    private function licenseState(bool $connected): array
+    private function connectionState(bool $connected): array
     {
         $meta   = $this->options->meta();
         $key    = (string) $this->options->get('hash_field', '');
@@ -454,19 +451,19 @@ final class AdminApi implements Registerable
             'domain'     => (string) \wp_parse_url(\home_url(), PHP_URL_HOST),
             'expires_at' => ! empty($meta['expires_at']) ? (string) $meta['expires_at'] : null,
             'status'     => $status,
-            'error'      => $status === 'active' ? '' : self::licenseError($reason),
+            'error'      => $status === 'active' ? '' : self::connectionError($reason),
         ];
     }
 
-    private static function licenseError(string $reason): string
+    private static function connectionError(string $reason): string
     {
         switch ($reason) {
             case 'no_connection':
-                return \__('Could not reach the license server. Try again later or contact support.', 'cherrylink-ai');
+                return \__('Could not reach the CherryLink server. Try again later or contact support.', 'cherrylink-ai');
             case 'pending':
                 return \__('The key is being checked in the background. Refresh in a few seconds.', 'cherrylink-ai');
             case 'missing_key':
-                return \__('Enter a license key.', 'cherrylink-ai');
+                return \__('Enter an API key.', 'cherrylink-ai');
             case 'validation_schedule_failed':
                 return \__('Could not schedule the key check. Try again.', 'cherrylink-ai');
             case 'bad_domain':
@@ -480,13 +477,12 @@ final class AdminApi implements Registerable
         }
     }
 
-    /** Translated message for a failed Connect redirect (cl_connect=<code>), or ''. */
+    /** Translated message for a failed Connect redirect (cherrylink_result=<code>), or ''. */
     public function connectError(): string
     {
-        // phpcs:disable WordPress.Security.NonceVerification.Recommended -- read-only outcome code, mapped to fixed strings
-        $code = isset($_GET['cl_connect']) ? \sanitize_key(\wp_unslash($_GET['cl_connect'])) : '';
-        $wait = isset($_GET['cl_retry']) ? (int) $_GET['cl_retry'] : 0;
-        // phpcs:enable
+        // Read-only outcome code, mapped to fixed strings below.
+        $code = (string) Input::get('cherrylink_result', 'key', '');
+        $wait = (int) Input::get('cherrylink_retry', 'uint', 0);
         switch ($code) {
             case '':
             case 'ok':

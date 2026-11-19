@@ -15,11 +15,10 @@ msgstr ""
 "X-Domain: cherrylink-ai\n"
 
 #. Plugin Name of the plugin
-#: cherrylink_main.php
 msgid "CherryLink – AI Internal Linking"
 msgstr "CherryLink – AI Internal Linking"
 
-#: cherrylink_main.php:25
+#: cherrylink_main.php:24
 msgid "Deactivate CherryLink Pro AI first. Two CherryLink plugins cannot run together."
 msgstr "Сначала отключите CherryLink Pro AI. Два плагина CherryLink не могут работать одновременно."
 
@@ -27,75 +26,66 @@ msgstr "Сначала отключите CherryLink Pro AI. Два плагин
 msgid "Could not reach the CherryLink server. Try again in a moment."
 msgstr "Не удалось связаться с сервером CherryLink. Повторите через минуту."
 
-#: src/Admin/AdminApi.php:126
+#: src/Admin/AdminApi.php:125
 msgid "Invalid settings."
 msgstr "Некорректные настройки."
 
-#: src/Admin/AdminApi.php:142
-#: src/Admin/AdminApi.php:469
-msgid "Enter a license key."
-msgstr "Введите ключ лицензии."
-
-#: src/Admin/AdminApi.php:114
-#: src/Admin/AdminApi.php:157
+#: src/Admin/AdminApi.php:112
+#: src/Admin/AdminApi.php:154
 msgid "Unknown action."
 msgstr "Неизвестное действие."
 
-#: src/Admin/AdminApi.php:169
+#: src/Admin/AdminApi.php:166
 msgid "Could not delete the site data on the CherryLink server. Check the connection and try again."
 msgstr "Не удалось удалить данные сайта на сервере CherryLink. Проверьте соединение и повторите."
 
-#: src/Admin/AdminApi.php:188
+#: src/Admin/AdminApi.php:185
 msgid "Could not import: choose a .txt file exported from CherryLink."
 msgstr "Не удалось импортировать: выберите файл .txt, экспортированный из CherryLink."
 
-#: src/Admin/AdminApi.php:465
-msgid "Could not reach the license server. Try again later or contact support."
-msgstr "Не удалось связаться с сервером лицензий. Повторите позже или обратитесь в поддержку."
-
-#: src/Admin/AdminApi.php:467
+#: src/Admin/AdminApi.php:464
 msgid "The key is being checked in the background. Refresh in a few seconds."
 msgstr "Ключ проверяется в фоне. Обновите страницу через несколько секунд."
 
-#: src/Admin/AdminApi.php:471
+#: src/Admin/AdminApi.php:468
 msgid "Could not schedule the key check. Try again."
 msgstr "Не удалось запланировать проверку ключа. Повторите попытку."
 
-#: src/Admin/AdminApi.php:473
+#: src/Admin/AdminApi.php:470
 msgid "This key is bound to another domain."
 msgstr "Этот ключ привязан к другому домену."
 
-#: src/Admin/AdminApi.php:475
+#: src/Admin/AdminApi.php:472
 msgid "This key has expired."
 msgstr "Срок действия ключа истёк."
 
-#: src/Admin/AdminApi.php:477
+#: src/Admin/AdminApi.php:474
 msgid "This key is not valid."
 msgstr "Этот ключ недействителен."
 
-#: src/Admin/AdminApi.php:495
+#: src/Admin/AdminApi.php:491
 msgid "Could not verify the domain: the CherryLink server could not open your site over HTTPS. The site must be reachable from the internet; for private sites enter a key manually."
 msgstr "Не удалось подтвердить домен: сервер CherryLink не смог открыть адрес сайта по HTTPS. Сайт должен быть доступен из интернета; для закрытых сайтов введите ключ вручную."
 
 #. translators: %d: seconds to wait
-#: src/Admin/AdminApi.php:499
+#: src/Admin/AdminApi.php:495
 #, php-format
 msgid "Too many connection attempts. Try again in %d s."
 msgstr "Слишком много попыток подключения. Повторите через %d с."
 
-#: src/Admin/AdminApi.php:500
+#: src/Admin/AdminApi.php:496
 msgid "Too many connection attempts. Try again later."
 msgstr "Слишком много попыток подключения. Повторите позже."
 
-#: src/Admin/AdminApi.php:502
+#: src/Admin/AdminApi.php:498
 msgid "This domain cannot be connected (a public domain is required, not an IP address or localhost)."
 msgstr "Домен сайта не подходит для подключения (нужен публичный домен, не IP-адрес и не localhost)."
 
-#: src/Admin/AdminApi.php:504
+#: src/Admin/AdminApi.php:500
 msgid "Connecting is not available for this domain. Enter a key manually or contact support."
 msgstr "Для этого домена подключение недоступно. Введите ключ вручную или обратитесь в поддержку."
 
-#: src/Admin/AdminApi.php:506
+#: src/Admin/AdminApi.php:502
 msgid "The connection service is temporarily unavailable. Try again later."
 msgstr "Сервис подключения временно недоступен. Повторите позже."
 
@@ -106,7 +96,6 @@ msgid "Settings"
 msgstr "Настройки"
 
 #. Author of the plugin
-#: cherrylink_main.php
 #: src/Admin/AdminMenu.php:75
 #: js/cherry-gutenberg.js:3
 msgid "CherryLink"
@@ -128,7 +117,7 @@ msgstr "Здоровье ссылок"
 msgid "Index"
 msgstr "Индекс"
 
-#: src/Admin/AdminMenu.php:185
+#: src/Admin/AdminMenu.php:151
 #: src/Support/Connect.php:88
 msgid "Insufficient permissions."
 msgstr "Недостаточно прав."
@@ -140,10 +129,6 @@ msgstr "Исх"
 #: src/Admin/StatsColumn.php:48
 msgid "In"
 msgstr "Вх"
-
-#: src/Indexing/AsyncBulkScan.php:282
-msgid "The license is inactive — synchronization is unavailable."
-msgstr "Лицензия неактивна — синхронизация недоступна."
 
 #: src/Indexing/AsyncBulkScan.php:340
 msgid "Asynchronous indexing is unavailable. Uploading will resume automatically."
@@ -162,7 +147,7 @@ msgid "Stopping the scan…"
 msgstr "Остановка сканирования…"
 
 #: src/Indexing/AsyncBulkScan.php:434
-#: src/Indexing/SyncService.php:288
+#: src/Indexing/SyncService.php:285
 msgid "Stopped by user"
 msgstr "Остановлено пользователем"
 
@@ -189,62 +174,58 @@ msgid "Processing on the server: %1$d of %2$d, %3$d queued."
 msgstr "Обработка на сервере: %1$d из %2$d, в очереди %3$d."
 
 #. translators: 1: <time> element with the formatted scan date, 2: upserted count, 3: deleted count
-#: src/Indexing/IndexHooks.php:287
+#: src/Indexing/IndexHooks.php:286
 #, php-format
 msgid "Last scan: %1$s (updated: %2$d, removed: %3$d)."
 msgstr "Последнее сканирование: %1$s (обновлено: %2$d, удалено: %3$d)."
 
-#: src/Indexing/IndexHooks.php:295
+#: src/Indexing/IndexHooks.php:294
 msgid "Scan not complete"
 msgstr "Сканирование не завершено"
 
-#: src/Indexing/IndexHooks.php:298
+#: src/Indexing/IndexHooks.php:297
 msgid "All good"
 msgstr "Все хорошо"
 
-#: src/Indexing/IndexHooks.php:301
+#: src/Indexing/IndexHooks.php:300
 msgid "You need to scan the site"
 msgstr "Нужно просканировать сайт"
 
+#: src/Indexing/IndexHooks.php:343
 #: src/Indexing/IndexHooks.php:344
-#: src/Indexing/IndexHooks.php:345
 msgid " loading data…"
 msgstr " загрузка данных…"
 
-#: src/Indexing/IndexHooks.php:414
-#: src/Indexing/IndexHooks.php:422
+#: src/Indexing/IndexHooks.php:413
+#: src/Indexing/IndexHooks.php:421
 msgid " failed to retrieve data (no connection to the server)."
 msgstr " не удалось получить данные (нет связи с сервером)."
 
 #. translators: %d: number of indexed articles
-#: src/Indexing/IndexHooks.php:418
+#: src/Indexing/IndexHooks.php:417
 #, php-format
 msgid " %d articles indexed in the Vector API."
 msgstr " проиндексировано %d статей в Vector API."
 
-#: src/Indexing/IndexHooks.php:419
+#: src/Indexing/IndexHooks.php:418
 msgid " articles are not indexed, run a scan."
 msgstr " статьи не проиндексированы, запустите сканирование."
 
 #. translators: %d: number of links found
-#: src/Indexing/IndexHooks.php:426
+#: src/Indexing/IndexHooks.php:425
 #, php-format
 msgid " %d links found in posts and pages."
 msgstr " найдено %d ссылок в записях и страницах."
 
-#: src/Indexing/IndexHooks.php:427
+#: src/Indexing/IndexHooks.php:426
 msgid " no links found."
 msgstr " ссылки не найдены."
 
-#: src/Indexing/SyncService.php:213
-msgid "License inactive — synchronization is unavailable. Enter your license key."
-msgstr "Лицензия неактивна — синхронизация недоступна. Введите ключ лицензии."
-
-#: src/Indexing/SyncService.php:270
+#: src/Indexing/SyncService.php:267
 msgid "Could not schedule the scan. Please try again."
 msgstr "Не удалось запланировать сканирование. Попробуйте снова."
 
-#: src/Indexing/SyncService.php:643
+#: src/Indexing/SyncService.php:642
 msgid "No changes found"
 msgstr "Изменений не найдено"
 
@@ -252,7 +233,7 @@ msgstr "Изменений не найдено"
 msgid "Every five minutes (CherryLink)"
 msgstr "Every five minutes (CherryLink)"
 
-#: src/Support/Options.php:162
+#: src/Support/Options.php:153
 msgid "Nothing found..."
 msgstr "Ничего не найдено..."
 
@@ -271,23 +252,9 @@ msgstr "Подключить"
 msgid "Hide"
 msgstr "Скрыть"
 
-#: templates/notices/license-inactive.php:12
-msgid "license inactive — indexing and scanning are paused, links are not being updated."
-msgstr "лицензия неактивна — индексация и сканирование приостановлены, ссылки не обновляются."
-
-#: templates/notices/license-inactive.php:12
+#: templates/notices/not-connected.php:12
 msgid "The internal linking index is not synchronized"
 msgstr "Индекс перелинковки не синхронизирован"
-
-#. translators: %s: human-readable date since which changes have not been indexed
-#: templates/notices/license-inactive.php:14
-#, php-format
-msgid "(changes since %s are not indexed). Activate your key and run a scan to restore synchronization."
-msgstr "(изменения с %s не проиндексированы). Активируйте ключ и запустите сканирование, чтобы восстановить синхронизацию."
-
-#: templates/notices/license-inactive.php:15
-msgid "Enter your license key"
-msgstr "Введите ключ лицензии"
 
 #: js/cherry-app.js:1
 msgid "Cancel"
@@ -354,11 +321,6 @@ msgstr "Подключить и получить бесплатный ключ"
 #: js/cherry-app.js:1
 msgid "I already have a key"
 msgstr "У меня уже есть ключ"
-
-#: js/cherry-app.js:1
-#: js/cherry-app.js:22
-msgid "License key"
-msgstr "Ключ лицензии"
 
 #: js/cherry-app.js:1
 #: js/cherry-app.js:22
@@ -786,10 +748,6 @@ msgid "Settings sections"
 msgstr "Разделы настроек"
 
 #: js/cherry-app.js:18
-msgid "License"
-msgstr "Лицензия"
-
-#: js/cherry-app.js:18
 #: js/cherry-app.js:22
 msgid "Editor panel"
 msgstr "Панель редактора"
@@ -813,7 +771,7 @@ msgstr "Импорт / экспорт"
 msgid "Troubleshooting"
 msgstr "Диагностика"
 
-#. translators: %s: masked license key
+#. translators: %s: masked API key
 #: js/cherry-app.js:19
 #, js-format
 msgid "Key %s"
@@ -933,10 +891,6 @@ msgid "Preview"
 msgstr "Предпросмотр"
 
 #: js/cherry-app.js:22
-msgid "While connected, CherryLink receives your posts' titles, text and URLs, plus plugin, PHP and WordPress versions for compatibility."
-msgstr "Пока сайт подключён, CherryLink получает заголовки, тексты и адреса ваших записей, а также версии плагина, PHP и WordPress для совместимости."
-
-#: js/cherry-app.js:22
 msgid "To stop all data transfer, remove the site data on the Index page and disconnect."
 msgstr "Чтобы остановить любую передачу данных, удалите данные сайта на странице «Индекс» и отключите сайт."
 
@@ -1003,10 +957,6 @@ msgstr "Отключить"
 #: js/cherry-app.js:22
 msgid "Reset settings?"
 msgstr "Сбросить настройки?"
-
-#: js/cherry-app.js:22
-msgid "All CherryLink settings return to their defaults. Your license stays connected."
-msgstr "Все настройки CherryLink вернутся к значениям по умолчанию. Лицензия останется подключённой."
 
 #: js/cherry-app.js:22
 msgid "Settings reset to defaults."
@@ -1773,12 +1723,60 @@ msgid "Find posts to link to"
 msgstr "Найти статьи, на которые можно сослаться"
 
 #. Plugin URI of the plugin
-#. Author URI of the plugin
-#: cherrylink_main.php
 msgid "https://cherrylink.app/"
 msgstr "https://cherrylink.app/"
 
 #. Description of the plugin
-#: cherrylink_main.php
 msgid "AI internal linking for WordPress: find related posts, get anchor phrase suggestions in the editor, and audit your link structure."
 msgstr "ИИ-перелинковка для WordPress: находит связанные записи, подсказывает анкоры прямо в редакторе и проверяет структуру внутренних ссылок."
+
+#: src/Admin/AdminApi.php:139
+#: src/Admin/AdminApi.php:466
+msgid "Enter an API key."
+msgstr "Введите ключ API."
+
+#: src/Admin/AdminApi.php:462
+msgid "Could not reach the CherryLink server. Try again later or contact support."
+msgstr "Не удалось связаться с сервером CherryLink. Повторите позже или обратитесь в поддержку."
+
+#: src/Editor/PanelApi.php:284
+msgid "Connect CherryLink to get suggestions."
+msgstr "Подключите CherryLink, чтобы получать подсказки."
+
+#: src/Indexing/AsyncBulkScan.php:282
+msgid "Not connected — synchronization is unavailable."
+msgstr "Нет подключения — синхронизация недоступна."
+
+#: src/Indexing/SyncService.php:210
+msgid "Not connected — synchronization is unavailable. Connect CherryLink or enter your API key."
+msgstr "Нет подключения — синхронизация недоступна. Подключите CherryLink или введите ключ API."
+
+#: templates/notices/not-connected.php:12
+msgid "not connected — indexing and scanning are paused, links are not being updated."
+msgstr "нет подключения — индексация и сканирование приостановлены, ссылки не обновляются."
+
+#. translators: %s: human-readable date since which changes have not been indexed
+#: templates/notices/not-connected.php:14
+msgid "(changes since %s are not indexed). Reconnect and run a scan to restore synchronization."
+msgstr "(изменения с %s не проиндексированы). Подключитесь заново и запустите сканирование, чтобы восстановить синхронизацию."
+
+#: templates/notices/not-connected.php:15
+msgid "Enter your API key"
+msgstr "Введите ключ API"
+
+#: js/cherry-app.js:1
+#: js/cherry-app.js:22
+msgid "API key"
+msgstr "Ключ API"
+
+#: js/cherry-app.js:18
+msgid "Connection"
+msgstr "Подключение"
+
+#: js/cherry-app.js:22
+msgid "While connected, CherryLink receives your posts' titles, text and URLs."
+msgstr "Пока сайт подключён, CherryLink получает заголовки, тексты и адреса ваших записей."
+
+#: js/cherry-app.js:22
+msgid "All CherryLink settings return to their defaults. Your site stays connected."
+msgstr "Все настройки CherryLink вернутся к значениям по умолчанию. Сайт останется подключённым."

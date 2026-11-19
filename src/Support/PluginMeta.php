@@ -8,9 +8,7 @@ use CherryLink\Plugin;
 
 /**
  * Plugin metadata helpers: the header version, cache-busting asset versions, and the
- * "are we on the CherryLink settings screen" check. Ported from the static bits of the
- * legacy LinkatePosts god-class (get_linkate_version / asset_ver /
- * linkate_is_plugin_admin_page).
+ * "are we on the CherryLink settings screen" check.
  */
 final class PluginMeta
 {

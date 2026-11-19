@@ -7,7 +7,7 @@ const row = (id, phrase) => ({
     suggestions: [{ phrase, context: `some [${phrase}] here`, block_index: 0 }],
 });
 
-const config = { ajaxUrl: '/ajax', nonce: 'n1', postId: 7, isTerm: false, host: 'classic', licensed: true, options: { showCatFilter: false, noSelectionAction: 'placeholder', limit: 10 } };
+const config = { ajaxUrl: '/ajax', nonce: 'n1', postId: 7, isTerm: false, host: 'classic', connected: true, options: { showCatFilter: false, noSelectionAction: 'placeholder', limit: 10 } };
 
 function makeAdapter() {
     let links = [];
@@ -122,13 +122,17 @@ describe('App', () => {
         expect(calls.find((c) => c.action === 'donor_insert').body).toEqual({ donor_id: 9, target_id: 7, phrase: 'p', block_index: 0 });
     });
 
-    it('shows a single Connect button without fetching when not connected', () => {
-        render(<App adapter={makeAdapter()} config={{ ...config, licensed: false, connectUrl: '/wp-admin/options-general.php?page=cherrylink-pro' }} />);
+    it('offers Connect for service features, never calls the service, and keeps the local categories tool', async () => {
+        render(<App adapter={makeAdapter()} config={{ ...config, connected: false, connectUrl: '/wp-admin/admin.php?page=cherrylink' }} />);
         expect(screen.getByText(/CherryLink is not connected yet/)).toBeInTheDocument();
-        const link = screen.getByText('Connect CherryLink');
-        expect(link.closest('a')).toHaveAttribute('href', '/wp-admin/options-general.php?page=cherrylink-pro');
-        expect(screen.getAllByRole('link')).toHaveLength(1);
-        expect(global.fetch).not.toHaveBeenCalled();
+        expect(screen.getByText('Connect CherryLink').closest('a')).toHaveAttribute('href', '/wp-admin/admin.php?page=cherrylink');
+        fireEvent.click(screen.getByText('Incoming links'));
+        expect(screen.getByText(/CherryLink is not connected yet/)).toBeInTheDocument();
+        // "All posts" opens on the local Categories list (no service call for the post list).
+        fireEvent.click(screen.getByText('All posts'));
+        await waitFor(() => expect(calls.some((c) => c.action === 'cherrylink_panel_terms')).toBe(true));
+        const services = ['cherrylink_panel_links', 'cherrylink_panel_incoming', 'cherrylink_panel_donors', 'cherrylink_panel_key_pin'];
+        expect(calls.filter((c) => services.includes(c.action))).toHaveLength(0);
     });
 
     it('shows the plan line in the strip only when the limit cuts the index', async () => {

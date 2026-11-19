@@ -9,10 +9,6 @@ namespace CherryLink\CustomFields;
  * merging, current-post resolution, and the WHERE-clause fragments that filter the
  * vector-API candidate IDs down through WordPress (status / type / category / author).
  *
- * Ported verbatim from the legacy cherrylink_cf.php (now a shim that keeps the
- * link_cf_* / linkate_get_image_sizes globals as delegators). The only caller of the
- * query helpers is \CherryLink\Editor\SuggestionsResults; linkate_get_image_sizes is
- * still used by the ACF settings form.
  */
 final class Cf
 {

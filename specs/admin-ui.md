@@ -18,8 +18,7 @@ Design reference (static HTML boards, read for layout/copy):
 - Until connected the Dashboard page renders the setup wizard; the other pages show a single
   "Connect CherryLink first" card linking to it. After Connect, the wizard continues (Analyze → Done)
   until `cherrylink_setup_done` option is set (Skip / Continue / Go to dashboard).
-- Old URL `options-general.php?page=cherrylink-pro[...]` redirects (admin_init, before the page check)
-  to `admin.php?page=cherrylink`, preserving `cl_connect`/`cl_retry`. Plugin-row "Settings" link, notices,
+- Plugin-row "Settings" link, notices,
   `Connect::settingsUrl()` and panel config URLs point to the new pages.
 - English source strings. Every plan term carries a translator comment:
   "learned" = post analyzed for suggestions, counts toward the plan limit; "checked"/"mapped" = post whose
@@ -30,7 +29,7 @@ Design reference (static HTML boards, read for layout/copy):
 ```
 { page: 'dashboard'|'links'|'index'|'settings',
   ajaxUrl, nonce,                       // Security::nonce()
-  connect: { postUrl, action, nonce, error },   // admin-post Connect::ACTION form; error = translated cl_connect message or ''
+  connect: { postUrl, action, nonce, error },   // admin-post Connect::ACTION form; error = translated cherrylink_result message or ''
   urls: { dashboard, links, index, settings, exportSettings, editPost /* admin_url('post.php?action=edit&post=') */,
           upgrade, pricing, terms, privacy, docs, limits },   // user-facing ones from Support\Urls
   state: <cherrylink_admin_state payload> }
@@ -49,7 +48,7 @@ Design reference (static HTML boards, read for layout/copy):
 | `cherrylink_admin_reset_settings` | – | `{state}` (`Options::fill(null)`, keeps license) |
 | `cherrylink_admin_setup_done` | – | `{}` sets `cherrylink_setup_done` |
 
-Reused unchanged: `linkate_sync_start|status|cancel|tick` (scan), `linkate_orphan_donors` (Find donors),
+Reused unchanged: `cherrylink_sync_start|status|cancel|tick` (scan), `cherrylink_orphan_donors` (Find donors),
 `cherrylink_server_status` (Check connection), `admin-post.php?action=cherrylink_export_options` (export).
 
 ### state
@@ -60,7 +59,7 @@ Reused unchanged: `linkate_sync_start|status|cancel|tick` (scan), `linkate_orpha
              domain, expires_at: string|null, status: 'active'|'pending'|'error'|'none', error: string },
   counts:  { total, types: [{name,label,count,enabled}], learned: int|null, checked: int|null, links: int|null },
   sync:    SyncService::getState() + { running: bool },
-  last_scan: { gmt, upserted, deleted } | null,   // last completed scan (linkate_posts_meta)
+  last_scan: { gmt, upserted, deleted } | null,   // last completed scan (cherrylink_state)
   route:   'direct'|'relay',
   settings: { <every whitelisted key, typed> },
   settings_choices: { authors: [{id, name}], categories: [{id, name, level}] } }
@@ -109,12 +108,11 @@ then delete `link_before|link_after|term_before|term_after`. Changing options ne
 No alt-server toggle. `Api\Client` sends directly; on a transport failure (WP_Error, no HTTP status) of the
 direct route it sets transient `cherrylink_relay_until` (24 h) and retries that request once via the relay
 port within the remaining budget. While the transient is set, requests use the relay. Route shown in
-Settings › Troubleshooting. The legacy `use_alt_server` option is ignored and removed on upgrade.
+Settings › Troubleshooting.
 
 ## Reports / hosts
 
-Lifecycle reports run iff connected (`License::isConnected()`); the `lifecycle_reports` option and its UI are
-removed. Licensing default `https://api.cherrylink.app/cherrylink-pro-licensing/` (override constant stays).
+The plugin sends no usage or lifecycle reports. Licensing default `https://api.cherrylink.app/cherrylink-pro-licensing/` (override constant stays).
 User-facing links live only in `Support\Urls` (cherrylink.app; may become market-aware, see plan step 6).
 
 ## Content types and the plan limit
@@ -140,7 +138,7 @@ up to five anchor calls each) and **Not learned on your plan** (orphans outside 
 headings appear only when there is a selected page or locked rows. Export CSV still exports every row.
 
 No outgoing tab: the Related posts cell holds "Find posts to link to" (on click, never preloaded).
-`linkate_post_targets` runs the editor panel pipeline (`SuggestionsResults::rows`, one search call on
+`cherrylink_post_targets` runs the editor panel pipeline (`SuggestionsResults::rows`, one search call on
 the saved content) and returns up to five targets in the donors shape, each with a link phrase from
 this post that no earlier target already uses; Edit opens this post. Results are kept per tab, since a
 post can be both an orphan and without outgoing links.
@@ -151,7 +149,7 @@ The API deletes a free site's index (vectors, link graph, inventory) after 180 d
 `plan.index_expired: true` in `GET /v1/capabilities`. `Capabilities::summarize()` carries it into the cached
 snapshot (`plan.index_expired`, default false; absent on older APIs). `AdminApi::state()` exposes
 `index_expired`; when set, the Dashboard shows a "Your site data was removed" notice with one **Analyze site**
-button (the normal `linkate_sync_start`), hides the stale link-health cards, and Link health shows the same
+button (the normal `cherrylink_sync_start`), hides the stale link-health cards, and Link health shows the same
 notice instead of cached results. `SyncService::start()` clears the cached flag locally and deletes the
 `cherrylink_link_health` option, so the notice disappears at once instead of after the 5-minute refresh (the
 API flips it back on `POST /v1/sync/plan`). The editor strip shows a `.cl-plan-note` (`config.indexExpired`,

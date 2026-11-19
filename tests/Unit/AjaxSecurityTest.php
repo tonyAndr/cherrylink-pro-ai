@@ -31,7 +31,7 @@ final class AjaxSecurityTest extends TestCase
 
     public function testVerifyChecksSharedNonceThenCapability(): void
     {
-        Functions\expect('check_ajax_referer')->once()->with('cherry_nonce');
+        Functions\expect('check_ajax_referer')->once()->with('cherrylink_nonce');
         Functions\expect('current_user_can')->once()->with('edit_posts')->andReturn(true);
         Functions\expect('wp_send_json_error')->never();
 
@@ -67,7 +67,7 @@ final class AjaxSecurityTest extends TestCase
 
     public function testNonceUsesSharedAction(): void
     {
-        Functions\expect('wp_create_nonce')->once()->with('cherry_nonce')->andReturn('abc123');
+        Functions\expect('wp_create_nonce')->once()->with('cherrylink_nonce')->andReturn('abc123');
 
         $this->assertSame('abc123', Security::nonce());
     }
@@ -75,6 +75,6 @@ final class AjaxSecurityTest extends TestCase
     public function testNonceConstantIsStable(): void
     {
         // The token name is load-bearing: it must match the Gutenberg localization.
-        $this->assertSame('cherry_nonce', Security::NONCE);
+        $this->assertSame('cherrylink_nonce', Security::NONCE);
     }
 }

@@ -20,7 +20,7 @@ function Connect() {
     const { boot, api, state, setState, urls } = useAdmin();
     const [showKey, setShowKey] = useState(false);
     const [key, setKey] = useState('');
-    const [checking, setChecking] = useState(state.has_key && state.license.status === 'pending');
+    const [checking, setChecking] = useState(state.has_key && state.connection.status === 'pending');
     const [err, setErr] = useState('');
 
     useEffect(() => {
@@ -31,9 +31,9 @@ function Connect() {
                 const s = await api('cherrylink_admin_state');
                 if (dead) return;
                 setState(s);
-                if (s.license.status !== 'pending') {
+                if (s.connection.status !== 'pending') {
                     setChecking(false);
-                    if (!s.connected) setErr(s.license.error || __('This key was not accepted.', 'cherrylink-ai'));
+                    if (!s.connected) setErr(s.connection.error || __('This key was not accepted.', 'cherrylink-ai'));
                 }
             } catch (e) { /* retry */ }
         }, 2000);
@@ -43,7 +43,7 @@ function Connect() {
     const useKey = async () => {
         setErr('');
         try {
-            setState(await api('cherrylink_admin_license', { op: 'set_key', key }));
+            setState(await api('cherrylink_admin_connection', { op: 'set_key', key }));
             setChecking(true);
         } catch (e) {
             setErr(e.message);
@@ -77,7 +77,7 @@ function Connect() {
             )}
             {showKey && !checking && (
                 <div className="cl-stack cl-top">
-                    <label htmlFor="cl-key"><strong>{__('License key', 'cherrylink-ai')}</strong></label>
+                    <label htmlFor="cl-key"><strong>{__('API key', 'cherrylink-ai')}</strong></label>
                     <div className="cl-row">
                         <input id="cl-key" type="text" className="cl-input cl-grow" placeholder="clp_…" value={key} onChange={(e) => setKey(e.target.value)} />
                         <Btn kind="outline" disabled={!key.trim()} onClick={useKey}>{__('Use this key', 'cherrylink-ai')}</Btn>
@@ -132,7 +132,7 @@ function Analyze({ onDone }) {
     const types = state.counts.types || [];
     const [sel, setSel] = useState(types.filter((t) => t.enabled).map((t) => t.name));
     const [saveErr, setSaveErr] = useState('');
-    const limit = state.license.post_limit;
+    const limit = state.connection.post_limit;
     const found = types.filter((t) => sel.includes(t.name)).reduce((a, t) => a + t.count, 0);
     const running = sync.status === 'running';
     const finished = sync.status === 'done';
@@ -157,7 +157,7 @@ function Analyze({ onDone }) {
 
     return (
         <Card className="cl-card cl-wide">
-            <div className="cl-row"><h1>{__('Analyze your site', 'cherrylink-ai')}</h1><Badge>{state.license.plan === 'free' ? __('Connected · Free', 'cherrylink-ai') : __('Connected', 'cherrylink-ai')}</Badge></div>
+            <div className="cl-row"><h1>{__('Analyze your site', 'cherrylink-ai')}</h1><Badge>{state.connection.plan === 'free' ? __('Connected · Free', 'cherrylink-ai') : __('Connected', 'cherrylink-ai')}</Badge></div>
             {(error || saveErr) && <Notice tone="danger">{error || saveErr}</Notice>}
             {sync.status === 'error' && <Notice tone="danger">{sync.last_error || sync.message || __('The analysis stopped with an error.', 'cherrylink-ai')}</Notice>}
             {!running && !finished && (

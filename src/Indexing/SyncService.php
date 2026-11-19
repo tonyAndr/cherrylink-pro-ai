@@ -7,6 +7,7 @@ namespace CherryLink\Indexing;
 use ActionScheduler;
 use ActionScheduler_Store;
 use CherryLink\Admin\AdminApi;
+use CherryLink\Ajax\Input;
 use CherryLink\Ajax\Security;
 use CherryLink\Api\Client;
 use CherryLink\Contracts\Registerable;
@@ -21,10 +22,6 @@ use CherryLink\Support\WorkerLock;
  * Start it and walk away: the scan runs as a chain of self-rescheduling background
  * actions, surviving page navigation, refresh, and browser close. A Stop control
  * cancels it cleanly.
- *
- * Ported verbatim from the legacy cherrylink_sync.php (now a thin shim that keeps
- * the CL_SYNC_* constant names for back-compat). The option keys the state/plan are
- * persisted under are unchanged, so an in-flight scan survives this refactor.
  *
  * Reuses the same building blocks as the foreground scan:
  *   IndexHelpers::compute_sync_plan()  — pure diff (new/changed vs orphaned)
@@ -115,10 +112,10 @@ final class SyncService implements Registerable
     {
         \add_action(self::HOOK, [$this, 'worker'], 10, 4);
 
-        \add_action('wp_ajax_linkate_sync_start', [$this, 'ajaxStart']);
-        \add_action('wp_ajax_linkate_sync_cancel', [$this, 'ajaxCancel']);
-        \add_action('wp_ajax_linkate_sync_status', [$this, 'ajaxStatus']);
-        \add_action('wp_ajax_linkate_sync_tick', [$this, 'ajaxTick']);
+        \add_action('wp_ajax_cherrylink_sync_start', [$this, 'ajaxStart']);
+        \add_action('wp_ajax_cherrylink_sync_cancel', [$this, 'ajaxCancel']);
+        \add_action('wp_ajax_cherrylink_sync_status', [$this, 'ajaxStatus']);
+        \add_action('wp_ajax_cherrylink_sync_tick', [$this, 'ajaxTick']);
     }
 
     // ── State helpers ─────────────────────────────────────────────────────────
@@ -210,7 +207,7 @@ final class SyncService implements Registerable
         if (! $this->license->isLicensed()) {
             return $this->setState([
                 'status'  => 'error',
-                'message' => \__('License inactive — synchronization is unavailable. Enter your license key.', 'cherrylink-ai'),
+                'message' => \__('Not connected — synchronization is unavailable. Connect CherryLink or enter your API key.', 'cherrylink-ai'),
             ]);
         }
         if (! \function_exists('as_enqueue_async_action')) {
@@ -222,10 +219,10 @@ final class SyncService implements Registerable
 
         // Mark the sync as running and queue manifest retrieval. The prior PLAN stays
         // untouched until the worker has fetched a complete manifest.
-        $meta = \get_option('linkate_posts_meta', []);
+        $meta = \get_option('cherrylink_state', []);
         $previous_process = $meta['indexing_process'] ?? null;
         $meta['indexing_process'] = 'IN_PROGRESS';
-        \update_option('linkate_posts_meta', $meta);
+        \update_option('cherrylink_state', $meta);
 
         $state = $this->setState([
             'status'       => 'running',
@@ -258,13 +255,13 @@ final class SyncService implements Registerable
             $action_id = 0;
         }
         if (!$action_id) {
-            $meta = \get_option('linkate_posts_meta', []);
+            $meta = \get_option('cherrylink_state', []);
             if ($previous_process === null) {
                 unset($meta['indexing_process']);
             } else {
                 $meta['indexing_process'] = $previous_process;
             }
-            \update_option('linkate_posts_meta', $meta);
+            \update_option('cherrylink_state', $meta);
             return $this->setState([
                 'status' => 'error',
                 'message' => \__('Could not schedule the scan. Please try again.', 'cherrylink-ai'),
@@ -473,12 +470,12 @@ final class SyncService implements Registerable
         }
 
         if ($next_phase === 'done') {
-            $meta = \get_option('linkate_posts_meta', []);
+            $meta = \get_option('cherrylink_state', []);
             $meta['indexing_process'] = 'DONE';
             $meta['last_scan_gmt']    = \gmdate('Y-m-d H:i:s');
             $meta['last_upserted']    = (int) $state['upsert_total'];
             $meta['last_deleted']     = (int) $state['delete_total'];
-            \update_option('linkate_posts_meta', $meta);
+            \update_option('cherrylink_state', $meta);
             \delete_option(self::PLAN);
             $this->options->clearIndexDirty();   // index reconciled — clear any out-of-sync flag
             self::afterScan();
@@ -623,12 +620,12 @@ final class SyncService implements Registerable
 
         // Nothing changed — finish immediately, no background round-trip.
         if ($first === 'done') {
-            $meta = \get_option('linkate_posts_meta', []);
+            $meta = \get_option('cherrylink_state', []);
             $meta['indexing_process'] = 'DONE';
             $meta['last_scan_gmt']    = \gmdate('Y-m-d H:i:s');
             $meta['last_upserted']    = 0;
             $meta['last_deleted']     = 0;
-            \update_option('linkate_posts_meta', $meta);
+            \update_option('cherrylink_state', $meta);
             \delete_option(self::PLAN);
             $this->options->clearIndexDirty();   // index reconciled — clear any out-of-sync flag
             self::afterScan();
@@ -647,9 +644,9 @@ final class SyncService implements Registerable
             return;
         }
 
-        $meta = \get_option('linkate_posts_meta', []);
+        $meta = \get_option('cherrylink_state', []);
         $meta['indexing_process'] = 'IN_PROGRESS';
-        \update_option('linkate_posts_meta', $meta);
+        \update_option('cherrylink_state', $meta);
 
         $state = $this->setState(\array_merge($state, [
             'status'           => 'running',
@@ -806,20 +803,19 @@ final class SyncService implements Registerable
 
     public function ajaxStart(): void
     {
-        Security::verify('edit_posts');
-        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- gated by Security::verify()
-        \wp_send_json($this->start(! empty($_POST['force_full'])));
+        Security::verify('cherrylink_settings');
+        \wp_send_json($this->start((bool) Input::post('force_full', 'bool', false)));
     }
 
     public function ajaxCancel(): void
     {
-        Security::verify('edit_posts');
+        Security::verify('cherrylink_settings');
         \wp_send_json($this->cancel());
     }
 
     public function ajaxStatus(): void
     {
-        Security::verify('edit_posts');
+        Security::verify('cherrylink_settings');
         $state              = $this->getState();
         $state['scheduled'] = \function_exists('as_has_scheduled_action')
             ? \as_has_scheduled_action(self::HOOK, null, self::GROUP)
@@ -857,7 +853,7 @@ final class SyncService implements Registerable
      */
     public function ajaxTick(): void
     {
-        Security::verify('edit_posts');
+        Security::verify('cherrylink_settings');
         $ran = 0;
         $dispatched = false;
         $active = $this->asyncActive()

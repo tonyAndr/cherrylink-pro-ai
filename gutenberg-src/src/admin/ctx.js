@@ -16,8 +16,8 @@ export function useSync() {
         let t;
         const tick = async () => {
             try {
-                api('linkate_sync_tick').catch(() => {});
-                const s = await api('linkate_sync_status');
+                api('cherrylink_sync_tick').catch(() => {});
+                const s = await api('cherrylink_sync_status');
                 if (dead) return;
                 setSync(s);
                 if (s.status !== 'running') {
@@ -37,12 +37,12 @@ export function useSync() {
             const next = await api(action);
             setSync(next);
             // A started scan rebuilds a purged index: drop the "data removed" state at once.
-            if (action === 'linkate_sync_start' && state.index_expired) setState({ ...state, index_expired: false });
+            if (action === 'cherrylink_sync_start' && state.index_expired) setState({ ...state, index_expired: false });
         } catch (e) {
             setError(e.message);
         }
     };
-    return { sync, error, start: () => run('linkate_sync_start'), cancel: () => run('linkate_sync_cancel') };
+    return { sync, error, start: () => run('cherrylink_sync_start'), cancel: () => run('cherrylink_sync_cancel') };
 }
 
 /** Link-health payload; if never computed, refreshes once (explicit user-visible action on first view). */

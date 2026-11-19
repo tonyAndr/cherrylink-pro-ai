@@ -32,7 +32,7 @@ final class RequestLockTest extends TestCase
         Functions\expect('add_option')->never();
         Functions\expect('wp_remote_request')->never();
 
-        $this->assertNull(RequestLock::acquire('cl_test_lock', 10));
+        $this->assertNull(RequestLock::acquire('cherrylink_test_lock', 10));
     }
 
     public function testAcquireReturnsNullWhenAtomicInsertLosesRace(): void
@@ -40,13 +40,13 @@ final class RequestLockTest extends TestCase
         Functions\when('get_option')->justReturn('');
         Functions\when('wp_generate_uuid4')->justReturn('race-token');
         Functions\expect('add_option')->once()->with(
-            'cl_test_lock',
+            'cherrylink_test_lock',
             Mockery::pattern('/^\d+\|race-token$/'),
             '',
             false
         )->andReturn(false);
 
-        $this->assertNull(RequestLock::acquire('cl_test_lock', 10));
+        $this->assertNull(RequestLock::acquire('cherrylink_test_lock', 10));
     }
 
     public function testReleaseDeletesOnlyMatchingNameAndExactToken(): void
@@ -55,7 +55,7 @@ final class RequestLockTest extends TestCase
         $wpdb->options = 'wp_options';
         $wpdb->shouldReceive('prepare')->once()->with(
             'DELETE FROM wp_options WHERE option_name = %s AND option_value = %s',
-            'cl_test_lock',
+            'cherrylink_test_lock',
             '123|owner-token'
         )->andReturn('DELETE FROM wp_options WHERE option_name = ... AND option_value = ...');
         $queried = false;
@@ -66,7 +66,7 @@ final class RequestLockTest extends TestCase
         $GLOBALS['wpdb'] = $wpdb;
         Functions\expect('wp_cache_delete')->never();
 
-        RequestLock::release('cl_test_lock', '123|owner-token');
+        RequestLock::release('cherrylink_test_lock', '123|owner-token');
         $this->assertTrue($queried);
     }
 }

@@ -6,6 +6,8 @@ namespace CherryLink\Admin;
 
 use CherryLink\Contracts\Registerable;
 use CherryLink\Support\Connect;
+use CherryLink\Support\License;
+use CherryLink\Support\Options;
 use CherryLink\Support\View;
 
 /**
@@ -32,8 +34,7 @@ final class Notices implements Registerable
         if ($pagenow !== 'plugins.php' || ! \current_user_can('cherrylink_settings')) {
             return;
         }
-        $meta = \get_option('linkate_posts_meta', []);
-        if (! empty($meta['key_valid']) || \get_user_meta(\get_current_user_id(), self::DISMISS_META, true)) {
+        if ((new License(new Options()))->isConnected() || \get_user_meta(\get_current_user_id(), self::DISMISS_META, true)) {
             return;
         }
         $dismiss = \wp_nonce_url(\add_query_arg(self::DISMISS_ACTION, '1', \admin_url('plugins.php')), self::DISMISS_ACTION);
@@ -46,6 +47,7 @@ final class Notices implements Registerable
 
     public function maybeDismiss(): void
     {
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- presence check only; the nonce is verified by check_admin_referer() below
         if (! isset($_GET[self::DISMISS_ACTION]) || ! \current_user_can('cherrylink_settings')) {
             return;
         }

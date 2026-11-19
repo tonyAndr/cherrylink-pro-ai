@@ -32,14 +32,14 @@ final class ApiClientTest extends TestCase
         Functions\when('wp_strip_all_tags')->alias('strip_tags');
 
         // Runtime constants normally set by cherrylink_vector_api.php at include time.
-        if (!defined('CHERRY_VECTOR_API_URL')) {
-            define('CHERRY_VECTOR_API_URL', 'https://api.cherrylink.app');
+        if (!defined('CHERRYLINK_API_URL')) {
+            define('CHERRYLINK_API_URL', 'https://api.cherrylink.app');
         }
-        if (!defined('CL_ALT_API_PORT')) {
-            define('CL_ALT_API_PORT', 9443);
+        if (!defined('CHERRYLINK_ALT_API_PORT')) {
+            define('CHERRYLINK_ALT_API_PORT', 9443);
         }
-        if (!defined('CL_ALT_API_IP')) {
-            define('CL_ALT_API_IP', '31.129.48.202');
+        if (!defined('CHERRYLINK_ALT_API_IP')) {
+            define('CHERRYLINK_ALT_API_IP', '31.129.48.202');
         }
 
         // Stable identity + real URL parsing for the constructor.
@@ -144,30 +144,6 @@ final class ApiClientTest extends TestCase
 
         $this->assertFalse($result['ok']);
         $this->assertSame('HTTP 403: customer_license_required', $result['error']);
-    }
-
-    public function testReportPluginEventsPostsBoundedBatchInBackgroundContext(): void
-    {
-        Functions\when('get_option')->justReturn(['hash_field' => 'LICENSE123']);
-        $this->mockHttp(['accepted' => 1, 'duplicates' => 0]);
-
-        $result = (new Client(null, Client::CONTEXT_BACKGROUND))->report_plugin_events([[
-            'event_key'      => 'evt-00000001',
-            'action'         => 'plugin.upgraded',
-            'plugin_version' => '1.2.0',
-            'from_version'   => '1.1.1',
-            'occurred_at'    => '2026-11-11T09:00:00+00:00',
-            'environment'    => ['wp_version' => '6.5.5', 'multisite' => false],
-        ]]);
-
-        $this->assertTrue($result['ok']);
-        $this->assertSame(1, $result['accepted']);
-        $this->assertSame('https://api.cherrylink.app/v1/client-events', $this->captured['url']);
-        $this->assertSame('POST', $this->captured['args']['method']);
-        $this->assertSame(10, $this->captured['args']['timeout']);
-        $body = json_decode($this->captured['args']['body'], true);
-        $this->assertSame('evt-00000001', $body['events'][0]['event_key']);
-        $this->assertSame('1.1.1', $body['events'][0]['from_version']);
     }
 
     public function testKeyPagesPostsPinsAndDemotes(): void
@@ -465,7 +441,7 @@ final class ApiClientTest extends TestCase
         $this->assertTrue(Client::is_retryable_result(['status' => 429, 'error' => 'HTTP 429']));
         $this->assertTrue(Client::is_retryable_result(['status' => 503, 'error' => 'HTTP 503']));
         $this->assertFalse(Client::is_retryable_result(['status' => 400, 'error' => 'HTTP 400']));
-        $this->assertFalse(Client::is_retryable_result(['status' => 0, 'error' => 'no license key configured']));
+        $this->assertFalse(Client::is_retryable_result(['status' => 0, 'error' => 'no API key configured']));
     }
     public function testBackgroundContextRetainsLongBatchBudget(): void
     {

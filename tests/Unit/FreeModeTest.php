@@ -13,7 +13,6 @@ use CherryLink\Support\CapabilitiesRefresh;
 use CherryLink\Support\Connect;
 use CherryLink\Support\License;
 use CherryLink\Support\Options;
-use CherryLink\Support\PluginReports;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -41,16 +40,16 @@ final class FreeModeTest extends TestCase
     {
         parent::setUp();
         Monkey\setUp();
-        if (!defined('CHERRY_VECTOR_API_URL')) {
-            define('CHERRY_VECTOR_API_URL', 'https://api.cherrylink.app');
+        if (!defined('CHERRYLINK_API_URL')) {
+            define('CHERRYLINK_API_URL', 'https://api.cherrylink.app');
         }
-        if (!defined('CL_ALT_API_PORT')) {
-            define('CL_ALT_API_PORT', 9443);
+        if (!defined('CHERRYLINK_ALT_API_PORT')) {
+            define('CHERRYLINK_ALT_API_PORT', 9443);
         }
-        if (!defined('CL_ALT_API_IP')) {
-            define('CL_ALT_API_IP', '31.129.48.202');
+        if (!defined('CHERRYLINK_ALT_API_IP')) {
+            define('CHERRYLINK_ALT_API_IP', '31.129.48.202');
         }
-        $this->store = ['linkate-posts' => [], 'linkate_posts_meta' => []];
+        $this->store = ['cherrylink_options' => [], 'cherrylink_state' => []];
         $this->transients = [];
         $this->posts = [];
         $this->scheduled = [];
@@ -169,24 +168,24 @@ final class FreeModeTest extends TestCase
 
     public function testFreeKeyIsValidWithoutExpiryAndPaidExpiredFallbackStaysValid(): void
     {
-        $this->store['linkate-posts'] = ['hash_field' => 'k'];
-        $this->store['linkate_posts_meta'] = ['key_valid' => true, 'expires_at' => '', 'plan' => 'free'];
+        $this->store['cherrylink_options'] = ['hash_field' => 'k'];
+        $this->store['cherrylink_state'] = ['key_valid' => true, 'expires_at' => '', 'plan' => 'free'];
         $this->assertTrue($this->license()->isValid());
         $this->assertTrue($this->license()->isConnected());
 
         // Lapsed paid subscription answers plan free with a past expires_at.
-        $this->store['linkate_posts_meta'] = ['key_valid' => true, 'expires_at' => '2020-01-01 00:00:00', 'plan' => 'free', 'paid_expired' => true];
+        $this->store['cherrylink_state'] = ['key_valid' => true, 'expires_at' => '2020-01-01 00:00:00', 'plan' => 'free', 'paid_expired' => true];
         $this->assertTrue($this->license()->isValid());
     }
 
     public function testNonFreeKeysStillNeedAFutureExpiry(): void
     {
-        $this->store['linkate-posts'] = ['hash_field' => 'k'];
-        $this->store['linkate_posts_meta'] = ['key_valid' => true, 'expires_at' => '2020-01-01 00:00:00', 'plan' => 'pro'];
+        $this->store['cherrylink_options'] = ['hash_field' => 'k'];
+        $this->store['cherrylink_state'] = ['key_valid' => true, 'expires_at' => '2020-01-01 00:00:00', 'plan' => 'pro'];
         $this->assertFalse($this->license()->isValid());
-        $this->store['linkate_posts_meta'] = ['key_valid' => true, 'expires_at' => '2020-01-01 00:00:00']; // legacy
+        $this->store['cherrylink_state'] = ['key_valid' => true, 'expires_at' => '2020-01-01 00:00:00']; // legacy
         $this->assertFalse($this->license()->isValid());
-        $this->store['linkate_posts_meta'] = ['key_valid' => true, 'expires_at' => '2099-01-01 00:00:00'];
+        $this->store['cherrylink_state'] = ['key_valid' => true, 'expires_at' => '2099-01-01 00:00:00'];
         $this->assertTrue($this->license()->isValid());
     }
 
@@ -206,12 +205,12 @@ final class FreeModeTest extends TestCase
 
     public function testPostLimitOnlyForValidKeysWithALimit(): void
     {
-        $this->store['linkate-posts'] = ['hash_field' => 'k'];
-        $this->store['linkate_posts_meta'] = ['key_valid' => true, 'plan' => 'free', 'post_limit' => 1000];
+        $this->store['cherrylink_options'] = ['hash_field' => 'k'];
+        $this->store['cherrylink_state'] = ['key_valid' => true, 'plan' => 'free', 'post_limit' => 1000];
         $this->assertSame(1000, $this->license()->postLimit());
-        $this->store['linkate_posts_meta'] = ['key_valid' => true, 'plan' => 'pro', 'post_limit' => null, 'expires_at' => '2099-01-01'];
+        $this->store['cherrylink_state'] = ['key_valid' => true, 'plan' => 'pro', 'post_limit' => null, 'expires_at' => '2099-01-01'];
         $this->assertNull($this->license()->postLimit());
-        $this->store['linkate_posts_meta'] = ['key_valid' => true, 'expires_at' => '2099-01-01'];
+        $this->store['cherrylink_state'] = ['key_valid' => true, 'expires_at' => '2099-01-01'];
         $this->assertNull($this->license()->postLimit());
     }
 
@@ -243,8 +242,8 @@ final class FreeModeTest extends TestCase
         $this->assertSame(['nonce' => $body['nonce']], $seen, 'proof route served the nonce during the call');
         $this->assertInstanceOf(\WP_Error::class, $connect->proof(), 'nonce is gone afterwards');
 
-        $this->assertSame('free-key-1', $this->store['linkate-posts']['hash_field']);
-        $meta = $this->store['linkate_posts_meta'];
+        $this->assertSame('free-key-1', $this->store['cherrylink_options']['hash_field']);
+        $meta = $this->store['cherrylink_state'];
         $this->assertTrue($meta['key_valid']);
         $this->assertSame('free', $meta['plan']);
         $this->assertSame(1000, $meta['post_limit']);
@@ -318,7 +317,7 @@ final class FreeModeTest extends TestCase
         $this->assertFalse($result['ok']);
         $this->assertSame($code, $result['code']);
         $this->assertSame($retry, $result['retry_after']);
-        $this->assertSame('', (string) ($this->store['linkate-posts']['hash_field'] ?? ''), 'no key stored on failure');
+        $this->assertSame('', (string) ($this->store['cherrylink_options']['hash_field'] ?? ''), 'no key stored on failure');
         $this->assertArrayNotHasKey(Connect::NONCE_TRANSIENT, $this->transients);
     }
 
@@ -356,17 +355,12 @@ final class FreeModeTest extends TestCase
 
         (new CapabilitiesRefresh($license, new Capabilities()))->run();
 
-        $reports = new PluginReports($license);
-        $reports->recordActivation();
-        $reports->sweep();
-        $reports->send();
-
         $client = new Client();
         $this->assertNull($client->get_count());
         $this->assertNull($client->get_links_count());
         $diagnostics = $client->diagnostics();
         $this->assertFalse($diagnostics['probes']['health']['ok']);
-        $this->assertSame('', $this->store['linkate-posts']['hash_field'] ?? '');
+        $this->assertSame('', $this->store['cherrylink_options']['hash_field'] ?? '');
     }
 
     public function testSyncStartRefusesWhenNotConnected(): void
@@ -374,13 +368,5 @@ final class FreeModeTest extends TestCase
         Functions\expect('wp_remote_request')->never();
         $service = new SyncService(new Options(), $this->license());
         $this->assertSame('error', $service->start()['status']);
-    }
-
-    public function testConnectedFreeKeyEnablesReports(): void
-    {
-        $this->assertFalse(PluginReports::enabled());
-        $this->store['linkate-posts'] = ['hash_field' => 'k'];
-        $this->store['linkate_posts_meta'] = ['key_valid' => true, 'expires_at' => '', 'plan' => 'free'];
-        $this->assertTrue(PluginReports::enabled()); // connected: no opt-in flag any more
     }
 }

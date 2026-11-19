@@ -25,7 +25,7 @@ final class SuggestionsResults
      * @param array{post_id:int,is_term?:bool,source_html?:string,query?:string,category?:string,offset?:int,taxonomy?:string} $p
      * @return array{items:array<int,array<string,mixed>>,has_more:bool}
      */
-    public static function rows(array $p, string $option_key = 'linkate-posts'): array
+    public static function rows(array $p, string $option_key = \CherryLink\Support\Options::MAIN): array
     {
         $empty   = ['items' => [], 'has_more' => false];
         $post_id = (int) $p['post_id'];
@@ -146,8 +146,8 @@ final class SuggestionsResults
                 'url'         => LinkFields::url($option_key, $result),
                 'view_url'    => (string) \get_permalink($id),
                 'edit_url'    => \admin_url('post.php?post=' . $id . '&action=edit'),
-                'out'         => (int) \get_post_meta($id, 'cherry_outgoing', true),
-                'in'          => (int) \get_post_meta($id, 'cherry_income', true),
+                'out'         => (int) \get_post_meta($id, 'cherrylink_outgoing', true),
+                'in'          => (int) \get_post_meta($id, 'cherrylink_incoming', true),
                 'saturated'   => false,
                 'is_key'      => \in_array($id, $key_ids, true),
                 'match'       => $matches[$id] ?? '',
@@ -213,7 +213,7 @@ final class SuggestionsResults
         if ($consider_max && $results) {
             $max     = (int) $options['max_incoming_links'];
             $results = \array_values(\array_filter($results, static function ($row) use ($max) {
-                return (int) \get_post_meta($row->ID, 'cherry_income', true) < $max;
+                return (int) \get_post_meta($row->ID, 'cherrylink_incoming', true) < $max;
             }));
         }
 

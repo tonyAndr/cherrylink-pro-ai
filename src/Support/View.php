@@ -50,10 +50,10 @@ final class View
         // Isolate scope: a static closure keeps $this out, and the two internals
         // are passed as parameters under obscure names so real data keys (including
         // ones literally named "data" or "file") extract into scope uncollided.
-        $render = static function (string $__cl_tpl, array $__cl_vars): string {
-            \extract($__cl_vars, EXTR_SKIP);
+        $render = static function (string $__cherrylink_tpl, array $__cherrylink_vars): string {
+            \extract($__cherrylink_vars, EXTR_SKIP);
             \ob_start();
-            include $__cl_tpl;
+            include $__cherrylink_tpl;
             return (string) \ob_get_clean();
         };
 

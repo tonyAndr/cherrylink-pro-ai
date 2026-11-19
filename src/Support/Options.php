@@ -11,13 +11,12 @@ namespace CherryLink\Support;
  * legacy fill_options()), and a small typed read/write API over the two option
  * arrays the plugin persists:
  *
- *   - self::MAIN  ('linkate-posts')      the user-facing settings array
- *   - self::META  ('linkate_posts_meta') license-validation state
+ *   - self::MAIN  ('cherrylink_options')      the user-facing settings array
+ *   - self::META  ('cherrylink_state') license-validation state
  *
  * plus two standalone flags:
  *
  *   - self::INDEX_DIRTY ('cherrylink_index_dirty') "changed while unlicensed" marker
- *   - self::DEBUG_INFO  ('cherry_debug_info')      last wpdb query/error snapshot
  *
  * The class is stateless (every method reads/writes WP options live), so it is safe
  * to construct on demand or share a single instance. Legacy global functions now
@@ -27,16 +26,13 @@ namespace CherryLink\Support;
 final class Options
 {
     /** User-facing settings array. */
-    public const MAIN = 'linkate-posts';
+    public const MAIN = 'cherrylink_options';
 
     /** License-validation state (key_valid / expires_at / key_error_reason). */
-    public const META = 'linkate_posts_meta';
+    public const META = 'cherrylink_state';
 
     /** Timestamp marker: a post changed while the license was inactive. */
     public const INDEX_DIRTY = 'cherrylink_index_dirty';
-
-    /** Last wpdb query/error snapshot, for the debug panel. */
-    public const DEBUG_INFO = 'cherry_debug_info';
 
     // ── main settings array ────────────────────────────────────────────────
 
@@ -122,7 +118,7 @@ final class Options
     /**
      * Fill in defaults for any missing setting and persist the result. Ported
      * verbatim from the legacy fill_options() — behavior (including the loose
-     * null/[] "reset to defaults" branch, the show_static→show_pages migration,
+     * null/[] "reset to defaults" branch
      * and the always-forced no_selection_action / multilink values) is preserved
      * exactly and pinned by OptionDefaultsTest.
      *
@@ -152,11 +148,6 @@ final class Options
         }
         if (! isset($options['show_pages'])) {
             $options['show_pages'] = 'true'; // pages are analyzed by default (2.x)
-        }
-        // show_static is now show_pages
-        if (isset($options['show_static'])) {
-            $options['show_pages'] = $options['show_static'];
-            unset($options['show_static']);
         }
         if (! isset($options['none_text'])) {
             $options['none_text'] = \__('Nothing found...', 'cherrylink-ai');
@@ -205,9 +196,6 @@ final class Options
         $options['multilink'] = 'checked'; // always allow multiple links, not configurable
         if (! isset($options['anons_len'])) {
             $options['anons_len'] = 200;
-        }
-        if (! isset($options['linkate_scheme_exists'])) {
-            $options['linkate_scheme_exists'] = false; // since 1.4.0
         }
         if (! isset($options['relative_links'])) {
             $options['relative_links'] = 'full'; // since 1.4.9

@@ -16,7 +16,7 @@ final class LinkMarkup
     /**
      * @param string              $url     final href (relative-link format already applied by the caller)
      * @param string              $title   plain (unescaped) title
-     * @param array<string,mixed> $options linkate-posts options
+     * @param array<string,mixed> $options cherrylink_options options
      * @return array{open:string,close:string}
      */
     public static function build(string $url, string $title, array $options): array

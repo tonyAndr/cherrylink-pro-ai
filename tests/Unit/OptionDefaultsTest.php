@@ -22,7 +22,7 @@ final class OptionDefaultsTest extends TestCase
     {
         parent::setUp();
         Monkey\setUp();
-        // A fresh install calls fill_options((array) get_option('linkate-posts', [])),
+        // A fresh install calls fill_options((array) get_option('cherrylink_options', [])),
         // i.e. fill_options([]). Since [] == null in PHP, that enters the "reset to
         // defaults" branch, which re-reads the stored options to preserve the license
         // key before rebuilding every default. Mock that read + the final persist.
@@ -54,7 +54,6 @@ final class OptionDefaultsTest extends TestCase
             'hash_field'                  => '',
             'multilink'                   => 'checked',
             'anons_len'                   => 200,
-            'linkate_scheme_exists'       => false,
             'relative_links'              => 'full',
             'debug_enabled'               => 'false',
             'consider_max_incoming_links' => 'false',
@@ -98,7 +97,7 @@ final class OptionDefaultsTest extends TestCase
         $expectedKeys = [
             'anons_len', 'consider_max_incoming_links', 'debug_enabled', 'divider',
             'excluded_authors', 'excluded_cats', 'hash_field', 'limit_ajax',
-            'link_class', 'link_new_tab', 'link_title_attr', 'linkate_scheme_exists',
+            'link_class', 'link_new_tab', 'link_title_attr',
             'match_cat', 'max_incoming_links', 'multilink', 'no_selection_action',
             'none_text', 'relative_links', 'show_cat_filter', 'show_customs',
             'show_pages', 'show_private', 'status', 'template_image_size',

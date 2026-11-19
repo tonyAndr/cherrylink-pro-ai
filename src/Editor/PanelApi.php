@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace CherryLink\Editor;
 
+use CherryLink\Ajax\Input;
 use CherryLink\Ajax\Security;
 use CherryLink\Api\Client;
 use CherryLink\Contracts\Registerable;
 use CherryLink\Support\KeyPages;
+use CherryLink\Support\License;
 use CherryLink\Support\Options;
 use CherryLink\Terms\TermsService;
 
@@ -15,12 +17,36 @@ use CherryLink\Terms\TermsService;
  * AJAX backend of the unified editor panel (specs/unified-panel.md section 4).
  *
  * Every action: Security::verify('edit_posts') + a per-object capability check, JSON
- * body (php://input) with $_POST fallback, JSON reply `{ok:true,...}` or
- * `{ok:false,error,message}`.
+ * body (php://input) with $_POST fallback (every field sanitized by type, see FIELDS),
+ * JSON reply `{ok:true,...}` or `{ok:false,error,message}`.
+ *
+ * All actions are registered for every administrator-side request, connected or not.
+ * Actions that need the CherryLink service (links, incoming, donors, key_pin) answer
+ * `not_connected` until the site is connected; the local ones (terms, donor_insert,
+ * donor_undo) work without a connection.
  */
 final class PanelApi implements Registerable
 {
     private const UNDO_TTL = 3600;
+
+    /** Request fields the panel may send, by sanitization type (see Ajax\Input). */
+    private const FIELDS = [
+        'post_id'     => 'uint',
+        'object_id'   => 'uint',
+        'donor_id'    => 'uint',
+        'target_id'   => 'uint',
+        'block_index' => 'int',
+        'offset'      => 'uint',
+        'is_term'     => 'bool',
+        'query'       => 'text',
+        'category'    => 'text',
+        'taxonomy'    => 'key',
+        'type'        => 'key',
+        'mode'        => 'key',
+        'phrase'      => 'text',
+        'undo_token'  => 'key',
+        'source_html' => 'html',
+    ];
 
     /** @var Options */
     private $options;
@@ -31,16 +57,20 @@ final class PanelApi implements Registerable
     /** @var callable|null returns an Api\Client */
     private $client_factory;
 
-    public function __construct(?Options $options = null, ?callable $body_reader = null, ?callable $client_factory = null)
+    /** @var callable|null returns whether the site is connected to the service */
+    private $connected;
+
+    public function __construct(?Options $options = null, ?callable $body_reader = null, ?callable $client_factory = null, ?callable $connected = null)
     {
         $this->options        = $options ?? new Options();
         $this->body_reader    = $body_reader;
         $this->client_factory = $client_factory;
+        $this->connected      = $connected;
     }
 
     public function register(): void
     {
-        if (! \is_admin() || empty($this->options->meta()['key_valid'])) {
+        if (! \is_admin()) {
             return;
         }
         foreach (['links', 'terms', 'incoming', 'donors', 'donor_insert', 'donor_undo', 'key_pin'] as $action) {
@@ -52,7 +82,7 @@ final class PanelApi implements Registerable
 
     public function ajaxLinks(): void
     {
-        $in      = $this->start();
+        $in      = $this->start(true);
         $id      = (int) ($in['post_id'] ?? 0);
         $is_term = ! empty($in['is_term']);
         if (! $this->canEditObject($id, $is_term)) {
@@ -62,12 +92,12 @@ final class PanelApi implements Registerable
         $data = SuggestionsResults::rows([
             'post_id'     => $id,
             'is_term'     => $is_term,
-            // Live editor HTML for the API's block extractor: raw on purpose.
+            // Live editor HTML for the API's block extractor, already run through wp_kses_post().
             'source_html' => (string) ($in['source_html'] ?? ''),
-            'query'       => \sanitize_text_field((string) ($in['query'] ?? '')),
-            'category'    => \sanitize_text_field((string) ($in['category'] ?? '')),
+            'query'       => (string) ($in['query'] ?? ''),
+            'category'    => (string) ($in['category'] ?? ''),
             'offset'      => (int) ($in['offset'] ?? 0),
-            'taxonomy'    => \sanitize_key((string) ($in['taxonomy'] ?? '')),
+            'taxonomy'    => (string) ($in['taxonomy'] ?? ''),
         ]);
         $this->ok($data);
     }
@@ -81,7 +111,7 @@ final class PanelApi implements Registerable
 
     public function ajaxIncoming(): void
     {
-        $in   = $this->start();
+        $in   = $this->start(true);
         $id   = (int) ($in['object_id'] ?? 0);
         $type = (string) ($in['type'] ?? 'post');
         $term = $type === 'term';
@@ -117,7 +147,7 @@ final class PanelApi implements Registerable
 
     public function ajaxDonors(): void
     {
-        $in = $this->start();
+        $in = $this->start(true);
         $id = (int) ($in['post_id'] ?? 0);
         if ($id < 1 || ! \current_user_can('edit_post', $id)) {
             $this->fail('forbidden', 'Not allowed', 403);
@@ -131,7 +161,7 @@ final class PanelApi implements Registerable
         $in        = $this->start();
         $donor_id  = (int) ($in['donor_id'] ?? 0);
         $target_id = (int) ($in['target_id'] ?? 0);
-        $phrase    = \trim((string) ($in['phrase'] ?? ''));
+        $phrase    = (string) ($in['phrase'] ?? '');
         $block     = isset($in['block_index']) ? (int) $in['block_index'] : -1;
 
         $donor  = $donor_id ? \get_post($donor_id) : null;
@@ -176,7 +206,7 @@ final class PanelApi implements Registerable
 
         $stored = \get_post($donor_id);
         $hash   = \md5($stored ? (string) $stored->post_content : $new);
-        $token  = \wp_generate_password(24, false);
+        $token  = \strtolower(\wp_generate_password(24, false)); // lower-case: the request field goes through sanitize_key()
         \set_transient($this->undoKey($donor_id, $token), ['previous_content' => $content, 'new_hash' => $hash], self::UNDO_TTL);
 
         $this->ok(['undo_token' => $token]);
@@ -186,8 +216,8 @@ final class PanelApi implements Registerable
     {
         $in       = $this->start();
         $donor_id = (int) ($in['donor_id'] ?? 0);
-        $token    = (string) ($in['undo_token'] ?? '');
-        if ($donor_id < 1 || \preg_match('/^[A-Za-z0-9]{8,64}$/', $token) !== 1) {
+        $token    = (string) ($in['undo_token'] ?? ''); // sanitize_key lower-cases; tokens are generated lower-case
+        if ($donor_id < 1 || \preg_match('/^[a-z0-9]{8,64}$/', $token) !== 1) {
             $this->fail('bad_request', 'Invalid request', 400);
             return;
         }
@@ -222,9 +252,9 @@ final class PanelApi implements Registerable
     /** Mark / unmark the post being edited as a key page (pins are site-wide: edit_others_posts). */
     public function ajaxKeyPin(): void
     {
-        $in   = $this->start();
+        $in   = $this->start(true);
         $id   = (int) ($in['post_id'] ?? 0);
-        $mode = \sanitize_key((string) ($in['mode'] ?? ''));
+        $mode = (string) ($in['mode'] ?? '');
         if ($id < 1 || ! \current_user_can('edit_post', $id) || ! \current_user_can('edit_others_posts')) {
             $this->fail('forbidden', 'Not allowed', 403);
             return;
@@ -240,17 +270,35 @@ final class PanelApi implements Registerable
 
     // ── Helpers ─────────────────────────────────────────────────────────────────
 
-    /** @return array<string,mixed> */
-    private function start(): array
+    /**
+     * Verify nonce + capability, then read the request body (JSON, else $_POST) through the
+     * FIELDS whitelist so every value is sanitized by type. With $needs_service, a site that is
+     * not connected gets the clean `not_connected` error instead (and the call ends here).
+     *
+     * @return array<string,mixed>
+     */
+    private function start(bool $needs_service = false): array
     {
         Security::verify('edit_posts');
+        if ($needs_service && ! $this->isConnected()) {
+            $this->fail('not_connected', \__('Connect CherryLink to get suggestions.', 'cherrylink-ai'), 403);
+            return [];
+        }
         $raw  = $this->body_reader ? (string) ($this->body_reader)() : (string) \file_get_contents('php://input');
         $data = \json_decode($raw, true);
         if (! \is_array($data)) {
-            // phpcs:ignore WordPress.Security.NonceVerification.Missing -- gated by Security::verify()
+            // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified by Security::verify() above; every field is sanitized by Input::fields()
             $data = (array) \wp_unslash($_POST);
         }
-        return $data;
+        return Input::fields($data, self::FIELDS);
+    }
+
+    private function isConnected(): bool
+    {
+        if ($this->connected !== null) {
+            return (bool) ($this->connected)();
+        }
+        return (new License($this->options))->isConnected();
     }
 
     private function canEditObject(int $id, bool $is_term): bool
@@ -278,7 +326,7 @@ final class PanelApi implements Registerable
         $result->ID = (int) $target->ID;
         $title      = \html_entity_decode((string) \get_the_title($result->ID), ENT_QUOTES | ENT_HTML5, 'UTF-8');
 
-        return LinkMarkup::build(LinkFields::url('linkate-posts', $result), $title, (array) \get_option('linkate-posts', []));
+        return LinkMarkup::build(LinkFields::url(Options::MAIN, $result), $title, $this->options->main());
     }
 
     private function undoKey(int $donor_id, string $token): string

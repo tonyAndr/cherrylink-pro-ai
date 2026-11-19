@@ -351,7 +351,7 @@ class Capture
             return $this->readFields();
         }
 
-        $options = (array) \get_option('linkate-posts', []);
+        $options = (array) \get_option(\CherryLink\Support\Options::MAIN, []);
 
         return $this->client->configured_meta_fields($options);
     }

@@ -44,8 +44,8 @@ final class StatsColumn implements Registerable
      */
     public function columns(array $cols): array
     {
-        $cols['cherry_outgoing'] = \__('Out', 'cherrylink-ai');
-        $cols['cherry_income']   = \__('In', 'cherrylink-ai');
+        $cols['cherrylink_outgoing'] = \__('Out', 'cherrylink-ai');
+        $cols['cherrylink_incoming']   = \__('In', 'cherrylink-ai');
 
         return $cols;
     }
@@ -55,12 +55,12 @@ final class StatsColumn implements Registerable
      */
     public function columnValue(string $column_name, $post_id): void
     {
-        if ('cherry_income' === $column_name) {
-            echo (int) \get_post_meta((int) $post_id, 'cherry_income', true);
+        if ('cherrylink_incoming' === $column_name) {
+            echo (int) \get_post_meta((int) $post_id, 'cherrylink_incoming', true);
         }
 
-        if ('cherry_outgoing' === $column_name) {
-            echo (int) \get_post_meta((int) $post_id, 'cherry_outgoing', true);
+        if ('cherrylink_outgoing' === $column_name) {
+            echo (int) \get_post_meta((int) $post_id, 'cherrylink_outgoing', true);
         }
     }
 
@@ -70,8 +70,8 @@ final class StatsColumn implements Registerable
      */
     public function sortableColumns(array $columns): array
     {
-        $columns['cherry_outgoing'] = '_cherry_outgoing';
-        $columns['cherry_income']   = '_cherry_income';
+        $columns['cherrylink_outgoing'] = '_cherrylink_outgoing';
+        $columns['cherrylink_incoming']   = '_cherrylink_incoming';
 
         return $columns;
     }
@@ -83,13 +83,13 @@ final class StatsColumn implements Registerable
     {
         $orderby = $query->get('orderby');
 
-        if ('_cherry_outgoing' === $orderby) {
-            $query->set('meta_query', $this->sortMetaQuery('cherry_outgoing'));
+        if ('_cherrylink_outgoing' === $orderby) {
+            $query->set('meta_query', $this->sortMetaQuery('cherrylink_outgoing'));
             $query->set('orderby', 'meta_value_num');
         }
 
-        if ('_cherry_income' === $orderby) {
-            $query->set('meta_query', $this->sortMetaQuery('cherry_income'));
+        if ('_cherrylink_incoming' === $orderby) {
+            $query->set('meta_query', $this->sortMetaQuery('cherrylink_incoming'));
             $query->set('orderby', 'meta_value_num');
         }
     }

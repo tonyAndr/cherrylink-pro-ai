@@ -50,7 +50,7 @@ text (anchor, target title if internal, click = reveal in editor) and incoming l
 anchor, edit/view links). This replaces the old Stats tab.
 
 Empty / error / loading states: skeleton rows while loading; API errors show the message plus
-`Повторить`; unlicensed → single Connect button (see Free mode additions).
+`Повторить`; not connected → Connect prompt on service tabs, local categories list still works (see Free mode additions).
 
 ## 2. Visual system
 
@@ -106,7 +106,7 @@ gutenberg adapter with mocked data stores (existing tests patterns), App smoke r
 
 Bootstrap config (both hosts, `wp_localize_script` as `cherrylinkPanel`):
 `{ ajaxUrl, nonce, postId, isTerm, termTaxonomy?, host: 'gutenberg'|'classic', options:
-{ showCatFilter, noSelectionAction, limit }, licensed: bool, editUrlBase }`.
+{ showCatFilter, noSelectionAction, limit }, connected: bool, editUrlBase }`.
 
 New service `Editor\PanelApi` (Registerable). All actions: `Security::verify('edit_posts')`, JSON body
 (`php://input`), JSON response `{ ok: true, ... }` or `{ ok: false, error: code, message }`.
@@ -173,14 +173,14 @@ terms linking, incoming list, donor insert/undo, locked donor, unlicensed state,
   `SuggestionsResults::rows()` is the structured pipeline (the old `execute()` was removed in phase 3).
 - Config is emitted with `wp_add_inline_script(..., 'before')` (`window.cherrylinkPanel = {...}`),
   not `wp_localize_script`, so booleans/ints keep their types. Extra key `categories: [{id,name,level}]`
-  (only when `showCatFilter`). `licensed` is false for unconnected sites (the host still loads; the panel shows the Connect button).
+  (only when `showCatFilter`). `connected` is false for unconnected sites (the host still loads; service tabs show a Connect prompt, local tools stay usable).
 - Classic toggle: the media button has `id="cherrylink-panel-toggle"` (printed once per page) and class
   `cherrylink-panel-toggle`. Old jQuery panel is only used when `js/cherry-classic.js` does not exist.
 - Error replies: `{ok:false,error,message}` with HTTP status. Codes: forbidden 403, bad_request 400,
   not_published/locked/already_linked/changed 409, phrase_not_found 422, expired 410, save_failed 500.
   Security::verify failures use WP's own `{success:false}` 403.
 - Row: `linked` is omitted (front derives it); `saturated` is always false because saturated posts are
-  still dropped by the max-incoming filter. `out`/`in` come from `cherry_outgoing`/`cherry_income` post meta.
+  still dropped by the max-incoming filter. `out`/`in` come from `cherrylink_outgoing`/`cherrylink_incoming` post meta.
   `category` accepts a term id or a category name. `has_more` = SQL found more than `limit` rows; the API
   returns at most 50 hits, so offset paging is bounded by that.
 - Terms reply: `{items:[{is_divider:true,title}|{is_divider:false,title,url,taxonomy,post_count,open,close,children}]}`.
@@ -193,8 +193,8 @@ terms linking, incoming list, donor insert/undo, locked donor, unlicensed state,
 
 ## Free mode additions
 
-Config also carries `connectUrl`, `upgradeUrl` and `plan`. Unlicensed: a single "Подключить CherryLink" button
-(no fetch). Plan-limited sites: the strip shows "Проиндексировано N из M · Расширить". Details in
+Config also carries `connectUrl`, `upgradeUrl` and `plan`. Not connected: service tabs show a "Connect CherryLink" prompt
+(no service fetch); the categories list still loads. Plan-limited sites: the strip shows "Проиндексировано N из M · Расширить". Details in
 `connect-and-plans.md`.
 
 ## Key pages (v1)

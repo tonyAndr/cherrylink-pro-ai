@@ -69,7 +69,7 @@ export default function LinkHealth() {
         setPinBusy(0);
     };
 
-    const limit = state.license.post_limit;
+    const limit = state.connection.post_limit;
     const rows = data && tab !== 'keys' ? rowsFor(tab, data.rows, type, q) : [];
     // Orphans split in three: the page opened from the dashboard, learned pages (donors on demand),
     // and pages outside the plan limit (locked behind an upgrade overlay).
@@ -82,7 +82,7 @@ export default function LinkHealth() {
     const types = data ? [...new Map(data.rows.map((r) => [r.type, r.type_label || r.type])).entries()] : [];
 
     // Orphans: posts that could link here. No outgoing: posts this one could link to. Both on click.
-    const find = async (id, action = 'linkate_orphan_donors') => {
+    const find = async (id, action = 'cherrylink_orphan_donors') => {
         const k = `${action}:${id}`; // a post can be on both tabs
         setDonors((d) => ({ ...d, [k]: 'loading' }));
         try {
@@ -102,7 +102,7 @@ export default function LinkHealth() {
     const title = (r) => r.title || __('(no title)', 'cherrylink-ai');
     const orphanRow = (r) => {
         const out = tab === 'no_outgoing';
-        const action = out ? 'linkate_post_targets' : 'linkate_orphan_donors';
+        const action = out ? 'cherrylink_post_targets' : 'cherrylink_orphan_donors';
         const d = donors[`${action}:${r.post_id}`];
         return (
             <tr key={r.post_id}>

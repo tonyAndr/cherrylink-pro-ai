@@ -33,12 +33,12 @@ function Picker({ legend, items, value, onChange }) {
     );
 }
 
-async function waitLicense(api, setState) {
+async function waitConnection(api, setState) {
     for (let i = 0; i < 15; i += 1) {
         await new Promise((r) => setTimeout(r, 2000));
         const s = await api('cherrylink_admin_state');
         setState(s);
-        if (s.license.status !== 'pending') return;
+        if (s.connection.status !== 'pending') return;
     }
 }
 
@@ -51,7 +51,7 @@ function Form({ onReload }) {
     const [newKey, setNewKey] = useState(null);
     const [conn, setConn] = useState(null);
     const file = useRef(null);
-    const { license, route } = state;
+    const { connection, route } = state;
     const choices = state.settings_choices || { authors: [], categories: [] };
     const up = (k) => (v) => setS({ ...s, [k]: v });
 
@@ -74,12 +74,12 @@ function Form({ onReload }) {
     };
     const save = () => run(() => post('cherrylink_admin_save_settings', { settings: s }), __('Settings saved.', 'cherrylink-ai'));
     const changeKey = () => run(async () => {
-        await post('cherrylink_admin_license', { op: 'set_key', key: newKey });
+        await post('cherrylink_admin_connection', { op: 'set_key', key: newKey });
         setNewKey(null);
-        await waitLicense(api, setState);
+        await waitConnection(api, setState);
     });
     const reset = () => run(async () => { await post('cherrylink_admin_reset_settings'); onReload(); }, __('Settings reset to defaults.', 'cherrylink-ai'));
-    const disconnect = () => run(() => post('cherrylink_admin_license', { op: 'disconnect' }));
+    const disconnect = () => run(() => post('cherrylink_admin_connection', { op: 'disconnect' }));
     const doImport = () => run(async () => {
         const f = file.current && file.current.files[0];
         if (!f) throw new Error(__('Choose a file first.', 'cherrylink-ai'));
@@ -91,45 +91,45 @@ function Form({ onReload }) {
     const probes = conn && conn.probes;
     const connText = !conn ? '' : conn.pending ? __('A check is already running. Try again in a moment.', 'cherrylink-ai')
         : probes && probes.health && probes.health.ok ? __('Connection is working.', 'cherrylink-ai') : __('Could not reach the CherryLink server.', 'cherrylink-ai');
-    const licText = license.status === 'pending' ? __('checking…', 'cherrylink-ai') : license.status === 'active' ? __('connected', 'cherrylink-ai') : license.status === 'error' ? __('problem', 'cherrylink-ai') : __('not connected', 'cherrylink-ai');
+    const statusText = connection.status === 'pending' ? __('checking…', 'cherrylink-ai') : connection.status === 'active' ? __('connected', 'cherrylink-ai') : connection.status === 'error' ? __('problem', 'cherrylink-ai') : __('not connected', 'cherrylink-ai');
 
     return (
         <>
             <nav className="cl-subnav" aria-label={__('Settings sections', 'cherrylink-ai')}>
-                {[['lic', __('License', 'cherrylink-ai')], ['ed', __('Editor panel', 'cherrylink-ai')], ['mk', __('Link markup', 'cherrylink-ai')], ['pv', __('Privacy', 'cherrylink-ai')], ['io', __('Import / export', 'cherrylink-ai')], ['db', __('Troubleshooting', 'cherrylink-ai')]]
+                {[['lic', __('Connection', 'cherrylink-ai')], ['ed', __('Editor panel', 'cherrylink-ai')], ['mk', __('Link markup', 'cherrylink-ai')], ['pv', __('Privacy', 'cherrylink-ai')], ['io', __('Import / export', 'cherrylink-ai')], ['db', __('Troubleshooting', 'cherrylink-ai')]]
                     .map(([id, l]) => <a key={id} href={`#cl-${id}`}>{l}</a>)}
             </nav>
             {msg.text && <Notice tone={msg.tone}>{msg.text}</Notice>}
 
             <Card id="cl-lic">
-                <h2>{__('License', 'cherrylink-ai')}</h2>
-                <div className="cl-row"><Badge tone={license.status === 'error' ? 'danger' : 'ok'}>{planName(license.plan)} · {licText}</Badge>
+                <h2>{__('Connection', 'cherrylink-ai')}</h2>
+                <div className="cl-row"><Badge tone={connection.status === 'error' ? 'danger' : 'ok'}>{planName(connection.plan)} · {statusText}</Badge>
                     <span className="cl-muted">{[
-                        license.key_masked && sprintf(
-                            /* translators: %s: masked license key */
-                            __('Key %s', 'cherrylink-ai'), license.key_masked),
-                        license.domain && sprintf(
+                        connection.key_masked && sprintf(
+                            /* translators: %s: masked API key */
+                            __('Key %s', 'cherrylink-ai'), connection.key_masked),
+                        connection.domain && sprintf(
                             /* translators: %s: site domain */
-                            __('bound to %s', 'cherrylink-ai'), license.domain),
-                        license.expires_at ? sprintf(
+                            __('bound to %s', 'cherrylink-ai'), connection.domain),
+                        connection.expires_at ? sprintf(
                             /* translators: %s: expiry date */
-                            __('expires %s', 'cherrylink-ai'), license.expires_at) : __('never expires', 'cherrylink-ai'),
+                            __('expires %s', 'cherrylink-ai'), connection.expires_at) : __('never expires', 'cherrylink-ai'),
                     ].filter(Boolean).join(' · ')}</span></div>
-                {license.error && <Notice tone="danger">{license.error}</Notice>}
-                {license.post_limit && state.counts.total > license.post_limit && (
+                {connection.error && <Notice tone="danger">{connection.error}</Notice>}
+                {connection.post_limit && state.counts.total > connection.post_limit && (
                     <p className="cl-muted">{sprintf(
                         /* translators: 1: learned posts, 2: all posts. "Learned" = post analyzed for suggestions; counts toward the plan limit. */
                         __('%1$s of %2$s posts learned. Posts beyond the limit keep link health and their own suggestions, but other posts won\'t suggest links to them.', 'cherrylink-ai'),
-                        (state.counts.learned ?? license.post_limit).toLocaleString(), state.counts.total.toLocaleString())}</p>
+                        (state.counts.learned ?? connection.post_limit).toLocaleString(), state.counts.total.toLocaleString())}</p>
                 )}
                 <div className="cl-row">
-                    {license.plan === 'free' && <Link href={urls.upgrade} target="_blank" rel="noreferrer">{__('Upgrade to Pro', 'cherrylink-ai')}</Link>}
+                    {connection.plan === 'free' && <Link href={urls.upgrade} target="_blank" rel="noreferrer">{__('Upgrade to Pro', 'cherrylink-ai')}</Link>}
                     <button type="button" className="cl-textbtn" onClick={() => setNewKey(newKey === null ? '' : null)}>{__('Use a different key', 'cherrylink-ai')}</button>
                     <button type="button" className="cl-textbtn" onClick={() => setModal('disconnect')}>{__('Disconnect site', 'cherrylink-ai')}</button>
                 </div>
                 {newKey !== null && (
                     <div className="cl-row">
-                        <label htmlFor="cl-newkey" className="screen-reader-text">{__('License key', 'cherrylink-ai')}</label>
+                        <label htmlFor="cl-newkey" className="screen-reader-text">{__('API key', 'cherrylink-ai')}</label>
                         <input id="cl-newkey" className="cl-input cl-grow" placeholder="clp_…" value={newKey} onChange={(e) => setNewKey(e.target.value)} />
                         <Btn kind="outline" disabled={busy || !newKey.trim()} onClick={changeKey}>{__('Use this key', 'cherrylink-ai')}</Btn>
                     </div>
@@ -177,7 +177,7 @@ function Form({ onReload }) {
 
             <Card id="cl-pv">
                 <h2>{__('Privacy', 'cherrylink-ai')}</h2>
-                <span>{__('While connected, CherryLink receives your posts\' titles, text and URLs, plus plugin, PHP and WordPress versions for compatibility.', 'cherrylink-ai')} <a className="cl-link" href={urls.privacy} target="_blank" rel="noreferrer">{__('Privacy Policy', 'cherrylink-ai')}</a> · {__('To stop all data transfer, remove the site data on the Index page and disconnect.', 'cherrylink-ai')}</span>
+                <span>{__('While connected, CherryLink receives your posts\' titles, text and URLs.', 'cherrylink-ai')} <a className="cl-link" href={urls.privacy} target="_blank" rel="noreferrer">{__('Privacy Policy', 'cherrylink-ai')}</a> · {__('To stop all data transfer, remove the site data on the Index page and disconnect.', 'cherrylink-ai')}</span>
             </Card>
 
             <Card id="cl-io">
@@ -206,7 +206,7 @@ function Form({ onReload }) {
 
             {modal === 'disconnect' && <Confirm title={__('Disconnect this site?', 'cherrylink-ai')} text={__('Suggestions and link health stop until you connect again. Data already on CherryLink servers stays until you remove it on the Index page.', 'cherrylink-ai')}
                 action={__('Disconnect', 'cherrylink-ai')} busy={busy} onCancel={() => setModal('')} onConfirm={disconnect} />}
-            {modal === 'reset' && <Confirm title={__('Reset settings?', 'cherrylink-ai')} text={__('All CherryLink settings return to their defaults. Your license stays connected.', 'cherrylink-ai')}
+            {modal === 'reset' && <Confirm title={__('Reset settings?', 'cherrylink-ai')} text={__('All CherryLink settings return to their defaults. Your site stays connected.', 'cherrylink-ai')}
                 action={__('Reset settings', 'cherrylink-ai')} busy={busy} onCancel={() => setModal('')} onConfirm={reset} />}
         </>
     );

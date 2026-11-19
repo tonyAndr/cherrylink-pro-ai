@@ -32,16 +32,16 @@ final class Relay implements Registerable
      */
     public static function defineConstants(): void
     {
-        if (! \defined('CHERRY_VECTOR_API_URL')) {
-            $options = \get_option('linkate-posts', []);
+        if (! \defined('CHERRYLINK_API_URL')) {
+            $options = \get_option(\CherryLink\Support\Options::MAIN, []);
             $url     = ! empty($options['vector_api_url']) ? $options['vector_api_url'] : 'https://api.cherrylink.app';
-            \define('CHERRY_VECTOR_API_URL', $url);
+            \define('CHERRYLINK_API_URL', $url);
         }
-        if (! \defined('CL_ALT_API_PORT')) {
-            \define('CL_ALT_API_PORT', self::ALT_PORT);
+        if (! \defined('CHERRYLINK_ALT_API_PORT')) {
+            \define('CHERRYLINK_ALT_API_PORT', self::ALT_PORT);
         }
-        if (! \defined('CL_ALT_API_IP')) {
-            \define('CL_ALT_API_IP', self::ALT_IP);
+        if (! \defined('CHERRYLINK_ALT_API_IP')) {
+            \define('CHERRYLINK_ALT_API_IP', self::ALT_IP);
         }
     }
 
@@ -64,10 +64,10 @@ final class Relay implements Registerable
             return;
         }
         $parts = \wp_parse_url($url);
-        if (empty($parts['host']) || (int) ($parts['port'] ?? 0) !== CL_ALT_API_PORT) {
+        if (empty($parts['host']) || (int) ($parts['port'] ?? 0) !== CHERRYLINK_ALT_API_PORT) {
             return;
         }
         // phpcs:ignore WordPress.WP.AlternativeFunctions.curl_curl_setopt -- inside the http_api_curl hook: the only way to pin the connect address (SNI/cert unchanged)
-        \curl_setopt($handle, CURLOPT_RESOLVE, [$parts['host'] . ':' . CL_ALT_API_PORT . ':' . CL_ALT_API_IP]);
+        \curl_setopt($handle, CURLOPT_RESOLVE, [$parts['host'] . ':' . CHERRYLINK_ALT_API_PORT . ':' . CHERRYLINK_ALT_API_IP]);
     }
 }

@@ -11,6 +11,7 @@ use CherryLink\Indexing\IndexHooks;
 use CherryLink\Support\Capabilities;
 use CherryLink\Support\Connect;
 use CherryLink\Support\KeyPages;
+use CherryLink\Support\License;
 use CherryLink\Support\Options;
 use CherryLink\Support\Urls;
 
@@ -38,7 +39,7 @@ final class PanelConfig
                 'noSelectionAction' => (string) ($main['no_selection_action'] ?? ''),
                 'limit'             => (int) ($main['limit_ajax'] ?? 0),
             ],
-            'licensed'  => ! empty($options->meta()['key_valid']),
+            'connected' => (new License($options))->isConnected(),
             'connectUrl' => Connect::settingsUrl(),
             'upgradeUrl' => Urls::UPGRADE,
             'plan'      => $plan = self::plan($options),

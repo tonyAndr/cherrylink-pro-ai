@@ -10,12 +10,10 @@ if (defined('ABSPATH') && defined('WP_UNINSTALL_PLUGIN')) {
 	global $wpdb;
 
 	$cherrylink_options = [
-		// Settings + licence state.
-		'linkate-posts',
-		'linkate_posts',
-		'linkate_posts_meta',
+		// Settings + connection state.
+		'cherrylink_options',
+		'cherrylink_state',
 		'cherrylink_index_dirty',
-		'cherry_debug_info',
 		// Synchronous scan state + its worker fence.
 		'cherrylink_sync_state',
 		'cherrylink_sync_plan',
@@ -28,10 +26,12 @@ if (defined('ABSPATH') && defined('WP_UNINSTALL_PLUGIN')) {
 		'cherrylink_async_worker_lock',
 		'cherrylink_async_tenant',
 		// Request locks.
-		'cl_server_probe_lock',
-		'cl_status_refresh_lock',
+		'cherrylink_server_probe_lock',
+		'cherrylink_status_refresh_lock',
+		'cherrylink_key_check_lock',
 		// Link health / key pages caches and the user's key-page pins.
 		'cherrylink_link_health',
+		'cherrylink_setup_done',
 		'cherrylink_key_pages',
 		'cherrylink_key_pins',
 		// Schema version marker.
@@ -43,13 +43,24 @@ if (defined('ABSPATH') && defined('WP_UNINSTALL_PLUGIN')) {
 
 	$cherrylink_transients = [
 		'cherrylink_capabilities',
-		'cl_status_cache',
-		'cl_server_status_cache',
-		'cherry-manual-indexation-needed',
+		'cherrylink_status_cache',
+		'cherrylink_server_status_cache',
 		'cherrylink_updated',
+		'cherrylink_connect_nonce',
+		'cherrylink_relay_until',
+		'cherrylink_eligible_total',
 	];
 	foreach ($cherrylink_transients as $cherrylink_transient) {
 		delete_transient($cherrylink_transient);
+	}
+
+	// Link-count post meta, the per-user notice dismissal and the settings capability.
+	delete_post_meta_by_key('cherrylink_outgoing');
+	delete_post_meta_by_key('cherrylink_incoming');
+	delete_metadata('user', 0, 'cherrylink_connect_notice_dismissed', '', true);
+	$cherrylink_admin_role = get_role('administrator');
+	if ($cherrylink_admin_role) {
+		$cherrylink_admin_role->remove_cap('cherrylink_settings');
 	}
 
 	// Remove the durable async-indexing outbox (tables + rows).

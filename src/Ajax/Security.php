@@ -19,9 +19,9 @@ final class Security
 {
     /**
      * One shared nonce action for all plugin AJAX. The Gutenberg sidebar already
-     * localizes wp_create_nonce('cherry_nonce'); reusing it keeps a single token.
+     * localizes wp_create_nonce('cherrylink_nonce'); reusing it keeps a single token.
      */
-    public const NONCE = 'cherry_nonce';
+    public const NONCE = 'cherrylink_nonce';
 
     /**
      * Verify the request nonce and the caller's capability. On a bad/missing nonce

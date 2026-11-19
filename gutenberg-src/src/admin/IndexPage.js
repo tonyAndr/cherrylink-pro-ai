@@ -7,8 +7,8 @@ import { Btn, Card, Confirm, Link, Notice, Title, num } from './ui';
 export default function IndexPage() {
     const { api, state, setState, urls } = useAdmin();
     const { sync, error, start, cancel } = useSync();
-    const { counts, license } = state;
-    const limit = license.post_limit;
+    const { counts, connection } = state;
+    const limit = connection.post_limit;
     const types = counts.types || [];
     const [sel, setSel] = useState(types.filter((t) => t.enabled).map((t) => t.name));
     const [fields, setFields] = useState(state.settings.vector_custom_fields || '');

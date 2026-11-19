@@ -5,8 +5,7 @@ declare(strict_types=1);
 namespace CherryLink\Support;
 
 /**
- * Debug logger. Writes to the PHP error log only when WP_DEBUG is on — a verbatim
- * port of the legacy cherry_write_log() (deleted).
+ * Debug logger. Writes to the PHP error log only when WP_DEBUG is on.
  *
  * The one intentional hardening over the original: we guard on defined('WP_DEBUG')
  * so analysis/CLI contexts where the constant is absent don't fatal. In every real

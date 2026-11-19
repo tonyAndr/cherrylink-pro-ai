@@ -279,7 +279,7 @@ class AsyncBulkScan implements Registerable
         if (! $this->license->isLicensed()) {
             return $this->setState([
                 'status'  => 'error',
-                'message' => \__('The license is inactive — synchronization is unavailable.', 'cherrylink-ai'),
+                'message' => \__('Not connected — synchronization is unavailable.', 'cherrylink-ai'),
             ]);
         }
         if (! \function_exists('as_enqueue_async_action')) {

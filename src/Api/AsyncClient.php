@@ -407,7 +407,7 @@ class AsyncClient
     {
         $status = (int) ($result['status'] ?? 0);
         if ($status === 0) {
-            return ($result['error'] ?? '') !== 'no license key configured';
+            return ($result['error'] ?? '') !== 'no API key configured';
         }
         if ($status === 429) {
             return true;

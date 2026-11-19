@@ -13,7 +13,7 @@ const health = {
 };
 const mkState = (o = {}) => ({
     connected: true, has_key: true, setup_done: true,
-    license: { plan: 'free', post_limit: 1000, key_masked: 'clp_••••4f2a', domain: 's.test', expires_at: null, status: 'active', error: '' },
+    connection: { plan: 'free', post_limit: 1000, key_masked: 'clp_••••4f2a', domain: 's.test', expires_at: null, status: 'active', error: '' },
     counts: { total: 10, types: [{ name: 'post', label: 'Posts', count: 8, enabled: true }, { name: 'page', label: 'Pages', count: 2, enabled: false }], learned: 8, checked: 10, links: 50 },
     sync: { status: 'idle', phase: null, upsert_total: 0, indexed: 0, links: 0 },
     route: 'direct',
@@ -21,7 +21,7 @@ const mkState = (o = {}) => ({
     settings_choices: { authors: [{ id: 1, name: 'Ann' }], categories: [{ id: 5, name: 'News', level: 0 }] },
     ...o,
 });
-const boot = (page, state = mkState()) => ({ page, ajaxUrl: '/ajax', nonce: 'N', connect: { postUrl: '/post', action: 'cl_connect', nonce: 'W', error: '' },
+const boot = (page, state = mkState()) => ({ page, ajaxUrl: '/ajax', nonce: 'N', connect: { postUrl: '/post', action: 'cherrylink_connect', nonce: 'W', error: '' },
     urls: { dashboard: '/d', links: '/l', index: '/i', settings: '/s', exportSettings: '/x', editPost: '/e=', upgrade: '/up', pricing: '/pr', terms: '/t', privacy: '/p', docs: '/dc', limits: '/lim' }, state });
 
 let calls, responses;
@@ -29,12 +29,12 @@ beforeEach(() => {
     calls = [];
     responses = {
         cherrylink_admin_link_health: health,
-        linkate_sync_start: { status: 'running', phase: 'upsert', upsert_total: 10, indexed: 0, links: 0 },
-        linkate_sync_tick: { ran: 0 },
+        cherrylink_sync_start: { status: 'running', phase: 'upsert', upsert_total: 10, indexed: 0, links: 0 },
+        cherrylink_sync_tick: { ran: 0 },
         cherrylink_admin_save_settings: { success: true, data: { state: mkState({ setup_done: false }) } },
         cherrylink_admin_state: { success: true, data: mkState() },
-        linkate_orphan_donors: { donors: [{ source_id: 9, source_title: 'Donor nine', anchor: 'hello', edit_url: '/edit9' }] },
-        linkate_post_targets: { donors: [{ source_id: 4, source_title: 'Target four', anchor: 'world', edit_url: '/edit1' }] },
+        cherrylink_orphan_donors: { donors: [{ source_id: 9, source_title: 'Donor nine', anchor: 'hello', edit_url: '/edit9' }] },
+        cherrylink_post_targets: { donors: [{ source_id: 4, source_title: 'Target four', anchor: 'world', edit_url: '/edit1' }] },
     };
     global.fetch = jest.fn(async (url, init) => {
         const action = init.body.get('action');
@@ -60,7 +60,7 @@ describe('admin pages (connected free state)', () => {
         expect(screen.queryByText('pages nobody links to')).toBeNull();
         expect(calls.some((c) => c.action === 'cherrylink_admin_link_health')).toBe(false);
         await act(async () => { fireEvent.click(screen.getByText('Analyze site')); });
-        await waitFor(() => expect(calls.some((c) => c.action === 'linkate_sync_start')).toBe(true));
+        await waitFor(() => expect(calls.some((c) => c.action === 'cherrylink_sync_start')).toBe(true));
         await waitFor(() => expect(screen.queryByText('Your site data was removed')).toBeNull());
     });
 
@@ -78,7 +78,7 @@ describe('admin pages (connected free state)', () => {
         expect(screen.getAllByText('Find posts that could link here').length).toBe(1); // only the learned one
         fireEvent.click(screen.getByText('Find posts that could link here'));
         expect(await screen.findByText('Donor nine')).toBeInTheDocument();
-        expect(calls.find((c) => c.action === 'linkate_orphan_donors').body.get('post_id')).toBe('1');
+        expect(calls.find((c) => c.action === 'cherrylink_orphan_donors').body.get('post_id')).toBe('1');
         fireEvent.click(screen.getByRole('tab', { name: /Broken links/ }));
         expect(screen.getByText('Post 3')).toBeInTheDocument();
         expect(screen.queryByText('Post 1')).toBeNull();
@@ -94,7 +94,7 @@ describe('admin pages (connected free state)', () => {
         expect(screen.queryByText('Donor nine')).toBeNull();
         fireEvent.click(screen.getByText('Find posts to link to'));
         expect(await screen.findByText('Target four')).toBeInTheDocument();
-        expect(calls.find((c) => c.action === 'linkate_post_targets').body.get('post_id')).toBe('1');
+        expect(calls.find((c) => c.action === 'cherrylink_post_targets').body.get('post_id')).toBe('1');
     });
 
     it('key pages tab lists members not linking and pins through the ajax action', async () => {
@@ -143,6 +143,13 @@ describe('admin pages (connected free state)', () => {
         render(<App boot={boot('links', mkState({ connected: false }))} />);
         expect(screen.getByText('Connect CherryLink first')).toBeInTheDocument();
     });
+
+    it('settings stay available without a connection (local options and key entry)', () => {
+        render(<App boot={boot('settings', mkState({ connected: false, connection: { plan: null, post_limit: null, key_masked: '', domain: 's.test', expires_at: null, status: 'none', error: '' } }))} />);
+        expect(screen.queryByText('Connect CherryLink first')).toBeNull();
+        expect(screen.getAllByText('Link markup').length).toBeGreaterThan(0);
+        expect(screen.getByText('Use a different key')).toBeInTheDocument();
+    });
 });
 
 describe('wizard', () => {
@@ -152,13 +159,13 @@ describe('wizard', () => {
         expect(form.getAttribute('action')).toBe('/post');
         expect(form.querySelector('input[name=_wpnonce]').value).toBe('W');
         fireEvent.click(screen.getByText('I already have a key'));
-        expect(screen.getByLabelText('License key')).toBeInTheDocument();
+        expect(screen.getByLabelText('API key')).toBeInTheDocument();
     });
 
     it('analyze: saves types, starts the scan, polls and stops when done', async () => {
         jest.useFakeTimers();
         try {
-            responses.linkate_sync_status = [
+            responses.cherrylink_sync_status = [
                 { status: 'running', phase: 'upsert', upsert_total: 10, indexed: 5, links: 0 },
                 { status: 'done', phase: 'done', upsert_total: 10, indexed: 10, links: 10 },
             ];
@@ -166,9 +173,9 @@ describe('wizard', () => {
             let n = 0;
             const orig = global.fetch;
             global.fetch = jest.fn(async (u, i) => {
-                if (i.body.get('action') === 'linkate_sync_status') {
-                    calls.push({ action: 'linkate_sync_status' });
-                    return { ok: true, json: async () => responses.linkate_sync_status[Math.min(n++, 1)] };
+                if (i.body.get('action') === 'cherrylink_sync_status') {
+                    calls.push({ action: 'cherrylink_sync_status' });
+                    return { ok: true, json: async () => responses.cherrylink_sync_status[Math.min(n++, 1)] };
                 }
                 return orig(u, i);
             });
@@ -180,9 +187,9 @@ describe('wizard', () => {
             await screen.findByText(/5 \/ 10/);
             await act(async () => { jest.advanceTimersByTime(3100); });
             await screen.findByText('✓ Analysis complete');
-            const polls = calls.filter((c) => c.action === 'linkate_sync_status').length;
+            const polls = calls.filter((c) => c.action === 'cherrylink_sync_status').length;
             await act(async () => { jest.advanceTimersByTime(20000); });
-            expect(calls.filter((c) => c.action === 'linkate_sync_status').length).toBe(polls);
+            expect(calls.filter((c) => c.action === 'cherrylink_sync_status').length).toBe(polls);
         } finally {
             jest.useRealTimers();
         }

@@ -94,7 +94,7 @@ final class SyncServiceTest extends TestCase
             $this->enqueued[] = ['hook' => $hook, 'args' => $args, 'group' => $group];
             return 101;
         });
-        $GLOBALS['cl_sync_test_enqueue'] = function ($hook, $args, $group) {
+        $GLOBALS['cherrylink_sync_test_enqueue'] = function ($hook, $args, $group) {
             $this->enqueued[] = ['hook' => $hook, 'args' => $args, 'group' => $group];
             return 101;
         };
@@ -231,9 +231,9 @@ final class SyncServiceTest extends TestCase
     public function testStartQueuesManifestWithoutCreatingClientOrReplacingPriorPlan(): void
     {
         if (!\function_exists('as_enqueue_async_action')) {
-            eval('function as_enqueue_async_action($hook, $args, $group) { return call_user_func($GLOBALS["cl_sync_test_enqueue"], $hook, $args, $group); }');
+            eval('function as_enqueue_async_action($hook, $args, $group) { return call_user_func($GLOBALS["cherrylink_sync_test_enqueue"], $hook, $args, $group); }');
         }
-        $this->options['linkate_posts_meta'] = ['key_valid' => true, 'expires_at' => '2099-01-01'];
+        $this->options['cherrylink_state'] = ['key_valid' => true, 'expires_at' => '2099-01-01'];
         $this->options[SyncService::PLAN] = ['upsert' => [77], 'delete' => [88]];
         $this->state['status'] = 'idle';
         $factory_calls = 0;
@@ -258,9 +258,9 @@ final class SyncServiceTest extends TestCase
     public function testStartClearsExpiredIndexFlagAndStaleLinkHealth(): void
     {
         if (!\function_exists('as_enqueue_async_action')) {
-            eval('function as_enqueue_async_action($hook, $args, $group) { return call_user_func($GLOBALS["cl_sync_test_enqueue"], $hook, $args, $group); }');
+            eval('function as_enqueue_async_action($hook, $args, $group) { return call_user_func($GLOBALS["cherrylink_sync_test_enqueue"], $hook, $args, $group); }');
         }
-        $this->options['linkate_posts_meta'] = ['key_valid' => true, 'expires_at' => '2099-01-01'];
+        $this->options['cherrylink_state'] = ['key_valid' => true, 'expires_at' => '2099-01-01'];
         $this->state['status'] = 'idle';
         $snapshot = ['async' => false, 'plan' => ['name' => 'free', 'index_expired' => true]];
         $stored   = null;
@@ -285,21 +285,21 @@ final class SyncServiceTest extends TestCase
 
     public function testManifestSchedulingFailureIsVisibleAndKeepsPriorPlan(): void
     {
-        $this->options['linkate_posts_meta'] = ['key_valid' => true, 'expires_at' => '2099-01-01'];
+        $this->options['cherrylink_state'] = ['key_valid' => true, 'expires_at' => '2099-01-01'];
         $this->state['status'] = 'idle';
         Functions\when('as_enqueue_async_action')->justReturn(0);
         $api = Mockery::mock(Client::class);
         $api->shouldNotReceive('fetch_manifest_result');
         $state = $this->service($api)->start();
         $this->assertSame('error', $state['status']);
-        $this->assertArrayNotHasKey('indexing_process', $this->options['linkate_posts_meta']);
+        $this->assertArrayNotHasKey('indexing_process', $this->options['cherrylink_state']);
         $this->assertSame(['upsert' => [1, 2], 'delete' => []], $this->plan);
     }
 
     public function testAjaxTickDispatchesAsyncRequestWithoutRunningQueueInline(): void
     {
         if (!\class_exists('ActionScheduler', false)) {
-            eval('class ActionScheduler { public static function runner() { return $GLOBALS["cl_sync_test_runner"]; } }');
+            eval('class ActionScheduler { public static function runner() { return $GLOBALS["cherrylink_sync_test_runner"]; } }');
         }
         if (!\function_exists('as_has_scheduled_action')) {
             eval('function as_has_scheduled_action($hook, $args = null, $group = "") { return true; }');
@@ -313,7 +313,7 @@ final class SyncServiceTest extends TestCase
             public function maybe_dispatch_async_request(): void { ++$this->dispatches; }
             public function run(): void { throw new \RuntimeException('queue must not run inline'); }
         };
-        $GLOBALS['cl_sync_test_runner'] = $runner;
+        $GLOBALS['cherrylink_sync_test_runner'] = $runner;
         $response = null;
         Functions\when('wp_send_json')->alias(static function ($data) use (&$response) {
             $response = $data;
@@ -588,8 +588,8 @@ final class SyncServiceTest extends TestCase
     public function testOlderApiWithoutPlanRouteFallsBackToTheManifest(): void
     {
         $this->state['phase'] = 'manifest';
-        $this->options['linkate-posts'] = ['hash_field' => 'free-key'];
-        $this->options['linkate_posts_meta'] = ['key_valid' => true, 'expires_at' => '', 'plan' => 'free', 'post_limit' => 1];
+        $this->options['cherrylink_options'] = ['hash_field' => 'free-key'];
+        $this->options['cherrylink_state'] = ['key_valid' => true, 'expires_at' => '', 'plan' => 'free', 'post_limit' => 1];
         $this->eligible([1 => '2026-01-01 00:00:00', 2 => '2026-01-02 00:00:00']);
         $api = Mockery::mock(Client::class);
         $api->shouldReceive('content_hash')->andReturn('h');

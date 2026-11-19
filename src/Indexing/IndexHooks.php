@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace CherryLink\Indexing;
 
+use CherryLink\Ajax\Input;
 use CherryLink\Ajax\Security;
 use CherryLink\Api\Client;
 use CherryLink\Contracts\Registerable;
@@ -22,16 +23,15 @@ use WP_Post;
  *
  * Ported from the legacy cherrylink_index.php (now deleted). The readiness payload lives
  * on the static statusData(), read directly by the settings page; the license gate and
- * out-of-sync flag go through the injected License / Options services (the old cl_*
- * globals are gone).
+ * out-of-sync flag go through the injected License / Options services.
  */
 final class IndexHooks implements Registerable
 {
     /** Transient holding the last readiness snapshot. */
-    public const STATUS_CACHE_KEY = 'cl_status_cache';
+    public const STATUS_CACHE_KEY = 'cherrylink_status_cache';
 
     /** Transient holding the manually requested server diagnostics. */
-    public const SERVER_STATUS_CACHE_KEY = 'cl_server_status_cache';
+    public const SERVER_STATUS_CACHE_KEY = 'cherrylink_server_status_cache';
 
     /** Counts older than this (seconds) get a background refresh. */
     public const STATUS_STALE_S = 300;
@@ -124,7 +124,7 @@ final class IndexHooks implements Registerable
         \add_action('delete_post', [$this, 'onDelete']);
 
         // Background readiness refresh — hits the API + updates the cache.
-        \add_action('wp_ajax_linkate_index_status_data', [$this, 'ajaxStatusData']);
+        \add_action('wp_ajax_cherrylink_index_status_data', [$this, 'ajaxStatusData']);
         // Server connectivity diagnostics for the "Server status" card.
         \add_action('wp_ajax_cherrylink_server_status', [$this, 'ajaxServerStatus']);
     }
@@ -166,11 +166,11 @@ final class IndexHooks implements Registerable
             $source_url = \get_permalink($post_id);
             if (! empty($source_url) && ! empty($post->post_content)) {
                 $count = $api->parse_links($post_id, 0, $source_url, $post->post_content, $api->content_hash($post));
-                \update_post_meta($post_id, 'cherry_outgoing', $count);
+                \update_post_meta($post_id, 'cherrylink_outgoing', $count);
 
                 // Refresh this post's own incoming count (1 API call, not N on page load)
                 $incoming = $api->get_incoming_links($source_url);
-                \update_post_meta($post_id, 'cherry_income', (int) ($incoming['count'] ?? 0));
+                \update_post_meta($post_id, 'cherrylink_incoming', (int) ($incoming['count'] ?? 0));
             }
         } else {
             // Unpublished / trashed — remove from both vector index and link graph
@@ -223,22 +223,21 @@ final class IndexHooks implements Registerable
 
     public function ajaxStatusData(): void
     {
-        Security::verify('edit_posts');
+        Security::verify('cherrylink_settings');
         // The manual "Test connection" path sends force=1. It must not be short-circuited
         // by the 30-second negative cache; an administrator expects a real probe.
-        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- gated by Security::verify()
-        $force = !empty($_POST['force']);
+        $force = (bool) Input::post('force', 'bool', false);
         \wp_send_json(self::statusData(true, $force));
     }
 
     public function ajaxServerStatus(): void
     {
-        Security::verify('edit_posts');
+        Security::verify('cherrylink_settings');
         // The button is an explicit manual check, so always discard the previous
         // diagnostics/readiness snapshots and probe now. A negative diagnostic cached
         // from a transient network failure must not survive the user's retry.
         self::clearStatusCaches();
-        $token = RequestLock::acquire('cl_server_probe_lock', 15);
+        $token = RequestLock::acquire('cherrylink_server_probe_lock', 15);
         if ($token === null) {
             $data = ['pending' => true];
         } else {
@@ -246,7 +245,7 @@ final class IndexHooks implements Registerable
                 $data = (new Client())->diagnostics();
                 \set_transient(self::SERVER_STATUS_CACHE_KEY, $data, HOUR_IN_SECONDS);
             } finally {
-                RequestLock::release('cl_server_probe_lock', $token);
+                RequestLock::release('cherrylink_server_probe_lock', $token);
             }
         }
         \wp_send_json($data);
@@ -266,7 +265,7 @@ final class IndexHooks implements Registerable
 
     /**
      * Local-only parts of the card (badge + last-scan line) — built from the
-     * linkate_posts_meta option, no API call.
+     * cherrylink_state option, no API call.
      *
      * @param array<string,mixed> $meta
      * @return array{last_scan_text:string,badge_html:string}
@@ -318,7 +317,7 @@ final class IndexHooks implements Registerable
      */
     public static function statusData(bool $refresh = false, bool $force = false): array
     {
-        $meta  = \get_option('linkate_posts_meta', []);
+        $meta  = \get_option('cherrylink_state', []);
         $local = self::statusLocal($meta);
 
         if ($refresh && $force) {
@@ -358,14 +357,14 @@ final class IndexHooks implements Registerable
         ) {
             return self::statusData(false);
         }
-        $token = RequestLock::acquire('cl_status_refresh_lock', 10);
+        $token = RequestLock::acquire('cherrylink_status_refresh_lock', 10);
         if ($token === null) {
             return \array_merge(self::statusData(false), ['refresh_pending' => true]);
         }
         try {
             return self::refreshStatus($local);
         } finally {
-            RequestLock::release('cl_status_refresh_lock', $token);
+            RequestLock::release('cherrylink_status_refresh_lock', $token);
         }
     }
 

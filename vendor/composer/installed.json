@@ -44,32 +44,40 @@
         },
         {
             "name": "woocommerce/action-scheduler",
-            "version": "3.6.4",
-            "version_normalized": "3.6.4.0",
+            "version": "4.2.0",
+            "version_normalized": "4.2.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/woocommerce/action-scheduler.git",
-                "reference": "e7dafe215be5ef823392204535ee2e241f99a8cb"
+                "reference": "9e2c6b02e89652bade4445ea2ca5fb12e0fa7242"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/woocommerce/action-scheduler/zipball/e7dafe215be5ef823392204535ee2e241f99a8cb",
-                "reference": "e7dafe215be5ef823392204535ee2e241f99a8cb",
+                "url": "https://api.github.com/repos/woocommerce/action-scheduler/zipball/9e2c6b02e89652bade4445ea2ca5fb12e0fa7242",
+                "reference": "9e2c6b02e89652bade4445ea2ca5fb12e0fa7242",
                 "shasum": ""
             },
-            "require-dev": {
-                "phpunit/phpunit": "^7.5",
-                "woocommerce/woocommerce-sniffs": "0.1.0",
-                "wp-cli/wp-cli": "~2.5.0",
-                "yoast/phpunit-polyfills": "^1.0"
+            "require": {
+                "php": ">=7.2"
             },
-            "time": "2023-10-11T18:24:47+00:00",
+            "require-dev": {
+                "phpunit/phpunit": "^8.5",
+                "sirbrillig/phpcs-changed": "^2.11",
+                "woocommerce/woocommerce-sniffs": "^1.0.1",
+                "wp-cli/wp-cli": "~2.5.0",
+                "yoast/phpunit-polyfills": "^2.0"
+            },
+            "time": "2026-09-16T21:40:40+00:00",
+            "published-time": "2026-09-16T21:53:56+00:00",
             "type": "wordpress-plugin",
             "extra": {
                 "scripts-description": {
+                    "lint": "Run phpcs against PHP files with unstaged changes",
                     "test": "Run unit tests",
                     "phpcs": "Analyze code against the WordPress coding standards with PHP_CodeSniffer",
-                    "phpcbf": "Fix coding standards warnings/errors automatically with PHP Code Beautifier"
+                    "phpcbf": "Fix coding standards warnings/errors automatically with PHP Code Beautifier",
+                    "lint-branch": "Run phpcs against PHP files changed on the current branch compared to its base branch",
+                    "lint-staged": "Run phpcs against PHP files with staged changes"
                 }
             },
             "installation-source": "dist",
@@ -81,11 +89,11 @@
             "homepage": "https://actionscheduler.org/",
             "support": {
                 "issues": "https://github.com/woocommerce/action-scheduler/issues",
-                "source": "https://github.com/woocommerce/action-scheduler/tree/3.6.4"
+                "source": "https://github.com/woocommerce/action-scheduler/tree/4.2.0"
             },
             "install-path": "../woocommerce/action-scheduler"
         }
     ],
-    "dev": true,
+    "dev": false,
     "dev-package-names": []
 }

@@ -1,6 +1,6 @@
 /* Classic editor: icon of the "CherryLink Pro" media button (the toggle for the React panel,
    whose own styles live in js/cherry-classic.css). */
-.linkate-media-btn:before {
+.cherrylink-media-btn:before {
     font: 400 14px/1 dashicons;
     speak: none;
     -webkit-font-smoothing: antialiased;

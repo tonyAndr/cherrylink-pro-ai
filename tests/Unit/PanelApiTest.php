@@ -43,7 +43,18 @@ final class PanelApiTest extends TestCase
         Functions\when('wp_unslash')->returnArg(1);
         Functions\when('wp_slash')->returnArg(1);
         Functions\when('sanitize_text_field')->returnArg(1);
-        Functions\when('sanitize_key')->returnArg(1);
+        Functions\when('sanitize_key')->alias(static function ($k) {
+            return strtolower(preg_replace('/[^A-Za-z0-9_\-]/', '', (string) $k));
+        });
+        Functions\when('absint')->alias(static function ($v) {
+            return abs((int) $v);
+        });
+        Functions\when('rest_sanitize_boolean')->alias(static function ($v) {
+            return is_string($v) ? !in_array(strtolower($v), ['false', '0', ''], true) : (bool) $v;
+        });
+        Functions\when('wp_kses_post')->alias(static function ($v) {
+            return preg_replace('#<script\b.*?</script>#is', '', (string) $v);
+        });
         Functions\when('is_wp_error')->justReturn(false);
         Functions\when('wp_generate_password')->justReturn('tok1234567890abcdef1234');
         Functions\when('get_option')->justReturn([
@@ -103,11 +114,13 @@ final class PanelApiTest extends TestCase
     }
 
     /** @param array<string,mixed> $body */
-    private function api(array $body, ?callable $client = null): PanelApi
+    private function api(array $body, ?callable $client = null, bool $connected = true): PanelApi
     {
         return new PanelApi(new Options(), static function () use ($body) {
             return \json_encode($body);
-        }, $client);
+        }, $client, static function () use ($connected) {
+            return $connected;
+        });
     }
 
     /** @return array{0:array<string,mixed>,1:int} */
@@ -307,6 +320,61 @@ final class PanelApiTest extends TestCase
         $this->assertArrayNotHasKey('locked_by', $res['items'][1]);
         $this->assertSame('target topic', $res['items'][1]['suggestion']['phrase']);
         $this->assertSame(3, $res['items'][1]['in']);
+    }
+
+    public function testServiceActionsAnswerNotConnectedWithoutTouchingTheService(): void
+    {
+        $client = static function () {
+            throw new \LogicException('the service must not be reached when not connected');
+        };
+        foreach ([
+            'ajaxLinks'   => ['post_id' => 10],
+            'ajaxIncoming' => ['object_id' => 10, 'type' => 'post'],
+            'ajaxDonors'  => ['post_id' => 10],
+            'ajaxKeyPin'  => ['post_id' => 10, 'mode' => 'pin'],
+        ] as $method => $body) {
+            [$res, $status] = $this->call($this->api($body, $client, false), $method);
+            $this->assertFalse($res['ok'], $method);
+            $this->assertSame('not_connected', $res['error'], $method);
+            $this->assertSame('Connect CherryLink to get suggestions.', $res['message'], $method);
+            $this->assertSame(403, $status, $method);
+        }
+    }
+
+    public function testLocalActionsWorkWithoutAConnection(): void
+    {
+        [$res] = $this->call($this->api(['donor_id' => 20, 'target_id' => 10, 'phrase' => 'target topic', 'block_index' => 0], null, false), 'ajaxDonorInsert');
+        $this->assertTrue($res['ok']);
+        [$res] = $this->call($this->api(['donor_id' => 20, 'undo_token' => $res['undo_token']], null, false), 'ajaxDonorUndo');
+        $this->assertTrue($res['ok']);
+        $this->assertSame('<p>A donor article that talks about the target topic.</p>', $this->posts[20]['content']);
+
+        Functions\when('get_terms')->justReturn([]);
+        [$res] = $this->call($this->api([], null, false), 'ajaxTerms');
+        $this->assertTrue($res['ok']);
+    }
+
+    public function testRequestFieldsAreSanitizedByType(): void
+    {
+        $m = new \ReflectionMethod(PanelApi::class, 'start');
+        $m->setAccessible(true);
+        $api = $this->api([
+            'post_id'     => '12abc',
+            'is_term'     => 'false',
+            'offset'      => -5,
+            'block_index' => '-1',
+            'taxonomy'    => 'Category<script>',
+            'source_html' => '<p>ok</p><script>alert(1)</script>',
+            'evil'        => 'dropped',
+        ]);
+        $in = $m->invoke($api, false);
+        $this->assertSame(12, $in['post_id']);
+        $this->assertFalse($in['is_term']);
+        $this->assertSame(5, $in['offset']);
+        $this->assertSame(-1, $in['block_index']);
+        $this->assertSame('categoryscript', $in['taxonomy']);
+        $this->assertSame('<p>ok</p>', $in['source_html']);
+        $this->assertArrayNotHasKey('evil', $in);
     }
 
     public function testTermsDecoratesTreeWithMarkup(): void

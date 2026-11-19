@@ -20,8 +20,8 @@ final class AdminResponsivenessTest extends TestCase
         if (!\defined('HOUR_IN_SECONDS')) {
             \define('HOUR_IN_SECONDS', 3600);
         }
-        if (!\defined('CHERRY_VECTOR_API_URL')) {
-            \define('CHERRY_VECTOR_API_URL', 'https://api.cherrylink.app');
+        if (!\defined('CHERRYLINK_API_URL')) {
+            \define('CHERRYLINK_API_URL', 'https://api.cherrylink.app');
         }
     }
 
@@ -50,7 +50,7 @@ final class AdminResponsivenessTest extends TestCase
     {
         $cached = $this->snapshot(true, 21, 9, 301);
         Functions\when('get_option')->alias(static function ($key, $default = false) {
-            return $key === 'cl_status_refresh_lock' ? (string) (\time() + 10) . '|other-request' : $default;
+            return $key === 'cherrylink_status_refresh_lock' ? (string) (\time() + 10) . '|other-request' : $default;
         });
         Functions\when('get_transient')->justReturn($cached);
         Functions\expect('add_option')->never();
@@ -82,8 +82,8 @@ final class AdminResponsivenessTest extends TestCase
     {
         $cached = $this->snapshot(true, 44, 18, 301);
         Functions\when('get_option')->alias(static function ($key, $default = false) {
-            if ($key === 'linkate-posts') return ['hash_field' => 'test-key'];
-            if ($key === 'cl_status_refresh_lock') return '';
+            if ($key === 'cherrylink_options') return ['hash_field' => 'test-key'];
+            if ($key === 'cherrylink_status_refresh_lock') return '';
             return $default;
         });
         Functions\when('get_transient')->alias(static function ($key) use ($cached) {
@@ -91,7 +91,7 @@ final class AdminResponsivenessTest extends TestCase
         });
         Functions\when('wp_generate_uuid4')->justReturn('refresh-token');
         Functions\expect('add_option')->once()->with(
-            'cl_status_refresh_lock',
+            'cherrylink_status_refresh_lock',
             Mockery::pattern('/^\d+\|refresh-token$/'),
             '',
             false
@@ -112,12 +112,12 @@ final class AdminResponsivenessTest extends TestCase
         $wpdb->options = 'wp_options';
         $wpdb->shouldReceive('prepare')->once()->with(
             'DELETE FROM wp_options WHERE option_name = %s AND option_value = %s',
-            'cl_status_refresh_lock',
+            'cherrylink_status_refresh_lock',
             Mockery::pattern('/^\d+\|refresh-token$/')
         )->andReturn('DELETE FROM wp_options WHERE option_name = ... AND option_value = ...');
         $wpdb->shouldReceive('query')->once()->andReturn(1);
         $GLOBALS['wpdb'] = $wpdb;
-        Functions\expect('wp_cache_delete')->once()->with('cl_status_refresh_lock', 'options')->andReturn(true);
+        Functions\expect('wp_cache_delete')->once()->with('cherrylink_status_refresh_lock', 'options')->andReturn(true);
         Functions\expect('set_transient')->once()->with(
             IndexHooks::STATUS_CACHE_KEY,
             Mockery::on(static function (array $data): bool {

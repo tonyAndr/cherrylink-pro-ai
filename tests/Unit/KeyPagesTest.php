@@ -224,6 +224,9 @@ final class KeyPagesTest extends TestCase
     private function panel(array $body, callable $can): array
     {
         Functions\when('current_user_can')->alias($can);
+        Functions\when('absint')->alias(static function ($v) {
+            return abs((int) $v);
+        });
         Functions\when('wp_send_json')->alias(static function ($data, $status = null) {
             throw new KeyPagesJson($data, (int) $status);
         });
@@ -232,6 +235,8 @@ final class KeyPagesTest extends TestCase
             return \json_encode($body);
         }, static function () use ($client) {
             return $client;
+        }, static function () {
+            return true;
         });
         try {
             $api->ajaxKeyPin();

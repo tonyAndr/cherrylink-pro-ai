@@ -88,7 +88,7 @@ final class DonorFinder
                 'title'      => \html_entity_decode((string) \get_the_title($id), ENT_QUOTES | ENT_HTML5, 'UTF-8'),
                 'edit_url'   => \admin_url('post.php?post=' . $id . '&action=edit'),
                 'view_url'   => (string) \get_permalink($id),
-                'in'         => (int) \get_post_meta($id, 'cherry_income', true),
+                'in'         => (int) \get_post_meta($id, 'cherrylink_incoming', true),
                 'can_edit'   => $can_edit,
                 'suggestion' => $suggestion,
             ];

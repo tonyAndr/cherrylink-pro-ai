@@ -36,7 +36,7 @@ final class LinkFields
     /** @param \stdClass $result */
     public static function url(string $option_key, $result): string
     {
-        $options    = \get_option('linkate-posts', []);
+        $options    = \get_option(\CherryLink\Support\Options::MAIN, []);
         $url_option = $options['relative_links'];
         $value      = \get_permalink($result->ID);
         return self::unparseUrl($value, $url_option);

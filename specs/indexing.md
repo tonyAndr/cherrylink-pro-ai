@@ -89,7 +89,7 @@ between saving the cursor and scheduling the next action. Every callback carries
 the run key and is rejected for a different run, and a worker lock prevents two
 turns from running the same scan concurrently.
 
-Known gap: the Posts-list columns `cherry_outgoing`/`cherry_income` are written by
+Known gap: the Posts-list columns `cherrylink_outgoing`/`cherrylink_incoming` are written by
 the synchronous save path only, so an async tenant that never ran a synchronous
 scan shows zeros there; counts are available from the editor/API instead.
 

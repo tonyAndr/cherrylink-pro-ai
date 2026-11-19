@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace CherryLink\Admin;
 
+use CherryLink\Ajax\Input;
 use CherryLink\Ajax\Security;
 use CherryLink\Contracts\Registerable;
 use CherryLink\Plugin;
@@ -37,7 +38,6 @@ final class AdminMenu implements Registerable
     public function register(): void
     {
         \add_action('admin_menu', [$this, 'menu'], 1);
-        \add_action('admin_init', [$this, 'redirectLegacy']);
         \add_action('admin_enqueue_scripts', [$this, 'enqueue'], 1);
         // Settings export is served through a nonce-checked admin handler, never as a
         // static file inside the plugin directory.
@@ -79,42 +79,9 @@ final class AdminMenu implements Registerable
         \add_submenu_page('cherrylink', \__('Settings', 'cherrylink-ai'), \__('Settings', 'cherrylink-ai'), $cap, 'cherrylink-settings', [$this, 'render']);
     }
 
-    /**
-     * Target for the pre-2.x settings URL (options-general.php?page=cherrylink-pro), or null.
-     * Connect outcome parameters survive so a wizard return still shows its message.
-     *
-     * @param array<string,mixed> $get
-     */
-    public static function legacyTarget(string $pagenow, array $get): ?string
-    {
-        if ($pagenow !== 'options-general.php' || ($get['page'] ?? '') !== 'cherrylink-pro') {
-            return null;
-        }
-        $args = [];
-        foreach (['cl_connect', 'cl_retry'] as $key) {
-            if (isset($get[$key]) && \is_scalar($get[$key])) {
-                $args[$key] = \sanitize_key((string) $get[$key]);
-            }
-        }
-
-        return \add_query_arg($args, self::url('cherrylink'));
-    }
-
-    public function redirectLegacy(): void
-    {
-        global $pagenow;
-        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only redirect selector
-        $target = self::legacyTarget((string) $pagenow, $_GET);
-        if ($target !== null) {
-            \wp_safe_redirect($target);
-            exit;
-        }
-    }
-
     public function render(): void
     {
-        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only screen selector
-        $slug = isset($_GET['page']) ? \sanitize_key(\wp_unslash($_GET['page'])) : 'cherrylink';
+        $slug = (string) Input::get('page', 'key', 'cherrylink');
         echo '<div class="wrap"><hr class="wp-header-end"><div id="cherrylink-admin" data-page="' . \esc_attr(self::PAGES[$slug] ?? 'dashboard') . '"></div></div>';
     }
 
@@ -144,8 +111,7 @@ final class AdminMenu implements Registerable
     /** @return array<string,mixed> */
     public function bootstrap(): array
     {
-        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only screen selector
-        $slug = isset($_GET['page']) ? \sanitize_key(\wp_unslash($_GET['page'])) : 'cherrylink';
+        $slug = (string) Input::get('page', 'key', 'cherrylink');
 
         return [
             'page'    => self::PAGES[$slug] ?? 'dashboard',
@@ -186,7 +152,7 @@ final class AdminMenu implements Registerable
         }
         \check_admin_referer('cherrylink-export-options');
 
-        $payload = \http_build_query((array) \get_option('linkate-posts', []));
+        $payload = \http_build_query((array) \get_option(\CherryLink\Support\Options::MAIN, []));
 
         \nocache_headers();
         \header('Content-Type: text/plain; charset=utf-8');

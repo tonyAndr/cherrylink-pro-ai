@@ -10,15 +10,15 @@ use CherryLink\Support\Language;
 use WP_Post;
 
 /**
- * Cherry Vector API client — all communication with the Cherry Vector API service
+ * CherryLink API client — all communication with the CherryLink API service
  * (semantic search, link graph, indexing).
  *
- * Moved from the legacy CherryVectorAPI. The runtime CHERRY_VECTOR_API_URL /
- * CL_ALT_API_* constants and the http_api_curl alternative-route hook now live in
+ * The runtime CHERRYLINK_API_URL /
+ * CHERRYLINK_ALT_API_* constants and the http_api_curl alternative-route hook now live in
  * Api\Relay. Explicit interactive/status/background contexts bound UI requests while
  * preserving long-running background scan transport and structured HTTP results.
  */
-class Client implements ReportClient
+class Client
 {
     /** Maximum results the API accepts for /v1/search (SearchRequest le=50). */
     public const SEARCH_LIMIT_MAX = 50;
@@ -78,7 +78,7 @@ class Client implements ReportClient
             return null;
         }
 
-        return 'https://' . $parts['host'] . ':' . CL_ALT_API_PORT;
+        return 'https://' . $parts['host'] . ':' . CHERRYLINK_ALT_API_PORT;
     }
 
     /**
@@ -128,21 +128,21 @@ class Client implements ReportClient
         };
         $this->deadline = null;
         $this->logger   = $logger ?? new Logger();
-        $this->direct_base = $this->base_url = \rtrim(CHERRY_VECTOR_API_URL, '/');
+        $this->direct_base = $this->base_url = \rtrim(CHERRYLINK_API_URL, '/');
         // While the relay transient is active, hit the relay port on the SAME hostname (so TLS is
         // unchanged); the http_api_curl hook redirects the connection to the relay IP.
         if (self::alt_enabled() && $this->relay_base() !== null) {
             $this->base_url = (string) $this->relay_base();
         }
-        $options        = \get_option('linkate-posts', []);
+        $options        = \get_option(\CherryLink\Support\Options::MAIN, []);
         // Prefer the saved customer license. An old explicit API key (wp-config
         // constant or the expert setting) must not shadow a real license: production
         // disables the server's admin-license bypass, so sending a leftover admin key
         // makes every tenant request return HTTP 403 customer_license_required.
         // The explicit key remains a fallback for license-less/local installations.
         $explicit_key = '';
-        if (\defined('CHERRY_VECTOR_API_KEY') && CHERRY_VECTOR_API_KEY !== '') {
-            $explicit_key = (string) CHERRY_VECTOR_API_KEY;
+        if (\defined('CHERRYLINK_API_KEY') && CHERRYLINK_API_KEY !== '') {
+            $explicit_key = (string) CHERRYLINK_API_KEY;
         } elseif (!empty($options['vector_api_key'])) {
             $explicit_key = (string) $options['vector_api_key'];
         }
@@ -178,7 +178,7 @@ class Client implements ReportClient
      */
     private function build_text(WP_Post $post): string
     {
-        $options = \get_option('linkate-posts', []);
+        $options = \get_option(\CherryLink\Support\Options::MAIN, []);
         $meta    = [];
         foreach ($this->configured_meta_fields($options) as $field) {
             $meta[$field] = \get_post_meta($post->ID, $field, true);
@@ -831,7 +831,7 @@ class Client implements ReportClient
 
     /**
      * Send raw post HTML to the API for link extraction and storage.
-     * Returns the number of outgoing links found (for cherry_outgoing post meta).
+     * Returns the number of outgoing links found (for cherrylink_outgoing post meta).
      */
     public function parse_links(int $source_id, int $source_type, string $source_url, string $html, ?string $content_hash = null): int
     {
@@ -903,7 +903,7 @@ class Client implements ReportClient
     }
 
     /**
-     * Total link count for this client (replaces SELECT COUNT(*) from linkate_scheme).
+     * Total link count for this client .
      */
     public function get_links_count(): ?int
     {
@@ -939,39 +939,6 @@ class Client implements ReportClient
     }
 
     // ── Error reporting ─────────────────────────────────────────────────────
-
-    /**
-     * Send a bounded batch of queued plugin lifecycle reports.
-     *
-     * Called only from the dedicated WP-Cron send event, never from activation,
-     * rendering or save hooks. The caller owns retries/backoff.
-     *
-     * @param array<int,array<string,mixed>> $events
-     * @return array<string,mixed>|null
-     */
-    public function report_plugin_events(array $events): ?array
-    {
-        $payload = ['events' => []];
-        foreach ($events as $event) {
-            $payload['events'][] = [
-                'event_key'      => (string) ($event['event_key'] ?? ''),
-                'action'         => (string) ($event['action'] ?? ''),
-                'plugin_version' => (string) ($event['plugin_version'] ?? ''),
-                'from_version'   => $event['from_version'] ?? null,
-                'occurred_at'    => (string) ($event['occurred_at'] ?? ''),
-                'environment'    => \is_array($event['environment'] ?? null) ? $event['environment'] : [],
-            ];
-        }
-
-        $result = $this->request_result('POST', '/v1/client-events', $payload, 10);
-        if (! $result['ok']) {
-            $this->logger->log('CherryLink plugin report failed: ' . $result['error']);
-            return null;
-        }
-
-        $body = $result['body'];
-        return \is_array($body) ? \array_merge(['ok' => true], $body) : ['ok' => true];
-    }
 
     /**
      * Push an error/warning event to the API log.
@@ -1022,11 +989,11 @@ class Client implements ReportClient
         if ($this->license_key === '') {
             // No outbound request before the site is connected (WordPress.org guideline 7).
             return ['ok' => false, 'ms' => 0, 'http_code' => 0,
-                    'error' => 'no license key configured', 'body' => null];
+                    'error' => 'no API key configured', 'body' => null];
         }
         if ($remaining <= 0) {
             return ['ok' => false, 'ms' => 0, 'http_code' => 0,
-                    'error' => $remaining <= 0 ? 'request budget exhausted' : 'no license key configured', 'body' => null];
+                    'error' => $remaining <= 0 ? 'request budget exhausted' : 'no API key configured', 'body' => null];
         }
         $timeout = \min($timeout, $remaining);
         $args = ['method' => $method, 'timeout' => $timeout, 'redirection' => 0, 'headers' => ['Content-Type' => 'application/json']];
@@ -1077,13 +1044,13 @@ class Client implements ReportClient
         array $extra_headers = []
     ): array {
         if (empty($this->license_key)) {
-            $this->logger->log('CherryVectorAPI: no license key configured');
+            $this->logger->log('CherryLink: no API key configured');
             return [
                 'ok'          => false,
                 'status'      => 0,
                 'headers'     => [],
                 'body'        => null,
-                'error'       => 'no license key configured',
+                'error'       => 'no API key configured',
                 'retry_after' => null,
             ];
         }
@@ -1230,7 +1197,7 @@ class Client implements ReportClient
     {
         $status = (int)($result['status'] ?? 0);
         if ($status === 0) {
-            return ($result['error'] ?? '') !== 'no license key configured';
+            return ($result['error'] ?? '') !== 'no API key configured';
         }
 
         return $status === 408 || $status === 429 || $status >= 500;

@@ -10,7 +10,7 @@ use CherryLink\Contracts\Registerable;
  * License validation + activation lifecycle.
  *
  * Owns the "call home" check against the licensing authority, the cached validity state in the
- * linkate_posts_meta option, the daily re-check cron, the settings-page "index out of
+ * cherrylink_state option, the daily re-check cron, the settings-page "index out of
  * sync while unlicensed" notice, and the administrator capability grant. Ported from
  * the legacy cherrylink_install.php (deleted); the activation/update lifecycle now lives
  * in Support\Lifecycle, which calls install() on activation and after an update.
@@ -21,7 +21,8 @@ use CherryLink\Contracts\Registerable;
  */
 final class License implements Registerable
 {
-    public const VALIDATION_HOOK = 'clpro_license_validation_hook';
+    public const VALIDATION_HOOK = 'cherrylink_key_check';
+    public const DAILY_HOOK = 'cherrylink_key_check_daily';
     public const DEFAULT_LICENSING_URL = 'https://api.cherrylink.app/cherrylink-pro-licensing/';
     private const MAX_ATTEMPTS = 3;
 
@@ -35,11 +36,11 @@ final class License implements Registerable
 
     public function register(): void
     {
-        \add_action('clpro_license_cron_hook', [$this, 'runDailyCheck']);
+        \add_action(self::DAILY_HOOK, [$this, 'runDailyCheck']);
         \add_action(self::VALIDATION_HOOK, [$this, 'runScheduledValidation']);
-        \add_action('update_option_linkate-posts', [$this, 'onOptionsUpdated'], 10, 2);
-        if (! \wp_next_scheduled('clpro_license_cron_hook')) {
-            \wp_schedule_event(\time(), 'daily', 'clpro_license_cron_hook');
+        \add_action('update_option_' . Options::MAIN, [$this, 'onOptionsUpdated'], 10, 2);
+        if (! \wp_next_scheduled(self::DAILY_HOOK)) {
+            \wp_schedule_event(\time(), 'daily', self::DAILY_HOOK);
         }
 
         \add_action('admin_notices', [$this, 'indexNotice']);
@@ -349,7 +350,7 @@ final class License implements Registerable
     {
         $this->refreshOptionCache(Options::MAIN);
         $key = (string) $this->options->get('hash_field', '');
-        $lock_token = $key === '' ? null : RequestLock::acquire('clpro_license_validation_lock', 60);
+        $lock_token = $key === '' ? null : RequestLock::acquire('cherrylink_key_check_lock', 60);
         if ($lock_token === null) {
             if ($key !== '') {
                 if (! $this->queueValidation(30)) {
@@ -427,7 +428,7 @@ final class License implements Registerable
             }
             $this->options->saveMeta($meta);
         } finally {
-            RequestLock::release('clpro_license_validation_lock', $lock_token);
+            RequestLock::release('cherrylink_key_check_lock', $lock_token);
         }
     }
 
@@ -496,7 +497,7 @@ final class License implements Registerable
         }
 
         $dirty = $this->options->indexIsDirty();
-        $html  = (new View())->render('notices/license-inactive', [
+        $html  = (new View())->render('notices/not-connected', [
             'dirty'        => $dirty,
             'since'        => $dirty ? \get_date_from_gmt($this->options->indexDirtySince()) : '',
             'settings_url' => \admin_url('admin.php?page=cherrylink-settings'),

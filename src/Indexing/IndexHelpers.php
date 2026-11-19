@@ -6,8 +6,7 @@ namespace CherryLink\Indexing;
 
 /**
  * Post-type + count helpers for the vector-API indexer, plus the pure
- * incremental-sync diff. Moved verbatim from the legacy CL_Index_Helpers
- * class (deleted).
+ * incremental-sync diff.
  */
 class IndexHelpers
 {
@@ -52,7 +51,7 @@ class IndexHelpers
     {
         // The content types chosen in the admin (post always; pages and custom types opt-in)
         // decide what is indexed, counted against the plan, and suggested in the editor.
-        $options = (array) \get_option('linkate-posts', []);
+        $options = (array) \get_option(\CherryLink\Support\Options::MAIN, []);
         $customs = \array_filter(\array_map('trim', \explode(',', (string) ($options['show_customs'] ?? ''))));
         $list    = ['post'];
         foreach (self::get_public_types_list() as $type) {

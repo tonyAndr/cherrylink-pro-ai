@@ -34,17 +34,16 @@ final class OptionsTest extends TestCase
     {
         // These strings are load-bearing: they must match the persisted option
         // names the plugin has always used, or saved settings would be orphaned.
-        $this->assertSame('linkate-posts', Options::MAIN);
-        $this->assertSame('linkate_posts_meta', Options::META);
+        $this->assertSame('cherrylink_options', Options::MAIN);
+        $this->assertSame('cherrylink_state', Options::META);
         $this->assertSame('cherrylink_index_dirty', Options::INDEX_DIRTY);
-        $this->assertSame('cherry_debug_info', Options::DEBUG_INFO);
     }
 
     public function testMainReadsMainOptionAsArray(): void
     {
         Functions\expect('get_option')
             ->once()
-            ->with('linkate-posts', [])
+            ->with('cherrylink_options', [])
             ->andReturn(['divider' => '|']);
 
         $this->assertSame(['divider' => '|'], (new Options())->main());
@@ -72,7 +71,7 @@ final class OptionsTest extends TestCase
         Functions\when('get_option')->justReturn(['divider' => '|']);
         Functions\expect('update_option')
             ->once()
-            ->with('linkate-posts', ['divider' => '|', 'anons_len' => 300])
+            ->with('cherrylink_options', ['divider' => '|', 'anons_len' => 300])
             ->andReturn(true);
 
         $this->assertTrue((new Options())->set('anons_len', 300));
@@ -82,7 +81,7 @@ final class OptionsTest extends TestCase
     {
         Functions\expect('update_option')
             ->once()
-            ->with('linkate_posts_meta', ['key_valid' => true])
+            ->with('cherrylink_state', ['key_valid' => true])
             ->andReturn(true);
 
         $this->assertTrue((new Options())->saveMeta(['key_valid' => true]));

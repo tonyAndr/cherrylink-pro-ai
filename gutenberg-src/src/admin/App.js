@@ -20,7 +20,7 @@ export default function App({ boot }) {
     let body;
     if (page === 'dashboard' && (!state.connected || !state.setup_done)) {
         body = <Wizard />;
-    } else if (!state.connected) {
+    } else if (!state.connected && page !== 'settings') {
         body = (
             <Card>
                 <Title>{__('Connect CherryLink first', 'cherrylink-ai')}</Title>

@@ -14,7 +14,6 @@ Audited paths and how each is closed:
 | `Api\Client::request_result` (all API calls) | existing "no license key configured" short-circuit (also `AsyncClient`, readiness, logs) |
 | `Api\Client::probe` / `diagnostics` (health, no auth) | now also refuses without a key |
 | `Support\CapabilitiesRefresh` / `Capabilities::refresh` | cron callback requires `isLicensed()` |
-| `Support\PluginReports` | `enabled()` = connected; not connected = nothing queued, nothing sent, queue cleared |
 | `Indexing\IndexHooks`, `SyncService`, `AsyncBulkScan` | `isLicensed()` gates (index is only marked dirty) |
 | `Api\Relay` | only adjusts connect address of our own requests |
 | Admin app (`js/cherry-app.{js,css}`), editor bundle | all local files; no CDN/remote asset |
@@ -28,7 +27,7 @@ Tests: `FreeModeTest::testNothingReachesTheNetworkWithoutAKey`.
 ## Free keys in the license
 - `callHome` accepts `key_valid: 1` with `expires_at: null` **only** when `plan === 'free'`; responses without
   `plan` keep the strict legacy checks.
-- `plan`, `post_limit`, `features`, `paid_expired` are stored in `linkate_posts_meta` (cleared for legacy responses
+- `plan`, `post_limit`, `features`, `paid_expired` are stored in `cherrylink_state` (cleared for legacy responses
   and on key change).
 - `isValid()` skips the expiry test for stored plan `free` (also the `paid_expired` fallback, whose `expires_at` is
   past), including the outage fallback and schedule-failure paths. Other plans still need a future expiry.
@@ -46,8 +45,8 @@ Tests: `FreeModeTest::testNothingReachesTheNetworkWithoutAKey`.
    (`wp_ajax_nopriv_` + `wp_ajax_cherrylink_connect_proof`, `Connect::handleAjaxProof`) answers `{"nonce": ...}` while
    the transient exists, else 404.
 4. 200: `license_key` is stored in the key option, plan fields and `key_valid` in meta (no second round trip), a
-   capabilities refresh is scheduled on cron, and the user is redirected back to `Connect::settingsUrl()` (`admin.php?page=cherrylink`) with `cl_connect=ok`.
-5. Errors map to `cl_connect=<code>` notices: `domain_proof_failed` (409), `rate_limited` (429, `Retry-After`),
+   capabilities refresh is scheduled on cron, and the user is redirected back to `Connect::settingsUrl()` (`admin.php?page=cherrylink`) with `cherrylink_result=ok`.
+5. Errors map to `cherrylink_result=<code>` notices: `domain_proof_failed` (409), `rate_limited` (429, `Retry-After`),
    `invalid_domain` (422), `subscription_not_eligible` (409), everything else `unavailable`.
 "I already have a key" in the wizard saves it via `cherrylink_admin_license` (`set_key`).
 
@@ -74,7 +73,7 @@ The async bulk run (`AsyncBulkScan`) is not plan-limited (the API does not limit
 `PanelConfig` adds `connectUrl`, `upgradeUrl` and `plan {name, post_limit, indexed, total}` (null for legacy keys;
 `indexed` from the cached capabilities `plan.indexed`, else the cached readiness count; `total` = published posts of
 indexable types, 10-minute transient). The Gutenberg and Classic hosts now load for unconnected sites too:
-`licensed === false` shows one "Connect CherryLink" link to `connectUrl` and makes no AJAX call. When
+`connected === false` makes no service call (links, incoming, donors, key pin): those tabs show a "Connect CherryLink" prompt linking to `connectUrl`; the local categories list and link insertion stay available, and `PanelApi` answers service actions with `not_connected` while local actions (terms, donor insert/undo) always work. When
 `post_limit` is set and `total > post_limit` the strip shows the learned count with an Upgrade link, and
 `postLearned` (false = this post is outside the newest `post_limit` by `post_modified_gmt`) shows a note that other
 posts won't suggest links to it. Content types (post always, page by default, opt-in customs) decide what is

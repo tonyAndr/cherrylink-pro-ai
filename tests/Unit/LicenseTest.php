@@ -38,16 +38,16 @@ final class LicenseTest extends TestCase
     {
         $meta = ['key_valid' => false, 'key_error_reason' => 'wrong_key'];
         Functions\when('get_option')->alias(static function ($key, $default = false) use (&$meta) {
-            if ($key === 'linkate-posts') {
+            if ($key === 'cherrylink_options') {
                 return ['hash_field' => 'secret-key'];
             }
-            if ($key === 'linkate_posts_meta') {
+            if ($key === 'cherrylink_state') {
                 return $meta;
             }
             return $default;
         });
         Functions\when('update_option')->alias(static function ($key, $value) use (&$meta) {
-            if ($key === 'linkate_posts_meta') {
+            if ($key === 'cherrylink_state') {
                 $meta = $value;
             }
             return true;
@@ -68,10 +68,10 @@ final class LicenseTest extends TestCase
     {
         $meta = ['key_valid' => true, 'expires_at' => '2099-01-01 00:00:00'];
         Functions\when('get_option')->alias(static function ($key, $default = false) use (&$meta) {
-            return $key === 'linkate-posts' ? ['hash_field' => 'new'] : ($key === 'linkate_posts_meta' ? $meta : $default);
+            return $key === 'cherrylink_options' ? ['hash_field' => 'new'] : ($key === 'cherrylink_state' ? $meta : $default);
         });
         Functions\when('update_option')->alias(static function ($key, $value) use (&$meta) {
-            if ($key === 'linkate_posts_meta') {
+            if ($key === 'cherrylink_state') {
                 $meta = $value;
             }
             return true;
@@ -92,10 +92,10 @@ final class LicenseTest extends TestCase
     public function testIsValidRejectsCachedActivationForDifferentConfiguredKey(): void
     {
         Functions\when('get_option')->alias(static function ($key, $default = false) {
-            if ($key === 'linkate-posts') {
+            if ($key === 'cherrylink_options') {
                 return ['hash_field' => 'new-key'];
             }
-            if ($key === 'linkate_posts_meta') {
+            if ($key === 'cherrylink_state') {
                 return [
                     'key_valid' => true,
                     'expires_at' => '2099-01-01 00:00:00',
@@ -147,10 +147,10 @@ final class LicenseTest extends TestCase
             'validation_status' => 'valid',
         ];
         Functions\when('get_option')->alias(static function ($key, $default = false) use (&$meta) {
-            return $key === 'linkate-posts' ? ['hash_field' => 'current'] : ($key === 'linkate_posts_meta' ? $meta : $default);
+            return $key === 'cherrylink_options' ? ['hash_field' => 'current'] : ($key === 'cherrylink_state' ? $meta : $default);
         });
         Functions\when('update_option')->alias(static function ($key, $value) use (&$meta) {
-            if ($key === 'linkate_posts_meta') {
+            if ($key === 'cherrylink_state') {
                 $meta = $value;
             }
             return true;
@@ -184,13 +184,13 @@ final class LicenseTest extends TestCase
             'validation_attempt' => 0,
         ];
         Functions\when('get_option')->alias(static function ($key, $default = false) use (&$settings, &$meta) {
-            if ($key === 'linkate-posts') {
+            if ($key === 'cherrylink_options') {
                 return $settings;
             }
-            return $key === 'linkate_posts_meta' ? $meta : $default;
+            return $key === 'cherrylink_state' ? $meta : $default;
         });
         Functions\when('update_option')->alias(static function ($key, $value) use (&$meta) {
-            if ($key === 'linkate_posts_meta') {
+            if ($key === 'cherrylink_state') {
                 $meta = $value;
             }
             return true;
@@ -218,18 +218,18 @@ final class LicenseTest extends TestCase
         $settings_reads = 0;
         $meta = ['key_valid' => false, 'validation_status' => 'pending'];
         Functions\when('get_option')->alias(static function ($key, $default = false) use (&$settings_reads, &$meta) {
-            if ($key === 'linkate-posts') {
+            if ($key === 'cherrylink_options') {
                 $settings_reads++;
                 return ['hash_field' => $settings_reads === 1 ? 'old' : 'new'];
             }
-            if ($key === 'linkate_posts_meta') {
+            if ($key === 'cherrylink_state') {
                 return $meta;
             }
             return $default;
         });
         // This read occurs after the network response and sees the replacement key.
         Functions\when('update_option')->alias(static function ($key, $value) use (&$meta) {
-            if ($key === 'linkate_posts_meta') {
+            if ($key === 'cherrylink_state') {
                 $meta = $value;
             }
             return true;
@@ -254,10 +254,10 @@ final class LicenseTest extends TestCase
         $wpdb->shouldReceive('query')->once()->andReturn(1);
         $GLOBALS['wpdb'] = $wpdb;
         Functions\when('get_option')->alias(static function ($key, $default = false) {
-            return $key === 'clpro_license_validation_lock' ? '' : $default;
+            return $key === 'cherrylink_key_check_lock' ? '' : $default;
         });
         Functions\expect('add_option')->once()->with(
-            'clpro_license_validation_lock',
+            'cherrylink_key_check_lock',
             Mockery::pattern('/^\d+\|test-lock-token$/'),
             '',
             false

@@ -4,36 +4,14 @@ declare(strict_types=1);
 
 namespace CherryLink\Terms;
 
-use CherryLink\Ajax\Security;
-use CherryLink\Contracts\Registerable;
 use WP_Term;
 
 /**
  * Builds the taxonomy term tree (JSON) the editor panel links into, plus the flat
- * category list for its filter. Ported from the legacy cherrylink_terms.php (deleted).
+ * category list for its filter.
  */
-final class TermsService implements Registerable
+final class TermsService
 {
-    public function register(): void
-    {
-        \add_action('wp_ajax_linkate_gutenberg_hierarchical_terms_json', [$this, 'ajaxGutenbergTree']);
-        \add_action('wp_ajax_linkate_get_all_categories_json', [$this, 'ajaxGutenbergCategories']);
-    }
-
-    // ── AJAX (Gutenberg) ───────────────────────────────────────────────────────
-
-    public function ajaxGutenbergTree(): void
-    {
-        Security::verify('edit_posts');
-        \wp_send_json(self::gutenbergTree());
-    }
-
-    public function ajaxGutenbergCategories(): void
-    {
-        Security::verify('edit_posts');
-        \wp_send_json(self::gutenbergCategories());
-    }
-
     // ── Classic panel ──────────────────────────────────────────────────────────
 
     /**

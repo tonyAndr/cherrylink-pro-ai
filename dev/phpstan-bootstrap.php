@@ -19,43 +19,10 @@ defined('CHERRYLINK_INITIAL_LIMIT') || define('CHERRYLINK_INITIAL_LIMIT', 100);
 
 // API client constants — defined at runtime by cherrylink_vector_api.php (derived from
 // saved options); mirror them here so static analysis of src/Api/Client.php resolves them.
-defined('CHERRY_VECTOR_API_URL') || define('CHERRY_VECTOR_API_URL', 'https://api.cherrylink.app');
-defined('CL_ALT_API_PORT') || define('CL_ALT_API_PORT', 9443);
-defined('CL_ALT_API_IP') || define('CL_ALT_API_IP', '31.129.48.202');
+defined('CHERRYLINK_API_URL') || define('CHERRYLINK_API_URL', 'https://api.cherrylink.app');
+defined('CHERRYLINK_ALT_API_PORT') || define('CHERRYLINK_ALT_API_PORT', 9443);
+defined('CHERRYLINK_ALT_API_IP') || define('CHERRYLINK_ALT_API_IP', '31.129.48.202');
 
-// ── License gate globals (defined at runtime in cherrylink_install.php) ──────
-// Namespaced services call these shims inside their hook callbacks; declare them
-// here so analysis of src/ resolves them without loading the whole plugin.
-if (! function_exists('cl_is_licensed')) {
-    function cl_is_licensed(): bool
-    {
-        return true;
-    }
-}
-if (! function_exists('cl_mark_index_dirty')) {
-    function cl_mark_index_dirty(): void
-    {
-    }
-}
-if (! function_exists('cl_clear_index_dirty')) {
-    function cl_clear_index_dirty(): void
-    {
-    }
-}
-if (! function_exists('cl_index_status_data')) {
-    /** @return array<string,mixed> */
-    function cl_index_status_data(bool $refresh = false): array
-    {
-        return [];
-    }
-}
-if (! function_exists('linkate_posts_install')) {
-    /** @return mixed */
-    function linkate_posts_install()
-    {
-        return true;
-    }
-}
 
 // ── Legacy globals used by Debug\Debugger (defined in cherrylink_main.php +
 //    env-info/W18T.class.php at runtime) ──────────────────────────────────────

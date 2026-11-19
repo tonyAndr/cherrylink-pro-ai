@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace CherryLink\Support;
 
 use CherryLink\Contracts\Registerable;
-use CherryLink\Editor\LinkMarkup;
 use CherryLink\Indexing\AsyncBulkScan;
 use CherryLink\Indexing\IndexHooks;
 use CherryLink\Indexing\Outbox\Delivery;
@@ -18,10 +17,6 @@ use CherryLink\Support\Capabilities;
  * Plugin lifecycle wiring: load the text domain, run the install/defaults routine on
  * activation (with first-install bookkeeping + a manual-scan prompt on large sites),
  * and re-run it after WordPress finishes updating the plugin.
- *
- * Ported from the procedural bootstrap in the legacy cherrylink_main.php
- * (linkate_posts_init text-domain load, lp_activate, linkate_on_update,
- * linkate_redirectToUpdatePlugin).
  */
 final class Lifecycle implements Registerable
 {
@@ -31,17 +26,10 @@ final class Lifecycle implements Registerable
     /** @var Capabilities|null Warms the capability cache from cron after activation. */
     private $capabilities;
 
-    /** @var PluginReports */
-    private $reports;
-
-    public function __construct(
-        License $license,
-        ?Capabilities $capabilities = null,
-        ?PluginReports $reports = null
-    ) {
+    public function __construct(License $license, ?Capabilities $capabilities = null)
+    {
         $this->license      = $license;
         $this->capabilities = $capabilities;
-        $this->reports      = $reports ?? new PluginReports($license);
     }
 
     public function register(): void
@@ -52,7 +40,6 @@ final class Lifecycle implements Registerable
         \add_action('upgrader_process_complete', [$this, 'onUpdate'], 10, 2);
         \add_action('plugins_loaded', [$this, 'maybeFinishUpdate']);
         \add_action('plugins_loaded', [$this, 'maybeInstallOutbox'], 20);
-        \add_action('plugins_loaded', [$this, 'maybeMigrateOptions'], 20);
     }
 
     /** Bundled translations (ru_RU) until language packs exist on translate.wordpress.org. */
@@ -75,20 +62,11 @@ final class Lifecycle implements Registerable
             $this->capabilities->forget();
         }
 
-        $meta = \get_option('linkate_posts_meta', []);
+        $meta = \get_option('cherrylink_state', []);
         if (empty($meta['first_version'])) {
             $meta['first_version'] = PluginMeta::version();
             $meta['first_install'] = \current_time('timestamp');
-            \update_option('linkate_posts_meta', $meta);
-        }
-
-        // Reporting is queue-only: no HTTP during activation. A failure here must
-        // never block activation, so keep it best-effort.
-        try {
-            $this->reports->recordActivation();
-        } catch (\Throwable $error) {
-            // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- best-effort failure note; activation must not break
-            \error_log('CherryLink: could not queue plugin report: ' . $error->getMessage());
+            \update_option('cherrylink_state', $meta);
         }
     }
 
@@ -106,7 +84,7 @@ final class Lifecycle implements Registerable
             Delivery::SWEEP_HOOK,
             AsyncBulkScan::SWEEP_HOOK,
             License::VALIDATION_HOOK,
-            'clpro_license_cron_hook',
+            License::DAILY_HOOK,
         ];
         foreach ($hooks as $hook) {
             if (\function_exists('wp_clear_scheduled_hook')) {
@@ -175,26 +153,5 @@ final class Lifecycle implements Registerable
     public function maybeInstallOutbox(): void
     {
         Schema::maybeInstall();
-    }
-
-    /**
-     * 2.x upgrade: replace the link templates with the three markup settings and drop the
-     * removed options (alternative-server toggle, opt-in reports flag). Runs once; the
-     * stored array is only touched while a legacy key is still present.
-     */
-    public function maybeMigrateOptions(): void
-    {
-        $options = \get_option(Options::MAIN, []);
-        if (! \is_array($options)) {
-            return;
-        }
-        $legacy = ['link_before', 'link_after', 'term_before', 'term_after', 'link_temp_alt', 'term_temp_alt', 'use_alt_server', 'lifecycle_reports'];
-        if (! \array_intersect($legacy, \array_keys($options))) {
-            return;
-        }
-        $options = LinkMarkup::migrate($options);
-        unset($options['use_alt_server'], $options['lifecycle_reports']);
-        \update_option(Options::MAIN, $options);
-        \delete_transient('cherrylink_relay_until');
     }
 }

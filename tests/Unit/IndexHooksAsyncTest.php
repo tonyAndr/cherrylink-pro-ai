@@ -123,11 +123,11 @@ final class IndexHooksAsyncTest extends TestCase
 
     private function defineApiConstants(): void
     {
-        if (! \defined('CHERRY_VECTOR_API_URL')) {
-            \define('CHERRY_VECTOR_API_URL', 'https://api.example.test');
+        if (! \defined('CHERRYLINK_API_URL')) {
+            \define('CHERRYLINK_API_URL', 'https://api.example.test');
         }
-        if (! \defined('CL_ALT_API_PORT')) {
-            \define('CL_ALT_API_PORT', 8443);
+        if (! \defined('CHERRYLINK_ALT_API_PORT')) {
+            \define('CHERRYLINK_ALT_API_PORT', 8443);
         }
     }
 

@@ -20,8 +20,7 @@ without changing runtime behavior. See the staged plan in
 
 - **Entry:** `cherrylink_main.php` — plugin header, requires `vendor/autoload.php`,
   then calls `\CherryLink\Plugin::boot(__FILE__)`. It also loads Action Scheduler
-  + the GitHub update checker. No plugin logic. (The public `linkate_posts()`
-  template tag was removed in `16d0387`; rendered output lives in
+  + the GitHub update checker. No plugin logic. (Rendered output lives in
   `Editor\SuggestionsResults`.)
 - **Bootstrap:** `src/Plugin.php` — defines the API runtime constants
   (`Api\Relay::defineConstants()`), constructs the shared `Options` + `License`,
@@ -38,15 +37,8 @@ without changing runtime behavior. See the staged plan in
   lives in a namespaced, autoloaded, DI-wired service under `src/`. All former
   global-function / class-alias shim files were deleted once grep proved no
   callers (their behavior was ported to the services above and callers re-pointed;
-  the historical `linkate_otf_*` {tag}-dispatch used by the render golden-master
-  now lives in `tests/fixtures/legacy-output-tags.php`).
-  - Notable moves: `LinkatePosts` god-class → `Support\PluginMeta` (version /
-    assetVer / isSettingsPage) + `Support\Lifecycle` (activation/update) +
-    `Admin\AdminAssets` (settings-page enqueue) + `Admin\Notices` (scan prompts)
-    + `Admin\SettingsPage::actionLinks`; `CherryVectorAPI` → `Api\Client`;
-    the API constants + `http_api_curl` alt-server relay hook → `Api\Relay`;
-    `CL_Index_Helpers` → `Indexing\IndexHelpers`; `CL_TWC` → `Support\Tailwind`;
-    `cherry_write_log()` → `Support\Logger`.
+  behavior was ported to the services above).
+
 
 ## Key Files / where things live now
 
@@ -58,18 +50,16 @@ without changing runtime behavior. See the staged plan in
 | API constants + alt-server relay hook | `src/Api/Relay.php` |
 | Plugin metadata (version, assetVer, screen check) | `src/Support/PluginMeta.php` |
 | Activation / update / textdomain lifecycle | `src/Support/Lifecycle.php` |
-| Plugin lifecycle report queue/sender | `src/Support/PluginReports.php` |
-| Runtime environment collector | `src/Support/Environment.php` (`specs/plugin-reports.md`) |
 | Admin menu/pages + bundle enqueue + scan notices | `src/Admin/AdminMenu.php`, `src/Admin/Notices.php` (contract: `specs/admin-ui.md`) |
 | Post save/delete hooks + readiness payload | `src/Indexing/IndexHooks.php` |
 | Background scan (Action Scheduler worker) | `src/Indexing/SyncService.php` |
-| Incremental-sync diff (pure, tested) | `src/Indexing/IndexHelpers.php` (ex-`CL_Index_Helpers`) |
+| Incremental-sync diff (pure, tested) | `src/Indexing/IndexHelpers.php` |
 | Classic editor integration (media button + bundle enqueue) | `src/Editor/ClassicPanel.php` |
 | Editor panel API (AJAX `cherrylink_panel_*`) + config | `src/Editor/PanelApi.php`, `PanelConfig.php`, `ContentLinker.php`, `DonorFinder.php`, `LinkMarkup.php` |
 | Suggestions pipeline (query→filter→structured rows) | `src/Editor/SuggestionsResults.php::rows()`, `Editor/LinkFields.php` |
 | Gutenberg sidebar enqueue | `src/Editor/GutenbergAssets.php` |
 | Stats / CSV / Terms services | `src/Statistics/`, `src/Csv/`, `src/Terms/` |
-| Admin app AJAX (state, settings, licence, link health) | `src/Admin/AdminApi.php` (React app `gutenberg-src/src/admin/`) |
+| Admin app AJAX (state, settings, connection, link health) | `src/Admin/AdminApi.php` (React app `gutenberg-src/src/admin/`) |
 | License validation / cron / capability | `src/Support/License.php` |
 | User-facing links | `src/Support/Urls.php` |
 | AJAX nonce+capability guard | `src/Ajax/Security.php` |
@@ -107,27 +97,37 @@ keeps the synchronous chain untouched. Remaining work: initial enrollment /
 existing-index reconciliation, the progress UI split, and one live
 WordPress -> API -> worker check.
 
-## Plugin lifecycle reports checkpoint (2026-11-11)
+## Usage reports
 
-Activation and version changes are reported to the API as bounded milestones
-(`plugin.activated` / `plugin.upgraded`) with an allowlisted runtime snapshot.
-Read `specs/plugin-reports.md` before changing this path.
+The plugin sends no usage, lifecycle or environment reports (removed for WordPress.org). Only what
+the service needs to function leaves the site: Connect, key checks, capabilities, indexing and
+search, error events from failed scan steps. Keep `readme.txt` "External services" in step with
+any new outbound call.
 
-- `PluginReports` is queue-only on the request path: activation/update write the
-  non-autoloaded `cherrylink_plugin_reports` option; no HTTP from activation,
-  rendering, AJAX or save hooks.
-- The existing five-minute `Capabilities::REFRESH_HOOK` tick detects version
-  changes and recovers pending sends without HTTP. The actual POST is a single
-  `cherrylink_report_send` WP-Cron event: one batch, `RequestLock`, 10-second
-  background-client timeout, bounded backoff (5m/30m/2h/6h, five attempts).
-- `admin_init` stores `cherrylink_web_environment` once per plugin version so
-  cron/WP-CLI reports use Apache/PHP values rather than `cli`.
-- `Api\Client::report_plugin_events()` targets `POST /v1/client-events`; the API
-  stores `ops_plugin_reports` and exposes version/runtime on the admin sites and
-  activity routes. Scan progress is still not reported.
-- Implemented 2026-11-11 and pushed on `refactor/plugin-modernization`; 241 PHP
-  tests / 658 assertions pass, PHPStan clean, PHPCS no errors. Released as
-  plugin v1.2.1. Local wp-dev evidence and revert commands are in `.wp-dev-versions/README.md`.
+## Naming (WordPress.org prefix rule)
+
+Everything the plugin registers globally uses a unique `cherrylink` prefix: options
+`cherrylink_options` (settings, `Options::MAIN`) and `cherrylink_state` (key/connection state,
+`Options::META`), transients/locks `cherrylink_*`, cron hooks `cherrylink_*`, AJAX actions
+`cherrylink_*`, nonce `cherrylink_nonce`, post meta `cherrylink_outgoing` / `cherrylink_incoming`,
+constants `CHERRYLINK_*` (wp-config overrides: `CHERRYLINK_API_URL`, `CHERRYLINK_API_KEY`,
+`CHERRYLINK_LICENSING_URL`), script/style handles and page slugs `cherrylink-*`. The plugin is a new
+2.x line: no migration from the 1.x option names. Do not reintroduce `linkate`, `cl_`, `clpro`, `cherry_`.
+
+## Input handling
+
+Every request field is read through `Ajax\Input` (typed `int/uint/bool/key/text/textarea/url/html`,
+sanitized at read time; JSON bodies go through a field => type whitelist) after
+`Ajax\Security::verify($cap)` (nonce + capability). Admin-app handlers use `cherrylink_settings`;
+editor-panel handlers use `edit_posts` plus a per-object `edit_post` check. The only public
+unauthenticated handlers are the read-only Connect domain proof (REST + `nopriv` AJAX).
+
+## Features without a connection
+
+`Editor\PanelApi` registers every panel action for any admin request. Service actions
+(links, incoming, donors, key_pin) answer `not_connected` when the site is not connected; local
+ones (terms, donor_insert, donor_undo) always work. The React panel shows a Connect prompt for
+service tabs and keeps the categories list; the admin Settings page is available unconnected.
 
 ## Dev tooling & tests
 
@@ -215,11 +215,11 @@ explicit script deps in `Editor\GutenbergAssets`.
 
 All API calls go through `\CherryLink\Api\Client` (`src/Api/Client.php`, ex-`CherryVectorAPI`).
 The API runtime constants + the alt-server hook live in `\CherryLink\Api\Relay`.
-- API URL: `CHERRY_VECTOR_API_URL` constant in wp-config → admin settings → `https://api.cherrylink.app` (defined by `Api\Relay::defineConstants()`)
-- Auth key priority: saved license key (`hash_field`) → `CHERRY_VECTOR_API_KEY` constant → `vector_api_key` setting. The explicit key is a fallback for license-less/local installs; a leftover admin key must not shadow the license. **Never ship the server ADMIN_KEY in plugin code.**
+- API URL: `CHERRYLINK_API_URL` constant in wp-config → admin settings → `https://api.cherrylink.app` (defined by `Api\Relay::defineConstants()`)
+- Auth key priority: saved API key (`hash_field`) → `CHERRYLINK_API_KEY` constant → `vector_api_key` setting. The explicit key is a fallback for unconnected/local installs; a leftover admin key must not shadow the saved key. **Never ship the server ADMIN_KEY in plugin code.**
 - Headers sent: `X-License-Key`, `X-Site-Domain`
 - Errors: logged via `\CherryLink\Support\Logger`
-- Alt-server relay: `Api\Relay::resolveAltRoute()` (the `http_api_curl` hook) reroutes requests to `CL_ALT_API_*` when the "For experts" toggle is on (blocked-provider workaround).
+- Alt-server relay: `Api\Relay::resolveAltRoute()` (the `http_api_curl` hook) reroutes requests to `CHERRYLINK_ALT_API_*` when the "For experts" toggle is on (blocked-provider workaround).
 
 ---
 
@@ -246,9 +246,8 @@ docker compose up -d
 
 ## Non-obvious Things
 
-- **`linkate_scheme_exists` option**: repurposed flag — means "Cherry Vector API is configured and accessible", NOT that a MySQL table exists (that table was migrated to Postgres on the API)
 - **Scan is incremental**: diffs current published posts against `GET /v1/documents/manifest` by `post_modified_gmt`, re-embeds only changed posts, builds their links via `POST /v1/links/parse-batch`, and prunes orphans via `POST /v1/documents/delete-batch`. The diff is a pure, unit-tested helper: `Indexing\IndexHelpers::compute_sync_plan()` (see `tests/Unit/SyncPlanTest.php`).
-- **Scan runs in the background via Action Scheduler** (`src/Indexing/SyncService.php`, bundled `vendor/woocommerce/action-scheduler`). Start it and leave the page — a self-rescheduling `cherrylink_sync_worker` action processes one batch (upsert→links→prune) and enqueues the next. AJAX: `linkate_sync_start` / `linkate_sync_cancel` / `linkate_sync_status`; JS (`cherry-admin-index.js`) starts it, polls status, and has a Stop button. Progress/worklists live in options `cherrylink_sync_state` / `cherrylink_sync_plan`. Cancel flags the state AND cancels pending actions by ID (`as_unschedule_all_actions([])` only matches arg-less actions). Needs WP-Cron enabled (or a server cron / `wp action-scheduler run`) to advance without traffic.
+- **Scan runs in the background via Action Scheduler** (`src/Indexing/SyncService.php`, bundled `vendor/woocommerce/action-scheduler`). Start it and leave the page — a self-rescheduling `cherrylink_sync_worker` action processes one batch (upsert→links→prune) and enqueues the next. AJAX: `cherrylink_sync_start` / `cherrylink_sync_cancel` / `cherrylink_sync_status`; JS (`cherry-admin-index.js`) starts it, polls status, and has a Stop button. Progress/worklists live in options `cherrylink_sync_state` / `cherrylink_sync_plan`. Cancel flags the state AND cancels pending actions by ID (`as_unschedule_all_actions([])` only matches arg-less actions). Needs WP-Cron enabled (or a server cron / `wp action-scheduler run`) to advance without traffic.
 - **Async queue status**: the durable backend queue routes exist but async writes
   are disabled in production, so tenants stay in `sync` mode and the plugin uses
   the synchronous adapter. The plugin-side async surface is implemented:

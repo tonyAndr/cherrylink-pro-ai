@@ -22,9 +22,9 @@ function smoke_check(string $label, bool $ok, string $detail = ''): void
 }
 
 // 1. Real stored options must not break the option merge (the PHP 8 fatal).
-$options = (array) get_option('linkate-posts', []);
+$options = (array) get_option('cherrylink_options', []);
 smoke_check('options loaded', $options !== []);
-$merged = Cf::setOptions('linkate-posts', []);
+$merged = Cf::setOptions('cherrylink_options', []);
 smoke_check('Cf::setOptions survives real option types', isset($merged['limit_ajax']));
 
 // 2. The search request must stay inside the API's accepted range.

@@ -90,9 +90,9 @@ final class Connect implements Registerable
         \check_admin_referer(self::ACTION);
 
         $result = $this->connect();
-        $args   = ['cl_connect' => $result['ok'] ? 'ok' : $result['code']];
+        $args   = ['cherrylink_result' => $result['ok'] ? 'ok' : $result['code']];
         if (! empty($result['retry_after'])) {
-            $args['cl_retry'] = (int) $result['retry_after'];
+            $args['cherrylink_retry'] = (int) $result['retry_after'];
         }
         \wp_safe_redirect(\add_query_arg($args, self::settingsUrl()));
         exit;

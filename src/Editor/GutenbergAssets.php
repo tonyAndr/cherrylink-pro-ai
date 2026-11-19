@@ -4,18 +4,15 @@ declare(strict_types=1);
 
 namespace CherryLink\Editor;
 
-use CherryLink\Ajax\Security;
 use CherryLink\Contracts\Registerable;
 use CherryLink\Support\Options;
 
 /**
  * Enqueues the Gutenberg sidebar bundle (built from gutenberg-src/) on the block
- * editor. Ported from the legacy cherrylink_gutenberg.php +
- * register_cherrylink_gutenberg_scripts() (kept as a shim).
+ * editor.
  *
- * Only wires the enqueue hook in the admin for a licensed site — mirroring the old
- * behavior where the hook was added from cherrylink_editor_ui.php behind its
- * admin + valid-license gate.
+ * Wires the enqueue hook in the admin whether or not the site is connected: the local
+ * panel features (categories, link insertion) never depend on the service.
  */
 final class GutenbergAssets implements Registerable
 {
@@ -56,10 +53,6 @@ final class GutenbergAssets implements Registerable
             PanelConfig::inlineScript(PanelConfig::build($this->options, 'gutenberg', $post ? (int) $post->ID : 0)),
             'before'
         );
-        \wp_localize_script('cherrylink-gutenberg', 'ajax_var', [
-            'url'   => 'admin-ajax.php',
-            'nonce' => Security::nonce(),
-        ]);
         \wp_set_script_translations('cherrylink-gutenberg', 'cherrylink-ai', CHERRYLINK_DIR . 'languages');
         \wp_enqueue_script('cherrylink-gutenberg');
 

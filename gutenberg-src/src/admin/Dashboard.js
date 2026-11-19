@@ -9,9 +9,9 @@ export default function Dashboard() {
     const expired = !!state.index_expired;
     const { data, busy, error } = useLinkHealth(expired);
     const { sync, error: syncError, start } = useSync();
-    const { license, counts } = state;
+    const { connection, counts } = state;
     const s = data && data.summary;
-    const limit = license.post_limit;
+    const limit = connection.post_limit;
     const orphans = (data ? data.rows : []).filter((r) => r.orphan && r.learned).slice(0, 3);
     const rows = s ? [
         [__('Broken links', 'cherrylink-ai'), s.broken, 'broken'],
@@ -24,7 +24,7 @@ export default function Dashboard() {
         <>
             <Title extra={
                 <span className="cl-plan">
-                    <Badge tone={license.plan === 'free' ? 'accent' : 'ok'}>{planName(license.plan)}</Badge>
+                    <Badge tone={connection.plan === 'free' ? 'accent' : 'ok'}>{planName(connection.plan)}</Badge>
                     <span>{limit
                         ? sprintf(
                             /* translators: 1: posts learned (analyzed for suggestions; counts toward the plan limit), 2: total posts on the site */
@@ -32,7 +32,7 @@ export default function Dashboard() {
                         : sprintf(
                             /* translators: %s: posts learned (analyzed for suggestions) */
                             __('%s learned', 'cherrylink-ai'), num(counts.learned))}</span>
-                    {license.plan === 'free' && <Link href={urls.upgrade} target="_blank" rel="noreferrer">{__('Upgrade', 'cherrylink-ai')}</Link>}
+                    {connection.plan === 'free' && <Link href={urls.upgrade} target="_blank" rel="noreferrer">{__('Upgrade', 'cherrylink-ai')}</Link>}
                 </span>
             }>CherryLink</Title>
 

@@ -1,7 +1,7 @@
 === CherryLink – AI Internal Linking ===
-Contributors: tonyandr
+Contributors: blueberryacc
 Tags: internal links, internal linking, seo, links, link building
-Requires at least: 5.6
+Requires at least: 6.9
 Tested up to: 7.1
 Requires PHP: 7.4
 Stable tag: 2.0.0
@@ -42,20 +42,20 @@ Search is multilingual and works with any language. The plugin interface is avai
 
 == External services ==
 
-CherryLink relies on a hosted service operated by the plugin authors. The plugin does not work without it, because the semantic search index lives there. **Nothing is sent until an administrator clicks "Connect" in the CherryLink setup screen** (or enters a license key).
+CherryLink relies on a hosted service operated by the plugin authors. Related-post suggestions, the incoming-link list and the link health analysis need it, because the semantic search index lives there. Inserting links from the category list and the other tools that run on your own site work without a connection. **Nothing is sent until an administrator clicks "Connect" in the CherryLink setup screen** (or enters an API key).
 
-**1. CherryLink licensing service**
+**1. CherryLink connection service**
 URL: https://api.cherrylink.app/cherrylink-pro-licensing/
 
 * When: when an administrator clicks Connect, and afterwards periodically (and when a key is saved) to check that the key is valid and which plan limits apply.
-* What is sent: your site's domain name and the license key. During Connect, the service also fetches a one-time proof token from your site (a public URL on your own site that exists for about ten minutes) to confirm that you own the domain.
+* What is sent: your site's domain name and the API key. During Connect, the service also fetches a one-time proof token from your site (a public URL on your own site that exists for about ten minutes) to confirm that you own the domain.
 
 **2. CherryLink indexing API**
 URL: https://api.cherrylink.app
 
 * When: after you connect. When posts are published or updated, when a scan is started, when you open the editor panel and search for related posts, and when the link health dashboard is refreshed.
-* What is sent: for each indexed published post, its ID, title, plain-text content, URL, modified date, language and category/term names, and the links it contains. Your license key authenticates each request. Search requests send the text of the post being edited. Unpublished drafts are not indexed.
-* Lifecycle reports: after connecting, the plugin sends a small, infrequent report when it is activated or updated: the plugin version, WordPress and PHP versions, database version, web server, operating system, theme name and version, site locale and whether multisite is on. No post content, user data or IP-based tracking is included.
+* What is sent: for each indexed published post, its ID, title, plain-text content, URL, modified date, language and category/term names, and the links it contains. Your API key authenticates each request. Search requests send the text of the post being edited. Unpublished drafts are not indexed.
+* Error events: when a background scan step fails, a short error message and the failing step are sent to the same API for diagnostics. No post content is included.
 
 **3. Alternative route (relay)**
 If api.cherrylink.app cannot be reached directly (for example it is blocked by your network), the plugin automatically retries the same HTTPS requests through a relay server at 31.129.48.202, port 9443. The relay passes the encrypted traffic through to the same API; the TLS connection and certificate are still validated against api.cherrylink.app. The relay is used only after a failed direct connection and only for the requests listed above.
@@ -84,7 +84,7 @@ The 1,000 most recently modified posts are indexed and available for suggestions
 
 = What data leaves my site? =
 
-Only after you connect: the content of your published posts (for the search index), the text of the post you are editing when you ask for suggestions, your domain, and a small plugin/environment report. See the External services section for details and links to the privacy policy.
+Only after you connect: the content of your published posts (for the search index), the text of the post you are editing when you ask for suggestions, and your domain. See the External services section for details and links to the privacy policy.
 
 = Which languages are supported? =
 

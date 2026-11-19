@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace CherryLink\Statistics;
 
+use CherryLink\Ajax\Input;
 use CherryLink\Ajax\Security;
 use CherryLink\Api\Client;
 use CherryLink\Contracts\Registerable;
@@ -19,8 +20,8 @@ final class StatisticsService implements Registerable
 {
     public function register(): void
     {
-        \add_action('wp_ajax_linkate_orphan_donors', [$this, 'ajaxOrphanDonors']);
-        \add_action('wp_ajax_linkate_post_targets', [$this, 'ajaxPostTargets']);
+        \add_action('wp_ajax_cherrylink_orphan_donors', [$this, 'ajaxOrphanDonors']);
+        \add_action('wp_ajax_cherrylink_post_targets', [$this, 'ajaxPostTargets']);
     }
 
     /**
@@ -29,10 +30,9 @@ final class StatisticsService implements Registerable
      */
     public function ajaxPostTargets(): void
     {
-        Security::verify('edit_posts');
+        Security::verify('cherrylink_settings');
 
-        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- gated by Security::verify()
-        $post_id = isset($_POST['post_id']) ? (int) $_POST['post_id'] : 0;
+        $post_id = (int) Input::post('post_id', 'uint', 0);
         if ($post_id < 1 || ! \current_user_can('edit_post', $post_id)) {
             \wp_send_json(['donors' => []]);
         }
@@ -63,10 +63,9 @@ final class StatisticsService implements Registerable
      */
     public function ajaxOrphanDonors(): void
     {
-        Security::verify('edit_posts');
+        Security::verify('cherrylink_settings');
 
-        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- gated by Security::verify()
-        $post_id = isset($_POST['post_id']) ? (int) $_POST['post_id'] : 0;
+        $post_id = (int) Input::post('post_id', 'uint', 0);
         $orphan  = $post_id ? \get_post($post_id) : null;
         if (! $orphan) {
             \wp_send_json(['donors' => []]);

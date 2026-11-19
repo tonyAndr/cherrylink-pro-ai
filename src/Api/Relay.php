@@ -14,7 +14,7 @@ use CherryLink\Contracts\Registerable;
  * our relay-port requests only — overrides the connect address to the relay IP while
  * keeping the real hostname (so SNI / Host / certificate validation are unchanged; the
  * relay just pipes encrypted bytes to the API). Used when the primary API IP is blocked
- * upstream (e.g. RKN). License (api.cherrylink.app), the GitHub updater, etc. are never touched.
+ * upstream (e.g. RKN). The licensing endpoint (api.cherrylink.app) is never touched.
  *
  * Ported from the legacy cherrylink_vector_api.php (now deleted).
  */

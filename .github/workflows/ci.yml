@@ -1,8 +1,7 @@
 name: CI
 
 # Quality gate for the refactor: lint + static analysis + unit tests on the PHP
-# floor (7.4) and a modern runtime (8.2). Separate from release.yml, which only
-# builds the client zip on a version tag.
+# floor (7.4) and a modern runtime (8.2).
 on:
   push:
     branches: ['**']

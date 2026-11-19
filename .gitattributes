@@ -1,6 +1,6 @@
 # Paths excluded from `git archive` — i.e. from the distributed plugin zip built
-# by .github/workflows/release.yml. Everything NOT listed here ships to clients,
-# so keep runtime code (vendor/, updater/, js/, css/, img/, assets/).
+# by dev/build-org-zip.sh. Everything NOT listed here ships to clients,
+# so keep runtime code (vendor/, js/, css/, img/, assets/).
 # These are dev-only: source, tooling, tests, docs, and repo metadata.
 gutenberg-src   export-ignore
 wp-dev          export-ignore

@@ -11,7 +11,6 @@ async protocol or publish a plugin release.
 | Ordinary settings/card rendering | Cached/local state only | Last known counts, unknown/pending state |
 | License form submission / retry | Save local key/state and schedule WP-Cron; no licensing HTTP | Pending notice and retry control; scheduling failure is an error |
 | License background callback | One 5-second call; redirects disabled | Preserve a matching unexpired license on outage; bounded delayed retries |
-| Periodic GitHub update check | Cron/CLI only through the updater filter; dashboard hooks cannot fetch GitHub | Cached update metadata; explicit update actions remain available |
 | Plugin lifecycle report | Activation/update only queues a pending event; one batched POST per bounded retry from WP-Cron, never from a page/save request | Pending option survives outages; five-minute local recovery tick schedules the send |
 | Scan start | Persist manifest phase and enqueue Action Scheduler | Preserve prior plan; report scheduling failure |
 | Scan status / tick | Local status; tick requests async runner dispatch only | WP-Cron remains fallback; never consume queue inline |
@@ -77,7 +76,7 @@ were used for validation.
 Focused coverage includes cache-only rendering, failed-read cache preservation,
 lock contention/token release, transport deadline exhaustion, background budget
 compatibility, explicit diagnostics, queued manifest start/scheduling failure,
-async-only scheduler ticks, periodic updater isolation, key replacement/import,
+async-only scheduler ticks, key replacement/import,
 malformed responses, cron identity, outage preservation and failed validation
 scheduling. A full WordPress browser/outage drill remains a release gate after
 the live outbox is implemented; these are unit/static checks, not that drill.

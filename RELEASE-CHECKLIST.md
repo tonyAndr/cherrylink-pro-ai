@@ -53,13 +53,6 @@ unzip -l /tmp/cherrylink.zip | grep -E 'dev/|tests/|specs/|gutenberg-src/'   # m
 - `languages/*.pot` regenerated (`msgcat` of the per-source extractions) and
   `.po`/`.mo`/JS JSON compile (`msgfmt --check`).
 
-## 6. Tag
+## 6. Release
 
-Only with explicit owner approval:
-
-```bash
-git tag v1.2.0 && git push origin v1.2.0
-```
-
-`.github/workflows/release.yml` builds the sanitized zip and publishes the
-GitHub release the updater consumes.
+Only with explicit owner approval: follow `.wordpress-org/PUBLISHING.md` (SVN).

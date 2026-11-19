@@ -167,7 +167,7 @@ then from `plugin/` (wp-cli in Docker works without a WP install):
 
 ```bash
 wp i18n make-pot . languages/cherrylink-ai.pot --domain=cherrylink-ai \
-  --exclude=vendor,node_modules,gutenberg-src,tests,dev,build,.github,wp-dev,updater,env-info
+  --exclude=vendor,node_modules,gutenberg-src,tests,dev,build,.github,wp-dev,env-info
 wp i18n update-po languages/cherrylink-ai.pot languages/cherrylink-ai-ru_RU.po   # then translate new entries
 wp i18n make-mo languages/cherrylink-ai-ru_RU.po languages/
 wp i18n make-json languages/cherrylink-ai-ru_RU.po --no-purge

@@ -49,21 +49,3 @@ require_once(CHERRYLINK_DIR . 'vendor/autoload.php');
 if (file_exists(CHERRYLINK_DIR . '/vendor/woocommerce/action-scheduler/action-scheduler.php')) {
     require_once(CHERRYLINK_DIR . '/vendor/woocommerce/action-scheduler/action-scheduler.php');
 }
-
-// Automatic updates from the public GitHub repo (Plugin Update Checker v4.9).
-// Ships new versions via GitHub Releases — publish a release whose tag matches the
-// "Version:" header above (e.g. v1.0.3) and attach the packaged plugin zip as a
-// release asset. Clients then see the update in wp-admin like any WordPress.org plugin.
-if (file_exists(CHERRYLINK_DIR . '/updater/plugin-update-checker.php')) {
-    require_once(CHERRYLINK_DIR . '/updater/plugin-update-checker.php');
-    $cherrylink_update_checker = Puc_v4_Factory::buildUpdateChecker(
-        'https://github.com/tonyAndr/cherrylink-pro-ai/',
-        __FILE__,
-        'cherrylink-pro-ai'
-    );
-    // Periodic checks belong in background cron/CLI, never dashboard navigation.
-    $cherrylink_update_checker->addFilter('check_now', [\CherryLink\Support\UpdateChecks::class, 'allowScheduledCheck']);
-    // Prefer the attached release-asset zip over GitHub's auto-generated source archive
-    // (keeps dev files like gutenberg-src/ and node_modules out of client installs).
-    $cherrylink_update_checker->getVcsApi()->enableReleaseAssets();
-}

@@ -17,7 +17,7 @@ Audited paths and how each is closed:
 | `Indexing\IndexHooks`, `SyncService`, `AsyncBulkScan` | `isLicensed()` gates (index is only marked dirty) |
 | `Api\Relay` | only adjusts connect address of our own requests |
 | Admin app (`js/cherry-app.{js,css}`), editor bundle | all local files; no CDN/remote asset |
-| `env-info/`, `updater/` | env-info only reads local data. `updater/` (GitHub PUC) exists only in the legacy zip; the `.org` zip (`dev/build-org-zip.sh`) removes it and the main file guards it with `file_exists` |
+| `env-info/` | Only reads local data. The GitHub updater is gone from 2.x; updates come from WordPress.org |
 Tests: `FreeModeTest::testNothingReachesTheNetworkWithoutAKey`.
 
 ## Licensing URL
@@ -82,8 +82,7 @@ The panel AJAX handlers (`PanelApi`) remain registered only for validated keys.
 
 ## Coexistence
 The main file returns early (admin notice "Deactivate CherryLink Pro AI first") when `CHERRYLINK_DIR` is already
-defined. `release.yml` triggers only on `v1.*` tags. `dev/build-org-zip.sh` builds `dist/cherrylink.zip`
-(`cherrylink/` folder, no `updater/`).
+defined. `dev/build-org-zip.sh` builds `dist/cherrylink-ai.zip` (`cherrylink-ai/` folder).
 
 ## Free-site retention
 

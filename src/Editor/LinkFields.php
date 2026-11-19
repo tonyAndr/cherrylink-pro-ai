@@ -192,6 +192,9 @@ final class LinkFields
             $host   = isset($parsed_url['host']) ? $parsed_url['host'] : $HTTP_HOST;
             $port   = isset($parsed_url['port']) ? ':' . $parsed_url['port'] : '';
             $path   = isset($parsed_url['path']) ? $parsed_url['path'] : '';
+            // Plain permalinks (?p=123) live in the query string; dropping it links to the home page.
+            $path  .= isset($parsed_url['query']) ? '?' . $parsed_url['query'] : '';
+            $path  .= isset($parsed_url['fragment']) ? '#' . $parsed_url['fragment'] : '';
             if ($opt === 'full') {
                 return "$scheme$host$port$path";
             }

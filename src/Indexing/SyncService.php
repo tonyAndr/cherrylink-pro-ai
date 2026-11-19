@@ -478,6 +478,8 @@ final class SyncService implements Registerable
             \update_option('cherrylink_state', $meta);
             \delete_option(self::PLAN);
             $this->options->clearIndexDirty();   // index reconciled — clear any out-of-sync flag
+            // Refresh the learned count now rather than on the next five-minute tick.
+            \wp_schedule_single_event(\time(), \CherryLink\Support\Capabilities::REFRESH_HOOK, ['scan_done']);
             self::afterScan();
             $this->setState(\array_merge($state, ['status' => 'done', 'phase' => 'done', 'offset' => 0]));
             return;
@@ -628,6 +630,8 @@ final class SyncService implements Registerable
             \update_option('cherrylink_state', $meta);
             \delete_option(self::PLAN);
             $this->options->clearIndexDirty();   // index reconciled — clear any out-of-sync flag
+            // Refresh the learned count now rather than on the next five-minute tick.
+            \wp_schedule_single_event(\time(), \CherryLink\Support\Capabilities::REFRESH_HOOK, ['scan_done']);
             self::afterScan();
             $this->setState(\array_merge($state, [
                 'status'       => 'done',
